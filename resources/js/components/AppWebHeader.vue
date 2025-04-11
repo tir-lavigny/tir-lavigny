@@ -15,10 +15,11 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
+import { useAppearance } from '@/composables/useAppearance';
 import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Menu, Moon, Sun } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -37,6 +38,9 @@ const isCurrentRoute = computed(() => (url: string) => page.url === url);
 const activeItemStyles = computed(
     () => (url: string) => (isCurrentRoute.value(url) ? 'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100' : ''),
 );
+
+const { appearance, updateAppearance } = useAppearance();
+const handleToggleAppearance = () => updateAppearance(appearance.value === 'light' ? 'dark' : 'light');
 
 const mainNavItems: NavItem[] = [
     {
@@ -73,7 +77,7 @@ const rightNavItems: NavItem[] = [
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" class="w-[300px] p-6">
-                            <SheetTitle class="sr-only">Navigation Menu</SheetTitle>
+                            <SheetTitle class="sr-only">Menu de navigation</SheetTitle>
                             <SheetHeader class="flex justify-start text-left">
                                 <AppLogoIcon class="size-6 fill-current text-black dark:text-white" />
                             </SheetHeader>
@@ -137,7 +141,15 @@ const rightNavItems: NavItem[] = [
                 <div class="ml-auto flex items-center space-x-2">
                     <div class="relative flex items-center space-x-1">
                         <Button variant="ghost" size="icon" class="group h-9 w-9 cursor-pointer">
-                            <Search class="size-5 opacity-80 group-hover:opacity-100" />
+                            <Button variant="ghost" size="icon" @click="handleToggleAppearance()">
+                                <Sun
+                                    class="size-5 scale-100 rotate-0 opacity-80 transition-all duration-500 group-hover:opacity-100 dark:scale-0 dark:-rotate-90"
+                                />
+                                <Moon
+                                    class="absolute size-5 scale-0 rotate-90 opacity-80 transition-all duration-500 group-hover:opacity-100 dark:scale-100 dark:rotate-0"
+                                />
+                                <span class="sr-only">Toggle theme</span>
+                            </Button>
                         </Button>
 
                         <div class="hidden space-x-1 lg:flex">
