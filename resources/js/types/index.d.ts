@@ -37,3 +37,25 @@ export interface User {
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;
+
+export interface Event {
+    id: number;
+    title: string;
+    start_datetime: string; // ISO 8601 format
+    end_datetime?: string; // ISO 8601 format
+    content_id?: number;
+    location_id?: number;
+    created_at: string; // ISO 8601 format
+    updated_at: string; // ISO 8601 format
+    location?: Location;
+}
+
+export interface Location {
+    id: number;
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    created_at: string; // ISO 8601 format
+    updated_at: string; // ISO 8601 format
+}

@@ -23,6 +23,11 @@ class Event extends Model
         'end_datetime' => 'datetime',
     ];
 
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
+    }
+
     public function content(): BelongsTo
     {
         return $this->belongsTo(Content::class);
