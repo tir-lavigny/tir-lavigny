@@ -12,14 +12,14 @@ import {
     NavigationMenuList,
     navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, Menu, Moon, Sun } from 'lucide-vue-next';
+import { Building, Calendar, House, LayoutDashboard, Menu, Moon, Sun, Target } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -33,10 +33,10 @@ const props = withDefaults(defineProps<Props>(), {
 const page = usePage<SharedData>();
 const auth = computed(() => page.props.auth);
 
-const isCurrentRoute = computed(() => (url: string) => page.url === url);
+const isCurrentRoute = computed(() => (url: string) => route().current() === url);
 
 const activeItemStyles = computed(
-    () => (url: string) => (isCurrentRoute.value(url) ? 'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100' : ''),
+    () => (url: string) => (isCurrentRoute.value(url) ? 'text-neutral-900 bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-100' : ''),
 );
 
 const { appearance, updateAppearance } = useAppearance();
@@ -44,28 +44,34 @@ const handleToggleAppearance = () => updateAppearance(appearance.value === 'ligh
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
+        title: 'Accueil',
+        href: 'home',
+        icon: House,
     },
     {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
+        title: 'Stand',
+        href: 'stand',
+        icon: Building,
     },
     {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
+        title: 'Événements',
+        href: 'events',
+        icon: Calendar,
     },
     {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
+        title: 'Tirs militaires',
+        href: 'shootings',
+        icon: Target,
     },
 ];
 
-const rightNavItems: NavItem[] = [];
+const rightNavItems: NavItem[] = [
+    {
+        title: 'Tableau de bord',
+        href: 'dashboard',
+        icon: LayoutDashboard,
+    },
+];
 </script>
 
 <template>
@@ -82,6 +88,7 @@ const rightNavItems: NavItem[] = [];
                         </SheetTrigger>
                         <SheetContent side="left" class="w-[300px] p-6">
                             <SheetTitle class="sr-only">Menu de navigation</SheetTitle>
+                            <SheetDescription class="sr-only">Menu de navigation mobile</SheetDescription>
                             <SheetHeader class="flex justify-start text-left">
                                 <AppLogoIcon class="size-6 fill-current text-black dark:text-white" />
                             </SheetHeader>
@@ -90,7 +97,7 @@ const rightNavItems: NavItem[] = [];
                                     <Link
                                         v-for="item in mainNavItems"
                                         :key="item.title"
-                                        :href="item.href"
+                                        :href="route(item.href)"
                                         class="hover:bg-accent flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium"
                                         :class="activeItemStyles(item.href)"
                                     >
@@ -99,24 +106,22 @@ const rightNavItems: NavItem[] = [];
                                     </Link>
                                 </nav>
                                 <div class="flex flex-col space-y-4">
-                                    <a
+                                    <Link
                                         v-for="item in rightNavItems"
                                         :key="item.title"
-                                        :href="item.href"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                        :href="route(item.href)"
                                         class="flex items-center space-x-2 text-sm font-medium"
                                     >
                                         <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
                                         <span>{{ item.title }}</span>
-                                    </a>
+                                    </Link>
                                 </div>
                             </div>
                         </SheetContent>
                     </Sheet>
                 </div>
 
-                <Link :href="route('dashboard')" class="flex items-center gap-x-2">
+                <Link :href="route('home')" class="flex items-center gap-x-2">
                     <AppLogo />
                 </Link>
 
@@ -125,7 +130,7 @@ const rightNavItems: NavItem[] = [];
                     <NavigationMenu class="ml-10 flex h-full items-stretch">
                         <NavigationMenuList class="flex h-full items-stretch space-x-2">
                             <NavigationMenuItem v-for="(item, index) in mainNavItems" :key="index" class="relative flex h-full items-center">
-                                <Link :href="item.href" class="flex h-full items-center">
+                                <Link :href="route(item.href)" class="flex h-full items-center">
                                     <NavigationMenuLink
                                         :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']"
                                     >
@@ -144,17 +149,24 @@ const rightNavItems: NavItem[] = [];
 
                 <div class="ml-auto flex items-center space-x-2">
                     <div class="relative flex items-center space-x-1">
-                        <Button variant="ghost" size="icon" class="group h-9 w-9 cursor-pointer">
-                            <Button variant="ghost" size="icon" @click="handleToggleAppearance()">
-                                <Sun
-                                    class="size-5 scale-100 rotate-0 opacity-80 transition-all duration-500 group-hover:opacity-100 dark:scale-0 dark:-rotate-90"
-                                />
-                                <Moon
-                                    class="absolute size-5 scale-0 rotate-90 opacity-80 transition-all duration-500 group-hover:opacity-100 dark:scale-100 dark:rotate-0"
-                                />
-                                <span class="sr-only">Toggle theme</span>
-                            </Button>
-                        </Button>
+                        <TooltipProvider :delay-duration="0">
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Button variant="ghost" size="icon" class="group h-9 w-9 cursor-pointer" @click="handleToggleAppearance()">
+                                        <Sun
+                                            class="size-5 scale-100 rotate-0 opacity-80 transition-all duration-500 group-hover:opacity-100 dark:scale-0 dark:-rotate-90"
+                                        />
+                                        <Moon
+                                            class="absolute size-5 scale-0 rotate-90 opacity-80 transition-all duration-500 group-hover:opacity-100 dark:scale-100 dark:rotate-0"
+                                        />
+                                        <span class="sr-only">Changer le thème</span>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Changer le thème</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
 
                         <div class="hidden space-x-1 lg:flex">
                             <template v-for="item in rightNavItems" :key="item.title">
@@ -162,10 +174,10 @@ const rightNavItems: NavItem[] = [];
                                     <Tooltip>
                                         <TooltipTrigger>
                                             <Button variant="ghost" size="icon" as-child class="group h-9 w-9 cursor-pointer">
-                                                <a :href="item.href" target="_blank" rel="noopener noreferrer">
+                                                <Link :href="route(item.href)">
                                                     <span class="sr-only">{{ item.title }}</span>
                                                     <component :is="item.icon" class="size-5 opacity-80 group-hover:opacity-100" />
-                                                </a>
+                                                </Link>
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
