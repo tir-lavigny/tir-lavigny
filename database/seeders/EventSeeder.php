@@ -18,6 +18,18 @@ class EventSeeder extends Seeder
         $trainingContent = Content::where('title', 'Entraînement')->first();
         $shootingContent = Content::where('title', 'Tir Obligatoire')->first();
 
+        // Create 2 events today
+        Event::factory(2)->create([
+            'start_datetime' => now(),
+        ]);
+
+        // Create an event in the past
+        $randomPastDate = now()->subDays(rand(1, 30));
+        Event::factory(1)->create([
+            'start_datetime' => $randomPastDate,
+            'end_datetime' => $randomPastDate->addHours(2),
+        ]);
+
         // Create 5 events linked to "Training"
         Event::factory(5)->create([
             'content_id' => $trainingContent->id,
