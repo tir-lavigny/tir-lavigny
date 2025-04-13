@@ -14,8 +14,8 @@ defineProps<{
             :style="{ backgroundImage: `url(${image})` }"
         >
             <div class="absolute inset-0 bg-black opacity-50"></div>
-            <div class="relative z-10 flex flex-col gap-8 text-center text-white">
-                <H1>{{ title }}</H1>
+            <div class="relative z-10 mt-16 flex flex-col gap-8 px-4 text-center text-white 2xl:px-0">
+                <H1 class="text-pretty">{{ title }}</H1>
                 <slot name="description"></slot>
             </div>
         </section>
