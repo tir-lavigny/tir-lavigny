@@ -22,11 +22,11 @@ class EventController extends Controller
     public function show($id)
     {
         $event = Event::with('location')->findOrFail($id);
-        $contnent = $event->getEffectiveContent();
+        $content = $event->getEffectiveContent();
 
-        return Inertia::render('Events', [
+        return Inertia::render('Event', [
             'event' => $event,
-            'content' => $contnent,
+            'content' => $content,
         ]);
     }
 }

@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { H1 } from './typography/headings';
-import { Large } from './typography/texts';
 
 defineProps<{
     title: string;
-    description: string;
     image: string;
 }>();
 </script>
@@ -16,9 +14,9 @@ defineProps<{
             :style="{ backgroundImage: `url(${image})` }"
         >
             <div class="absolute inset-0 bg-black opacity-50"></div>
-            <div class="relative z-10 text-center text-white">
+            <div class="relative z-10 flex flex-col gap-8 text-center text-white">
                 <H1>{{ title }}</H1>
-                <Large>{{ description }}</Large>
+                <slot name="description"></slot>
             </div>
         </section>
     </div>

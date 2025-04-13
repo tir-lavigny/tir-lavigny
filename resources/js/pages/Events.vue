@@ -2,7 +2,7 @@
 import AppEventCalendarCard from '@/components/AppEventCalendarCard.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
 import { H2, H3 } from '@/components/typography/headings';
-import { P } from '@/components/typography/texts';
+import { Large, P } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import WebLayout from '@/layouts/WebLayout.vue';
@@ -61,7 +61,9 @@ const groupedEvents = computed(() => {
     <Head title="Événements" />
 
     <WebLayout>
-        <AppHeroSection title="Événements" description="Prochains événements, tirs, etc." image="/images/hero.jpg" />
+        <AppHeroSection title="Événements" image="/images/hero.jpg">
+            <template #description> <Large> Prochains événements, tirs, etc. </Large> </template>
+        </AppHeroSection>
 
         <section v-if="!events" class="mt-96 flex flex-col gap-8 py-12">
             <P>Pas d'événements à afficher</P>

@@ -2,7 +2,7 @@
 import AppEventCard from '@/components/AppEventCard.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
 import { H2 } from '@/components/typography/headings';
-import { List, P } from '@/components/typography/texts';
+import { Large, List, P } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { Event } from '@/types';
@@ -18,7 +18,9 @@ defineProps<{
     <Head title="Accueil" />
 
     <WebLayout>
-        <AppHeroSection title="Société de tir de lavigny" description="Tirs militaire, campagne et sportif" image="/images/hero.jpg" />
+        <AppHeroSection title="Société de tir de lavigny" image="/images/hero.jpg">
+            <template #description> <Large> Tirs militaire, campagne et sportif </Large> </template>
+        </AppHeroSection>
         <section class="mt-96 flex flex-col gap-8 py-12" v-if="events">
             <H2>Prochains événements</H2>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
