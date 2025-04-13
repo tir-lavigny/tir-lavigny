@@ -24,23 +24,14 @@ class ContentFactory extends Factory
 
     private function generateMarkdown(): string
     {
-        return <<<MD
-            # {$this->faker->sentence(4)}
-
-            ## {$this->faker->sentence(3)}
-
-            {$this->faker->paragraph(3)}
-
-            - {$this->faker->sentence()}
-            - {$this->faker->sentence()}
-            - {$this->faker->sentence()}
-
-            [En savoir plus]({$this->faker->url()})
-
-            **{$this->faker->words(5, true)}**
-
-            *{$this->faker->words(4, true)}*
-
-        MD;
+        return "# " . $this->faker->sentence(4) . "\n\n" .
+            "## " . $this->faker->sentence(3) . "\n\n" .
+            $this->faker->paragraph(3) . "\n\n" .
+            "- " . $this->faker->sentence() . "\n" .
+            "- " . $this->faker->sentence() . "\n" .
+            "- " . $this->faker->sentence() . "\n\n" .
+            "[En savoir plus](" . $this->faker->url() . ")\n\n" .
+            "**" . $this->faker->words(5, true) . "**\n\n" .
+            "*" . $this->faker->words(4, true) . "*";
     }
 }
