@@ -63,11 +63,11 @@ const groupedEvents = computed(() => {
     <WebLayout>
         <AppHeroSection title="Événements" description="Prochains événements, tirs, etc." image="/images/hero.jpg" />
 
-        <section v-if="!events" class="mt-96 flex flex-col gap-8 pt-12">
+        <section v-if="!events" class="mt-96 flex flex-col gap-8 py-12">
             <P>Pas d'événements à afficher</P>
         </section>
         <template v-else>
-            <section v-if="isMobile" class="mt-96 flex flex-col gap-8 pt-12">
+            <section v-if="isMobile" class="mt-96 flex flex-col gap-8 py-12">
                 <div class="flex flex-row items-center justify-between">
                     <H2 class="!pb-0">Saison {{ new Date().getFullYear() }}</H2>
                     <DropdownMenu>

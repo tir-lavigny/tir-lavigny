@@ -19,7 +19,7 @@ defineProps<{
 
     <WebLayout>
         <AppHeroSection title="Société de tir de lavigny" description="Tirs militaire, campagne et sportif" image="/images/hero.jpg" />
-        <section class="mt-96 flex flex-col gap-8 pt-12" v-if="events">
+        <section class="mt-96 flex flex-col gap-8 py-12" v-if="events">
             <H2>Prochains événements</H2>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <AppEventCard v-for="event in events" class="w-full" :key="event.id" :event="event" />
