@@ -21,9 +21,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
-            LocationSeeder::class,
-            ContentSeeder::class,
-            EventSeeder::class,
+            // LocationSeeder::class,
+            // ContentSeeder::class,
+            // EventSeeder::class,
+            Data2025Seeder::class,
         ]);
     }
 }

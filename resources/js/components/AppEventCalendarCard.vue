@@ -32,6 +32,7 @@ defineProps<{
                         {{ formatDate(new Date(event.start_datetime), 'DD MMMM YYYY') }} -
                         {{ formatDate(new Date(event.end_datetime), 'DD MMMM YYYY') }}
                     </Small>
+                    <Small v-else>{{ formatDate(new Date(event.start_datetime), 'DD MMMM YYYY') }}</Small>
                     <Small>
                         {{ formatDate(new Date(event.start_datetime), 'HH:mm') }}
                         <template

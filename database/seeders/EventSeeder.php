@@ -17,6 +17,7 @@ class EventSeeder extends Seeder
     {
         $trainingContent = Content::where('title', 'Entraînement')->first();
         $shootingContent = Content::where('title', 'Tir Militaire')->first();
+        $campagneContent = Content::where('title', 'Tir Fédéral en Campagne')->first();
 
         // Create 2 events today
         Event::factory(2)->create([
@@ -39,6 +40,12 @@ class EventSeeder extends Seeder
         Event::factory(3)->create([
             'title' => 'Tir Militaire',
             'content_id' => $shootingContent->id,
+        ]);
+
+        // Create 2 events linked to "Federal Shooting in Campaign"
+        Event::factory(2)->create([
+            'title' => 'Tir Fédéral en Campagne',
+            'content_id' => $campagneContent->id,
         ]);
 
         // Create 5 events without predefined content (which will have unique content)
