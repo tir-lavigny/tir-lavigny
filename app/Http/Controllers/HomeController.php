@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use App\Models\Event;
+use Inertia\Inertia;
 
 class HomeController extends Controller
 {

@@ -26,14 +26,14 @@ class LocationFactory extends Factory
             'Neuchâtel',
             'Bâle',
             'Sion',
-            'Lugano'
+            'Lugano',
         ];
 
         $city = $this->faker->randomElement($cities);
 
         return [
-            'name' => $this->faker->company . ' - ' . $city,
-            'address' => $this->faker->streetAddress() . ', ' . $this->faker->postcode() . ' ' . $this->faker->city(),
+            'name' => $this->faker->company.' - '.$city,
+            'address' => $this->faker->streetAddress().', '.$this->faker->postcode().' '.$this->faker->city(),
             'latitude' => $this->faker->latitude(45.8, 47.8), // Suisse ~45.8° à 47.8° N
             'longitude' => $this->faker->longitude(5.9, 10.5), // Suisse ~5.9° à 10.5° E
         ];

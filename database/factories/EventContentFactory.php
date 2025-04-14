@@ -23,13 +23,13 @@ class EventContentFactory extends Factory
 
     private function generateMarkdown(): string
     {
-        return "# " . $this->faker->sentence(5) . "\n\n" .
-            $this->faker->paragraph(2) . "\n\n" .
-            "## Détails\n\n" .
-            "- " . $this->faker->catchPhrase() . "\n" .
-            "- " . $this->faker->bs() . "\n" .
-            "- " . $this->faker->company() . "\n\n" .
-            "[Voir l'événement](" . $this->faker->url() . ")\n\n" .
-            "**Note Importante**: " . $this->faker->sentence() . "\n";
+        return '# '.$this->faker->sentence(5)."\n\n".
+            $this->faker->paragraph(2)."\n\n".
+            "## Détails\n\n".
+            '- '.$this->faker->catchPhrase()."\n".
+            '- '.$this->faker->bs()."\n".
+            '- '.$this->faker->company()."\n\n".
+            "[Voir l'événement](".$this->faker->url().")\n\n".
+            '**Note Importante**: '.$this->faker->sentence()."\n";
     }
 }

@@ -22,7 +22,7 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
-    require __DIR__ . '/settings.php';
+    require __DIR__.'/settings.php';
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

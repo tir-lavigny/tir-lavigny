@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Content;
 use App\Models\Event;
 use App\Models\EventContent;
 use App\Models\Location;
+use Illuminate\Database\Seeder;
 
 class Data2025Seeder extends Seeder
 {
@@ -57,7 +56,7 @@ class Data2025Seeder extends Seeder
             'start_datetime' => '2025-08-14 17:25:00',
         ]);
         $c3 = new EventContent([
-            'body' => "### Stand de tir ouvert",
+            'body' => '### Stand de tir ouvert',
         ]);
         $e3->customContent()->save($c3);
         $e3->location()->associate($lavignyLocation);
@@ -68,7 +67,7 @@ class Data2025Seeder extends Seeder
             'start_datetime' => '2025-10-02 19:35:00',
         ]);
         $c4 = new EventContent([
-            'body' => "### Fin de la saison 2025",
+            'body' => '### Fin de la saison 2025',
         ]);
         $e4->customContent()->save($c4);
         $e4->location()->associate($lavignyLocation);

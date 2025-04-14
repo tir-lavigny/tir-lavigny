@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ShootingController extends Controller
@@ -11,7 +10,7 @@ class ShootingController extends Controller
     public function index()
     {
         $title = 'Tir militaire';
-        $events = Event::whereLike('title', '%' . $title . '%', false)
+        $events = Event::whereLike('title', '%'.$title.'%', false)
             ->where('start_datetime', '>=', now())
             ->with('location')
             ->orderBy('start_datetime', 'asc')
