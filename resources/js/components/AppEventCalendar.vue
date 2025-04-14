@@ -36,12 +36,12 @@ watchEffect(() => {
 
 <template>
     <div class="mb-4 grid grid-cols-3 gap-4">
-        <ScrollArea class="col-span-2 max-h-[80dvh] overflow-scroll">
+        <ScrollArea class="col-span-2 max-h-[80dvh]">
             <div v-for="(events, date) in groupedEvents" :key="date" class="mx-auto w-full max-w-4xl pr-4">
                 <H3
                     :id="`date-${date}`"
                     :class="{ 'text-primary': new Date(date).toDateString() === new Date().toDateString() }"
-                    class="bg-background sticky top-0 z-10 py-6"
+                    class="bg-background sticky top-0 z-10 py-4"
                 >
                     {{ formatDate(new Date(date), 'ddd DD MMMM YYYY') }}
                 </H3>
