@@ -20,7 +20,7 @@ class ContentSeeder extends Seeder
 
         Content::create([
             'title' => 'Tir Militaire',
-            'body' => "# Tir Obligatoire\n\nLe tir obligatoire est prévu selon les règles officielles.\n\n- Date : à vérifier\n- Lieu : stand de tir officiel",
+            'body' => "### Tir Obligatoire\n\n**Programme obligatoire :**\n\n- 5 coups: coup par coup, sur cible A5\n- 5 coups: coup par coup, sur cible B4\n- 1 x 2 coups: feu de vitesse, sur cible B4\n- 1 x 3 coups: feu de vitesse, sur cible B4\n- 1 x 5 coups: feu de vitesse, sur cible B4",
         ]);
 
         Content::factory(3)->create(); // 3 contenus aléatoires
