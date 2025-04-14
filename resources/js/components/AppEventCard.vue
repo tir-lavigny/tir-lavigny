@@ -56,10 +56,8 @@ withDefaults(
                 <div class="flex items-center gap-2">
                     <MapPin class="text-muted-foreground h-4 w-4 min-w-4" />
                     <Small class="text-primary" v-if="event.location">
-                        {{ event.location.name }} -
-                        <span class="text-foreground">
-                            {{ event.location.address }}
-                        </span>
+                        {{ event.location.name }}
+                        <span class="text-foreground"> - {{ event.location.address }} </span>
                     </Small>
                     <Small v-else> Pas de lieu défini </Small>
                 </div>

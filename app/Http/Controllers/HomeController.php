@@ -10,7 +10,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $events = Event::with('location')->where('start_date', '>=', now())->orderBy('start_date')->take(3)->get();
+        $events = Event::with('location')->where('start_datetime', '>=', now())->orderBy('start_datetime')->take(3)->get();
 
         return Inertia::render('Home', [
             'events' => $events,
