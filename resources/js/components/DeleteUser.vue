@@ -59,13 +59,21 @@ const closeModal = () => {
                         <DialogHeader class="space-y-3">
                             <DialogTitle>Êtes-vous sûr de vouloir supprimer votre compte ?</DialogTitle>
                             <DialogDescription>
-                                Une fois votre compte supprimé, toutes ses ressources et données seront également définitivement supprimées. Veuillez entrer votre mot de passe pour confirmer que vous souhaitez supprimer définitivement votre compte.
+                                Une fois votre compte supprimé, toutes ses ressources et données seront également définitivement supprimées. Veuillez
+                                entrer votre mot de passe pour confirmer que vous souhaitez supprimer définitivement votre compte.
                             </DialogDescription>
                         </DialogHeader>
 
                         <div class="grid gap-2">
                             <Label for="password" class="sr-only">Mot de passe</Label>
-                            <Input id="password" type="password" name="password" ref="passwordInput" v-model="form.password" placeholder="Mot de passe" />
+                            <Input
+                                id="password"
+                                type="password"
+                                name="password"
+                                ref="passwordInput"
+                                v-model="form.password"
+                                placeholder="Mot de passe"
+                            />
                             <InputError :message="form.errors.password" />
                         </div>
 

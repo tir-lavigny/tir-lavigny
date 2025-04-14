@@ -1,5 +1,5 @@
 <template>
-    <p class="text-xl text-muted-foreground">
+    <p class="text-muted-foreground text-xl">
         <slot></slot>
     </p>
 </template>
