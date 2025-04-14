@@ -2,9 +2,9 @@
 import { Small } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { formatDate } from '@vueuse/core';
 import { ArrowRight, Calendar, MapPin } from 'lucide-vue-next';
 
 withDefaults(
@@ -30,26 +30,20 @@ withDefaults(
                 <div class="flex items-center gap-2">
                     <Calendar class="text-muted-foreground h-4 w-4 min-w-4" />
                     <Small>
-                        {{ formatDate(new Date(event.start_datetime), 'DD MMMM YYYY') }}
+                        {{ formatDate(event.start_datetime, 'DD MMMM YYYY') }}
                         <template
                             v-if="
                                 event.end_datetime &&
-                                formatDate(new Date(event.start_datetime), 'DD MMMM YYYY') !==
-                                    formatDate(new Date(event.end_datetime), 'DD MMMM YYYY')
+                                formatDate(event.start_datetime, 'DD MMMM YYYY') !== formatDate(event.end_datetime, 'DD MMMM YYYY')
                             "
                         >
-                            - {{ formatDate(new Date(event.end_datetime), 'DD MMMM YYYY') }}
+                            - {{ formatDate(event.end_datetime, 'DD MMMM YYYY') }}
                         </template>
                     </Small>
                     <Small>
-                        {{ formatDate(new Date(event.start_datetime), 'HH:mm') }}
-                        <template
-                            v-if="
-                                event.end_datetime &&
-                                formatDate(new Date(event.start_datetime), 'HH:mm') !== formatDate(new Date(event.end_datetime), 'HH:mm')
-                            "
-                        >
-                            - {{ formatDate(new Date(event.end_datetime), 'HH:mm') }}
+                        {{ formatDate(event.start_datetime, 'HH:mm') }}
+                        <template v-if="event.end_datetime && formatDate(event.start_datetime, 'HH:mm') !== formatDate(event.end_datetime, 'HH:mm')">
+                            - {{ formatDate(event.end_datetime, 'HH:mm') }}
                         </template>
                     </Small>
                 </div>
@@ -83,26 +77,20 @@ withDefaults(
                 <div class="flex items-center gap-2">
                     <Calendar class="text-muted-foreground h-4 w-4 min-w-4" />
                     <Small>
-                        {{ formatDate(new Date(event.start_datetime), 'DD MMMM YYYY') }}
+                        {{ formatDate(event.start_datetime, 'DD MMMM YYYY') }}
                         <template
                             v-if="
                                 event.end_datetime &&
-                                formatDate(new Date(event.start_datetime), 'DD MMMM YYYY') !==
-                                    formatDate(new Date(event.end_datetime), 'DD MMMM YYYY')
+                                formatDate(event.start_datetime, 'DD MMMM YYYY') !== formatDate(event.end_datetime, 'DD MMMM YYYY')
                             "
                         >
-                            - {{ formatDate(new Date(event.end_datetime), 'DD MMMM YYYY') }}
+                            - {{ formatDate(event.end_datetime, 'DD MMMM YYYY') }}
                         </template>
                     </Small>
                     <Small>
-                        {{ formatDate(new Date(event.start_datetime), 'HH:mm') }}
-                        <template
-                            v-if="
-                                event.end_datetime &&
-                                formatDate(new Date(event.start_datetime), 'HH:mm') !== formatDate(new Date(event.end_datetime), 'HH:mm')
-                            "
-                        >
-                            - {{ formatDate(new Date(event.end_datetime), 'HH:mm') }}
+                        {{ formatDate(event.start_datetime, 'HH:mm') }}
+                        <template v-if="event.end_datetime && formatDate(event.start_datetime, 'HH:mm') !== formatDate(event.end_datetime, 'HH:mm')">
+                            - {{ formatDate(event.end_datetime, 'HH:mm') }}
                         </template>
                     </Small>
                 </div>

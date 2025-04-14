@@ -4,9 +4,9 @@ import { H3 } from '@/components/typography/headings';
 import { P } from '@/components/typography/texts';
 import { Calendar } from '@/components/ui/calendar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { type DateValue, getLocalTimeZone, today } from '@internationalized/date';
-import { formatDate } from '@vueuse/core';
 import { type Ref, ref, watchEffect } from 'vue';
 
 const props = defineProps<{
@@ -43,7 +43,7 @@ watchEffect(() => {
                     :class="{ 'text-primary': new Date(date).toDateString() === new Date().toDateString() }"
                     class="bg-background sticky top-0 z-10 py-4"
                 >
-                    {{ formatDate(new Date(date), 'ddd DD MMMM YYYY') }}
+                    {{ formatDate(date, 'ddd DD MMMM YYYY') }}
                 </H3>
                 <AppEventCalendarCard v-for="event in events" :key="event.id" :event="event" class="mt-4" />
             </div>
