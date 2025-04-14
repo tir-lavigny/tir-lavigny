@@ -16,7 +16,7 @@ class EventSeeder extends Seeder
     public function run(): void
     {
         $trainingContent = Content::where('title', 'Entraînement')->first();
-        $shootingContent = Content::where('title', 'Tir Obligatoire')->first();
+        $shootingContent = Content::where('title', 'Tir Militaire')->first();
 
         // Create 2 events today
         Event::factory(2)->create([
@@ -37,6 +37,7 @@ class EventSeeder extends Seeder
 
         // Create 3 events linked to "Mandatory Shooting"
         Event::factory(3)->create([
+            'title' => 'Tir Militaire',
             'content_id' => $shootingContent->id,
         ]);
 

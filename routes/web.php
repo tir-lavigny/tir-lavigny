@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ShootingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -10,9 +11,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/events', [EventController::class, 'index'])->name('events');
 Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
 
-Route::get('/shootings', function () {
-    return Inertia::render('Shootings');
-})->name('shootings');
+Route::get('/shootings', [ShootingController::class, 'index'])->name('shootings');
 
 
 Route::get('dashboard', function () {
