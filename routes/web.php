@@ -13,10 +13,16 @@ Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show'
 
 Route::get('/shootings', [ShootingController::class, 'index'])->name('shootings');
 
+Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('dashboard');
+    })->name('back-office');
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+    Route::get('dashboard', function () {
+        return Inertia::render('Dashboard');
+    })->name('dashboard');
 
-require __DIR__ . '/settings.php';
+    require __DIR__ . '/settings.php';
+});
+
 require __DIR__ . '/auth.php';

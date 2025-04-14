@@ -13,17 +13,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::updateOrCreate(
+            ['email' => env('APP_USER_EMAIL')],
+            [
+                'name' => env('APP_USER_NAME'),
+                'email_verified_at' => now(),
+                'password' => env('APP_USER_PASSWORD'),
+            ]
+        );
 
         $this->call([
-            // LocationSeeder::class,
-            // ContentSeeder::class,
-            // EventSeeder::class,
             Data2025Seeder::class,
         ]);
     }
