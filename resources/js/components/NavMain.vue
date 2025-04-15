@@ -17,7 +17,7 @@ const isCurrentRoute = computed(() => (url: string) => {
 
 <template>
     <SidebarGroup class="px-2 py-0">
-        <SidebarGroupLabel>Platform</SidebarGroupLabel>
+        <SidebarGroupLabel>Back Office</SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton as-child :is-active="isCurrentRoute(item.href)" :tooltip="item.title">
