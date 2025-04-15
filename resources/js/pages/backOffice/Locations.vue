@@ -116,10 +116,9 @@ const handleSubmitDelete = () => {
                 </div>
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-32 overflow-hidden rounded-xl border p-4">
                     <MapIframe
-                        title="Map"
+                        :title="createLocationForm?.form.name"
                         :latitude="createLocationForm?.form.latitude || 0"
                         :longitude="createLocationForm?.form.longitude || 0"
-                        :zoom="18"
                         class="h-64 w-full rounded-xl"
                     />
                 </div>
