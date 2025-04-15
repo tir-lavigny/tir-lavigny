@@ -2,14 +2,19 @@
 import ContentsTable from '@/components/back-office/ContentsTable.vue';
 import InputError from '@/components/InputError.vue';
 import { H3, H4 } from '@/components/typography/headings';
+import { Small } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Content, type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
+import { useMediaQuery } from '@vueuse/core';
 import { Save, Undo2 } from 'lucide-vue-next';
 import { marked } from 'marked';
+import { ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -22,6 +27,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 defineProps<{
     contents?: Content[];
 }>();
+
+const showPreview = ref(false);
+const isMobile = useMediaQuery('(max-width: 768px)');
 
 const updateForm = useForm({
     id: null,
@@ -138,24 +146,46 @@ const handleTabKey = (event: KeyboardEvent) => {
                         </Button>
                     </div>
                 </div>
-                <div class="mt-8 grid gap-4 md:grid-cols-2" v-if="updateForm?.id">
-                    <div class="flex flex-col gap-4">
-                        <div class="flex flex-row items-center gap-1">
-                            <H4>Markdown</H4>
-                            <InputError :message="updateForm.errors.body" />
+                <template v-if="!isMobile">
+                    <div class="mt-8 grid grid-cols-2 gap-4" v-if="updateForm?.id">
+                        <div class="flex flex-col gap-4">
+                            <div class="flex flex-row items-center gap-1">
+                                <H4>Markdown</H4>
+                                <InputError :message="updateForm.errors.body" />
+                            </div>
+                            <Separator />
+                            <Textarea class="w-full resize-none" v-model="updateForm.body" @keydown="handleTabKey"></Textarea>
                         </div>
-                        <hr />
-                        <Textarea class="w-full resize-none" v-model="updateForm.body" @keydown="handleTabKey"></Textarea>
+                        <div class="flex flex-col gap-4">
+                            <H4>Prévisualisation</H4>
+                            <Separator />
+                            <div v-html="marked(updateForm.body)" class="prose dark:prose-invert w-full"></div>
+                        </div>
                     </div>
-                    <div class="flex flex-col gap-4">
-                        <H4>Prévisualisation</H4>
-                        <hr />
-                        <div v-html="marked(updateForm.body)" class="prose dark:prose-invert w-full"></div>
+                    <div v-else class="mt-4">
+                        <div class="text-muted-foreground flex-1 text-sm">Sélectionnez un contenu pour voir les détails.</div>
                     </div>
-                </div>
-                <div v-else class="mt-4">
-                    <div class="text-muted-foreground flex-1 text-sm">Sélectionnez un contenu pour voir les détails.</div>
-                </div>
+                </template>
+                <template v-else>
+                    <div class="mt-4 flex flex-col gap-4" v-if="updateForm?.id">
+                        <div class="flex flex-row items-center justify-between">
+                            <div class="flex flex-row items-center gap-1">
+                                <H4>{{ !showPreview ? 'Markdown' : 'Prévisualisation' }}</H4>
+                                <InputError :message="updateForm.errors.body" />
+                            </div>
+                            <div class="flex flex-row items-center gap-2">
+                                <Switch v-model="showPreview" />
+                                <Small>Prévisualisation</Small>
+                            </div>
+                        </div>
+                        <Separator />
+                        <Textarea v-if="!showPreview" class="w-full resize-none" v-model="updateForm.body" @keydown="handleTabKey"></Textarea>
+                        <div v-else v-html="marked(updateForm.body)" class="prose dark:prose-invert w-full"></div>
+                    </div>
+                    <div v-else class="mt-4">
+                        <div class="text-muted-foreground flex-1 text-sm">Sélectionnez un contenu pour voir les détails.</div>
+                    </div>
+                </template>
             </div>
         </div>
     </AppLayout>
