@@ -4,6 +4,16 @@ import LocationsList from '@/components/back-office/LocationsList.vue';
 import MapIframe from '@/components/MapIframe.vue';
 import { H3 } from '@/components/typography/headings';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Location, type BreadcrumbItem } from '@/types';
@@ -137,9 +147,24 @@ const handleSubmitDelete = () => {
                     }"
                     @submit="handleSubmitUpdate"
                 />
-                <form class="mt-4 flex justify-end px-4" @submit.prevent="handleSubmitDelete">
-                    <Button variant="destructive" type="submit"> Supprimer le lieu </Button>
-                </form>
+                <Dialog>
+                    <DialogTrigger class="mt-4 flex justify-end px-4"> <Button variant="destructive"> Supprimer le lieu </Button> </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Supprimer le lieu</DialogTitle>
+                            <DialogDescription> Êtes-vous sûr de vouloir supprimer ce lieu ? Cette action est irréversible. </DialogDescription>
+                        </DialogHeader>
+
+                        <DialogFooter>
+                            <form @submit.prevent="handleSubmitDelete">
+                                <Button variant="destructive" type="submit"> Supprimer le lieu </Button>
+                            </form>
+                            <DialogClose>
+                                <Button variant="secondary"> Annuler </Button>
+                            </DialogClose>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </SheetContent>
         </Sheet>
     </AppLayout>
