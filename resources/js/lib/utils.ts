@@ -1,6 +1,8 @@
+import type { Updater } from '@tanstack/vue-table';
 import { formatDate as FD, UseDateFormatOptions } from '@vueuse/core';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { Ref } from 'vue';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -14,4 +16,7 @@ export function formatDate(date: string, format: string, options?: UseDateFormat
         locales: 'fr-CH',
         ...options,
     });
+}
+export function valueUpdater<T extends Updater<any>>(updaterOrValue: T, ref: Ref) {
+    ref.value = typeof updaterOrValue === 'function' ? updaterOrValue(ref.value) : updaterOrValue;
 }
