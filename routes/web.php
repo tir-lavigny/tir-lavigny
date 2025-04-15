@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
@@ -24,6 +25,7 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     })->name('dashboard');
 
     Route::resource('locations', LocationController::class)->except(['create', 'show', 'edit']);
+    Route::resource('contents', ContentController::class)->except(['create', 'show', 'edit']);
 
     require __DIR__.'/settings.php';
 });

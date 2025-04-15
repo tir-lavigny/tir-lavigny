@@ -1,0 +1,108 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Content;
+use Exception;
+use Illuminate\Http\Request;
+
+class ContentController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $contents = Content::withCount('events')->get();
+
+        return inertia('backOffice/Contents', [
+            'contents' => $contents,
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255|unique:contents,title',
+            'body' => 'required|string',
+        ]);
+
+        try {
+            Content::create($request->only(['title', 'body']));
+        } catch (Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Une erreur est survenue lors de la création du contenu.']);
+        }
+
+        return redirect()->back()->with('success', 'Contenu créé avec succès.');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'body' => 'required|string',
+        ]);
+
+        $content = Content::findOrFail($id);
+        if (Content::where('title', $request->title)->where('id', '!=', $id)->exists()) {
+            return redirect()->back()->withErrors(['title' => 'Un contenu avec le même titre existe déjà.']);
+        }
+
+        try {
+            $content->update($request->only(['title', 'body']));
+        } catch (Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Une erreur est survenue lors de la mise à jour du contenu.']);
+        }
+
+        return redirect()->back()->with('success', 'Contenu mis à jour avec succès.');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $content = Content::findOrFail($id);
+        if ($content->events()->exists()) {
+            return redirect()->back()->withErrors(['error' => 'Impossible de supprimer le contenu car il est associé à des événements.']);
+        }
+
+        try {
+            $content->delete();
+        } catch (Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Une erreur est survenue lors de la suppression du contenu.']);
+        }
+
+        return redirect()->back()->with('success', 'Contenu supprimé avec succès.');
+    }
+}

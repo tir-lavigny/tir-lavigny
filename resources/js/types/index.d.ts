@@ -59,3 +59,12 @@ export interface Location {
     created_at: string; // ISO 8601 format
     updated_at: string; // ISO 8601 format
 }
+
+export interface Content {
+    id: number;
+    title: string;
+    body: string;
+    created_at: string; // ISO 8601 format
+    updated_at: string; // ISO 8601 format
+    events_count?: number;
+}
