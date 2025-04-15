@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Content, type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
+import { Save, Undo2 } from 'lucide-vue-next';
 import { marked } from 'marked';
 import { toast } from 'vue-sonner';
 
@@ -128,9 +129,16 @@ const handleTabKey = (event: KeyboardEvent) => {
                             <InputError :message="updateForm.errors.title" />
                         </div>
                     </div>
-                    <Button :disabled="!updateForm.isDirty" @click="handleUpdate">Enregistrer</Button>
+                    <div class="flex flex-row items-center gap-2">
+                        <Button size="icon" :disabled="!updateForm.isDirty" @click="handleUpdate">
+                            <Save />
+                        </Button>
+                        <Button variant="destructive" size="icon" :disabled="!updateForm.isDirty" @click="updateForm.reset()">
+                            <Undo2 />
+                        </Button>
+                    </div>
                 </div>
-                <div class="mt-8 grid grid-cols-2 gap-4" v-if="updateForm?.id">
+                <div class="mt-8 grid gap-4 md:grid-cols-2" v-if="updateForm?.id">
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-row items-center gap-1">
                             <H4>Markdown</H4>

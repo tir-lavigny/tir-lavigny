@@ -228,7 +228,7 @@ table.setPagination({
         </div>
 
         <div class="flex items-center justify-end space-x-2 py-4">
-            <div class="text-muted-foreground flex-1 text-sm">
+            <div class="text-muted-foreground hidden flex-1 text-sm">
                 {{ table.getFilteredSelectedRowModel().rows.length }} de {{ table.getFilteredRowModel().rows.length }} colonne(s) séléctionnée.
             </div>
             <div class="space-x-2">
