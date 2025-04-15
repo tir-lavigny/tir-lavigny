@@ -3,10 +3,11 @@ import LocationForm from '@/components/back-office/LocationForm.vue';
 import LocationsList from '@/components/back-office/LocationsList.vue';
 import MapIframe from '@/components/MapIframe.vue';
 import { H3 } from '@/components/typography/headings';
+import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Location, type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import { ref, useTemplateRef } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -55,6 +56,25 @@ const handleSubmitCreate = (form: any) => {
         },
         onError: () => {
             toast.error('Échec de la création du lieu');
+        },
+    });
+};
+
+const handleSubmitDelete = () => {
+    const form = useForm({
+        id: currentLocation.value?.id,
+    });
+    form.delete(route('locations.destroy', currentLocation.value?.id), {
+        onSuccess: () => {
+            toast.success('Lieu supprimé avec succès');
+            form.reset();
+            isSheetOpen.value = false;
+        },
+        onError: (error) => {
+            const errorMessage = Object.entries(error)
+                .map(([, value]) => `${value}`)
+                .join(', ');
+            toast.error(errorMessage);
         },
     });
 };
@@ -117,6 +137,9 @@ const handleSubmitCreate = (form: any) => {
                     }"
                     @submit="handleSubmitUpdate"
                 />
+                <form class="mt-4 flex justify-end px-4" @submit.prevent="handleSubmitDelete">
+                    <Button variant="destructive" type="submit"> Supprimer le lieu </Button>
+                </form>
             </SheetContent>
         </Sheet>
     </AppLayout>

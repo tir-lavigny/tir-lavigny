@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
+use Exception;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,7 +14,7 @@ class LocationController extends Controller
      */
     public function index()
     {
-        $locations = Location::all();
+        $locations = Location::orderBy('name')->get();
 
         return Inertia::render('backOffice/Locations', [
             'locations' => $locations,
@@ -42,7 +43,7 @@ class LocationController extends Controller
 
         Location::create($request->only(['name', 'address', 'latitude', 'longitude']));
 
-        return redirect()->route('locations.index')->with('success', 'Lieu créé avec succès');
+        return redirect()->back()->with('success', 'Lieu créé avec succès');
     }
 
     /**
@@ -76,7 +77,7 @@ class LocationController extends Controller
         $location = Location::findOrFail($id);
         $location->update($request->only(['name', 'address', 'latitude', 'longitude']));
 
-        return redirect()->route('locations.index')->with('success', 'Lieu mis à jour avec succès');
+        return redirect()->back()->with('success', 'Lieu mis à jour avec succès');
     }
 
     /**
@@ -84,6 +85,13 @@ class LocationController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $location = Location::findOrFail($id);
+        try {
+            $location->delete();
+        } catch (Exception $e) {
+            return redirect()->back()->withErrors('Impossible de supprimer ce lieu car il est associé à des événements.');
+        }
+
+        return redirect()->back()->with('success', 'Lieu supprimé avec succès');
     }
 }
