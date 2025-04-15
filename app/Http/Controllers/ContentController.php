@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Content;
+use Exception;
 use Illuminate\Http\Request;
 
 class ContentController extends Controller
@@ -68,7 +69,7 @@ class ContentController extends Controller
 
         try {
             $content->update($request->only(['title', 'body']));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Une erreur est survenue lors de la mise à jour du contenu.']);
         }
 
@@ -80,6 +81,17 @@ class ContentController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $content = Content::findOrFail($id);
+        if ($content->events()->exists()) {
+            return redirect()->back()->withErrors(['error' => 'Impossible de supprimer le contenu car il est associé à des événements.']);
+        }
+
+        try {
+            $content->delete();
+        } catch (Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Une erreur est survenue lors de la suppression du contenu.']);
+        }
+
+        return redirect()->back()->with('success', 'Contenu supprimé avec succès.');
     }
 }

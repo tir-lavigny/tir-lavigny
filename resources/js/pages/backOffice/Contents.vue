@@ -18,16 +18,18 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const props = defineProps<{
+defineProps<{
     contents?: Content[];
 }>();
-
-console.log(props.contents);
 
 const updateForm = useForm({
     id: null,
     title: '',
     body: '',
+});
+
+const deleteForm = useForm({
+    id: null,
 });
 
 const flushUpdateForm = () => {
@@ -42,6 +44,23 @@ const handleSelection = (selectedRows: Content) => {
     updateForm.defaults('title', selectedRows.title);
     updateForm.defaults('body', selectedRows.body);
     updateForm.reset();
+};
+
+const handleSelectionDelete = (selectedRows: Content) => {
+    deleteForm.defaults('id', selectedRows.id);
+    deleteForm.reset();
+    deleteForm.delete(route('contents.destroy', { id: selectedRows.id }), {
+        onSuccess: () => {
+            toast.success('Contenu supprimé avec succès');
+            window.location.reload();
+        },
+        onError: (error) => {
+            const errorMessage = Object.entries(error)
+                .map(([, value]) => `${value}`)
+                .join(', ');
+            toast.error(errorMessage);
+        },
+    });
 };
 
 const handleUpdate = () => {
@@ -93,7 +112,12 @@ const handleTabKey = (event: KeyboardEvent) => {
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative flex-1 rounded-xl border p-4 md:min-h-min" style="flex: 1 1 10%">
                 <H3>Templates</H3>
-                <ContentsTable :contents="contents" :pageSize="5" @update:row-selection="handleSelection" />
+                <ContentsTable
+                    :contents="contents"
+                    :pageSize="5"
+                    @update:row-selection="handleSelection"
+                    @delete:rowSelection="handleSelectionDelete"
+                />
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative flex-1 rounded-xl border p-4 md:min-h-min" style="flex: 2 1 90%">
                 <div class="flex flex-row justify-between">

@@ -16,7 +16,7 @@ import {
     getSortedRowModel,
     useVueTable,
 } from '@tanstack/vue-table';
-import { ArrowUpDown, ChevronDown, Edit } from 'lucide-vue-next';
+import { ArrowUpDown, ChevronDown, Edit, Trash2 } from 'lucide-vue-next';
 import { h, ref } from 'vue';
 
 const props = defineProps<{
@@ -24,7 +24,7 @@ const props = defineProps<{
     pageSize?: number;
 }>();
 
-const emit = defineEmits(['update:rowSelection']);
+const emit = defineEmits(['update:rowSelection', 'delete:rowSelection']);
 
 const data = props.contents || [];
 
@@ -33,12 +33,14 @@ const columns: ColumnDef<Content>[] = [
         id: 'select',
         header: ({ table }) =>
             h(Checkbox, {
+                disabled: true,
                 modelValue: table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate'),
                 'onUpdate:modelValue': (value) => table.toggleAllPageRowsSelected(!!value),
                 ariaLabel: 'Select all',
             }),
         cell: ({ row }) =>
             h(Checkbox, {
+                disabled: true,
                 modelValue: row.getIsSelected(),
                 'onUpdate:modelValue': (value) => row.toggleSelected(!!value),
                 ariaLabel: 'Select row',
@@ -85,17 +87,35 @@ const columns: ColumnDef<Content>[] = [
         cell: ({ row }) => {
             const content = row.original;
 
-            return h(
-                Button,
-                {
-                    size: 'icon',
-                    variant: 'secondary',
-                    class: 'float-right',
-                    onClick: () => {
-                        emit('update:rowSelection', content);
+            const actionButtons = [
+                h(
+                    Button,
+                    {
+                        size: 'icon',
+                        variant: 'destructive',
+                        onClick: () => {
+                            emit('delete:rowSelection', content);
+                        },
                     },
-                },
-                () => h(Edit),
+                    () => h(Trash2),
+                ),
+                h(
+                    Button,
+                    {
+                        size: 'icon',
+                        variant: 'secondary',
+                        onClick: () => {
+                            emit('update:rowSelection', content);
+                        },
+                    },
+                    () => h(Edit),
+                ),
+            ];
+
+            return h(
+                'div',
+                { class: 'flex items-center gap-2 float-right' },
+                row.getValue('events_count') === 0 ? actionButtons : [actionButtons[1]],
             );
         },
     },

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->dateTime('start_datetime');
             $table->dateTime('end_datetime')->nullable();
             $table->foreignId('content_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('location_id')->nullable()->constrained()->restrictOnDelete();
+            $table->foreignId('location_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
         });
     }
