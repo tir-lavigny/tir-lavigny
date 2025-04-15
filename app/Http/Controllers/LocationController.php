@@ -14,6 +14,7 @@ class LocationController extends Controller
     public function index()
     {
         $locations = Location::all();
+
         return Inertia::render('backOffice/Locations', [
             'locations' => $locations,
         ]);
@@ -32,7 +33,16 @@ class LocationController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ]);
+
+        Location::create($request->only(['name', 'address', 'latitude', 'longitude']));
+
+        return redirect()->route('locations.index')->with('success', 'Lieu créé avec succès');
     }
 
     /**
@@ -65,6 +75,7 @@ class LocationController extends Controller
 
         $location = Location::findOrFail($id);
         $location->update($request->only(['name', 'address', 'latitude', 'longitude']));
+
         return redirect()->route('locations.index')->with('success', 'Lieu mis à jour avec succès');
     }
 

@@ -15,7 +15,7 @@ defineEmits<{
 </script>
 
 <template>
-    <div class="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card v-for="location in locations" :key="location.id">
             <CardHeader class="flex items-center justify-between">
                 <CardTitle>{{ location.name }}</CardTitle>
