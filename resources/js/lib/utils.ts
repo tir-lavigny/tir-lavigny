@@ -20,3 +20,14 @@ export function formatDate(date: string, format: string, options?: UseDateFormat
 export function valueUpdater<T extends Updater<any>>(updaterOrValue: T, ref: Ref) {
     ref.value = typeof updaterOrValue === 'function' ? updaterOrValue(ref.value) : updaterOrValue;
 }
+
+export const handleTabKey = (event: KeyboardEvent) => {
+    if (event.key === 'Tab') {
+        event.preventDefault();
+        const target = event.target as HTMLTextAreaElement;
+        const start = target.selectionStart;
+        const end = target.selectionEnd;
+        target.value = target.value.substring(0, start) + '\t' + target.value.substring(end);
+        target.selectionStart = target.selectionEnd = start + 1;
+    }
+};

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ContentsCreate from '@/components/back-office/ContentsCreate.vue';
 import ContentsTable from '@/components/back-office/ContentsTable.vue';
 import InputError from '@/components/InputError.vue';
 import { H3, H4 } from '@/components/typography/headings';
@@ -8,11 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { handleTabKey } from '@/lib/utils';
 import { Content, type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
 import { useMediaQuery } from '@vueuse/core';
-import { Save, Undo2 } from 'lucide-vue-next';
+import { Plus, Save, Undo2 } from 'lucide-vue-next';
 import { marked } from 'marked';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
@@ -102,15 +105,28 @@ const handleUpdate = () => {
         },
     });
 };
-const handleTabKey = (event: KeyboardEvent) => {
-    if (event.key === 'Tab') {
-        event.preventDefault();
-        const target = event.target as HTMLTextAreaElement;
-        const start = target.selectionStart;
-        const end = target.selectionEnd;
-        target.value = target.value.substring(0, start) + '\t' + target.value.substring(end);
-        target.selectionStart = target.selectionEnd = start + 1;
-    }
+
+const handleSubmitCreate = (form: any) => {
+    form.clearErrors();
+
+    if (!form.title) form.setError('title', 'Le titre est requis');
+    if (!form.body) form.setError('body', 'Le contenu est requis');
+
+    if (form.hasErrors) return;
+
+    form.post(route('contents.store'), {
+        onSuccess: () => {
+            flushUpdateForm();
+            toast.success('Template créée avec succès');
+            window.location.reload();
+        },
+        onError: (error: any) => {
+            const errorMessage = Object.entries(error)
+                .map(([, value]) => `${value}`)
+                .join(', ');
+            toast.error(errorMessage);
+        },
+    });
 };
 </script>
 
@@ -120,7 +136,27 @@ const handleTabKey = (event: KeyboardEvent) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative flex-1 rounded-xl border p-4 md:min-h-min" style="flex: 1 1 10%">
-                <H3>Templates</H3>
+                <div class="flex flex-row items-center justify-between">
+                    <H3>Templates</H3>
+                    <ContentsCreate
+                        title="Créer une nouvelle template"
+                        description="Créer une nouvelle template de contenu, cette template peut ensuite être utilisée dans plusieurs événements pour en unifier le contenu."
+                        @submit="handleSubmitCreate"
+                    >
+                        <template #trigger>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Button size="icon"> <Plus /> </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Créer une template</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </template>
+                    </ContentsCreate>
+                </div>
                 <ContentsTable
                     :contents="contents"
                     :pageSize="5"
@@ -138,12 +174,27 @@ const handleTabKey = (event: KeyboardEvent) => {
                         </div>
                     </div>
                     <div class="flex flex-row items-center gap-2">
-                        <Button size="icon" :disabled="!updateForm.isDirty" @click="handleUpdate">
-                            <Save />
-                        </Button>
-                        <Button variant="destructive" size="icon" :disabled="!updateForm.isDirty" @click="updateForm.reset()">
-                            <Undo2 />
-                        </Button>
+                        <Tooltip :disabled="!updateForm.isDirty">
+                            <TooltipTrigger>
+                                <Button size="icon" :disabled="!updateForm.isDirty" @click="handleUpdate">
+                                    <Save />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Sauvegarder</p>
+                            </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip :disabled="!updateForm.isDirty">
+                            <TooltipTrigger>
+                                <Button variant="destructive" size="icon" :disabled="!updateForm.isDirty" @click="updateForm.reset()">
+                                    <Undo2 />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Annuler</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </div>
                 </div>
                 <template v-if="!isMobile">

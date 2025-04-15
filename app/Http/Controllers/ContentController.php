@@ -33,7 +33,18 @@ class ContentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'title' => 'required|string|max:255|unique:contents,title',
+            'body' => 'required|string',
+        ]);
+
+        try {
+            Content::create($request->only(['title', 'body']));
+        } catch (Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Une erreur est survenue lors de la création du contenu.']);
+        }
+
+        return redirect()->back()->with('success', 'Contenu créé avec succès.');
     }
 
     /**
