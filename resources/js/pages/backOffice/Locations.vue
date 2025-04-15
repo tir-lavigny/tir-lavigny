@@ -14,6 +14,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Location, type BreadcrumbItem } from '@/types';
@@ -131,40 +132,45 @@ const handleSubmitDelete = () => {
 
         <Sheet :open="isSheetOpen" @update:open="isSheetOpen = $event">
             <SheetContent class="w-full sm:max-w-xl">
-                <SheetHeader>
-                    <SheetTitle>Édition de "{{ currentLocation?.name }}"</SheetTitle>
-                    <SheetDescription>
-                        {{ currentLocation?.address }}
-                    </SheetDescription>
-                </SheetHeader>
-                <LocationForm
-                    v-if="currentLocation"
-                    :formDefaults="{
-                        name: currentLocation.name,
-                        address: currentLocation.address,
-                        latitude: currentLocation.latitude,
-                        longitude: currentLocation.longitude,
-                    }"
-                    @submit="handleSubmitUpdate"
-                />
-                <Dialog>
-                    <DialogTrigger class="mt-4 flex justify-end px-4"> <Button variant="destructive"> Supprimer le lieu </Button> </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Supprimer le lieu</DialogTitle>
-                            <DialogDescription> Êtes-vous sûr de vouloir supprimer ce lieu ? Cette action est irréversible. </DialogDescription>
-                        </DialogHeader>
+                <ScrollArea class="h-screen pb-4">
+                    <SheetHeader>
+                        <SheetTitle>Édition de "{{ currentLocation?.name }}"</SheetTitle>
+                        <SheetDescription>
+                            {{ currentLocation?.address }}
+                        </SheetDescription>
+                    </SheetHeader>
 
-                        <DialogFooter>
-                            <form @submit.prevent="handleSubmitDelete">
-                                <Button variant="destructive" type="submit"> Supprimer le lieu </Button>
-                            </form>
-                            <DialogClose>
-                                <Button variant="secondary"> Annuler </Button>
-                            </DialogClose>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                    <LocationForm
+                        v-if="currentLocation"
+                        :formDefaults="{
+                            name: currentLocation.name,
+                            address: currentLocation.address,
+                            latitude: currentLocation.latitude,
+                            longitude: currentLocation.longitude,
+                        }"
+                        @submit="handleSubmitUpdate"
+                    />
+                    <Dialog>
+                        <DialogTrigger class="mt-12 w-full px-4 text-end">
+                            <Button variant="destructive"> Supprimer le lieu </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Supprimer le lieu</DialogTitle>
+                                <DialogDescription> Êtes-vous sûr de vouloir supprimer ce lieu ? Cette action est irréversible. </DialogDescription>
+                            </DialogHeader>
+
+                            <DialogFooter>
+                                <form @submit.prevent="handleSubmitDelete">
+                                    <Button variant="destructive" type="submit"> Supprimer le lieu </Button>
+                                </form>
+                                <DialogClose>
+                                    <Button variant="secondary"> Annuler </Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </ScrollArea>
             </SheetContent>
         </Sheet>
     </AppLayout>
