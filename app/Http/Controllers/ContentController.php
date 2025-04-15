@@ -12,7 +12,7 @@ class ContentController extends Controller
      */
     public function index()
     {
-        $contents = Content::all();
+        $contents = Content::withCount('events')->get();
 
         return inertia('backOffice/Contents', [
             'contents' => $contents,
@@ -56,7 +56,23 @@ class ContentController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'body' => 'required|string',
+        ]);
+
+        $content = Content::findOrFail($id);
+        if (Content::where('title', $request->title)->where('id', '!=', $id)->exists()) {
+            return redirect()->back()->withErrors(['title' => 'Un contenu avec le même titre existe déjà.']);
+        }
+
+        try {
+            $content->update($request->only(['title', 'body']));
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Une erreur est survenue lors de la mise à jour du contenu.']);
+        }
+
+        return redirect()->back()->with('success', 'Contenu mis à jour avec succès.');
     }
 
     /**

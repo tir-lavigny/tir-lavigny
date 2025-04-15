@@ -72,7 +72,12 @@ const columns: ColumnDef<Content>[] = [
                 () => ['Titre', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })],
             );
         },
-        cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('title')),
+        cell: ({ row }) => h('div', row.getValue('title')),
+    },
+    {
+        accessorKey: 'events_count',
+        header: "Nb d'occurrences",
+        cell: ({ row }) => h('div', row.getValue('events_count')),
     },
     {
         id: 'actions',
