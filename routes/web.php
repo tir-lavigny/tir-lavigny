@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ShootingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -19,8 +20,10 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     })->name('back-office');
 
     Route::get('dashboard', function () {
-        return Inertia::render('Dashboard');
+        return Inertia::render('backOffice/Dashboard');
     })->name('dashboard');
+
+    Route::resource('locations', LocationController::class)->except(['create', 'show', 'edit']);
 
     require __DIR__.'/settings.php';
 });

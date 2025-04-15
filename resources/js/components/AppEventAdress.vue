@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MapIframe from '@/components/MapIframe.vue';
 import { P } from '@/components/typography/texts';
 import { Location } from '@/types';
 
@@ -22,16 +23,7 @@ defineProps<{
                 </P>
             </div>
             <div class="sm:w-1/2">
-                <iframe
-                    class="rounded-lg"
-                    :style="{ height: '400px', width: '100%' }"
-                    frameborder="0"
-                    scrolling="no"
-                    marginheight="0"
-                    marginwidth="0"
-                    :src="`https://maps.google.com/maps?q=${location.latitude},${location.longitude}&hl=fr&title=${encodeURIComponent(location.name)}&z=14&amp;output=embed`"
-                >
-                </iframe>
+                <MapIframe :latitude="location.latitude" :longitude="location.longitude" :title="location.name" />
             </div>
         </div>
     </div>
