@@ -36,6 +36,10 @@ const breadcrumbs: BreadcrumbItem[] = [
         title: `${props.event.title}`,
         href: route('bo.events.show', { event: props.event.id }),
     },
+    {
+        title: 'Modification',
+        href: route('bo.events.edit', { event: props.event.id }),
+    },
 ];
 
 const isInitialContentTemplate = computed(() => props.contentSource?.startsWith('template'));
