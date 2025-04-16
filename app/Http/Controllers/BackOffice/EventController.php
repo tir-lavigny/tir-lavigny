@@ -78,7 +78,15 @@ class EventController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $event = Event::with('location')
+            ->where('id', $id)
+            ->firstOrFail();
+        $content = $event->getEffectiveContent();
+
+        return Inertia::render('backOffice/Events/Show', [
+            'event' => $event,
+            'content' => $content,
+        ]);
     }
 
     /**
