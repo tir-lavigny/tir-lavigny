@@ -48,6 +48,8 @@ class EventController extends Controller
             'paginatedEvents' => $data,
             'filters' => [
                 'search' => $search,
+                'start_before' => $startBefore,
+                'end_before' => $endBefore,
             ],
         ]);
     }

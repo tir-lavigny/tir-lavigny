@@ -96,7 +96,7 @@ watch(
                         placeholder="Sélectionner une date"
                         @update:value="(newDate) => (filters.startBefore = newDate)"
                     />
-                    <Button :disabled="!filters.startBefore" size="icon" variant="outline" @click="handleDateReset">
+                    <Button v-if="filters.startBefore" size="icon" variant="outline" @click="handleDateReset">
                         <Undo2 />
                     </Button>
                 </div>
