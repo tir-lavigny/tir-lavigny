@@ -31,3 +31,11 @@ export const handleTabKey = (event: KeyboardEvent) => {
         target.selectionStart = target.selectionEnd = start + 1;
     }
 };
+
+export const debounce = (func: any, wait: number) => {
+    let timeout: any;
+    return function (this: any, ...args: any[]) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+};

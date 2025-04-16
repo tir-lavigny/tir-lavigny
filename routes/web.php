@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
@@ -26,6 +27,7 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
 
     Route::resource('locations', LocationController::class)->except(['create', 'show', 'edit']);
     Route::resource('contents', ContentController::class)->except(['create', 'show', 'edit']);
+    Route::resource('events', BackOfficeEventController::class);
 
     require __DIR__.'/settings.php';
 });
