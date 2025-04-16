@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\BackOffice;
 
 use App\Http\Controllers\Controller;
+use App\Models\Content;
 use App\Models\Event;
+use App\Models\Location;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -80,8 +82,23 @@ class EventController extends Controller
             ->where('id', $id)
             ->firstOrFail();
 
+        $content = $event->getEffectiveContent();
+        $contentSource = null;
+        if ($event->customContent) {
+            $contentSource = 'custom';
+        } elseif ($event->content) {
+            $contentSource = 'template_'.$event->content->id;
+        }
+
+        $templates = Content::all();
+        $locations = Location::all();
+
         return Inertia::render('backOffice/Events/Show', [
             'event' => $event,
+            'content' => $content,
+            'contentSource' => $contentSource,
+            'templates' => $templates,
+            'locations' => $locations,
         ]);
     }
 
