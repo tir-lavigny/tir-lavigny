@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { DateFormatter, type DateValue } from '@internationalized/date';
 import { CalendarIcon } from 'lucide-vue-next';
-import { defineEmits, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 const df = new DateFormatter('fr-CH', {
     dateStyle: 'long',
