@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import { Small } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,9 +59,20 @@ const handleDelete = (id: number) => {
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger>
-                        <Button size="icon" variant="destructive" @click="handleDelete(event.id)">
-                            <Trash2 />
-                        </Button>
+                        <AppAlertDialog
+                            title="Êtes-vous absolument sûr ?"
+                            description="Cette action est irréversible. Cela supprimera définitivement votre compte et supprimera vos données de nos serveurs."
+                            cancelText="Annuler"
+                        >
+                            <template #trigger>
+                                <Button size="icon" variant="destructive">
+                                    <Trash2 />
+                                </Button>
+                            </template>
+                            <template #action>
+                                <Button variant="destructive" @click="handleDelete(event.id)">Supprimer</Button>
+                            </template>
+                        </AppAlertDialog>
                     </TooltipTrigger>
                     <TooltipContent>
                         <p>Supprimer le contenu</p>
