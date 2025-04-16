@@ -47,7 +47,7 @@ const handleDelete = (id: number) => {
             <div class="flex flex-row items-center gap-2">
                 <Tooltip>
                     <TooltipTrigger>
-                        <Link class="flex items-center gap-2" :href="route('events.show', event.id)">
+                        <Link class="flex items-center gap-2" :href="route('events.edit', event.id)">
                             <Button size="icon" variant="secondary">
                                 <PenBox />
                             </Button>

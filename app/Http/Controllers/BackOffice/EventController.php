@@ -78,6 +78,14 @@ class EventController extends Controller
      */
     public function show(string $id)
     {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
         $event = Event::with('location')
             ->where('id', $id)
             ->firstOrFail();
@@ -93,21 +101,13 @@ class EventController extends Controller
         $templates = Content::all();
         $locations = Location::all();
 
-        return Inertia::render('backOffice/Events/Show', [
+        return Inertia::render('backOffice/Events/Edit', [
             'event' => $event,
             'content' => $content,
             'contentSource' => $contentSource,
             'templates' => $templates,
             'locations' => $locations,
         ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
     }
 
     /**
