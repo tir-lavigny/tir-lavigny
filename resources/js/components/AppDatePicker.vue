@@ -21,6 +21,14 @@ const emit = defineEmits(['update:value']);
 watch(value, (newValue) => {
     emit('update:value', newValue ? newValue.toDate('UTC').toISOString().split('T').at(0) : null);
 });
+
+const resetDate = () => {
+    value.value = undefined;
+};
+
+defineExpose({
+    reset: resetDate,
+});
 </script>
 
 <template>

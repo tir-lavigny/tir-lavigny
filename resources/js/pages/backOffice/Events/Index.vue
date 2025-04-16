@@ -3,12 +3,13 @@ import AppDatePicker from '@/components/AppDatePicker.vue';
 import AppEventCardAdmin from '@/components/AppEventCardAdmin.vue';
 import AppPagination from '@/components/AppPagination.vue';
 import { Muted } from '@/components/typography/texts';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { PaginatedEvents, type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
-import { Search } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
+import { Search, Undo2 } from 'lucide-vue-next';
+import { ref, useTemplateRef, watch } from 'vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -26,11 +27,18 @@ const props = defineProps<{
     };
 }>();
 
+const datePicker = useTemplateRef('datePicker');
+
 const filters = ref({
     search: props.filters.search || '',
     startBefore: props.filters.start_before || '',
     endBefore: props.filters.end_before || '',
 });
+
+const handleDateReset = () => {
+    filters.value.startBefore = '';
+    datePicker.value?.reset();
+};
 
 const handlePageChange = (page: number = 1) => {
     router.get(
@@ -83,7 +91,14 @@ watch(
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-muted-foreground">Avant le</span>
-                    <AppDatePicker placeholder="Sélectionner une date" @update:value="(newDate) => (filters.startBefore = newDate)" />
+                    <AppDatePicker
+                        ref="datePicker"
+                        placeholder="Sélectionner une date"
+                        @update:value="(newDate) => (filters.startBefore = newDate)"
+                    />
+                    <Button :disabled="!filters.startBefore" size="icon" variant="outline" @click="handleDateReset">
+                        <Undo2 />
+                    </Button>
                 </div>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
