@@ -14,7 +14,7 @@ import { ref, useTemplateRef, watch } from 'vue';
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Événements',
-        href: route('events.index'),
+        href: route('bo.events.index'),
     },
 ];
 
@@ -42,7 +42,7 @@ const handleDateReset = () => {
 
 const handlePageChange = (page: number = 1) => {
     router.get(
-        route('events.index'),
+        route('bo.events.index'),
         {
             page: page,
             search: filters.value.search,
@@ -60,7 +60,7 @@ watch(
     filters,
     (newFilters) => {
         router.get(
-            route('events.index'),
+            route('bo.events.index'),
             {
                 page: 1,
                 search: newFilters.search,

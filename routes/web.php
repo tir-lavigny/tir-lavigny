@@ -27,7 +27,15 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
 
     Route::resource('locations', LocationController::class)->except(['create', 'show', 'edit']);
     Route::resource('contents', ContentController::class)->except(['create', 'show', 'edit']);
-    Route::resource('events', BackOfficeEventController::class);
+    Route::resource('events', BackOfficeEventController::class)->names([
+        'index' => 'bo.events.index',
+        'create' => 'bo.events.create',
+        'store' => 'bo.events.store',
+        'show' => 'bo.events.show',
+        'edit' => 'bo.events.edit',
+        'update' => 'bo.events.update',
+        'destroy' => 'bo.events.destroy',
+    ]);
 
     require __DIR__.'/settings.php';
 });

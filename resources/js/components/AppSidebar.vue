@@ -26,7 +26,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Événements',
-        href: route('events.index'),
+        href: route('bo.events.index'),
         icon: Calendar,
     },
 ];

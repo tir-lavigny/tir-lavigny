@@ -25,7 +25,7 @@ const handleDelete = (id: number) => {
         id,
     });
 
-    form.delete(route('events.destroy', id), {
+    form.delete(route('bo.events.destroy', id), {
         onSuccess: () => {
             toast.success('Événement supprimé avec succès');
             form.reset();
@@ -47,7 +47,7 @@ const handleDelete = (id: number) => {
             <div class="flex flex-row items-center gap-2">
                 <Tooltip>
                     <TooltipTrigger>
-                        <Link class="flex items-center gap-2" :href="route('events.edit', event.id)">
+                        <Link class="flex items-center gap-2" :href="route('bo.events.edit', event.id)">
                             <Button size="icon" variant="secondary">
                                 <PenBox />
                             </Button>
@@ -119,7 +119,7 @@ const handleDelete = (id: number) => {
                 {{ event.title }}
             </CardTitle>
             <Button variant="secondary" size="icon">
-                <Link class="flex items-center gap-2" :href="route('events.show', event.id)"> <ArrowRight class="h-4 w-4" /> </Link>
+                <Link class="flex items-center gap-2" :href="route('bo.events.show', event.id)"> <ArrowRight class="h-4 w-4" /> </Link>
             </Button>
         </CardHeader>
         <CardContent>
