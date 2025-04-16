@@ -5,8 +5,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
-import { Link } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { ArrowRight, Calendar, MapPin, PenBox, Trash2 } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
 withDefaults(
     defineProps<{
@@ -17,6 +18,23 @@ withDefaults(
         short: false,
     },
 );
+
+const handleDelete = (id: number) => {
+    const form = useForm({
+        id,
+    });
+
+    form.delete(route('events.destroy', id), {
+        onSuccess: () => {
+            toast.success('Événement supprimé avec succès');
+            form.reset();
+        },
+        onError: () => {
+            toast.error("Une erreur est survenue lors de la suppression de l'événement");
+            form.reset();
+        },
+    });
+};
 </script>
 
 <template>
@@ -28,9 +46,11 @@ withDefaults(
             <div class="flex flex-row items-center gap-2">
                 <Tooltip>
                     <TooltipTrigger>
-                        <Button size="icon">
-                            <PenBox />
-                        </Button>
+                        <Link class="flex items-center gap-2" :href="route('events.show', event.id)">
+                            <Button size="icon" variant="secondary">
+                                <PenBox />
+                            </Button>
+                        </Link>
                     </TooltipTrigger>
                     <TooltipContent>
                         <p>Modifier le contenu</p>
@@ -38,7 +58,7 @@ withDefaults(
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger>
-                        <Button size="icon" variant="destructive">
+                        <Button size="icon" variant="destructive" @click="handleDelete(event.id)">
                             <Trash2 />
                         </Button>
                     </TooltipTrigger>

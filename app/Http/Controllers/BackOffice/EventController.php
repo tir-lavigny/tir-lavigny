@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BackOffice;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -105,6 +106,14 @@ class EventController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $event = Event::findOrFail($id);
+
+        try {
+            $event->delete();
+        } catch (Exception $e) {
+            return redirect()->back()->withErrors('Unable to delete event. Please try again later.');
+        }
+
+        return redirect()->back()->with('success', 'Event deleted successfully.');
     }
 }
