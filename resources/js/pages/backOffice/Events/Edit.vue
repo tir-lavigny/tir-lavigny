@@ -76,6 +76,9 @@ const saveChanges = () => {
     } else {
         updateForm.body = bufferContent.value; // Use the buffer content
     }
+    if (updateForm.location_id === 0) {
+        updateForm.location_id = undefined;
+    }
     updateForm.put(route('bo.events.update', { event: props.event.id }));
 };
 
@@ -146,7 +149,10 @@ const resetForm = () => {
                         <H4>Lieu</H4>
                         <AppSelect
                             :modelValue="String(updateForm.location_id)"
-                            :options="props.locations.map((location) => ({ label: location.name, value: String(location.id) }))"
+                            :options="[
+                                { label: 'Pas de lieu', value: '0' },
+                                ...props.locations.map((location) => ({ label: location.name, value: String(location.id) })),
+                            ]"
                             @update:modelValue="updateForm.location_id = $event ? Number($event) : undefined"
                             placeholder="Sélectionner un lieu"
                             groupLabel="Lieux"
