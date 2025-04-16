@@ -2,7 +2,7 @@
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import { Small } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
@@ -54,14 +54,14 @@ const handleDelete = (id: number) => {
                         </Link>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Modifier le contenu</p>
+                        <p>Modifier l'événement</p>
                     </TooltipContent>
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger>
                         <AppAlertDialog
                             title="Êtes-vous absolument sûr ?"
-                            description="Cette action est irréversible. Cela supprimera définitivement votre compte et supprimera vos données de nos serveurs."
+                            description="Cette action est irréversible. Cela supprimera définitivement cet événement."
                             cancelText="Annuler"
                         >
                             <template #trigger>
@@ -75,7 +75,7 @@ const handleDelete = (id: number) => {
                         </AppAlertDialog>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Supprimer le contenu</p>
+                        <p>Supprimer l'événement</p>
                     </TooltipContent>
                 </Tooltip>
             </div>
@@ -112,11 +112,6 @@ const handleDelete = (id: number) => {
                 </div>
             </div>
         </CardContent>
-        <CardFooter>
-            <Button variant="secondary" size="sm">
-                <Link class="flex items-center gap-2" :href="route('events.show', event.id)"> Voir l'événement <ArrowRight class="h-4 w-4" /> </Link>
-            </Button>
-        </CardFooter>
     </Card>
     <Card class="justify-between" v-else>
         <CardHeader class="flex flex-row items-center justify-between">
