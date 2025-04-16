@@ -115,7 +115,37 @@ class EventController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'start_datetime' => 'required|date',
+            'end_datetime' => 'nullable|date|after_or_equal:start_datetime',
+            'location_id' => 'nullable|exists:locations,id',
+            'template_id' => 'nullable|exists:contents,id',
+            'body' => 'nullable|string',
+        ]);
+
+        $event = Event::findOrFail($id);
+        $event->title = $request->input('title');
+        $event->start_datetime = $request->input('start_datetime');
+        $event->end_datetime = $request->input('end_datetime');
+        $event->location_id = $request->input('location_id');
+
+        // Update content_id or set it to null
+        $event->content_id = $request->input('template_id');
+
+        // Handle custom content
+        if ($request->input('body')) {
+            $event->customContent()->updateOrCreate(
+                ['event_id' => $event->id],
+                ['body' => $request->input('body')]
+            );
+        } else {
+            $event->customContent()->delete();
+        }
+
+        $event->save();
+
+        return redirect()->route('bo.events.index')->with('success', 'Event updated successfully.');
     }
 
     /**
