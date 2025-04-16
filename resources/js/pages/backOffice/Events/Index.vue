@@ -82,14 +82,14 @@ watch(
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <div class="flex w-full items-center justify-between">
-                <div class="relative w-full max-w-sm items-center">
+            <div class="flex w-full flex-col items-center justify-between gap-6 lg:flex-row">
+                <div class="relative w-full items-center lg:max-w-sm">
                     <Input id="search" type="text" v-model="filters.search" placeholder="Rechercher..." class="pl-10" />
                     <span class="absolute inset-y-0 start-0 flex items-center justify-center px-2">
                         <Search class="text-muted-foreground size-6" />
                     </span>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex w-full items-center gap-2 lg:w-auto">
                     <span class="text-muted-foreground">Avant le</span>
                     <AppDatePicker
                         ref="datePicker"

@@ -34,7 +34,7 @@ defineExpose({
 <template>
     <Popover>
         <PopoverTrigger as-child>
-            <Button variant="outline" :class="cn('w-[280px] justify-start text-left font-normal', !value && 'text-muted-foreground')">
+            <Button variant="outline" :class="cn('max-w-sm justify-start text-left font-normal lg:max-w-[280px]', !value && 'text-muted-foreground')">
                 <CalendarIcon class="mr-2 h-4 w-4" />
                 {{ value ? df.format(value.toDate('UTC')) : (placeholder ?? 'Pick a date') }}
             </Button>
