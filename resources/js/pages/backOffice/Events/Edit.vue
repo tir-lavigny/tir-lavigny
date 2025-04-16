@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppSelect from '@/components/AppSelect.vue';
+import DropdownSelect from '@/components/back-office/DropdownSelect.vue';
 import InputError from '@/components/InputError.vue';
 import MapIframe from '@/components/MapIframe.vue';
 import { H1, H3, H4 } from '@/components/typography/headings';
@@ -145,24 +145,21 @@ const resetForm = () => {
                 <div
                     class="border-sidebar-border/70 dark:border-sidebar-border relative flex aspect-video flex-col justify-between gap-6 overflow-hidden rounded-xl border p-4"
                 >
-                    <div class="flex flex-row items-center justify-between">
-                        <H4>Lieu</H4>
-                        <AppSelect
-                            :modelValue="String(updateForm.location_id)"
-                            :options="[
-                                { label: 'Pas de lieu', value: '0' },
-                                ...props.locations.map((location) => ({ label: location.name, value: String(location.id) })),
-                            ]"
-                            @update:modelValue="updateForm.location_id = $event ? Number($event) : undefined"
-                            placeholder="Sélectionner un lieu"
-                            groupLabel="Lieux"
-                        />
-                    </div>
+                    <DropdownSelect
+                        :modelValue="String(updateForm.location_id)"
+                        :options="[
+                            { label: 'Pas de lieu', value: '0' },
+                            ...props.locations.map((location) => ({ label: location.name, value: String(location.id) })),
+                        ]"
+                        @update:modelValue="updateForm.location_id = $event ? Number($event) : undefined"
+                        placeholder="Sélectionner un lieu"
+                        groupLabel="Lieux"
+                        label="Lieu"
+                    />
                     <MapIframe :latitude="selectedLocation?.latitude || 0" :longitude="selectedLocation?.longitude || 0" :zoom="15" height="100%" />
                 </div>
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border p-4">
-                    <H4>Template de contenu</H4>
-                    <AppSelect
+                    <DropdownSelect
                         :modelValue="String(updateForm.template_id)"
                         :options="[
                             { label: 'Contenu personnalisé', value: '0' },
@@ -171,6 +168,7 @@ const resetForm = () => {
                         @update:modelValue="handleContentChange($event)"
                         placeholder="Sélectionner une template"
                         groupLabel="Templates"
+                        label="Template de contenu"
                     />
                 </div>
             </div>

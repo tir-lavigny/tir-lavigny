@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppDatePicker from '@/components/AppDatePicker.vue';
-import AppEventCardAdmin from '@/components/AppEventCardAdmin.vue';
 import AppPagination from '@/components/AppPagination.vue';
+import AppEventCardAdmin from '@/components/back-office/AppEventCardAdmin.vue';
 import { Muted } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
