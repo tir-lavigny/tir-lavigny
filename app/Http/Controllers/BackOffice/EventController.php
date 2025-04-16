@@ -16,6 +16,8 @@ class EventController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search', null);
+        $startBefore = $request->input('start_before', null);
+        $endBefore = $request->input('end_before', null);
         $query = Event::query();
         $query->with('location');
 
@@ -27,6 +29,14 @@ class EventController extends Controller
                     $query->where('name', 'LIKE', "%{$search}%");
                 });
             });
+        }
+
+        if ($startBefore) {
+            $query->where('start_datetime', '<=', $startBefore);
+        }
+
+        if ($endBefore) {
+            $query->where('end_datetime', '<=', $endBefore);
         }
 
         $query->where('start_datetime', '>=', now()->startOfYear())

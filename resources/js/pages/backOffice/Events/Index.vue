@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppDatePicker from '@/components/AppDatePicker.vue';
 import AppEventCardAdmin from '@/components/AppEventCardAdmin.vue';
 import AppPagination from '@/components/AppPagination.vue';
 import { Muted } from '@/components/typography/texts';
@@ -20,17 +21,25 @@ const props = defineProps<{
     paginatedEvents: PaginatedEvents;
     filters: {
         search?: string;
+        start_before?: string;
+        end_before?: string;
     };
 }>();
 
-const search = ref(props.filters.search || '');
+const filters = ref({
+    search: props.filters.search || '',
+    startBefore: props.filters.start_before || '',
+    endBefore: props.filters.end_before || '',
+});
 
 const handlePageChange = (page: number = 1) => {
     router.get(
         route('events.index'),
         {
             page: page,
-            search: search.value,
+            search: filters.value.search,
+            start_before: filters.value.startBefore,
+            end_before: filters.value.endBefore,
         },
         {
             preserveState: true,
@@ -39,19 +48,25 @@ const handlePageChange = (page: number = 1) => {
     );
 };
 
-watch(search, (newValue) => {
-    router.get(
-        route('events.index'),
-        {
-            page: 1,
-            search: newValue,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-        },
-    );
-});
+watch(
+    filters,
+    (newFilters) => {
+        router.get(
+            route('events.index'),
+            {
+                page: 1,
+                search: newFilters.search,
+                start_before: newFilters.startBefore,
+                end_before: newFilters.endBefore,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
+    },
+    { deep: true },
+);
 </script>
 
 <template>
@@ -59,11 +74,17 @@ watch(search, (newValue) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <div class="relative w-full max-w-sm items-center">
-                <Input id="search" type="text" v-model="search" placeholder="Rechercher..." class="pl-10" />
-                <span class="absolute inset-y-0 start-0 flex items-center justify-center px-2">
-                    <Search class="text-muted-foreground size-6" />
-                </span>
+            <div class="flex w-full items-center justify-between">
+                <div class="relative w-full max-w-sm items-center">
+                    <Input id="search" type="text" v-model="filters.search" placeholder="Rechercher..." class="pl-10" />
+                    <span class="absolute inset-y-0 start-0 flex items-center justify-center px-2">
+                        <Search class="text-muted-foreground size-6" />
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-muted-foreground">Avant le</span>
+                    <AppDatePicker placeholder="Sélectionner une date" @update:value="(newDate) => (filters.startBefore = newDate)" />
+                </div>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
                 <AppEventCardAdmin v-for="event in paginatedEvents.data" :key="event.id" :event="event" class="mb-4" />
