@@ -2,13 +2,15 @@
 import AppDatePicker from '@/components/AppDatePicker.vue';
 import AppPagination from '@/components/AppPagination.vue';
 import AppEventCardAdmin from '@/components/back-office/AppEventCardAdmin.vue';
+import { H3 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { PaginatedEvents, type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
-import { Search, Undo2 } from 'lucide-vue-next';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { Plus, Search, Undo2 } from 'lucide-vue-next';
 import { ref, useTemplateRef, watch } from 'vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -102,6 +104,23 @@ watch(
                 </div>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
+                <div class="mb-4 flex w-full flex-row">
+                    <div class="flex flex-1 items-center justify-between">
+                        <H3>Événements</H3>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Link :href="route('bo.events.create')">
+                                    <Button size="icon">
+                                        <Plus />
+                                    </Button>
+                                </Link>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Créer un nouvel événement</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                </div>
                 <AppEventCardAdmin v-for="event in paginatedEvents.data" :key="event.id" :event="event" class="mb-4" />
                 <Muted v-if="paginatedEvents.data" class="my-4 flex items-center justify-center">
                     {{ paginatedEvents.total }} événements trouvés
