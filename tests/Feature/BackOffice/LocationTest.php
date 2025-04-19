@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\BackOffice;
 
+use App\Models\Event;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -142,6 +143,18 @@ class LocationTest extends TestCase
         $this->assertDatabaseMissing('locations', ['id' => $location->id]);
     }
 
+    public function test_cannot_delete_location_linked_to_events(): void
+    {
+        $location = Location::factory()->create();
+        Event::factory()->create(['location_id' => $location->id]);
+
+        $response = $this->delete(route('locations.destroy', $location->id));
+
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors();
+        $this->assertDatabaseHas('locations', ['id' => $location->id]);
+    }
+
     public function test_name_is_required(): void
     {
         $data = [
@@ -238,5 +251,23 @@ class LocationTest extends TestCase
         $response = $this->post(route('locations.store'), $data);
 
         $response->assertSessionHasErrors(['name', 'address']);
+    }
+
+    public function test_cannot_update_location_with_duplicate_name(): void
+    {
+        $location1 = Location::factory()->create(['name' => 'Location 1']);
+        $location2 = Location::factory()->create(['name' => 'Location 2']);
+
+        $data = [
+            'name' => 'Location 1', // Duplicate name
+            'address' => $location2->address,
+            'latitude' => $location2->latitude,
+            'longitude' => $location2->longitude,
+        ];
+
+        $response = $this->put(route('locations.update', $location2->id), $data);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors(['name']);
     }
 }
