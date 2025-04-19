@@ -68,3 +68,28 @@ export interface Content {
     updated_at: string; // ISO 8601 format
     events_count?: number;
 }
+
+export abstract class PaginatedData<T> {
+    abstract current_page: number;
+    abstract data?: T[];
+    abstract first_page_url: string;
+    abstract from: number;
+    abstract last_page: number;
+    abstract last_page_url: string;
+    abstract links: PaginationLink[];
+    abstract next_page_url: string | null;
+    abstract path: string;
+    abstract per_page: number;
+    abstract prev_page_url: string | null;
+    abstract to: number;
+    abstract total: number;
+}
+export interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+export interface PaginatedEvents extends PaginatedData<Event> {
+    data?: Event[];
+}
