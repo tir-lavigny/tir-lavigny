@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import AppSelect from '@/components/AppSelect.vue';
 import { H4 } from '@/components/typography/headings';
-import { defineEmits, defineProps } from 'vue';
 
 defineProps<{
     modelValue: string | number;

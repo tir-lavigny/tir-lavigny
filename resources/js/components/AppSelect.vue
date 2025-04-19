@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { PropType } from 'vue';
-import { computed, defineEmits, defineProps } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
     modelValue: {
