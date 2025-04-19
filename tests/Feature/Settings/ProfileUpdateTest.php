@@ -16,7 +16,7 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->get('/settings/profile');
+            ->get('/back-office/settings/profile');
 
         $response->assertOk();
     }
@@ -27,14 +27,14 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch('/settings/profile', [
+            ->patch('/back-office/settings/profile', [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
             ]);
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect('/settings/profile');
+            ->assertRedirect('/back-office/settings/profile');
 
         $user->refresh();
 
@@ -49,14 +49,14 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->patch('/settings/profile', [
+            ->patch('/back-office/settings/profile', [
                 'name' => 'Test User',
                 'email' => $user->email,
             ]);
 
         $response
             ->assertSessionHasNoErrors()
-            ->assertRedirect('/settings/profile');
+            ->assertRedirect('/back-office/settings/profile');
 
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
@@ -67,7 +67,7 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->delete('/settings/profile', [
+            ->delete('/back-office/settings/profile', [
                 'password' => 'password',
             ]);
 
@@ -85,14 +85,14 @@ class ProfileUpdateTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->from('/settings/profile')
-            ->delete('/settings/profile', [
+            ->from('/back-office/settings/profile')
+            ->delete('/back-office/settings/profile', [
                 'password' => 'wrong-password',
             ]);
 
         $response
             ->assertSessionHasErrors('password')
-            ->assertRedirect('/settings/profile');
+            ->assertRedirect('/back-office/settings/profile');
 
         $this->assertNotNull($user->fresh());
     }

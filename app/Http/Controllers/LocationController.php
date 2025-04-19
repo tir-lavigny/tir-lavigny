@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
-use Exception;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -41,6 +40,11 @@ class LocationController extends Controller
             'longitude' => 'required|numeric',
         ]);
 
+        $location = Location::where('name', $request->name)->first();
+        if ($location) {
+            return redirect()->back()->withErrors(['name' => 'Ce lieu existe déjà.']);
+        }
+
         Location::create($request->only(['name', 'address', 'latitude', 'longitude']));
 
         return redirect()->back()->with('success', 'Lieu créé avec succès');
@@ -68,7 +72,7 @@ class LocationController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255,|unique:locations,name,'.$id,
             'address' => 'required|string|max:255',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
@@ -86,11 +90,11 @@ class LocationController extends Controller
     public function destroy(string $id)
     {
         $location = Location::findOrFail($id);
-        try {
-            $location->delete();
-        } catch (Exception $e) {
+        if ($location->events()->exists()) {
             return redirect()->back()->withErrors('Impossible de supprimer ce lieu car il est associé à des événements.');
         }
+
+        $location->delete();
 
         return redirect()->back()->with('success', 'Lieu supprimé avec succès');
     }
