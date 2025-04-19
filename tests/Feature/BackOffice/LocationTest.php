@@ -277,4 +277,11 @@ class LocationTest extends TestCase
         $response->assertStatus(302);
         $response->assertSessionHasErrors(['name']);
     }
+
+    public function test_cannot_delete_non_existing_location(): void
+    {
+        $response = $this->delete(route('locations.destroy', 9999)); // ID 9999 does not exist
+
+        $response->assertStatus(404);
+    }
 }
