@@ -141,4 +141,102 @@ class LocationTest extends TestCase
         $response->assertStatus(302);
         $this->assertDatabaseMissing('locations', ['id' => $location->id]);
     }
+
+    public function test_name_is_required(): void
+    {
+        $data = [
+            'name' => '',
+            'address' => '123 Test Street',
+            'latitude' => 45.12345,
+            'longitude' => -75.12345,
+        ];
+
+        $response = $this->post(route('locations.store'), $data);
+
+        $response->assertSessionHasErrors(['name']);
+    }
+
+    public function test_address_is_required(): void
+    {
+        $data = [
+            'name' => 'Test Location',
+            'address' => '',
+            'latitude' => 45.12345,
+            'longitude' => -75.12345,
+        ];
+
+        $response = $this->post(route('locations.store'), $data);
+
+        $response->assertSessionHasErrors(['address']);
+    }
+
+    public function test_latitude_is_required(): void
+    {
+        $data = [
+            'name' => 'Test Location',
+            'address' => '123 Test Street',
+            'latitude' => '',
+            'longitude' => -75.12345,
+        ];
+
+        $response = $this->post(route('locations.store'), $data);
+
+        $response->assertSessionHasErrors(['latitude']);
+    }
+
+    public function test_longitude_is_required(): void
+    {
+        $data = [
+            'name' => 'Test Location',
+            'address' => '123 Test Street',
+            'latitude' => 45.12345,
+            'longitude' => '',
+        ];
+
+        $response = $this->post(route('locations.store'), $data);
+
+        $response->assertSessionHasErrors(['longitude']);
+    }
+
+    public function test_latitude_and_longitude_must_be_numbers(): void
+    {
+        $data = [
+            'name' => 'Test Location',
+            'address' => '123 Test Street',
+            'latitude' => 'invalid',
+            'longitude' => 'invalid',
+        ];
+
+        $response = $this->post(route('locations.store'), $data);
+
+        $response->assertSessionHasErrors(['latitude', 'longitude']);
+    }
+
+    public function test_name_and_address_must_be_strings(): void
+    {
+        $data = [
+            'name' => 12345,
+            'address' => 67890,
+            'latitude' => 45.12345,
+            'longitude' => -75.12345,
+        ];
+
+        $response = $this->post(route('locations.store'), $data);
+
+        $response->assertSessionHasErrors(['name', 'address']);
+    }
+
+    public function test_name_and_address_max_length(): void
+    {
+        $data = [
+            'name' => str_repeat('a', 256), // 256 caractères
+            'address' => str_repeat('b', 256), // 256 caractères
+            'latitude' => 45.12345,
+            'longitude' => -75.12345,
+        ];
+
+        $response = $this->post(route('locations.store'), $data);
+
+        $response->assertSessionHasErrors(['name', 'address']);
+    }
 }
