@@ -18,10 +18,11 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { Save, Undo2 } from 'lucide-vue-next';
 import { marked } from 'marked';
 import { computed, ref } from 'vue';
+import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     event: Event;
-    content: string;
+    content?: string;
     contentSource?: string;
     templates: Content[];
     locations: Location[];
@@ -83,7 +84,15 @@ const saveChanges = () => {
     if (updateForm.location_id === 0) {
         updateForm.location_id = undefined;
     }
-    updateForm.put(route('bo.events.update', { event: props.event.id }));
+    updateForm.put(route('bo.events.update', { event: props.event.id }), {
+        preserveState: true,
+        onSuccess: () => {
+            toast.success('Événement mis à jour avec succès');
+        },
+        onError: () => {
+            toast.error("Erreur lors de la mise à jour de l'événement");
+        },
+    });
 };
 
 const resetForm = () => {
@@ -191,7 +200,7 @@ const resetForm = () => {
                 </div>
                 <Separator />
                 <template v-if="isContentTemplate">
-                    <div v-if="content" class="prose dark:prose-invert mt-8 w-full" v-html="marked(bufferContent)" />
+                    <div v-if="content && bufferContent" class="prose dark:prose-invert mt-8 w-full" v-html="marked(bufferContent)" />
                 </template>
                 <template v-else>
                     <div class="mt-4 flex flex-col gap-4" v-if="updateForm?.id">
@@ -202,7 +211,7 @@ const resetForm = () => {
                             @keydown="handleTabKey"
                             @input="updateForm.body = bufferContent"
                         />
-                        <div v-show="showPreview" v-html="marked(bufferContent)" class="prose dark:prose-invert w-full" />
+                        <div v-if="bufferContent" v-show="showPreview" v-html="marked(bufferContent)" class="prose dark:prose-invert w-full" />
                     </div>
                 </template>
             </div>
