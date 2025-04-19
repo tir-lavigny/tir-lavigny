@@ -41,6 +41,11 @@ class LocationController extends Controller
             'longitude' => 'required|numeric',
         ]);
 
+        $location = Location::where('name', $request->name)->first();
+        if ($location) {
+            return redirect()->back()->withErrors(['name' => 'Ce lieu existe déjà.']);
+        }
+
         Location::create($request->only(['name', 'address', 'latitude', 'longitude']));
 
         return redirect()->back()->with('success', 'Lieu créé avec succès');
