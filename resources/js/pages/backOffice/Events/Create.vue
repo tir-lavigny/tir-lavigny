@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DropdownSelect from '@/components/back-office/DropdownSelect.vue';
 import InputError from '@/components/InputError.vue';
+import MapIframe from '@/components/MapIframe.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Small } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,10 @@ const handleContentChange = (id: string | number) => {
     bufferContent.value = template ? template.body : '';
     showPreview.value = isContentTemplate.value;
 };
+
+const selectedLocation = computed(() => {
+    return props.locations.find((location) => location.id === createForm.location_id) || null;
+});
 
 const saveEvent = () => {
     if (createForm.template_id) {
@@ -164,6 +169,7 @@ const resetForm = () => {
                         groupLabel="Lieux"
                         label="Lieu"
                     />
+                    <MapIframe :latitude="selectedLocation?.latitude || 0" :longitude="selectedLocation?.longitude || 0" :zoom="15" height="100%" />
                 </div>
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border p-4">
                     <DropdownSelect
