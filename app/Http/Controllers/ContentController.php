@@ -35,14 +35,10 @@ class ContentController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255|unique:contents,title',
-            'body' => 'required|string',
+            'body' => 'required|string|max:65535',
         ]);
 
-        try {
-            Content::create($request->only(['title', 'body']));
-        } catch (Exception $e) {
-            return redirect()->back()->withErrors(['error' => 'Une erreur est survenue lors de la création du contenu.']);
-        }
+        Content::create($request->only(['title', 'body']));
 
         return redirect()->back()->with('success', 'Contenu créé avec succès.');
     }
@@ -69,8 +65,8 @@ class ContentController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
-            'body' => 'required|string',
+            'title' => 'required|string|max:255|unique:contents,title,'.$id,
+            'body' => 'required|string|max:65535',
         ]);
 
         $content = Content::findOrFail($id);
@@ -97,11 +93,7 @@ class ContentController extends Controller
             return redirect()->back()->withErrors(['error' => 'Impossible de supprimer le contenu car il est associé à des événements.']);
         }
 
-        try {
-            $content->delete();
-        } catch (Exception $e) {
-            return redirect()->back()->withErrors(['error' => 'Une erreur est survenue lors de la suppression du contenu.']);
-        }
+        $content->delete();
 
         return redirect()->back()->with('success', 'Contenu supprimé avec succès.');
     }
