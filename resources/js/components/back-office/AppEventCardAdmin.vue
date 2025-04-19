@@ -34,7 +34,7 @@ const handleDelete = (id: number) => {
 
 <template>
     <Card class="justify-between">
-        <CardHeader class="flex flex-row items-center justify-between">
+        <CardHeader class="flex flex-col items-center justify-between sm:flex-row">
             <CardTitle>
                 {{ event.title }}
             </CardTitle>
