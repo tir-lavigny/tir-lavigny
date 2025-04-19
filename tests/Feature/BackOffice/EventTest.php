@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\BackOffice;
 
+use App\Models\Content;
 use App\Models\Event;
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -446,5 +448,234 @@ class EventTest extends TestCase
         $response = $this->delete(route('bo.events.destroy', 9999));
 
         $response->assertStatus(404);
+    }
+
+    public function test_store_fails_with_invalid_location_id(): void
+    {
+        $data = [
+            'title' => 'Test Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(10)->addHours(2)->format('Y-m-d H:i:s'),
+            'location_id' => 9999, // Invalid location_id
+            'template_id' => null,
+            'body' => 'Test Event Body',
+        ];
+
+        $response = $this->post(route('bo.events.store'), $data);
+
+        $response->assertSessionHasErrors(['location_id']);
+    }
+
+    public function test_store_fails_with_invalid_template_id(): void
+    {
+        $data = [
+            'title' => 'Test Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(10)->addHours(2)->format('Y-m-d H:i:s'),
+            'location_id' => null,
+            'template_id' => 9999, // Invalid template_id
+            'body' => 'Test Event Body',
+        ];
+
+        $response = $this->post(route('bo.events.store'), $data);
+
+        $response->assertSessionHasErrors(['template_id']);
+    }
+
+    public function test_store_creates_event_without_end_datetime(): void
+    {
+        $data = [
+            'title' => 'Test Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => null, // No end_datetime
+            'location_id' => null,
+            'template_id' => null,
+            'body' => 'Test Event Body',
+        ];
+
+        $response = $this->post(route('bo.events.store'), $data);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('events', ['title' => 'Test Event']);
+    }
+
+    public function test_store_creates_event_with_valid_template_id(): void
+    {
+        $content = Content::factory()->create();
+
+        $data = [
+            'title' => 'Test Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(10)->addHours(2)->format('Y-m-d H:i:s'),
+            'location_id' => null,
+            'template_id' => $content->id,
+            'body' => 'Test Event Body',
+        ];
+
+        $response = $this->post(route('bo.events.store'), $data);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('events', ['content_id' => $content->id]);
+    }
+
+    public function test_store_creates_event_with_valid_location_id(): void
+    {
+        $location = Location::factory()->create();
+
+        $data = [
+            'title' => 'Test Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(10)->addHours(2)->format('Y-m-d H:i:s'),
+            'location_id' => $location->id,
+            'template_id' => null,
+            'body' => 'Test Event Body',
+        ];
+
+        $response = $this->post(route('bo.events.store'), $data);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('events', ['location_id' => $location->id]);
+    }
+
+    public function test_show_fails_for_invalid_event_id(): void
+    {
+        $response = $this->get(route('bo.events.show', 9999)); // Invalid ID
+
+        $response->assertStatus(404);
+    }
+
+    public function test_edit_view_form(): void
+    {
+        $event = Event::factory()->create();
+
+        $response = $this->get(route('bo.events.edit', $event->id));
+
+        $response->assertStatus(200);
+    }
+
+    public function test_edit_fails_for_invalid_event_id(): void
+    {
+        $response = $this->get(route('bo.events.edit', 9999)); // Invalid ID
+
+        $response->assertStatus(404);
+    }
+
+    public function test_update_fails_with_invalid_location_id(): void
+    {
+        $event = Event::factory()->create();
+
+        $data = [
+            'title' => 'Updated Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(10)->addHours(2)->format('Y-m-d H:i:s'),
+            'location_id' => 9999, // Invalid location_id
+            'template_id' => null,
+            'body' => 'Updated Body',
+        ];
+
+        $response = $this->put(route('bo.events.update', $event->id), $data);
+
+        $response->assertSessionHasErrors(['location_id']);
+    }
+
+    public function test_update_fails_with_invalid_template_id(): void
+    {
+        $event = Event::factory()->create();
+
+        $data = [
+            'title' => 'Updated Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(10)->addHours(2)->format('Y-m-d H:i:s'),
+            'location_id' => null,
+            'template_id' => 9999, // Invalid template_id
+            'body' => 'Updated Body',
+        ];
+
+        $response = $this->put(route('bo.events.update', $event->id), $data);
+
+        $response->assertSessionHasErrors(['template_id']);
+    }
+
+    public function test_update_modifies_event_without_end_datetime(): void
+    {
+        $event = Event::factory()->create();
+
+        $data = [
+            'title' => 'Updated Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => null, // No end_datetime
+            'location_id' => null,
+            'template_id' => null,
+            'body' => 'Updated Body',
+        ];
+
+        $response = $this->put(route('bo.events.update', $event->id), $data);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('events', ['id' => $event->id, 'title' => 'Updated Event']);
+    }
+
+    public function test_update_modifies_event_with_valid_content_id(): void
+    {
+        $content = Content::factory()->create();
+        $event = Event::factory()->create();
+
+        $data = [
+            'title' => 'Updated Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(10)->addHours(2)->format('Y-m-d H:i:s'),
+            'location_id' => null,
+            'template_id' => $content->id,
+            'body' => 'Updated Body',
+        ];
+
+        $response = $this->put(route('bo.events.update', $event->id), $data);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('events', ['id' => $event->id, 'content_id' => $content->id]);
+    }
+
+    public function test_update_modifies_event_with_valid_location_id(): void
+    {
+        $location = Location::factory()->create();
+        $event = Event::factory()->create();
+
+        $data = [
+            'title' => 'Updated Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(10)->addHours(2)->format('Y-m-d H:i:s'),
+            'location_id' => $location->id,
+            'template_id' => null,
+            'body' => 'Updated Body',
+        ];
+
+        $response = $this->put(route('bo.events.update', $event->id), $data);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('events', ['id' => $event->id, 'location_id' => $location->id]);
+    }
+
+    public function test_update_removes_custom_content_when_body_is_null(): void
+    {
+        $event = Event::factory()->create();
+        $event->customContent()->create(['body' => 'Custom Content']);
+        $event->save();
+
+        $data = [
+            'title' => 'Updated Event',
+            'start_datetime' => now()->addDays(10)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(10)->addHours(2)->format('Y-m-d H:i:s'),
+            'location_id' => null,
+            'template_id' => null,
+            'body' => null, // Remove custom content
+        ];
+
+        $response = $this->put(route('bo.events.update', $event->id), $data);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseMissing('event_contents', [
+            'event_id' => $event->id,
+            'body' => 'Custom Content',
+        ]);
     }
 }
