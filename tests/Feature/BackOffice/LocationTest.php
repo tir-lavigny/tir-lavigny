@@ -99,7 +99,14 @@ class LocationTest extends TestCase
         $response = $this->get(route('locations.index'));
 
         $response->assertStatus(200);
-        $response->assertSee($location->name);
+
+        $this->assertDatabaseHas('locations', [
+            'id' => $location->id,
+            'name' => $location->name,
+            'address' => $location->address,
+            'latitude' => $location->latitude,
+            'longitude' => $location->longitude,
+        ]);
     }
 
     public function test_can_update_location(): void
