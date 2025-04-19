@@ -34,21 +34,6 @@ class LocationTest extends TestCase
         $this->assertDatabaseHas('locations', $data);
     }
 
-    public function test_can_not_create_location_with_invalid_data(): void
-    {
-        $data = [
-            'name' => '',
-            'address' => '',
-            'latitude' => '',
-            'longitude' => '',
-        ];
-
-        $response = $this->post(route('locations.store'), $data);
-
-        $response->assertStatus(302);
-        $response->assertSessionHasErrors(['name', 'address', 'latitude', 'longitude']);
-    }
-
     public function test_cannot_create_location_with_invalid_data(): void
     {
         $data = [
