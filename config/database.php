@@ -112,6 +112,17 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'pulse' => [
+            'driver' => 'sqlite',
+            'url' => env('PULSE_DB_URL'),
+            'database' => env('PULSE_DB_DATABASE', database_path('pulse.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => env('PULSE_DB_FOREIGN_KEYS', true),
+            'busy_timeout' => null,
+            'journal_mode' => null,
+            'synchronous' => null,
+        ],
+
     ],
 
     /*
