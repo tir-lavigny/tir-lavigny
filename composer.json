@@ -12,6 +12,7 @@
         "php": "^8.2",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^12.0",
+        "laravel/pulse": "^1.4",
         "laravel/tinker": "^2.10.1",
         "tightenco/ziggy": "^2.4"
     },
@@ -50,6 +51,7 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php -r \"file_exists('database/pulse.sqlite') || touch('database/pulse.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ],
         "dev": [
