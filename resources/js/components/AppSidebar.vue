@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { Calendar, FileText, LayoutGrid, MapPin, PanelTop } from 'lucide-vue-next';
+import { Calendar, FileText, LayoutGrid, MapPin, PanelTop, ScanEye } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
@@ -32,6 +32,11 @@ const mainNavItems: NavItem[] = [
 ];
 
 const footerNavItems: NavItem[] = [
+    {
+        title: 'Pulse',
+        href: '/back-office/pulse',
+        icon: ScanEye,
+    },
     {
         title: 'Site web',
         href: route('home'),
