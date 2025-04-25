@@ -1,6 +1,10 @@
 <x-pulse>
     <livewire:pulse.servers cols="full" />
 
+    <livewire:requests cols="8" />
+
+    <livewire:4xx cols="4" />
+
     <livewire:pulse.exceptions cols="full" />
 
     <livewire:pulse.usage cols="4" rows="2" />
