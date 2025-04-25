@@ -141,6 +141,35 @@ return [
             'synchronous' => null,
         ],
 
+        'telescope' => env('APP_ENV') === 'production' ? [
+            'driver' => 'mariadb',
+            'url' => env('TELESCOPE_DB_URL'),
+            'host' => env('TELESCOPE_DB_HOST', '127.0.0.1'),
+            'port' => env('TELESCOPE_DB_PORT', '3306'),
+            'database' => env('TELESCOPE_DB_DATABASE', 'laravel'),
+            'username' => env('TELESCOPE_DB_USERNAME', 'root'),
+            'password' => env('TELESCOPE_DB_PASSWORD', ''),
+            'unix_socket' => env('TELESCOPE_DB_SOCKET', ''),
+            'charset' => env('TELESCOPE_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('TELESCOPE_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ] : [
+            'driver' => 'sqlite',
+            'url' => env('TELESCOPE_DB_URL'),
+            'database' => env('TELESCOPE_DB_DATABASE', database_path('telescope.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => env('TELESCOPE_DB_FOREIGN_KEYS', true),
+            'busy_timeout' => null,
+            'journal_mode' => null,
+            'synchronous' => null,
+        ],
+
     ],
 
     /*
