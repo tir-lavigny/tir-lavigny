@@ -53,6 +53,7 @@
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php -r \"file_exists('database/pulse.sqlite') || touch('database/pulse.sqlite');\"",
+            "@php -r \"file_exists('database/telescope.sqlite') || touch('database/telescope.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ],
         "dev": [
