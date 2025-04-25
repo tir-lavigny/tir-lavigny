@@ -1,7 +1,9 @@
 <x-pulse>
     <livewire:pulse.servers cols="full" />
 
-    <livewire:requests cols="full" />
+    <livewire:requests cols="8" />
+
+    <livewire:4xx cols="4" />
 
     <livewire:pulse.exceptions cols="full" />
 

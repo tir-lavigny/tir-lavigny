@@ -1,5 +1,6 @@
 <?php
 
+use App\Pulse\Recorder\FourXxRecorder;
 use App\Pulse\Recorder\RequestRecorder;
 use Laravel\Pulse\Http\Middleware\Authorize;
 use Laravel\Pulse\Pulse;
@@ -139,6 +140,18 @@ return [
 
     'recorders' => [
         RequestRecorder::class => [],
+
+        FourXxRecorder::class => [
+            'enabled' => env('PULSE_4XX_ENABLED', true),
+            'sample_rate' => env('PULSE_4XX_SAMPLE_RATE', 1),
+            'ignore' => [
+                '#^/wp-admin#', // Classic WordPress...
+                '#^/wp-login#',
+                '#^/wp-config#',
+                '#^/xmlrpc\.php#',
+                '#^/browserconfig\.xml#', // Microsoft junk
+            ],
+        ],
 
         Recorders\CacheInteractions::class => [
             'enabled' => env('PULSE_CACHE_INTERACTIONS_ENABLED', true),
