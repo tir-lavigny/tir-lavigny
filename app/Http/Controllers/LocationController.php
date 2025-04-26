@@ -4,10 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Location;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 
-class LocationController extends Controller
+class LocationController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:create location', only: ['store']),
+            new Middleware('permission:edit location', only: ['update']),
+            new Middleware('permission:delete location', only: ['destroy']),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */
