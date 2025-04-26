@@ -1,3 +1,4 @@
+import { User } from '@/types';
 import type { Updater } from '@tanstack/vue-table';
 import { formatDate as FD, UseDateFormatOptions } from '@vueuse/core';
 import { clsx, type ClassValue } from 'clsx';
@@ -38,4 +39,18 @@ export const debounce = (func: any, wait: number) => {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
+};
+
+export const hasRole = (user: User, role: string) => {
+    if (user.roles) {
+        return user.roles.some((r) => r.name === role);
+    }
+    return false;
+};
+
+export const can = (user: User, permission: string) => {
+    if (user.roles) {
+        return user.roles.some((r) => r.permissions?.some((p) => p.name === permission) ?? false);
+    }
+    return false;
 };

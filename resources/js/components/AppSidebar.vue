@@ -3,10 +3,14 @@ import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { hasRole } from '@/lib/utils';
+import type { SharedData } from '@/types';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { Calendar, FileText, LayoutGrid, MapPin, PanelTop, ScanEye, Telescope } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+
+const user = usePage<SharedData>().props.auth.user;
 
 const mainNavItems: NavItem[] = [
     {
@@ -32,16 +36,20 @@ const mainNavItems: NavItem[] = [
 ];
 
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Pulse',
-        href: '/back-office/pulse',
-        icon: ScanEye,
-    },
-    {
-        title: 'Telescope',
-        href: '/back-office/telescope',
-        icon: Telescope,
-    },
+    ...(hasRole(user, 'admin')
+        ? [
+              {
+                  title: 'Pulse',
+                  href: '/back-office/pulse',
+                  icon: ScanEye,
+              },
+              {
+                  title: 'Telescope',
+                  href: '/back-office/telescope',
+                  icon: Telescope,
+              },
+          ]
+        : []),
     {
         title: 'Site web',
         href: route('home'),
