@@ -13,28 +13,28 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        $adminRole = Role::create(['name' => 'admin']);
-        $editorRole = Role::create(['name' => 'editor']);
-        $userRole = Role::create(['name' => 'user']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $editorRole = Role::firstOrCreate(['name' => 'editor']);
+        $userRole = Role::firstOrCreate(['name' => 'user']);
 
-        $createEventPermission = Permission::create(['name' => 'create event']);
-        $editEventPermission = Permission::create(['name' => 'edit event']);
-        $deleteEventPermission = Permission::create(['name' => 'delete event']);
+        $createEventPermission = Permission::firstOrCreate(['name' => 'create event']);
+        $editEventPermission = Permission::firstOrCreate(['name' => 'edit event']);
+        $deleteEventPermission = Permission::firstOrCreate(['name' => 'delete event']);
 
-        $createLocationPermission = Permission::create(['name' => 'create location']);
-        $editLocationPermission = Permission::create(['name' => 'edit location']);
-        $deleteLocationPermission = Permission::create(['name' => 'delete location']);
+        $createLocationPermission = Permission::firstOrCreate(['name' => 'create location']);
+        $editLocationPermission = Permission::firstOrCreate(['name' => 'edit location']);
+        $deleteLocationPermission = Permission::firstOrCreate(['name' => 'delete location']);
 
-        $createContentPermission = Permission::create(['name' => 'create content']);
-        $editContentPermission = Permission::create(['name' => 'edit content']);
-        $deleteContentPermission = Permission::create(['name' => 'delete content']);
+        $createContentPermission = Permission::firstOrCreate(['name' => 'create content']);
+        $editContentPermission = Permission::firstOrCreate(['name' => 'edit content']);
+        $deleteContentPermission = Permission::firstOrCreate(['name' => 'delete content']);
 
-        $createUserPermission = Permission::create(['name' => 'create user']);
-        $editUserPermission = Permission::create(['name' => 'edit user']);
-        $deleteUserPermission = Permission::create(['name' => 'delete user']);
+        $createUserPermission = Permission::firstOrCreate(['name' => 'create user']);
+        $editUserPermission = Permission::firstOrCreate(['name' => 'edit user']);
+        $deleteUserPermission = Permission::firstOrCreate(['name' => 'delete user']);
 
         // Assign permissions to roles
-        $adminRole->givePermissionTo([
+        $adminRole->syncPermissions([
             $createEventPermission,
             $editEventPermission,
             $deleteEventPermission,
@@ -49,7 +49,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $deleteUserPermission,
         ]);
 
-        $editorRole->givePermissionTo([
+        $editorRole->syncPermissions([
             $createEventPermission,
             $editEventPermission,
             $deleteEventPermission,
