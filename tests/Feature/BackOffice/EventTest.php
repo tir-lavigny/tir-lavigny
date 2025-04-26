@@ -373,8 +373,8 @@ class EventTest extends TestCase
         $response = $this->get(route('bo.events.index', ['start_before' => now()->addDays(7)->format('Y-m-d'), 'end_before' => now()->addDays(7)->format('Y-m-d')]));
 
         $response->assertStatus(200);
-        $response->assertSee('5');
-        $response->assertDontSee('10');
+        $response->assertSee(now()->addDays(5)->format('Y-m-d'));
+        $response->assertDontSee(now()->addDays(10)->format('Y-m-d'));
     }
 
     public function test_index_pagination_works(): void
