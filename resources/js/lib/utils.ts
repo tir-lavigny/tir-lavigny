@@ -48,7 +48,7 @@ export const hasRole = (user: User, role: string) => {
     return false;
 };
 
-export const can = (user: User, permission: string) => {
+export const hasPermissionTo = (user: User, permission: string) => {
     if (user.roles) {
         return user.roles.some((r) => r.permissions?.some((p) => p.name === permission) ?? false);
     }
