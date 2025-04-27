@@ -13,7 +13,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::updateOrCreate(
+        $this->call([
+            RolesAndPermissionsSeeder::class,
+        ]);
+
+        $user = User::updateOrCreate(
             ['email' => env('APP_USER_EMAIL')],
             [
                 'name' => env('APP_USER_NAME'),
@@ -22,8 +26,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $this->call([
-            Data2025Seeder::class,
-        ]);
+        $user->assignRole('admin');
     }
 }
