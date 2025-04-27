@@ -11,14 +11,17 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { handleTabKey } from '@/lib/utils';
-import { Content, type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/vue3';
+import { handleTabKey, hasPermissionTo } from '@/lib/utils';
+import { Content, type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { useMediaQuery } from '@vueuse/core';
 import { Plus, Save, Undo2 } from 'lucide-vue-next';
 import { marked } from 'marked';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
+
+const page = usePage<SharedData>();
+const user = page.props.auth.user;
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -59,6 +62,11 @@ const handleSelection = (selectedRows: Content) => {
 };
 
 const handleSelectionDelete = (selectedRows: Content) => {
+    if (!hasPermissionTo(user, 'delete content')) {
+        toast.error("Vous n'avez pas la permission de supprimer le contenu");
+        return;
+    }
+
     deleteForm.defaults('id', selectedRows.id);
     deleteForm.reset();
     deleteForm.delete(route('contents.destroy', { id: selectedRows.id }), {
@@ -76,6 +84,11 @@ const handleSelectionDelete = (selectedRows: Content) => {
 };
 
 const handleUpdate = () => {
+    if (!hasPermissionTo(user, 'edit content')) {
+        toast.error("Vous n'avez pas la permission de modifier le contenu");
+        return;
+    }
+
     updateForm.clearErrors();
 
     if (!updateForm.id) {
@@ -107,6 +120,11 @@ const handleUpdate = () => {
 };
 
 const handleSubmitCreate = (form: any) => {
+    if (!hasPermissionTo(user, 'create content')) {
+        toast.error("Vous n'avez pas la permission de créer du contenu");
+        return;
+    }
+
     form.clearErrors();
 
     if (!form.title) form.setError('title', 'Le titre est requis');
@@ -139,6 +157,7 @@ const handleSubmitCreate = (form: any) => {
                 <div class="flex flex-row items-center justify-between">
                     <H3>Templates</H3>
                     <ContentsCreate
+                        v-if="hasPermissionTo(user, 'create content')"
                         title="Créer une nouvelle template"
                         description="Créer une nouvelle template de contenu, cette template peut ensuite être utilisée dans plusieurs événements pour en unifier le contenu."
                         @submit="handleSubmitCreate"
@@ -160,6 +179,10 @@ const handleSubmitCreate = (form: any) => {
                 <ContentsTable
                     :contents="contents"
                     :pageSize="5"
+                    :actions="[
+                        ...(hasPermissionTo(user, 'edit content') ? ['edit'] : []),
+                        ...(hasPermissionTo(user, 'delete content') ? ['delete'] : []),
+                    ]"
                     @update:row-selection="handleSelection"
                     @delete:rowSelection="handleSelectionDelete"
                 />
@@ -169,11 +192,19 @@ const handleSubmitCreate = (form: any) => {
                     <div class="flex flex-row gap-2">
                         <H3 class="text-nowrap">Contenu <template v-if="updateForm.id">de</template></H3>
                         <div class="flex flex-row items-center gap-1">
-                            <Input v-if="updateForm.id" class="w-96" required type="text" placeholder="Titre" v-model="updateForm.title" />
+                            <Input
+                                v-if="updateForm.id"
+                                :disabled="!hasPermissionTo(user, 'edit content')"
+                                class="w-96"
+                                required
+                                type="text"
+                                placeholder="Titre"
+                                v-model="updateForm.title"
+                            />
                             <InputError :message="updateForm.errors.title" />
                         </div>
                     </div>
-                    <div class="flex flex-row items-center gap-2">
+                    <div class="flex flex-row items-center gap-2" v-if="hasPermissionTo(user, 'edit content')">
                         <Tooltip :disabled="!updateForm.isDirty">
                             <TooltipTrigger>
                                 <Button size="icon" :disabled="!updateForm.isDirty" @click="handleUpdate">
@@ -205,7 +236,12 @@ const handleSubmitCreate = (form: any) => {
                                 <InputError :message="updateForm.errors.body" />
                             </div>
                             <Separator />
-                            <Textarea class="w-full resize-none" v-model="updateForm.body" @keydown="handleTabKey"></Textarea>
+                            <Textarea
+                                :disabled="!hasPermissionTo(user, 'edit content')"
+                                class="w-full resize-none"
+                                v-model="updateForm.body"
+                                @keydown="handleTabKey"
+                            ></Textarea>
                         </div>
                         <div class="flex flex-col gap-4">
                             <H4>Prévisualisation</H4>
@@ -230,7 +266,13 @@ const handleSubmitCreate = (form: any) => {
                             </div>
                         </div>
                         <Separator />
-                        <Textarea v-if="!showPreview" class="w-full resize-none" v-model="updateForm.body" @keydown="handleTabKey"></Textarea>
+                        <Textarea
+                            v-if="!showPreview"
+                            :disabled="!hasPermissionTo(user, 'edit content')"
+                            class="w-full resize-none"
+                            v-model="updateForm.body"
+                            @keydown="handleTabKey"
+                        ></Textarea>
                         <div v-else v-html="marked(updateForm.body)" class="prose dark:prose-invert w-full"></div>
                     </div>
                     <div v-else class="mt-4">
