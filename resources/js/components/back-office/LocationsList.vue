@@ -5,9 +5,15 @@ import { formatDate } from '@/lib/utils';
 import { Location } from '@/types';
 import { Edit } from 'lucide-vue-next';
 
-defineProps<{
-    locations?: Location[];
-}>();
+withDefaults(
+    defineProps<{
+        locations?: Location[];
+        actions?: string[];
+    }>(),
+    {
+        actions: () => ['edit'],
+    },
+);
 
 defineEmits<{
     (e: 'edit-location', id: number): void;
@@ -20,6 +26,7 @@ defineEmits<{
             <CardHeader class="flex items-center justify-between">
                 <CardTitle>{{ location.name }}</CardTitle>
                 <Edit
+                    v-if="actions.includes('edit')"
                     class="text-muted-foreground hover:text-primary h-4 w-4 cursor-pointer transition-colors"
                     @click="$emit('edit-location', location.id)"
                 />
