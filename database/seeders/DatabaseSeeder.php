@@ -27,9 +27,5 @@ class DatabaseSeeder extends Seeder
         );
 
         $user->assignRole('admin');
-
-        $this->call([
-            Data2025Seeder::class,
-        ]);
     }
 }
