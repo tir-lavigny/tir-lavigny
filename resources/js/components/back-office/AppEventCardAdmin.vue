@@ -10,11 +10,22 @@ import { Link, useForm } from '@inertiajs/vue3';
 import { ArrowRight, Calendar, MapPin, PenBox, Trash2 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
-defineProps<{
-    event: Event;
-}>();
+const props = withDefaults(
+    defineProps<{
+        event: Event;
+        actions?: string[];
+    }>(),
+    {
+        actions: () => ['edit', 'delete'],
+    },
+);
 
 const handleDelete = (id: number) => {
+    if (!props.actions.includes('delete')) {
+        toast.error("Vous n'avez pas le droit de supprimer un événement");
+        return;
+    }
+
     const form = useForm({
         id,
     });
@@ -39,7 +50,7 @@ const handleDelete = (id: number) => {
                 {{ event.title }}
             </CardTitle>
             <div class="flex flex-row items-center gap-2">
-                <Tooltip>
+                <Tooltip v-if="actions.includes('edit')">
                     <TooltipTrigger>
                         <Link class="flex items-center gap-2" :href="route('bo.events.edit', event.id)">
                             <Button size="icon" variant="secondary">
@@ -51,7 +62,7 @@ const handleDelete = (id: number) => {
                         <p>Modifier l'événement</p>
                     </TooltipContent>
                 </Tooltip>
-                <Tooltip>
+                <Tooltip v-if="actions.includes('delete')">
                     <TooltipTrigger>
                         <AppAlertDialog
                             title="Êtes-vous absolument sûr ?"

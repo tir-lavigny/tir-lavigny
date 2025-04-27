@@ -8,10 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { PaginatedEvents, type BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { hasPermissionTo } from '@/lib/utils';
+import { PaginatedEvents, type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Plus, Search, Undo2 } from 'lucide-vue-next';
 import { ref, useTemplateRef, watch } from 'vue';
+
+const page = usePage<SharedData>();
+const user = page.props.auth.user;
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -107,7 +111,7 @@ watch(
                 <div class="mb-4 flex w-full flex-row">
                     <div class="flex flex-1 items-center justify-between">
                         <H3>Événements</H3>
-                        <Tooltip>
+                        <Tooltip v-if="hasPermissionTo(user, 'create event')">
                             <TooltipTrigger>
                                 <Link :href="route('bo.events.create')">
                                     <Button size="icon">
@@ -121,7 +125,16 @@ watch(
                         </Tooltip>
                     </div>
                 </div>
-                <AppEventCardAdmin v-for="event in paginatedEvents.data" :key="event.id" :event="event" class="mb-4" />
+                <AppEventCardAdmin
+                    v-for="event in paginatedEvents.data"
+                    :key="event.id"
+                    :event="event"
+                    class="mb-4"
+                    :actions="[
+                        ...(hasPermissionTo(user, 'edit event') ? ['edit'] : []),
+                        ...(hasPermissionTo(user, 'delete event') ? ['delete'] : []),
+                    ]"
+                />
                 <Muted v-if="paginatedEvents.data" class="my-4 flex items-center justify-center">
                     {{ paginatedEvents.total }} événements trouvés
                 </Muted>

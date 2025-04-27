@@ -8,11 +8,22 @@ use App\Models\Event;
 use App\Models\Location;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
-class EventController extends Controller
+class EventController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:create event', only: ['create', 'store']),
+            new Middleware('permission:edit event', only: ['edit', 'update']),
+            new Middleware('permission:delete event', only: ['destroy']),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */

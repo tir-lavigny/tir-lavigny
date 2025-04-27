@@ -32,6 +32,7 @@ export interface User {
     email: string;
     avatar?: string;
     email_verified_at: string | null;
+    roles?: Role[];
     created_at: string;
     updated_at: string;
 }
@@ -92,4 +93,29 @@ export interface PaginationLink {
 
 export interface PaginatedEvents extends PaginatedData<Event> {
     data?: Event[];
+}
+
+export interface Permission {
+    id: number;
+    name: string;
+    guard_name: string;
+    created_at: string; // ISO 8601 format
+    updated_at: string; // ISO 8601 format
+    pivot: {
+        role_id: number;
+        permission_id: number;
+    };
+}
+export interface Role {
+    id: number;
+    name: string;
+    guard_name: string;
+    created_at: string; // ISO 8601 format
+    updated_at: string; // ISO 8601 format
+    pivot: {
+        model_type: string;
+        model_id: number;
+        role_id: number;
+    };
+    permissions?: Permission[];
 }

@@ -16,8 +16,10 @@ class EventTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+        $this->actingAs($admin);
     }
 
     public function test_can_create_event(): void

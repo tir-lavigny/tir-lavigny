@@ -7,12 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate } from '@/lib/utils';
-import { Event, type BreadcrumbItem } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { formatDate, hasPermissionTo } from '@/lib/utils';
+import { Event, type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { PenBox, Trash2 } from 'lucide-vue-next';
 import { marked } from 'marked';
 import { toast } from 'vue-sonner';
+
+const page = usePage<SharedData>();
+const user = page.props.auth.user;
 
 const props = defineProps<{
     event: Event;
@@ -31,6 +34,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const handleDelete = (id: number) => {
+    if (!hasPermissionTo(user, 'delete event')) {
+        toast.error("Vous n'avez pas le droit de supprimer un événement");
+        return;
+    }
     const form = useForm({
         id,
     });
@@ -56,7 +63,7 @@ const handleDelete = (id: number) => {
             <div class="flex w-full flex-row justify-between">
                 <H1> {{ event.title }} </H1>
                 <div class="flex flex-row items-center gap-2">
-                    <Tooltip>
+                    <Tooltip v-if="hasPermissionTo(user, 'edit event')">
                         <TooltipTrigger>
                             <Link class="flex items-center gap-2" :href="route('bo.events.edit', event.id)">
                                 <Button size="icon" variant="secondary">
@@ -68,7 +75,7 @@ const handleDelete = (id: number) => {
                             <p>Modifier l'événement</p>
                         </TooltipContent>
                     </Tooltip>
-                    <Tooltip>
+                    <Tooltip v-if="hasPermissionTo(user, 'delete event')">
                         <TooltipTrigger>
                             <AppAlertDialog
                                 title="Êtes-vous absolument sûr ?"

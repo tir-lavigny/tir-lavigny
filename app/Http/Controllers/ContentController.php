@@ -5,9 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\Content;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class ContentController extends Controller
+class ContentController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:create content', only: ['store']),
+            new Middleware('permission:edit content', only: ['update']),
+            new Middleware('permission:delete content', only: ['destroy']),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */

@@ -16,13 +16,19 @@ import {
     getSortedRowModel,
     useVueTable,
 } from '@tanstack/vue-table';
-import { ArrowUpDown, ChevronDown, Edit, Trash2 } from 'lucide-vue-next';
+import { ArrowUpDown, ChevronDown, Edit, Eye, Trash2 } from 'lucide-vue-next';
 import { h, ref } from 'vue';
 
-const props = defineProps<{
-    contents?: Content[];
-    pageSize?: number;
-}>();
+const props = withDefaults(
+    defineProps<{
+        contents?: Content[];
+        pageSize?: number;
+        actions?: string[];
+    }>(),
+    {
+        actions: () => ['edit', 'delete'],
+    },
+);
 
 const emit = defineEmits(['update:rowSelection', 'delete:rowSelection']);
 
@@ -93,7 +99,9 @@ const columns: ColumnDef<Content>[] = [
                     {
                         size: 'icon',
                         variant: 'destructive',
+                        disabled: !props.actions.includes('delete'),
                         onClick: () => {
+                            if (!props.actions.includes('delete')) return;
                             emit('delete:rowSelection', content);
                         },
                     },
@@ -108,7 +116,7 @@ const columns: ColumnDef<Content>[] = [
                             emit('update:rowSelection', content);
                         },
                     },
-                    () => h(Edit),
+                    () => h(props.actions.includes('edit') ? Edit : Eye),
                 ),
             ];
 

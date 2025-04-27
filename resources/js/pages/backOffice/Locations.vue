@@ -17,10 +17,14 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Location, type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/vue3';
+import { hasPermissionTo } from '@/lib/utils';
+import { Location, type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { ref, useTemplateRef } from 'vue';
 import { toast } from 'vue-sonner';
+
+const page = usePage<SharedData>();
+const user = page.props.auth.user;
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -38,6 +42,10 @@ const isSheetOpen = ref(false);
 const currentLocation = ref<Location | null>(null);
 
 const handleEditLocation = (id: number) => {
+    if (!hasPermissionTo(user, 'edit location')) {
+        toast.error("Vous n'avez pas la permission de modifier les lieux");
+        return;
+    }
     currentLocation.value = props.locations?.find((location) => location.id === id) || null;
     if (!currentLocation.value) {
         toast.error('Location not found');
@@ -47,6 +55,10 @@ const handleEditLocation = (id: number) => {
 };
 
 const handleSubmitUpdate = (form: any) => {
+    if (!hasPermissionTo(user, 'edit location')) {
+        toast.error("Vous n'avez pas la permission de modifier les lieux");
+        return;
+    }
     form.put(route('locations.update', currentLocation.value?.id), {
         onSuccess: () => {
             toast.success('Lieu mis à jour avec succès');
@@ -60,6 +72,10 @@ const handleSubmitUpdate = (form: any) => {
 };
 
 const handleSubmitCreate = (form: any) => {
+    if (!hasPermissionTo(user, 'create location')) {
+        toast.error("Vous n'avez pas la permission de créer des lieux");
+        return;
+    }
     form.post(route('locations.store'), {
         onSuccess: () => {
             toast.success('Lieu créé avec succès');
@@ -72,6 +88,10 @@ const handleSubmitCreate = (form: any) => {
 };
 
 const handleSubmitDelete = () => {
+    if (!hasPermissionTo(user, 'delete location')) {
+        toast.error("Vous n'avez pas la permission de supprimer des lieux");
+        return;
+    }
     const form = useForm({
         id: currentLocation.value?.id,
     });
@@ -96,12 +116,13 @@ const handleSubmitDelete = () => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <div class="grid auto-rows-min gap-4 md:grid-cols-3">
+            <div v-if="hasPermissionTo(user, 'create location')" class="grid auto-rows-min gap-4 md:grid-cols-3">
                 <div
                     class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-32 overflow-hidden rounded-xl border p-4 md:col-span-2"
                 >
                     <H3>Créer un lieu</H3>
                     <LocationForm
+                        v-if="hasPermissionTo(user, 'create location')"
                         ref="createLocationForm"
                         class="mt-6"
                         :formDefaults="{
@@ -125,11 +146,17 @@ const handleSubmitDelete = () => {
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
                 <H3>Lieux</H3>
-                <LocationsList class="mt-6" v-if="locations && locations.length" :locations="locations" @edit-location="handleEditLocation" />
+                <LocationsList
+                    class="mt-6"
+                    v-if="locations && locations.length"
+                    :locations="locations"
+                    @edit-location="handleEditLocation"
+                    :actions="hasPermissionTo(user, 'edit location') ? ['edit'] : []"
+                />
             </div>
         </div>
 
-        <Sheet :open="isSheetOpen" @update:open="isSheetOpen = $event">
+        <Sheet :open="isSheetOpen" @update:open="isSheetOpen = $event" v-if="hasPermissionTo(user, 'edit location')">
             <SheetContent class="w-full sm:max-w-xl">
                 <ScrollArea class="h-screen pb-4">
                     <SheetHeader>
@@ -149,7 +176,7 @@ const handleSubmitDelete = () => {
                         }"
                         @submit="handleSubmitUpdate"
                     />
-                    <Dialog>
+                    <Dialog v-if="hasPermissionTo(user, 'delete location')">
                         <DialogTrigger class="mt-12 w-full px-4 text-end">
                             <Button variant="destructive"> Supprimer le lieu </Button>
                         </DialogTrigger>
