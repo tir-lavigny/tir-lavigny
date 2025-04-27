@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { handleTabKey, hasPermissionTo } from '@/lib/utils';
 import { Content, type BreadcrumbItem, type SharedData } from '@/types';
@@ -163,16 +163,7 @@ const handleSubmitCreate = (form: any) => {
                         @submit="handleSubmitCreate"
                     >
                         <template #trigger>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Button size="icon"> <Plus /> </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Créer une template</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            <Button size="icon"> <Plus /> </Button>
                         </template>
                     </ContentsCreate>
                 </div>
