@@ -6,6 +6,12 @@ echo "Deploying application ..."
 # Enter maintenance mode
 (php-8.4 artisan down --secret="bypass") || true
 
+    # Stop Nightwatch agent if running as job
+    if pgrep -f "nightwatch:agent" > /dev/null; then
+        echo "Stopping Nightwatch agent..."
+        pkill -f "nightwatch:agent"
+    fi
+
     # Update codebase
     git fetch origin deploy
     git reset --hard origin/deploy
@@ -22,5 +28,7 @@ echo "Deploying application ..."
 
 # Exit maintenance mode
 php-8.4 artisan up
+
+php-8.4 artisan nightwatch:agent &
 
 echo "Application deployed!"
