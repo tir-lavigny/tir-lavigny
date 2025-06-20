@@ -30,5 +30,6 @@ echo "Deploying application ..."
 php-8.4 artisan up
 
 nohup php-8.4 artisan nightwatch:agent &
+disown
 
 echo "Application deployed!"
