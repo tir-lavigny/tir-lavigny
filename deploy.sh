@@ -6,10 +6,10 @@ echo "Deploying application ..."
 # Enter maintenance mode
 (php-8.4 artisan down --secret="bypass") || true
 
-    # Stop Nightwatch agent if running as job
-    if pgrep -f "nightwatch:agent" > /dev/null; then
+    # Stop Nightwatch agent if running as a nohup process
+    if pgrep -f "php-8.4 artisan nightwatch:agent" > /dev/null; then
         echo "Stopping Nightwatch agent..."
-        pkill -f "nightwatch:agent"
+        pkill -f "php-8.4 artisan nightwatch:agent"
     fi
 
     # Update codebase
@@ -29,6 +29,6 @@ echo "Deploying application ..."
 # Exit maintenance mode
 php-8.4 artisan up
 
-php-8.4 artisan nightwatch:agent &
+nohup php-8.4 artisan nightwatch:agent &
 
 echo "Application deployed!"
