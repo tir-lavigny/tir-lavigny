@@ -5,6 +5,7 @@ use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\ShootingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -13,6 +14,8 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/events', [EventController::class, 'index'])->name('events');
 Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
+
+Route::get('/posts/{public_id}', [PostController::class, 'show'])->name('posts.show');
 
 Route::get('/shootings', [ShootingController::class, 'index'])->name('shootings');
 

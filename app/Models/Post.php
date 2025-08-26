@@ -17,6 +17,10 @@ class Post extends Model
         'expire_at',
     ];
 
+    protected $hidden = [
+        'id',
+    ];
+
     protected $casts = [
         'publish_at' => 'datetime',
         'expire_at' => 'datetime',
