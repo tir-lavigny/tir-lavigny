@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import AppEventCard from '@/components/AppEventCard.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
+import AppPostCard from '@/components/AppPostCard.vue';
 import { H2 } from '@/components/typography/headings';
 import { Large, List, P } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import WebLayout from '@/layouts/WebLayout.vue';
-import { Event } from '@/types';
+import { Event, Post } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import { Mail, MapPin } from 'lucide-vue-next';
 
 defineProps<{
     events?: Event[];
+    posts?: Post[];
 }>();
 </script>
 
@@ -21,13 +23,19 @@ defineProps<{
         <AppHeroSection title="Société de tir de lavigny" image="/images/hero.jpg">
             <template #description> <Large> Tirs militaire, campagne et sportif </Large> </template>
         </AppHeroSection>
-        <section class="mt-96 flex flex-col gap-8 py-12" v-if="events">
-            <H2>Prochains événements</H2>
+        <section class="mt-96 flex flex-col gap-8 py-12" v-if="posts">
+            <H2>Communication{{ posts.length > 1 ? 's' : '' }}</H2>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <AppPostCard v-for="post in posts" class="w-full" :key="post.public_id" :post="post" />
+            </div>
+        </section>
+        <section class="mt-12 flex flex-col gap-8 py-12" v-if="events" :class="{ 'mt-96 pt-12': !posts }">
+            <H2>Prochain{{ events.length > 1 ? 's' : '' }} événement{{ events.length > 1 ? 's' : '' }}</H2>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <AppEventCard v-for="event in events" class="w-full" :key="event.id" :event="event" />
             </div>
         </section>
-        <section class="mt-12 flex flex-col gap-8" :class="{ 'mt-96 pt-12': !events }">
+        <section class="mt-12 flex flex-col gap-8" :class="{ 'mt-96 pt-12': !events && !posts }">
             <H2>Stand de tir</H2>
             <div class="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
                 <div class="flex items-center justify-center p-4">
