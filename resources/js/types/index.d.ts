@@ -39,6 +39,16 @@ export interface User {
 
 export type BreadcrumbItemType = BreadcrumbItem;
 
+export interface Post {
+    public_id: string;
+    title: string;
+    content: string;
+    publish_at: string; // ISO 8601 format
+    expire_at?: string; // ISO 8601 format
+    created_at: string; // ISO 8601 format
+    updated_at: string; // ISO 8601 format
+}
+
 export interface Event {
     id: number;
     title: string;
@@ -93,6 +103,10 @@ export interface PaginationLink {
 
 export interface PaginatedEvents extends PaginatedData<Event> {
     data?: Event[];
+}
+
+export interface PaginatedPosts extends PaginatedData<Event> {
+    data?: Post[];
 }
 
 export interface Permission {

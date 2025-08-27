@@ -21,6 +21,10 @@ class RolesAndPermissionsSeeder extends Seeder
         $editEventPermission = Permission::firstOrCreate(['name' => 'edit event']);
         $deleteEventPermission = Permission::firstOrCreate(['name' => 'delete event']);
 
+        $createPostPermission = Permission::firstOrCreate(['name' => 'create post']);
+        $editPostPermission = Permission::firstOrCreate(['name' => 'edit post']);
+        $deletePostPermission = Permission::firstOrCreate(['name' => 'delete post']);
+
         $createLocationPermission = Permission::firstOrCreate(['name' => 'create location']);
         $editLocationPermission = Permission::firstOrCreate(['name' => 'edit location']);
         $deleteLocationPermission = Permission::firstOrCreate(['name' => 'delete location']);
@@ -38,6 +42,9 @@ class RolesAndPermissionsSeeder extends Seeder
             $createEventPermission,
             $editEventPermission,
             $deleteEventPermission,
+            $createPostPermission,
+            $editPostPermission,
+            $deletePostPermission,
             $createLocationPermission,
             $editLocationPermission,
             $deleteLocationPermission,
@@ -53,6 +60,9 @@ class RolesAndPermissionsSeeder extends Seeder
             $createEventPermission,
             $editEventPermission,
             $deleteEventPermission,
+            $createPostPermission,
+            $editPostPermission,
+            $deletePostPermission,
             $createLocationPermission,
             $editLocationPermission,
             $deleteLocationPermission,
