@@ -105,6 +105,10 @@ export interface PaginatedEvents extends PaginatedData<Event> {
     data?: Event[];
 }
 
+export interface PaginatedPosts extends PaginatedData<Event> {
+    data?: Post[];
+}
+
 export interface Permission {
     id: number;
     name: string;
