@@ -5,6 +5,7 @@ namespace Tests\Feature\BackOffice;
 use App\Models\Content;
 use App\Models\Event;
 use App\Models\Location;
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -428,6 +429,113 @@ class RbacTest extends TestCase
             'address' => $data['address'],
             'latitude' => $data['latitude'],
             'longitude' => $data['longitude'],
+        ]);
+    }
+
+    public function test_posts_crud_ok_permissions(): void
+    {
+        $createUser = User::factory()->create();
+        $createUser->givePermissionTo('create post');
+
+        $editUser = User::factory()->create();
+        $editUser->givePermissionTo('edit post');
+
+        $deleteUser = User::factory()->create();
+        $deleteUser->givePermissionTo('delete post');
+
+        // Test create post
+        $response = $this->actingAs($createUser)->post(route('bo.posts.store'), [
+            'title' => 'Test Post',
+            'content' => 'This is a test post content.',
+            'publish_at' => now()->toDateTimeString(),
+            'expire_at' => now()->addDays(10)->toDateTimeString(),
+        ]);
+        $this->assertDatabaseHas('posts', [
+            'title' => 'Test Post',
+            'content' => 'This is a test post content.',
+        ]);
+        $post = Post::first();
+
+        // Test edit post
+        $response = $this->actingAs($editUser)->put(route('bo.posts.update', $post->public_id), [
+            'title' => 'Updated Title',
+            'content' => 'Updated content.',
+            'publish_at' => now()->toDateTimeString(),
+            'expire_at' => now()->addDays(5)->toDateTimeString(),
+        ]);
+        $this->assertDatabaseHas('posts', [
+            'title' => 'Updated Title',
+            'content' => 'Updated content.',
+        ]);
+        $this->assertDatabaseMissing('posts', [
+            'title' => 'Test Post',
+            'content' => 'This is a test post content.',
+        ]);
+
+        // Test delete post
+        $response = $this->actingAs($deleteUser)->delete(route('bo.posts.destroy', $post->public_id));
+        $this->assertDatabaseMissing('posts', [
+            'title' => 'Updated Title',
+            'content' => 'Updated content.',
+        ]);
+        $this->assertDatabaseMissing('posts', [
+            'title' => 'Test Post',
+            'content' => 'This is a test post content.',
+        ]);
+    }
+
+    public function test_posts_crud_nok_permissions(): void
+    {
+        $createUser = User::factory()->create();
+        $createUser->givePermissionTo('create post');
+
+        $editUser = User::factory()->create();
+        $editUser->givePermissionTo('edit post');
+
+        $deleteUser = User::factory()->create();
+        $deleteUser->givePermissionTo('delete post');
+
+        // Test create post without permission
+        $response = $this->actingAs($editUser)->post(route('bo.posts.store'), [
+            'title' => 'Test Post',
+            'content' => 'This is a test post content.',
+            'publish_at' => now()->toDateTimeString(),
+            'expire_at' => now()->addDays(10)->toDateTimeString(),
+        ]);
+        $response->assertStatus(403);
+        $this->assertDatabaseMissing('posts', [
+            'title' => 'Test Post',
+            'content' => 'This is a test post content.',
+        ]);
+
+        // Test edit post without permission
+        $post = Post::factory()->create();
+        $response = $this->actingAs($deleteUser)->put(route('bo.posts.update', $post->public_id), [
+            'title' => 'Updated Title',
+            'content' => 'Updated content.',
+            'publish_at' => now()->toDateTimeString(),
+            'expire_at' => now()->addDays(5)->toDateTimeString(),
+        ]);
+        $response->assertStatus(403);
+        $this->assertDatabaseMissing('posts', [
+            'title' => 'Updated Title',
+            'content' => 'Updated content.',
+        ]);
+        $this->assertDatabaseHas('posts', [
+            'title' => $post->title,
+            'content' => $post->content,
+        ]);
+
+        // Test delete post without permission
+        $response = $this->actingAs($createUser)->delete(route('bo.posts.destroy', $post->public_id));
+        $response->assertStatus(403);
+        $this->assertDatabaseHas('posts', [
+            'title' => $post->title,
+            'content' => $post->content,
+        ]);
+        $this->assertDatabaseMissing('posts', [
+            'title' => 'Updated Title',
+            'content' => 'Updated content.',
         ]);
     }
 }
