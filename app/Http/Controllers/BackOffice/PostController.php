@@ -98,7 +98,9 @@ class PostController extends Controller implements HasMiddleware
     {
         $post = Post::where('public_id', $public_id)->firstOrFail();
 
-        dd($post);
+        return Inertia::render('backOffice/Posts/Edit', [
+            'post' => $post,
+        ]);
     }
 
     /**
@@ -106,7 +108,27 @@ class PostController extends Controller implements HasMiddleware
      */
     public function update(Request $request, string $public_id)
     {
-        //
+        $post = Post::where('public_id', $public_id)->firstOrFail();
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'publish_at' => 'required|date',
+            'expire_at' => 'nullable|date|after:publish_at',
+        ]);
+
+        $post->title = $request->input('title');
+        $post->content = $request->input('content');
+        $post->publish_at = $request->input('publish_at');
+        $post->expire_at = $request->input('expire_at');
+
+        try {
+            $post->save();
+        } catch (Exception $e) {
+            return redirect()->back()->withErrors('Unable to update post. Please try again later.');
+        }
+
+        return redirect()->route('bo.posts.show', $post->public_id)->with('success', 'Post updated successfully.');
     }
 
     /**
