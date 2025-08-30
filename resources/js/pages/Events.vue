@@ -16,14 +16,14 @@ import { computed, ref } from 'vue';
 const isMobile = useMediaQuery('(max-width: 768px)');
 
 const props = defineProps<{
-    events?: Event[];
+    events: Event[];
 }>();
 
 const DEFAULT_FILTER = 'future';
 const filter = ref<'all' | 'passed' | 'future'>(DEFAULT_FILTER);
 
 const filteredEvents = computed(() => {
-    if (!props.events) return [];
+    if (!props.events.length) return [];
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to the start of the day
 
@@ -85,15 +85,13 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
             <template #description> <Large> Prochains événements, tirs, etc. </Large> </template>
         </AppHeroSection>
 
-        <section v-if="!events" class="mt-96 flex flex-col gap-8 py-12">
-            <P>Pas d'événements à afficher</P>
-        </section>
-        <template v-else>
-            <section v-if="isMobile" class="mt-96 flex flex-col gap-8 py-12">
-                <div class="flex flex-row items-center justify-between">
-                    <ReuseTemplate />
-                </div>
+        <section v-if="isMobile" class="mt-96 flex flex-col gap-8 py-12">
+            <div class="flex flex-row items-center justify-between">
+                <ReuseTemplate />
+            </div>
 
+            <P v-if="!events.length" class="text-center">Aucun événement pour l'instant.</P>
+            <template v-else>
                 <div v-for="(events, date) in groupedEvents" :key="date" class="mx-auto w-full max-w-4xl">
                     <H3 :class="{ 'text-primary': new Date(date).toDateString() === new Date().toDateString() }">
                         {{ formatDate(new Date(date), 'ddd DD MMMM YYYY') }}
@@ -103,15 +101,16 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
                 <div v-if="filteredEvents.length === 0" class="text-center">
                     <P>Aucun événement trouvé pour ce filtre.</P>
                 </div>
-            </section>
+            </template>
+        </section>
 
-            <section v-else class="mt-96 pt-12">
-                <div class="mb-6 flex flex-row items-center gap-6">
-                    <ReuseTemplate />
-                </div>
-                <AppEventCalendar :grouped-events="groupedEvents" />
-            </section>
-        </template>
+        <section v-else class="mt-96 pt-12">
+            <div class="mb-6 flex flex-row items-center gap-6">
+                <ReuseTemplate />
+            </div>
+
+            <AppEventCalendar :grouped-events="groupedEvents" :has-events="!!events.length" />
+        </section>
     </WebLayout>
 </template>
 
