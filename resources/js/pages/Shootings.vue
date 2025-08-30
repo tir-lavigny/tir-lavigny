@@ -9,7 +9,7 @@ import { Event } from '@/types';
 import { Head } from '@inertiajs/vue3';
 
 defineProps<{
-    events?: Event[];
+    events: Event[];
 }>();
 </script>
 
@@ -60,7 +60,7 @@ defineProps<{
                 <div class="md:col-span-1">
                     <H2 id="next-dates">Prochaines dates</H2>
                     <div class="mt-6 flex w-full flex-col gap-2">
-                        <div v-if="events" class="flex w-full flex-col gap-2">
+                        <div v-if="events.length" class="flex w-full flex-col gap-2">
                             <AppEventCard v-for="event in events" :key="event.id" :event="event" :short="true" />
                         </div>
                         <template v-else>
