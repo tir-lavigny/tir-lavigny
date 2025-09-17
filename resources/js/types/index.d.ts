@@ -133,3 +133,14 @@ export interface Role {
     };
     permissions?: Permission[];
 }
+
+export interface ActivityLog {
+    id: number;
+    model: string;
+    model_id: number;
+    action: string;
+    changes?: Record<string, any>;
+    user_id?: number;
+    created_at: string; // ISO 8601 format
+    updated_at: string; // ISO 8601 format
+}

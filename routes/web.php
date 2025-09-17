@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BackOffice\DashboardController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
 use App\Http\Controllers\ContentController;
@@ -9,7 +10,6 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ShootingController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -25,9 +25,7 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         return redirect()->route('dashboard');
     })->name('back-office');
 
-    Route::get('dashboard', function () {
-        return Inertia::render('backOffice/Dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('locations', LocationController::class)->except(['create', 'show', 'edit']);
     Route::resource('contents', ContentController::class)->except(['create', 'show', 'edit']);
