@@ -13,7 +13,7 @@ class DashboardController extends Controller
     {
         $activities = ActivityLog::where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
-            ->limit(10)
+            ->limit(5)
             ->get();
 
         return Inertia::render('backOffice/Dashboard', [
