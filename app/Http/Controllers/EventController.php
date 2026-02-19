@@ -45,14 +45,14 @@ class EventController extends Controller
             ->get();
 
         foreach ($events as $item) {
+            $start = $item->start_datetime->copy()->shiftTimezone('Europe/Zurich')->utc();
+            $end = $item->end_datetime ? $item->end_datetime->copy()->shiftTimezone('Europe/Zurich')->utc() : $start->copy()->addHour();
+
             $icalEvent = IcalEvent::create($item->title)
                 ->uniqueIdentifier('event-'.$item->id)
                 ->startsAt($item->start_datetime)
+                ->endsAt($end)
                 ->url(route('events.show', $item->id));
-
-            if ($item->end_datetime) {
-                $icalEvent->endsAt($item->end_datetime);
-            }
 
             if ($item->location?->address) {
                 $icalEvent->address($item->location->address);
