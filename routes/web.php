@@ -15,6 +15,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/events', [EventController::class, 'index'])->name('events');
 Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
+Route::get('/events/calendar/feed.ics', [EventController::class, 'feed_calendar'])->name('events.feed_calendar');
 
 Route::get('/posts/{public_id}', [PostController::class, 'show'])->name('posts.show');
 
