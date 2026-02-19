@@ -44,8 +44,9 @@ const copyToClipboard = async (text: string) => {
     try {
         await navigator.clipboard.writeText(text);
         toast.success('Lien copié dans le presse-papiers !');
-    } catch (err) {
+    } catch (error) {
         toast.error('Erreur lors de la copie du lien.');
+        console.error('Clipboard copy failed:', error);
     }
 };
 </script>
