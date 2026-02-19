@@ -16,6 +16,7 @@
         "laravel/pulse": "^1.4",
         "laravel/telescope": "^5.7",
         "laravel/tinker": "^2.10.1",
+        "spatie/icalendar-generator": "^3.2",
         "spatie/laravel-permission": "^6.17",
         "tightenco/ziggy": "^2.4"
     },
