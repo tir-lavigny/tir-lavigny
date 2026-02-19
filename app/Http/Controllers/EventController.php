@@ -45,8 +45,8 @@ class EventController extends Controller
             ->get();
 
         foreach ($events as $item) {
-            $start = $item->start_datetime->copy()->shiftTimezone('Europe/Zurich')->utc();
-            $end = $item->end_datetime ? $item->end_datetime->copy()->shiftTimezone('Europe/Zurich')->utc() : $start->copy()->addHour();
+            $start = $item->start_datetime->copy()->shiftTimezone('Europe/Zurich');
+            $end = $item->end_datetime ? $item->end_datetime->copy()->shiftTimezone('Europe/Zurich') : $start->copy()->addHours(1);
 
             $icalEvent = IcalEvent::create($item->title)
                 ->uniqueIdentifier('event-'.$item->id)
