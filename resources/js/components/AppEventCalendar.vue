@@ -9,8 +9,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { type DateValue, getLocalTimeZone, today } from '@internationalized/date';
-import { CalendarSync } from 'lucide-vue-next';
+import { CalendarSync, Copy } from 'lucide-vue-next';
 import { type Ref, ref, watchEffect } from 'vue';
+import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     groupedEvents: Record<string, Event[]>;
@@ -39,7 +40,14 @@ watchEffect(() => {
 
 const rawUrl = route('events.feed_calendar');
 const webcalUrl = rawUrl.replace('https://', 'webcal://');
-const googleUrl = `https://www.google.com/calendar/render?cid=${encodeURIComponent(rawUrl)}`;
+const copyToClipboard = async (text: string) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        toast.success('Lien copié dans le presse-papiers !');
+    } catch (err) {
+        toast.error('Erreur lors de la copie du lien.');
+    }
+};
 </script>
 
 <template>
@@ -71,7 +79,9 @@ const googleUrl = `https://www.google.com/calendar/render?cid=${encodeURICompone
                     </CardHeader>
                     <CardContent class="flex flex-col gap-2">
                         <Button as="a" variant="secondary" :href="webcalUrl"> <CalendarSync class="h-4 w-4" /> Apple / Outlook </Button>
-                        <Button as="a" variant="secondary" :href="googleUrl"> <CalendarSync class="h-4 w-4" /> Google Calendar </Button>
+                        <Button class="hover:cursor-pointer" variant="secondary" @click="copyToClipboard(rawUrl)">
+                            <Copy class="h-4 w-4" /> Google (copier le lien)
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
