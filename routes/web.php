@@ -3,6 +3,7 @@
 use App\Http\Controllers\BackOffice\DashboardController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
+use App\Http\Controllers\BackOffice\UserController as BackOfficeUserController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
@@ -47,6 +48,15 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         'edit' => 'bo.posts.edit',
         'update' => 'bo.posts.update',
         'destroy' => 'bo.posts.destroy',
+    ]);
+    Route::resource('users', BackOfficeUserController::class)->names([
+        'index' => 'bo.users.index',
+        'create' => 'bo.users.create',
+        'store' => 'bo.users.store',
+        'show' => 'bo.users.show',
+        'edit' => 'bo.users.edit',
+        'update' => 'bo.users.update',
+        'destroy' => 'bo.users.destroy',
     ]);
 
     require __DIR__.'/settings.php';

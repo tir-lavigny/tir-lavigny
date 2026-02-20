@@ -109,6 +109,10 @@ export interface PaginatedPosts extends PaginatedData<Event> {
     data?: Post[];
 }
 
+export interface PaginatedUsers extends PaginatedData<User> {
+    data?: User[];
+}
+
 export interface Permission {
     id: number;
     name: string;
