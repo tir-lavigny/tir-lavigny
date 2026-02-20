@@ -7,7 +7,7 @@ import { hasRole } from '@/lib/utils';
 import type { SharedData } from '@/types';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Calendar, FileText, LayoutGrid, MapPin, Newspaper, PanelTop, ScanEye, Telescope } from 'lucide-vue-next';
+import { Calendar, FileText, LayoutGrid, MapPin, Newspaper, PanelTop, ScanEye, Telescope, Users } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const user = usePage<SharedData>().props.auth.user;
@@ -27,6 +27,11 @@ const mainNavItems: NavItem[] = [
         title: 'Communications',
         href: route('bo.posts.index'),
         icon: Newspaper,
+    },
+    {
+        title: 'Utilisateurs',
+        href: route('bo.users.index'),
+        icon: Users,
     },
     {
         title: 'Lieux',
