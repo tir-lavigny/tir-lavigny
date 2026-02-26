@@ -1,11 +1,19 @@
+import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
-import path from 'path';
-import tailwindcss from "@tailwindcss/vite";
 import { resolve } from 'node:path';
+import path from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+    server: {
+        // Requis pour le HMR depuis un navigateur hôte quand Vite tourne dans Docker
+        host: '0.0.0.0',
+        port: 5173,
+        hmr: {
+            host: process.env.VITE_HMR_HOST ?? 'localhost',
+        },
+    },
     plugins: [
         laravel({
             input: ['resources/js/app.ts'],
