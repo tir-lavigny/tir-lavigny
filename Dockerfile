@@ -1,5 +1,7 @@
 # Stage 1 - Composer deps: needed by Vite (ziggy-js aliased to vendor/tightenco/ziggy)
-FROM composer:2 AS composer-deps
+FROM php:8.3-alpine AS composer-deps
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 COPY composer.json composer.lock ./
