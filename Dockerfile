@@ -1,4 +1,11 @@
-# Stage 1 - Node: compile Vite assets (used only by the prod stage)
+# Stage 1 - Composer deps: needed by Vite (ziggy-js aliased to vendor/tightenco/ziggy)
+FROM composer:2 AS composer-deps
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
+
+# Stage 2 - Node: compile Vite assets (used only by the prod stage)
 FROM node:22-alpine AS node-builder
 
 WORKDIR /app
@@ -7,9 +14,10 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+COPY --from=composer-deps /app/vendor ./vendor
 RUN npm run build
 
-# Stage 2 - PHP base: shared system dependencies for dev and prod
+# Stage 3 - PHP base: shared system dependencies for dev and prod
 FROM php:8.3-fpm AS php-base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -43,7 +51,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Stage 3 - dev: source code is bind-mounted at runtime, not copied here
+# Stage 4 - dev: source code is bind-mounted at runtime, not copied here
 FROM php-base AS dev
 
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
@@ -65,7 +73,7 @@ EXPOSE 9000
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]
 
-# Stage 4 - prod: self-contained image with source code and compiled assets
+# Stage 5 - prod: self-contained image with source code and compiled assets
 FROM php-base AS prod
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
