@@ -1,5 +1,9 @@
+ARG PHP_VERSION=8.3
+ARG NODE_VERSION=22
+
 # Stage 1 - Composer deps: needed by Vite (ziggy-js aliased to vendor/tightenco/ziggy)
-FROM php:8.3-alpine AS composer-deps
+# Uses a pinned PHP version - composer:2 bundles latest PHP which may break the lockfile
+FROM php:${PHP_VERSION}-alpine AS composer-deps
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -8,7 +12,7 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
 
 # Stage 2 - Node: compile Vite assets (used only by the prod stage)
-FROM node:22-alpine AS node-builder
+FROM node:${NODE_VERSION}-alpine AS node-builder
 
 WORKDIR /app
 
@@ -20,7 +24,7 @@ COPY --from=composer-deps /app/vendor ./vendor
 RUN npm run build
 
 # Stage 3 - PHP base: shared system dependencies for dev and prod
-FROM php:8.3-fpm AS php-base
+FROM php:${PHP_VERSION}-fpm AS php-base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
