@@ -140,7 +140,7 @@ const emit = defineEmits<{
                             </Button>
                         </template>
                         <template #action>
-                            <Button variant="secondary" @click="emit('detach-event', event.id)">Détacher</Button>
+                            <Button variant="destructive" @click="emit('detach-event', event.id)">Détacher</Button>
                         </template>
                     </AppAlertDialog>
                 </TooltipTrigger>

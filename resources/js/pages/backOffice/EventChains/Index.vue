@@ -134,7 +134,7 @@ watch(search, (val) => {
                                 <Tooltip v-if="hasPermissionTo(user, 'edit event chain')">
                                     <TooltipTrigger>
                                         <Link :href="route('bo.event-chains.edit', chain.id)">
-                                            <Button size="icon" variant="secondary">
+                                            <Button size="icon" variant="outline">
                                                 <PenBox />
                                             </Button>
                                         </Link>
