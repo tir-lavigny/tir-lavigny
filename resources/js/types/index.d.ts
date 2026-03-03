@@ -166,7 +166,7 @@ export interface ChainEvent extends Event {
     overridden_fields: string[] | null;
     has_chain_conflict: boolean;
     pending_conflict_fields: string[] | null;
-    customContent?: { body: string; event_id: number } | null;
+    custom_content?: { body: string; event_id: number } | null;
 }
 
 export interface PaginatedEventChains extends PaginatedData<EventChain> {

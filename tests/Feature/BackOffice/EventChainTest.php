@@ -398,8 +398,8 @@ class EventChainTest extends TestCase
             'resolution' => 'keep_override',
         ]);
 
-        // Title is kept, conflict cleared
-        $this->assertDatabaseHas('events', ['id' => $event->id, 'title' => 'Custom Title', 'has_chain_conflict' => false]);
+        // Title is kept; has_chain_conflict stays true because the event intentionally diverges from the chain
+        $this->assertDatabaseHas('events', ['id' => $event->id, 'title' => 'Custom Title', 'has_chain_conflict' => true]);
     }
 
     public function test_cannot_resolve_conflict_for_event_not_in_chain(): void

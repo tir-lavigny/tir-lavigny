@@ -91,7 +91,13 @@ class EventChainUpdaterService
             fn ($f) => $f !== $field
         ));
         $event->pending_conflict_fields = $pending;
-        $event->has_chain_conflict = count($pending) > 0;
+
+        // Only clear the conflict flag when the chain value was accepted.
+        // If the user kept their override the event intentionally diverges from
+        // the chain, so has_chain_conflict remains true as a visual indicator.
+        if ($resolution === 'accept_chain') {
+            $event->has_chain_conflict = count($pending) > 0;
+        }
 
         $event->save();
     }

@@ -205,7 +205,8 @@ class EventChainServiceTest extends TestCase
 
         $event->refresh();
         $this->assertEquals('Custom Title', $event->title);
-        $this->assertFalse($event->has_chain_conflict);
+        // has_chain_conflict stays true: the event intentionally diverges from the chain
+        $this->assertTrue($event->has_chain_conflict);
     }
 
     // ─── Event model helpers ──────────────────────────────────────────────────

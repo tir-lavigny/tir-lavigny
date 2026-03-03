@@ -76,7 +76,7 @@ const eventFieldValue = (event: ChainEvent, field: string): string => {
         case 'end_time':
             return event.end_datetime ? new Date(event.end_datetime).toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit' }) : '-';
         case 'custom_body':
-            return event.customContent?.body ?? '-';
+            return event.custom_content?.body ?? '—';
         default:
             return '-';
     }
@@ -271,27 +271,34 @@ const handlePageChange = (p: number = 1) => {
                         v-for="event in paginatedEvents.data"
                         :key="event.id"
                         class="border-sidebar-border/70 dark:border-sidebar-border flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
-                        :class="{ 'border-orange-400 dark:border-orange-500': event.has_chain_conflict }"
+                        :class="{
+                            'border-orange-400 dark:border-orange-500': event.pending_conflict_fields && event.pending_conflict_fields.length > 0,
+                        }"
                     >
                         <!-- Event info -->
                         <div class="flex items-start gap-3">
                             <CalendarDays
                                 class="mt-0.5 size-5 shrink-0"
-                                :class="event.has_chain_conflict ? 'text-orange-500' : 'text-muted-foreground'"
+                                :class="
+                                    event.pending_conflict_fields && event.pending_conflict_fields.length > 0
+                                        ? 'text-orange-500'
+                                        : 'text-muted-foreground'
+                                "
                             />
                             <div class="flex flex-col gap-1">
                                 <div class="flex items-center gap-2">
                                     <span class="font-semibold">{{ event.title }}</span>
+                                    <!-- Pending conflicts needing a decision -->
                                     <Badge
-                                        v-if="event.has_chain_conflict"
+                                        v-if="event.pending_conflict_fields && event.pending_conflict_fields.length > 0"
                                         variant="outline"
                                         class="border-orange-400 text-orange-600 dark:text-orange-400"
                                     >
                                         <AlertTriangle class="mr-1 size-3" />
-                                        {{ event.pending_conflict_fields?.length }} conflit{{
-                                            (event.pending_conflict_fields?.length ?? 0) > 1 ? 's' : ''
-                                        }}
+                                        {{ event.pending_conflict_fields.length }} conflit{{ event.pending_conflict_fields.length > 1 ? 's' : '' }}
                                     </Badge>
+                                    <!-- No pending decisions but event intentionally diverges from chain -->
+                                    <Badge v-else-if="event.has_chain_conflict" variant="secondary"> Diverge de la série </Badge>
                                     <Badge v-else-if="event.overridden_fields && event.overridden_fields.length > 0" variant="secondary">
                                         Modifié
                                     </Badge>
@@ -306,8 +313,14 @@ const handlePageChange = (p: number = 1) => {
 
                         <!-- Actions -->
                         <div class="flex flex-wrap items-center gap-2 sm:justify-end">
-                            <!-- Conflict resolution -->
-                            <Tooltip v-if="event.has_chain_conflict && hasPermissionTo(user, 'edit event chain')">
+                            <!-- Conflict resolution: only when there are pending decisions -->
+                            <Tooltip
+                                v-if="
+                                    event.pending_conflict_fields &&
+                                    event.pending_conflict_fields.length > 0 &&
+                                    hasPermissionTo(user, 'edit event chain')
+                                "
+                            >
                                 <TooltipTrigger>
                                     <Button
                                         size="sm"
