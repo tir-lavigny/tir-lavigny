@@ -13,6 +13,7 @@ import { formatDate, hasPermissionTo } from '@/lib/utils';
 import { ChainEvent, EventChain, PaginatedChainEvents, type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { AlertTriangle, CalendarDays, Eye, Link2Off, PenBox, Repeat, Trash2 } from 'lucide-vue-next';
+import { marked } from 'marked';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -57,9 +58,28 @@ const fieldLabels: Record<string, string> = {
 const chainFieldValue = (field: string): string => {
     const chain = props.chain as unknown as Record<string, unknown>;
     const val = chain[field];
-    if (val === null || val === undefined) return '—';
+    if (val === null || val === undefined) return '-';
     if (field === 'location_id') return props.chain.location?.name ?? String(val);
     return String(val);
+};
+
+const eventFieldValue = (event: ChainEvent, field: string): string => {
+    switch (field) {
+        case 'title':
+            return event.title ?? '-';
+        case 'location_id':
+            return event.location?.name ?? (event.location_id ? String(event.location_id) : '-');
+        case 'content_id':
+            return event.content_id ? String(event.content_id) : '-';
+        case 'start_time':
+            return event.start_datetime ? new Date(event.start_datetime).toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit' }) : '-';
+        case 'end_time':
+            return event.end_datetime ? new Date(event.end_datetime).toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit' }) : '-';
+        case 'custom_body':
+            return event.customContent?.body ?? '-';
+        default:
+            return '-';
+    }
 };
 
 // ─── Conflict Dialog ──────────────────────────────────────────────────────────
@@ -370,7 +390,7 @@ const handlePageChange = (p: number = 1) => {
 
     <!-- Conflict resolution dialog -->
     <Dialog v-model:open="conflictDialogOpen">
-        <DialogContent class="max-w-lg">
+        <DialogContent class="max-w-2xl">
             <DialogHeader>
                 <DialogTitle class="flex items-center gap-2">
                     <AlertTriangle class="size-5 text-orange-500" />
@@ -384,14 +404,24 @@ const handlePageChange = (p: number = 1) => {
             <div class="flex flex-col gap-4 py-2">
                 <div v-for="field in selectedEvent?.pending_conflict_fields" :key="field" class="flex flex-col gap-2 rounded-lg border p-3">
                     <p class="font-medium">{{ fieldLabels[field] ?? field }}</p>
-                    <div class="text-muted-foreground grid grid-cols-2 gap-2 text-sm">
-                        <div class="bg-accent rounded-md p-2">
-                            <p class="text-xs font-semibold uppercase">Valeur de la série</p>
-                            <p>{{ chainFieldValue(field) }}</p>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div class="bg-accent flex flex-col gap-1 rounded-md p-3">
+                            <p class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Valeur de la série</p>
+                            <div
+                                v-if="field === 'custom_body'"
+                                class="prose prose-sm dark:prose-invert max-h-40 overflow-y-auto"
+                                v-html="marked(chainFieldValue(field))"
+                            />
+                            <p v-else class="leading-snug">{{ chainFieldValue(field) }}</p>
                         </div>
-                        <div class="bg-accent rounded-md p-2">
-                            <p class="text-xs font-semibold uppercase">Votre modification</p>
-                            <p class="text-muted-foreground text-xs italic">Conservée dans l'événement</p>
+                        <div class="bg-accent flex flex-col gap-1 rounded-md p-3">
+                            <p class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Votre modification</p>
+                            <div
+                                v-if="field === 'custom_body'"
+                                class="prose prose-sm dark:prose-invert max-h-40 overflow-y-auto"
+                                v-html="marked(eventFieldValue(selectedEvent!, field))"
+                            />
+                            <p v-else class="leading-snug">{{ eventFieldValue(selectedEvent!, field) }}</p>
                         </div>
                     </div>
                     <div class="flex gap-2">

@@ -70,7 +70,7 @@ class EventChainController extends Controller implements HasMiddleware
         $eventChain->load('location', 'content');
 
         $events = $eventChain->events()
-            ->with('location')
+            ->with(['location', 'customContent'])
             ->orderBy('start_datetime')
             ->paginate(20)
             ->withQueryString();
