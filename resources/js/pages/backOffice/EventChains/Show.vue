@@ -348,8 +348,8 @@ const handlePageChange = (p: number = 1) => {
                             <!-- Reset to chain: only for events that diverge but have no pending conflicts -->
                             <Tooltip
                                 v-if="
-                                    event.has_chain_conflict &&
-                                    (!event.pending_conflict_fields || event.pending_conflict_fields.length === 0) &&
+                                    ((event.has_chain_conflict && (!event.pending_conflict_fields || event.pending_conflict_fields.length === 0)) ||
+                                        (event.overridden_fields && event.overridden_fields.length > 0)) &&
                                     hasPermissionTo(user, 'edit event chain')
                                 "
                             >
