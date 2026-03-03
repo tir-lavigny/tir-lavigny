@@ -277,7 +277,7 @@ const handlePageChange = (p: number = 1) => {
                 </div>
                 <Separator class="mb-4" />
 
-                <div v-if="paginatedEvents.data && paginatedEvents.data.length > 0" class="flex flex-col gap-3">
+                <div v-if="paginatedEvents.data && paginatedEvents.data.length > 0" class="mb-4 flex flex-col gap-3">
                     <AppEventChainItem
                         v-for="event in paginatedEvents.data"
                         :key="event.id"

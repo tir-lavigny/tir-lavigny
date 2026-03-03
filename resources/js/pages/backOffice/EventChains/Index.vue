@@ -93,7 +93,7 @@ watch(search, (val) => {
                 </div>
 
                 <!-- Chain cards -->
-                <div v-if="paginatedChains.data && paginatedChains.data.length > 0" class="flex flex-col gap-3">
+                <div v-if="paginatedChains.data && paginatedChains.data.length > 0" class="mb-4 flex flex-col gap-3">
                     <div
                         v-for="chain in paginatedChains.data"
                         :key="chain.id"
