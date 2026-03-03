@@ -33,4 +33,9 @@ class Post extends Model
             $post->public_id = Str::uuid7();
         });
     }
+
+    protected function getActivityKey(): mixed
+    {
+        return $this->public_id;
+    }
 }

@@ -20,11 +20,16 @@ trait LogsActivity
         });
     }
 
+    protected function getActivityKey(): mixed
+    {
+        return $this->getKey();
+    }
+
     protected function writeActivity(string $action, array $changes = []): void
     {
         ActivityLog::create([
             'model' => static::class,
-            'model_id' => $this->getKey(),
+            'model_id' => $this->getActivityKey(),
             'action' => $action,
             'changes' => json_encode($changes),
             'user_id' => Auth::id(),
