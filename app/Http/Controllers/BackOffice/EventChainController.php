@@ -28,15 +28,20 @@ class EventChainController extends Controller implements HasMiddleware
 
     // ─── CRUD ─────────────────────────────────────────────────────────────────
 
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->input('search');
+
         $chains = EventChain::with('location')
             ->withCount('events')
+            ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
             ->orderBy('start_date')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('backOffice/EventChains/Index', [
             'paginatedChains' => $chains,
+            'filters' => ['search' => $search],
         ]);
     }
 
@@ -67,7 +72,8 @@ class EventChainController extends Controller implements HasMiddleware
         $events = $eventChain->events()
             ->with('location')
             ->orderBy('start_datetime')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return Inertia::render('backOffice/EventChains/Show', [
             'chain' => $eventChain,

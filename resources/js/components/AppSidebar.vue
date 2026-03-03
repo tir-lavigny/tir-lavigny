@@ -7,7 +7,7 @@ import { hasRole } from '@/lib/utils';
 import type { SharedData } from '@/types';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Calendar, FileText, LayoutGrid, MapPin, Newspaper, PanelTop, ScanEye, Telescope, Users } from 'lucide-vue-next';
+import { Calendar, FileText, LayoutGrid, MapPin, Newspaper, PanelTop, Repeat, ScanEye, Telescope, Users } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const user = usePage<SharedData>().props.auth.user;
@@ -22,6 +22,11 @@ const mainNavItems: NavItem[] = [
         title: 'Événements',
         href: route('bo.events.index'),
         icon: Calendar,
+    },
+    {
+        title: "Séries d'événements",
+        href: route('bo.event-chains.index'),
+        icon: Repeat,
     },
     {
         title: 'Communications',

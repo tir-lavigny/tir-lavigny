@@ -1,0 +1,421 @@
+<script setup lang="ts">
+import AppAlertDialog from '@/components/AppAlertDialog.vue';
+import AppPagination from '@/components/AppPagination.vue';
+import { H1, H3, H4 } from '@/components/typography/headings';
+import { Muted, P, Small } from '@/components/typography/texts';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDate, hasPermissionTo } from '@/lib/utils';
+import { ChainEvent, EventChain, PaginatedChainEvents, type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { AlertTriangle, CalendarDays, Eye, Link2Off, PenBox, Repeat, Trash2 } from 'lucide-vue-next';
+import { ref } from 'vue';
+import { toast } from 'vue-sonner';
+
+const page = usePage<SharedData>();
+const user = page.props.auth.user;
+
+const props = defineProps<{
+    chain: EventChain;
+    paginatedEvents: PaginatedChainEvents;
+}>();
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: "Séries d'événements",
+        href: route('bo.event-chains.index'),
+    },
+    {
+        title: props.chain.title,
+        href: route('bo.event-chains.show', props.chain.id),
+    },
+];
+
+// ─── Labels ───────────────────────────────────────────────────────────────────
+
+const recurrenceLabel: Record<string, string> = {
+    daily: 'Quotidien',
+    weekly: 'Hebdomadaire',
+    biweekly: 'Bihebdomadaire',
+    monthly: 'Mensuel',
+    custom: 'Personnalisé',
+};
+
+const fieldLabels: Record<string, string> = {
+    title: 'Titre',
+    location_id: 'Lieu',
+    content_id: 'Template de contenu',
+    start_time: 'Heure de début',
+    end_time: 'Heure de fin',
+    custom_body: 'Contenu personnalisé',
+};
+
+const chainFieldValue = (field: string): string => {
+    const chain = props.chain as unknown as Record<string, unknown>;
+    const val = chain[field];
+    if (val === null || val === undefined) return '—';
+    if (field === 'location_id') return props.chain.location?.name ?? String(val);
+    return String(val);
+};
+
+// ─── Conflict Dialog ──────────────────────────────────────────────────────────
+
+const conflictDialogOpen = ref(false);
+const selectedEvent = ref<ChainEvent | null>(null);
+const resolvingField = ref<string | null>(null);
+
+const openConflictDialog = (event: ChainEvent) => {
+    selectedEvent.value = event;
+    conflictDialogOpen.value = true;
+};
+
+const resolveField = (field: string, resolution: 'accept_chain' | 'keep_override') => {
+    if (!selectedEvent.value) return;
+    resolvingField.value = field;
+
+    const form = useForm({ field, resolution });
+    form.post(
+        route('bo.event-chains.resolve-conflict', {
+            eventChain: props.chain.id,
+            event: selectedEvent.value.id,
+        }),
+        {
+            preserveState: false,
+            onSuccess: () => {
+                toast.success(`Conflit résolu pour « ${fieldLabels[field] ?? field} ».`);
+                resolvingField.value = null;
+                // Close dialog if no more conflicts
+                const remaining = (selectedEvent.value?.pending_conflict_fields ?? []).filter((f) => f !== field);
+                if (remaining.length === 0) conflictDialogOpen.value = false;
+            },
+            onError: () => {
+                toast.error('Erreur lors de la résolution du conflit.');
+                resolvingField.value = null;
+            },
+        },
+    );
+};
+
+// ─── Detach ───────────────────────────────────────────────────────────────────
+
+const detachEvent = (eventId: number) => {
+    const form = useForm({});
+    form.post(route('bo.events.detach', { event: eventId }), {
+        onSuccess: () => toast.success('Événement détaché de la série.'),
+        onError: () => toast.error('Erreur lors du détachement.'),
+    });
+};
+
+// ─── Delete chain ────────────────────────────────────────────────────────────
+
+const deleteChain = () => {
+    const form = useForm({});
+    form.delete(route('bo.event-chains.destroy', props.chain.id), {
+        onSuccess: () => toast.success('Série et événements supprimés.'),
+        onError: () => toast.error('Erreur lors de la suppression.'),
+    });
+};
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+const handlePageChange = (p: number = 1) => {
+    router.get(route('bo.event-chains.show', props.chain.id), { page: p }, { preserveState: true, preserveScroll: true });
+};
+</script>
+
+<template>
+    <Head :title="chain.title" />
+
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <!-- Header -->
+        <div class="m-4 flex flex-row items-center justify-between">
+            <div class="flex items-center gap-3">
+                <Repeat class="text-muted-foreground size-6" />
+                <H1>{{ chain.title }}</H1>
+            </div>
+            <div class="flex flex-row items-center gap-2">
+                <Tooltip v-if="hasPermissionTo(user, 'edit event chain')">
+                    <TooltipTrigger>
+                        <Link :href="route('bo.event-chains.edit', chain.id)">
+                            <Button size="icon" variant="secondary">
+                                <PenBox />
+                            </Button>
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Modifier la série</p></TooltipContent>
+                </Tooltip>
+                <Tooltip v-if="hasPermissionTo(user, 'delete event chain')">
+                    <TooltipTrigger>
+                        <AppAlertDialog
+                            title="Supprimer la série ?"
+                            description="Cette action est irréversible. La série et tous ses événements seront définitivement supprimés."
+                            cancelText="Annuler"
+                        >
+                            <template #trigger>
+                                <Button size="icon" variant="destructive">
+                                    <Trash2 />
+                                </Button>
+                            </template>
+                            <template #action>
+                                <Button variant="destructive" @click="deleteChain">Supprimer</Button>
+                            </template>
+                        </AppAlertDialog>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Supprimer la série</p></TooltipContent>
+                </Tooltip>
+            </div>
+        </div>
+
+        <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+            <!-- Chain summary cards -->
+            <div class="grid auto-rows-min gap-4 md:grid-cols-3">
+                <!-- General info -->
+                <div class="border-sidebar-border/70 dark:border-sidebar-border relative rounded-xl border p-4">
+                    <H4>Informations</H4>
+                    <div class="mt-4 flex flex-col gap-2">
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <Small>Récurrence</Small>
+                            <Badge variant="secondary" class="col-span-2 w-fit">
+                                {{ recurrenceLabel[chain.recurrence_type] ?? chain.recurrence_type }}
+                            </Badge>
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <Small>Début</Small>
+                            <P class="col-span-2 !mt-0">{{ formatDate(chain.start_date, 'DD MMM YYYY') }}</P>
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <Small>Fin</Small>
+                            <P class="col-span-2 !mt-0">{{ formatDate(chain.end_date, 'DD MMM YYYY') }}</P>
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <Small>Horaires</Small>
+                            <P class="col-span-2 !mt-0">
+                                {{ chain.start_time.slice(0, 5) }}{{ chain.end_time ? ' – ' + chain.end_time.slice(0, 5) : '' }}
+                            </P>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recurrence details -->
+                <div class="border-sidebar-border/70 dark:border-sidebar-border relative rounded-xl border p-4">
+                    <H4>Détails de récurrence</H4>
+                    <div class="mt-4 flex flex-col gap-2">
+                        <div v-if="chain.day_of_week !== null" class="grid grid-cols-3 items-center gap-2">
+                            <Small>Jour</Small>
+                            <P class="col-span-2 !mt-0">
+                                {{ ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'][chain.day_of_week] }}
+                            </P>
+                        </div>
+                        <div v-if="chain.day_of_month !== null" class="grid grid-cols-3 items-center gap-2">
+                            <Small>Jour du mois</Small>
+                            <P class="col-span-2 !mt-0">{{ chain.day_of_month }}</P>
+                        </div>
+                        <div v-if="chain.interval !== null" class="grid grid-cols-3 items-center gap-2">
+                            <Small>Intervalle</Small>
+                            <P class="col-span-2 !mt-0">{{ chain.interval }} {{ chain.interval_unit }}</P>
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-2">
+                            <Small>Événements</Small>
+                            <P class="col-span-2 !mt-0">{{ paginatedEvents.total }}</P>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location -->
+                <div class="border-sidebar-border/70 dark:border-sidebar-border relative rounded-xl border p-4">
+                    <H4>Lieu</H4>
+                    <div class="mt-4">
+                        <div v-if="chain.location">
+                            <P>{{ chain.location.name }}</P>
+                            <p class="text-muted-foreground text-sm">{{ chain.location.address }}</p>
+                        </div>
+                        <P v-else class="text-muted-foreground">Non défini</P>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Events list -->
+            <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
+                <div class="mb-4 flex items-center justify-between">
+                    <H3>Événements</H3>
+                    <Badge variant="outline">{{ paginatedEvents.total }} au total</Badge>
+                </div>
+                <Separator class="mb-4" />
+
+                <div v-if="paginatedEvents.data && paginatedEvents.data.length > 0" class="flex flex-col gap-3">
+                    <div
+                        v-for="event in paginatedEvents.data"
+                        :key="event.id"
+                        class="border-sidebar-border/70 dark:border-sidebar-border flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+                        :class="{ 'border-orange-400 dark:border-orange-500': event.has_chain_conflict }"
+                    >
+                        <!-- Event info -->
+                        <div class="flex items-start gap-3">
+                            <CalendarDays
+                                class="mt-0.5 size-5 shrink-0"
+                                :class="event.has_chain_conflict ? 'text-orange-500' : 'text-muted-foreground'"
+                            />
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-semibold">{{ event.title }}</span>
+                                    <Badge
+                                        v-if="event.has_chain_conflict"
+                                        variant="outline"
+                                        class="border-orange-400 text-orange-600 dark:text-orange-400"
+                                    >
+                                        <AlertTriangle class="mr-1 size-3" />
+                                        {{ event.pending_conflict_fields?.length }} conflit{{
+                                            (event.pending_conflict_fields?.length ?? 0) > 1 ? 's' : ''
+                                        }}
+                                    </Badge>
+                                    <Badge v-else-if="event.overridden_fields && event.overridden_fields.length > 0" variant="secondary">
+                                        Modifié
+                                    </Badge>
+                                </div>
+                                <p class="text-muted-foreground text-sm">
+                                    {{ formatDate(event.start_datetime, 'dddd DD MMMM YYYY à HH:mm') }}
+                                    <span v-if="event.end_datetime"> → {{ formatDate(event.end_datetime, 'HH:mm') }} </span>
+                                </p>
+                                <p v-if="event.location" class="text-muted-foreground text-sm">{{ event.location.name }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+                            <!-- Conflict resolution -->
+                            <Tooltip v-if="event.has_chain_conflict && hasPermissionTo(user, 'edit event chain')">
+                                <TooltipTrigger>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        class="border-orange-400 text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950"
+                                        @click="openConflictDialog(event)"
+                                    >
+                                        <AlertTriangle class="mr-1 size-4" />
+                                        Résoudre
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Résoudre les conflits de cet événement</p></TooltipContent>
+                            </Tooltip>
+
+                            <!-- View event -->
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Link :href="route('bo.events.show', event.id)">
+                                        <Button size="icon" variant="outline">
+                                            <Eye />
+                                        </Button>
+                                    </Link>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Voir l'événement</p></TooltipContent>
+                            </Tooltip>
+
+                            <!-- Edit event -->
+                            <Tooltip v-if="hasPermissionTo(user, 'edit event')">
+                                <TooltipTrigger>
+                                    <Link :href="route('bo.events.edit', event.id)">
+                                        <Button size="icon" variant="secondary">
+                                            <PenBox />
+                                        </Button>
+                                    </Link>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Modifier l'événement</p></TooltipContent>
+                            </Tooltip>
+
+                            <!-- Detach -->
+                            <Tooltip v-if="hasPermissionTo(user, 'edit event chain')">
+                                <TooltipTrigger>
+                                    <AppAlertDialog
+                                        title="Détacher l'événement ?"
+                                        description="L'événement sera conservé mais ne sera plus lié à cette série. Les modifications de la série ne s'y appliqueront plus."
+                                        cancelText="Annuler"
+                                    >
+                                        <template #trigger>
+                                            <Button size="icon" variant="ghost">
+                                                <Link2Off />
+                                            </Button>
+                                        </template>
+                                        <template #action>
+                                            <Button variant="secondary" @click="detachEvent(event.id)">Détacher</Button>
+                                        </template>
+                                    </AppAlertDialog>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Dissocier cet événement de la série</p></TooltipContent>
+                            </Tooltip>
+                        </div>
+                    </div>
+                </div>
+
+                <Muted v-if="!paginatedEvents.data || paginatedEvents.data.length === 0" class="my-4 flex items-center justify-center">
+                    Aucun événement dans cette série.
+                </Muted>
+
+                <AppPagination
+                    :items-per-page="paginatedEvents.per_page"
+                    :total-items="paginatedEvents.total"
+                    :sibling-count="1"
+                    :show-edges="true"
+                    :default-page="paginatedEvents.current_page"
+                    :show-prev-next="true"
+                    :show-first-last="false"
+                    @page-changed="handlePageChange"
+                />
+            </div>
+        </div>
+    </AppLayout>
+
+    <!-- Conflict resolution dialog -->
+    <Dialog v-model:open="conflictDialogOpen">
+        <DialogContent class="max-w-lg">
+            <DialogHeader>
+                <DialogTitle class="flex items-center gap-2">
+                    <AlertTriangle class="size-5 text-orange-500" />
+                    Résoudre les conflits
+                </DialogTitle>
+                <DialogDescription>
+                    Certains champs de cet événement ont été modifiés manuellement et diffèrent des valeurs de la série. Choisissez pour chaque champ
+                    l'action à effectuer.
+                </DialogDescription>
+            </DialogHeader>
+            <div class="flex flex-col gap-4 py-2">
+                <div v-for="field in selectedEvent?.pending_conflict_fields" :key="field" class="flex flex-col gap-2 rounded-lg border p-3">
+                    <p class="font-medium">{{ fieldLabels[field] ?? field }}</p>
+                    <div class="text-muted-foreground grid grid-cols-2 gap-2 text-sm">
+                        <div class="bg-accent rounded-md p-2">
+                            <p class="text-xs font-semibold uppercase">Valeur de la série</p>
+                            <p>{{ chainFieldValue(field) }}</p>
+                        </div>
+                        <div class="bg-accent rounded-md p-2">
+                            <p class="text-xs font-semibold uppercase">Votre modification</p>
+                            <p class="text-muted-foreground text-xs italic">Conservée dans l'événement</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <Button
+                            size="sm"
+                            variant="default"
+                            :disabled="resolvingField === field"
+                            @click="resolveField(field, 'accept_chain')"
+                            class="flex-1"
+                        >
+                            Accepter la série
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            :disabled="resolvingField === field"
+                            @click="resolveField(field, 'keep_override')"
+                            class="flex-1"
+                        >
+                            Conserver ma valeur
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </DialogContent>
+    </Dialog>
+</template>
