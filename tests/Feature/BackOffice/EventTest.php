@@ -4,6 +4,7 @@ namespace Tests\Feature\BackOffice;
 
 use App\Models\Content;
 use App\Models\Event;
+use App\Models\EventChain;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -678,6 +679,87 @@ class EventTest extends TestCase
         $this->assertDatabaseMissing('event_contents', [
             'event_id' => $event->id,
             'body' => 'Custom Content',
+        ]);
+    }
+
+    public function test_update_chained_event_marks_differing_fields_as_overridden(): void
+    {
+        $chain = EventChain::factory()->withoutEvents()->create(['title' => 'Chain Title']);
+        $event = Event::factory()->create([
+            'event_chain_id' => $chain->id,
+            'title' => 'Original Event Title',
+        ]);
+
+        $data = [
+            'title' => 'Manually Changed Title', // differs from chain
+            'start_datetime' => now()->addDays(5)->setTime(10, 0)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(5)->setTime(12, 0)->format('Y-m-d H:i:s'),
+            'location_id' => null,
+            'template_id' => null,
+            'body' => null,
+        ];
+
+        $this->put(route('bo.events.update', $event->id), $data)->assertStatus(302);
+
+        $event->refresh();
+        $this->assertTrue($event->isFieldOverridden('title'), 'title should be marked as overridden');
+    }
+
+    public function test_update_chained_event_clears_override_when_value_matches_chain(): void
+    {
+        $chain = EventChain::factory()->withoutEvents()->create(['title' => 'Chain Title']);
+        $event = Event::factory()->create([
+            'event_chain_id' => $chain->id,
+            'title' => 'Old Custom Title',
+            'overridden_fields' => ['title'],
+        ]);
+
+        $data = [
+            'title' => 'Chain Title', // now matches chain again
+            'start_datetime' => now()->addDays(5)->setTime(10, 0)->format('Y-m-d H:i:s'),
+            'end_datetime' => now()->addDays(5)->setTime(12, 0)->format('Y-m-d H:i:s'),
+            'location_id' => null,
+            'template_id' => null,
+            'body' => null,
+        ];
+
+        $this->put(route('bo.events.update', $event->id), $data);
+
+        $event->refresh();
+        $this->assertFalse($event->isFieldOverridden('title'), 'title override should be cleared when value matches chain');
+    }
+
+    public function test_chain_update_does_not_overwrite_manually_edited_chained_event_field(): void
+    {
+        $chain = EventChain::factory()->withoutEvents()->create(['title' => 'Chain Title']);
+        $event = Event::factory()->create([
+            'event_chain_id' => $chain->id,
+            'title' => 'Manual Title',
+            'overridden_fields' => ['title'],
+        ]);
+
+        // Update the chain title — the event should NOT be overwritten because 'title' is overridden
+        $this->put(route('bo.event-chains.update', $chain), [
+            'title' => 'New Chain Title',
+            'recurrence_type' => $chain->recurrence_type,
+            'interval' => $chain->interval,
+            'interval_unit' => $chain->interval_unit,
+            'day_of_week' => $chain->day_of_week,
+            'day_of_month' => $chain->day_of_month,
+            'start_date' => $chain->start_date,
+            'end_date' => $chain->end_date,
+            'start_time' => $chain->start_time,
+            'end_time' => $chain->end_time,
+            'location_id' => $chain->location_id,
+            'content_id' => $chain->content_id,
+            'custom_body' => $chain->custom_body,
+            'update_scope' => 'all',
+            'from_date' => null,
+        ]);
+
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+            'title' => 'Manual Title',
         ]);
     }
 }

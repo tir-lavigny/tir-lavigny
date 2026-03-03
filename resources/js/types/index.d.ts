@@ -56,6 +56,7 @@ export interface Event {
     end_datetime?: string; // ISO 8601 format
     content_id?: number;
     location_id?: number;
+    event_chain_id?: number | null;
     created_at: string; // ISO 8601 format
     updated_at: string; // ISO 8601 format
     location?: Location;
@@ -136,6 +137,44 @@ export interface Role {
         role_id: number;
     };
     permissions?: Permission[];
+}
+
+export interface EventChain {
+    id: number;
+    title: string;
+    recurrence_type: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'custom';
+    interval: number | null;
+    interval_unit: 'days' | 'weeks' | null;
+    day_of_week: number | null;
+    day_of_month: number | null;
+    start_date: string;
+    end_date: string;
+    start_time: string;
+    end_time: string | null;
+    location_id: number | null;
+    content_id: number | null;
+    custom_body: string | null;
+    created_at: string;
+    updated_at: string;
+    location?: Location;
+    content?: Content;
+    events_count?: number;
+}
+
+export interface ChainEvent extends Event {
+    event_chain_id: number | null;
+    overridden_fields: string[] | null;
+    has_chain_conflict: boolean;
+    pending_conflict_fields: string[] | null;
+    custom_content?: { body: string; event_id: number } | null;
+}
+
+export interface PaginatedEventChains extends PaginatedData<EventChain> {
+    data?: EventChain[];
+}
+
+export interface PaginatedChainEvents extends PaginatedData<ChainEvent> {
+    data?: ChainEvent[];
 }
 
 export interface ActivityLog {

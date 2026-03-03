@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import { Small } from '@/components/typography/texts';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { Link, useForm } from '@inertiajs/vue3';
-import { ArrowRight, Calendar, MapPin, PenBox, Trash2 } from 'lucide-vue-next';
+import { ArrowRight, Calendar, MapPin, PenBox, Repeat, Trash2 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 const props = withDefaults(
@@ -46,9 +47,21 @@ const handleDelete = (id: number) => {
 <template>
     <Card class="justify-between">
         <CardHeader class="flex flex-col items-center justify-between sm:flex-row">
-            <CardTitle>
-                {{ event.title }}
-            </CardTitle>
+            <div class="flex flex-wrap items-center gap-2">
+                <CardTitle>
+                    {{ event.title }}
+                </CardTitle>
+                <Tooltip v-if="event.event_chain_id">
+                    <TooltipTrigger>
+                        <Link :href="route('bo.event-chains.show', event.event_chain_id)">
+                            <Badge variant="secondary" class="cursor-pointer gap-1">
+                                <Repeat class="size-3" />
+                            </Badge>
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Voir la série d'événements</p></TooltipContent>
+                </Tooltip>
+            </div>
             <div class="flex flex-row items-center gap-2">
                 <Tooltip v-if="actions.includes('edit')">
                     <TooltipTrigger>
