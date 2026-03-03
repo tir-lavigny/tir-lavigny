@@ -182,7 +182,7 @@ const handlePageChange = (p: number = 1) => {
                 <Tooltip v-if="hasPermissionTo(user, 'delete event chain')">
                     <TooltipTrigger>
                         <AppAlertDialog
-                            title="Supprimer la série ?"
+                            :title="`Supprimer la série ${paginatedEvents.total ? ' et ' + paginatedEvents.total + ' événements associés' : ''} ?`"
                             description="Cette action est irréversible. La série et tous ses événements seront définitivement supprimés."
                             cancelText="Annuler"
                         >
