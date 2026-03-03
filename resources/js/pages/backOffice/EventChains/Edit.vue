@@ -153,9 +153,7 @@ const resetForm = () => {
         </div>
 
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <!-- Row 1: General + Recurrence + Location -->
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <!-- General info -->
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative overflow-hidden rounded-xl border p-4">
                     <H3>Informations générales</H3>
                     <div class="mt-4 flex flex-col gap-4">
@@ -194,7 +192,6 @@ const resetForm = () => {
                     </div>
                 </div>
 
-                <!-- Recurrence -->
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative overflow-hidden rounded-xl border p-4">
                     <H3>Récurrence</H3>
                     <div class="mt-4 flex flex-col gap-4">
@@ -275,7 +272,6 @@ const resetForm = () => {
                     </div>
                 </div>
 
-                <!-- Location + Template -->
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative overflow-hidden rounded-xl border p-4">
                     <H3>Lieu & contenu</H3>
                     <div class="mt-4 flex flex-col gap-4">
@@ -302,7 +298,6 @@ const resetForm = () => {
                 </div>
             </div>
 
-            <!-- Row 2: Update scope -->
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative overflow-hidden rounded-xl border p-4">
                 <H3>Portée de la mise à jour</H3>
                 <p class="text-muted-foreground mb-4 text-sm">
@@ -330,7 +325,6 @@ const resetForm = () => {
                 </div>
             </div>
 
-            <!-- Row 3: Custom body -->
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
                 <div class="flex flex-row items-center justify-between">
                     <div class="flex items-center gap-4">

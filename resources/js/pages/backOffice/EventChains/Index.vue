@@ -63,7 +63,6 @@ watch(search, (val) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <!-- Search bar -->
             <div class="flex w-full flex-col items-center justify-between gap-6 lg:flex-row">
                 <div class="relative w-full items-center lg:max-w-sm">
                     <Input id="search" type="text" v-model="search" placeholder="Rechercher..." class="pl-10" />
@@ -92,14 +91,12 @@ watch(search, (val) => {
                     </div>
                 </div>
 
-                <!-- Chain cards -->
                 <div v-if="paginatedChains.data && paginatedChains.data.length > 0" class="mb-4 flex flex-col gap-3">
                     <div
                         v-for="chain in paginatedChains.data"
                         :key="chain.id"
                         class="border-sidebar-border/70 dark:border-sidebar-border hover:bg-accent/50 flex flex-col gap-3 rounded-xl border p-4 transition-colors sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <!-- Left: info -->
                         <div class="flex items-start gap-3">
                             <CalendarDays class="text-muted-foreground mt-0.5 size-5 shrink-0" />
                             <div class="flex flex-col gap-1">
@@ -113,7 +110,6 @@ watch(search, (val) => {
                             </div>
                         </div>
 
-                        <!-- Right: badges + actions -->
                         <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                             <Badge :variant="recurrenceBadgeVariant(chain.recurrence_type)">
                                 {{ recurrenceLabel[chain.recurrence_type] ?? chain.recurrence_type }}

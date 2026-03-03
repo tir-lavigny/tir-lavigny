@@ -37,8 +37,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// ─── Labels ───────────────────────────────────────────────────────────────────
-
 const recurrenceLabel: Record<string, string> = {
     daily: 'Quotidien',
     weekly: 'Hebdomadaire',
@@ -83,8 +81,6 @@ const eventFieldValue = (event: ChainEvent, field: string): string => {
     }
 };
 
-// ─── Conflict Dialog ──────────────────────────────────────────────────────────
-
 const conflictDialogOpen = ref(false);
 const selectedEvent = ref<ChainEvent | null>(null);
 const resolvingField = ref<string | null>(null);
@@ -121,8 +117,6 @@ const resolveField = (field: string, resolution: 'accept_chain' | 'keep_override
     );
 };
 
-// ─── Detach ───────────────────────────────────────────────────────────────────
-
 const detachEvent = (eventId: number) => {
     const form = useForm({});
     form.post(route('bo.events.detach', { event: eventId }), {
@@ -130,8 +124,6 @@ const detachEvent = (eventId: number) => {
         onError: () => toast.error('Erreur lors du détachement.'),
     });
 };
-
-// ─── Reset to chain ──────────────────────────────────────────────────────────
 
 const resetToChain = (eventId: number) => {
     const form = useForm({});
@@ -141,8 +133,6 @@ const resetToChain = (eventId: number) => {
     });
 };
 
-// ─── Delete chain ────────────────────────────────────────────────────────────
-
 const deleteChain = () => {
     const form = useForm({});
     form.delete(route('bo.event-chains.destroy', props.chain.id), {
@@ -150,8 +140,6 @@ const deleteChain = () => {
         onError: () => toast.error('Erreur lors de la suppression.'),
     });
 };
-
-// ─── Pagination ───────────────────────────────────────────────────────────────
 
 const handlePageChange = (p: number = 1) => {
     router.get(route('bo.event-chains.show', props.chain.id), { page: p }, { preserveState: true, preserveScroll: true });
@@ -162,7 +150,6 @@ const handlePageChange = (p: number = 1) => {
     <Head :title="chain.title" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <!-- Header -->
         <div class="m-4 flex flex-row items-center justify-between">
             <div class="flex items-center gap-3">
                 <Repeat class="text-muted-foreground size-6" />
@@ -202,9 +189,7 @@ const handlePageChange = (p: number = 1) => {
         </div>
 
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <!-- Chain summary cards -->
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <!-- General info -->
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative rounded-xl border p-4">
                     <H4>Informations</H4>
                     <div class="mt-4 flex flex-col gap-2">
@@ -231,7 +216,6 @@ const handlePageChange = (p: number = 1) => {
                     </div>
                 </div>
 
-                <!-- Recurrence details -->
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative rounded-xl border p-4">
                     <H4>Détails de récurrence</H4>
                     <div class="mt-4 flex flex-col gap-2">
@@ -256,7 +240,6 @@ const handlePageChange = (p: number = 1) => {
                     </div>
                 </div>
 
-                <!-- Location -->
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative rounded-xl border p-4">
                     <H4>Lieu</H4>
                     <div class="mt-4">
@@ -269,7 +252,6 @@ const handlePageChange = (p: number = 1) => {
                 </div>
             </div>
 
-            <!-- Events list -->
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
                 <div class="mb-4 flex items-center justify-between">
                     <H3>Événements</H3>
@@ -307,7 +289,6 @@ const handlePageChange = (p: number = 1) => {
         </div>
     </AppLayout>
 
-    <!-- Conflict resolution dialog -->
     <Dialog v-model:open="conflictDialogOpen">
         <DialogContent class="max-w-2xl">
             <DialogHeader>

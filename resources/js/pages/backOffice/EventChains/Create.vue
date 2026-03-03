@@ -142,9 +142,7 @@ const saveChain = () => {
         </div>
 
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <!-- Row 1: General + Recurrence + Location -->
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <!-- General info -->
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative overflow-hidden rounded-xl border p-4">
                     <H3>Informations générales</H3>
                     <div class="mt-4 flex flex-col gap-4">
@@ -183,7 +181,6 @@ const saveChain = () => {
                     </div>
                 </div>
 
-                <!-- Recurrence -->
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative overflow-hidden rounded-xl border p-4">
                     <H3>Récurrence</H3>
                     <div class="mt-4 flex flex-col gap-4">
@@ -202,7 +199,6 @@ const saveChain = () => {
                             <InputError :message="createForm.errors.recurrence_type" />
                         </div>
 
-                        <!-- Weekly / Biweekly: day of week -->
                         <div v-if="needsDayOfWeek" class="grid gap-2">
                             <Label>Jour de la semaine</Label>
                             <Select
@@ -221,7 +217,6 @@ const saveChain = () => {
                             <InputError :message="createForm.errors.day_of_week" />
                         </div>
 
-                        <!-- Monthly: day of month -->
                         <div v-if="needsDayOfMonth" class="grid gap-2">
                             <Label for="day_of_month">Jour du mois</Label>
                             <Input
@@ -236,7 +231,6 @@ const saveChain = () => {
                             <InputError :message="createForm.errors.day_of_month" />
                         </div>
 
-                        <!-- Custom: interval + unit -->
                         <template v-if="needsInterval">
                             <div class="grid grid-cols-2 gap-2">
                                 <div class="grid gap-2">
@@ -272,7 +266,6 @@ const saveChain = () => {
                     </div>
                 </div>
 
-                <!-- Location + Template -->
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative overflow-hidden rounded-xl border p-4">
                     <H3>Lieu & contenu</H3>
                     <div class="mt-4 flex flex-col gap-4">
@@ -299,7 +292,6 @@ const saveChain = () => {
                 </div>
             </div>
 
-            <!-- Row 2: Custom body -->
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
                 <div class="flex flex-row items-center justify-between">
                     <div class="flex items-center gap-4">
