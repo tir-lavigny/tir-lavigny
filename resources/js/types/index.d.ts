@@ -56,6 +56,7 @@ export interface Event {
     end_datetime?: string; // ISO 8601 format
     content_id?: number;
     location_id?: number;
+    event_chain_id?: number | null;
     created_at: string; // ISO 8601 format
     updated_at: string; // ISO 8601 format
     location?: Location;
