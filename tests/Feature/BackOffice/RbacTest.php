@@ -4,6 +4,7 @@ namespace Tests\Feature\BackOffice;
 
 use App\Models\Content;
 use App\Models\Event;
+use App\Models\EventChain;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\User;
@@ -537,5 +538,106 @@ class RbacTest extends TestCase
             'title' => 'Updated Title',
             'content' => 'Updated content.',
         ]);
+    }
+
+    public function test_event_chains_crud_ok_permissions(): void
+    {
+        $createUser = User::factory()->create();
+        $createUser->givePermissionTo('create event chain');
+
+        $editUser = User::factory()->create();
+        $editUser->givePermissionTo('edit event chain');
+
+        $deleteUser = User::factory()->create();
+        $deleteUser->givePermissionTo('delete event chain');
+
+        $data = [
+            'title' => 'Daily Training',
+            'recurrence_type' => 'daily',
+            'interval' => null,
+            'interval_unit' => null,
+            'day_of_week' => null,
+            'day_of_month' => null,
+            'start_date' => '2099-01-06',
+            'end_date' => '2099-01-07',
+            'start_time' => '18:00',
+            'end_time' => '20:00',
+            'location_id' => null,
+            'content_id' => null,
+            'custom_body' => null,
+        ];
+
+        // Test create event chain
+        $response = $this->actingAs($createUser)->post(route('bo.event-chains.store'), $data);
+        $response->assertRedirect(route('bo.event-chains.index'));
+        $this->assertDatabaseHas('event_chains', [
+            'title' => 'Daily Training',
+            'recurrence_type' => 'daily',
+        ]);
+        $chain = EventChain::first();
+
+        // Test edit event chain
+        $response = $this->actingAs($editUser)->put(route('bo.event-chains.update', $chain), array_merge($data, [
+            'title' => 'Updated Training',
+            'update_scope' => 'all',
+            'from_date' => null,
+        ]));
+        $response->assertRedirect(route('bo.event-chains.show', $chain));
+        $this->assertDatabaseHas('event_chains', ['title' => 'Updated Training']);
+        $this->assertDatabaseMissing('event_chains', ['title' => 'Daily Training']);
+
+        // Test delete event chain
+        $response = $this->actingAs($deleteUser)->delete(route('bo.event-chains.destroy', $chain));
+        $response->assertRedirect(route('bo.event-chains.index'));
+        $this->assertDatabaseMissing('event_chains', ['title' => 'Updated Training']);
+    }
+
+    public function test_event_chains_crud_nok_permissions(): void
+    {
+        $createUser = User::factory()->create();
+        $createUser->givePermissionTo('create event chain');
+
+        $editUser = User::factory()->create();
+        $editUser->givePermissionTo('edit event chain');
+
+        $deleteUser = User::factory()->create();
+        $deleteUser->givePermissionTo('delete event chain');
+
+        $data = [
+            'title' => 'Daily Training',
+            'recurrence_type' => 'daily',
+            'interval' => null,
+            'interval_unit' => null,
+            'day_of_week' => null,
+            'day_of_month' => null,
+            'start_date' => '2099-01-06',
+            'end_date' => '2099-01-07',
+            'start_time' => '18:00',
+            'end_time' => '20:00',
+            'location_id' => null,
+            'content_id' => null,
+            'custom_body' => null,
+        ];
+
+        // Test create event chain without permission
+        $response = $this->actingAs($editUser)->post(route('bo.event-chains.store'), $data);
+        $response->assertStatus(403);
+        $this->assertDatabaseMissing('event_chains', ['title' => 'Daily Training']);
+
+        // Test edit event chain without permission
+        $chain = EventChain::factory()->withoutEvents()->create();
+        $response = $this->actingAs($deleteUser)->put(route('bo.event-chains.update', $chain), array_merge($data, [
+            'title' => 'Updated Training',
+            'update_scope' => 'all',
+            'from_date' => null,
+        ]));
+        $response->assertStatus(403);
+        $this->assertDatabaseMissing('event_chains', ['title' => 'Updated Training']);
+        $this->assertDatabaseHas('event_chains', ['title' => $chain->title]);
+
+        // Test delete event chain without permission
+        $response = $this->actingAs($createUser)->delete(route('bo.event-chains.destroy', $chain));
+        $response->assertStatus(403);
+        $this->assertDatabaseHas('event_chains', ['title' => $chain->title]);
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BackOffice\DashboardController;
+use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
 use App\Http\Controllers\BackOffice\UserController as BackOfficeUserController;
@@ -40,6 +41,21 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         'update' => 'bo.events.update',
         'destroy' => 'bo.events.destroy',
     ]);
+    Route::post('events/{event}/detach', [BackOfficeEventChainController::class, 'detachEvent'])->name('bo.events.detach');
+
+    Route::resource('event-chains', BackOfficeEventChainController::class)->names([
+        'index' => 'bo.event-chains.index',
+        'create' => 'bo.event-chains.create',
+        'store' => 'bo.event-chains.store',
+        'show' => 'bo.event-chains.show',
+        'edit' => 'bo.event-chains.edit',
+        'update' => 'bo.event-chains.update',
+        'destroy' => 'bo.event-chains.destroy',
+    ]);
+    Route::post(
+        'event-chains/{eventChain}/events/{event}/resolve-conflict',
+        [BackOfficeEventChainController::class, 'resolveConflict']
+    )->name('bo.event-chains.resolve-conflict');
     Route::resource('posts', BackOfficePostController::class)->names([
         'index' => 'bo.posts.index',
         'create' => 'bo.posts.create',
