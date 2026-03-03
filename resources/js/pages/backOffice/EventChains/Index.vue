@@ -107,7 +107,7 @@ watch(search, (val) => {
                                 <div class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
                                     <span>{{ formatDate(chain.start_date, 'DD MMM YYYY') }} → {{ formatDate(chain.end_date, 'DD MMM YYYY') }}</span>
                                     <span>·</span>
-                                    <span>{{ chain.start_time.slice(0, 5) }}{{ chain.end_time ? ' – ' + chain.end_time.slice(0, 5) : '' }}</span>
+                                    <span>{{ chain.start_time.slice(0, 5) }}{{ chain.end_time ? ' - ' + chain.end_time.slice(0, 5) : '' }}</span>
                                     <span v-if="chain.location">· {{ chain.location.name }}</span>
                                 </div>
                             </div>

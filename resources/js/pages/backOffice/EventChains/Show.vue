@@ -76,7 +76,7 @@ const eventFieldValue = (event: ChainEvent, field: string): string => {
         case 'end_time':
             return event.end_datetime ? new Date(event.end_datetime).toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit' }) : '-';
         case 'custom_body':
-            return event.custom_content?.body ?? '—';
+            return event.custom_content?.body ?? '-';
         default:
             return '-';
     }
@@ -224,7 +224,7 @@ const handlePageChange = (p: number = 1) => {
                         <div class="grid grid-cols-3 items-center gap-2">
                             <Small>Horaires</Small>
                             <P class="col-span-2 !mt-0">
-                                {{ chain.start_time.slice(0, 5) }}{{ chain.end_time ? ' – ' + chain.end_time.slice(0, 5) : '' }}
+                                {{ chain.start_time.slice(0, 5) }}{{ chain.end_time ? ' - ' + chain.end_time.slice(0, 5) : '' }}
                             </P>
                         </div>
                     </div>
@@ -392,7 +392,7 @@ const handlePageChange = (p: number = 1) => {
                             <Tooltip v-if="hasPermissionTo(user, 'edit event')">
                                 <TooltipTrigger>
                                     <Link :href="route('bo.events.edit', event.id)">
-                                        <Button size="icon" variant="secondary">
+                                        <Button size="icon" variant="outline">
                                             <PenBox />
                                         </Button>
                                     </Link>
