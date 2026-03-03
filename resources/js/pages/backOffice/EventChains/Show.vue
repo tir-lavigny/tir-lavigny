@@ -282,7 +282,7 @@ const handlePageChange = (p: number = 1) => {
                         :key="event.id"
                         class="border-sidebar-border/70 dark:border-sidebar-border flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
                         :class="{
-                            'border-orange-400 dark:border-orange-500': event.pending_conflict_fields && event.pending_conflict_fields.length > 0,
+                            'border-warning': event.pending_conflict_fields && event.pending_conflict_fields.length > 0,
                         }"
                     >
                         <!-- Event info -->
@@ -291,7 +291,7 @@ const handlePageChange = (p: number = 1) => {
                                 class="mt-0.5 size-5 shrink-0"
                                 :class="
                                     event.pending_conflict_fields && event.pending_conflict_fields.length > 0
-                                        ? 'text-orange-500'
+                                        ? 'text-warning'
                                         : 'text-muted-foreground'
                                 "
                             />
@@ -302,7 +302,7 @@ const handlePageChange = (p: number = 1) => {
                                     <Badge
                                         v-if="event.pending_conflict_fields && event.pending_conflict_fields.length > 0"
                                         variant="outline"
-                                        class="border-orange-400 text-orange-600 dark:text-orange-400"
+                                        class="border-warning text-warning-foreground"
                                     >
                                         <AlertTriangle class="mr-1 size-3" />
                                         {{ event.pending_conflict_fields.length }} conflit{{ event.pending_conflict_fields.length > 1 ? 's' : '' }}
@@ -335,7 +335,7 @@ const handlePageChange = (p: number = 1) => {
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        class="border-orange-400 text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950"
+                                        class="border-warning text-warning-foreground hover:bg-warning-subtle"
                                         @click="openConflictDialog(event)"
                                     >
                                         <AlertTriangle class="mr-1 size-4" />
@@ -363,7 +363,7 @@ const handlePageChange = (p: number = 1) => {
                                             <Button
                                                 size="icon"
                                                 variant="ghost"
-                                                class="text-orange-500 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950"
+                                                class="text-warning hover:bg-warning-subtle hover:text-warning-foreground"
                                             >
                                                 <RefreshCcw />
                                             </Button>
@@ -447,7 +447,7 @@ const handlePageChange = (p: number = 1) => {
         <DialogContent class="max-w-2xl">
             <DialogHeader>
                 <DialogTitle class="flex items-center gap-2">
-                    <AlertTriangle class="size-5 text-orange-500" />
+                    <AlertTriangle class="text-warning size-5" />
                     Résoudre les conflits
                 </DialogTitle>
                 <DialogDescription>
