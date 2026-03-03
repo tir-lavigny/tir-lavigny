@@ -37,6 +37,29 @@ const translate = (key: string) => {
 const cleanModelName = (model: string) => {
     return model.split('\\').pop()?.toLowerCase() ?? model.toLowerCase();
 };
+
+const translateModel = (model: string) => {
+    switch (cleanModelName(model)) {
+        case 'post':
+            return 'article';
+        case 'event':
+            return 'événement';
+        case 'eventchain':
+            return "série d'événements";
+        case 'location':
+            return 'lieu';
+        case 'content':
+            return 'contenu';
+        case 'eventcontent':
+            return "contenu d'événement";
+        case 'user':
+            return 'utilisateur';
+        case 'activitylog':
+            return "journal d'activité";
+        default:
+            return cleanModelName(model);
+    }
+};
 </script>
 
 <template>
@@ -61,7 +84,7 @@ const cleanModelName = (model: string) => {
                     <StepperItem v-for="(activity, index) in activities" :key="activity.id" :step="index">
                         <StepperTrigger>
                             <StepperTitle>
-                                {{ translate(activity.action) }} un {{ cleanModelName(activity.model) }}
+                                {{ translate(activity.action) }} un(e) {{ translateModel(activity.model) }}
 
                                 <Button
                                     :variant="activity.action === 'deleted' ? 'outline' : 'secondary'"
