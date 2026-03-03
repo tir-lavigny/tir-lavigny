@@ -72,6 +72,25 @@ class EventChainUpdaterService
     }
 
     /**
+     * Resets all overridden / conflict fields on a single event back to the
+     * chain's current values, clearing all override state.
+     */
+    public function resetToChain(Event $event, EventChain $chain): void
+    {
+        $event->loadMissing('customContent');
+
+        foreach (EventChain::PROPAGATABLE_FIELDS as $field) {
+            $chainValue = $this->getChainFieldValue($field, $chain);
+            $this->applyFieldToEvent($event, $field, $chainValue);
+        }
+
+        $event->overridden_fields = [];
+        $event->has_chain_conflict = false;
+        $event->pending_conflict_fields = [];
+        $event->save();
+    }
+
+    /**
      * Resolves a conflict on a single event field.
      *
      * @param  string  $resolution  'accept_chain' | 'keep_override'

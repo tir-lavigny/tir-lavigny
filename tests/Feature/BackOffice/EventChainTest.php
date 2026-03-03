@@ -416,6 +416,46 @@ class EventChainTest extends TestCase
 
     // ─── Detach ───────────────────────────────────────────────────────────────
 
+    public function test_can_reset_event_to_chain_values(): void
+    {
+        $chain = EventChain::factory()->withoutEvents()->create(['title' => 'Chain Title']);
+        $event = Event::factory()->create([
+            'event_chain_id' => $chain->id,
+            'title' => 'Custom Title',
+            'overridden_fields' => ['title'],
+            'has_chain_conflict' => true,
+            'pending_conflict_fields' => [],
+        ]);
+
+        $this->post(route('bo.event-chains.reset-to-chain', [$chain, $event]))
+            ->assertStatus(302);
+
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+            'title' => 'Chain Title',
+            'has_chain_conflict' => false,
+        ]);
+    }
+
+    public function test_reset_to_chain_returns_404_for_event_not_in_chain(): void
+    {
+        $chain = EventChain::factory()->withoutEvents()->create();
+        $otherChain = EventChain::factory()->withoutEvents()->create();
+        $event = Event::factory()->create(['event_chain_id' => $otherChain->id]);
+
+        $this->post(route('bo.event-chains.reset-to-chain', [$chain, $event]))
+            ->assertStatus(404);
+    }
+
+    public function test_guest_is_redirected_on_reset_to_chain(): void
+    {
+        $this->post('/logout');
+        $chain = EventChain::factory()->withoutEvents()->create();
+        $event = Event::factory()->create(['event_chain_id' => $chain->id]);
+        $this->post(route('bo.event-chains.reset-to-chain', [$chain, $event]))
+            ->assertRedirect('/login');
+    }
+
     public function test_can_detach_event_from_chain(): void
     {
         $chain = EventChain::factory()->withoutEvents()->create();

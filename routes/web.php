@@ -56,6 +56,10 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         'event-chains/{eventChain}/events/{event}/resolve-conflict',
         [BackOfficeEventChainController::class, 'resolveConflict']
     )->name('bo.event-chains.resolve-conflict');
+    Route::post(
+        'event-chains/{eventChain}/events/{event}/reset-to-chain',
+        [BackOfficeEventChainController::class, 'resetToChain']
+    )->name('bo.event-chains.reset-to-chain');
     Route::resource('posts', BackOfficePostController::class)->names([
         'index' => 'bo.posts.index',
         'create' => 'bo.posts.create',

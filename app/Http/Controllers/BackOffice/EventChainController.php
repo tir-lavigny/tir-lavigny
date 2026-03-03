@@ -21,7 +21,7 @@ class EventChainController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('permission:create event chain', only: ['create', 'store']),
-            new Middleware('permission:edit event chain', only: ['edit', 'update', 'resolveConflict', 'detachEvent']),
+            new Middleware('permission:edit event chain', only: ['edit', 'update', 'resolveConflict', 'resetToChain', 'detachEvent']),
             new Middleware('permission:delete event chain', only: ['destroy']),
         ];
     }
@@ -163,6 +163,25 @@ class EventChainController extends Controller implements HasMiddleware
         return redirect()
             ->route('bo.event-chains.show', $eventChain)
             ->with('success', 'Conflict resolved.');
+    }
+
+    /**
+     * Resets a single event back to all of the chain's current values,
+     * discarding all manual overrides.
+     * POST /back-office/event-chains/{eventChain}/events/{event}/reset-to-chain
+     */
+    public function resetToChain(
+        EventChain $eventChain,
+        Event $event,
+        EventChainUpdaterService $updater
+    ) {
+        abort_unless($event->event_chain_id === $eventChain->id, 404);
+
+        $updater->resetToChain($event, $eventChain);
+
+        return redirect()
+            ->route('bo.event-chains.show', $eventChain)
+            ->with('success', 'Event reset to chain values.');
     }
 
     /**

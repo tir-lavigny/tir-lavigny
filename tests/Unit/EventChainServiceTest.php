@@ -211,6 +211,26 @@ class EventChainServiceTest extends TestCase
 
     // ─── Event model helpers ──────────────────────────────────────────────────
 
+    public function test_reset_to_chain_restores_all_chain_values(): void
+    {
+        $chain = EventChain::factory()->withoutEvents()->create(['title' => 'Chain Title']);
+        $event = Event::factory()->create([
+            'event_chain_id' => $chain->id,
+            'title' => 'Custom Title',
+            'overridden_fields' => ['title'],
+            'has_chain_conflict' => true,
+            'pending_conflict_fields' => [],
+        ]);
+
+        app(EventChainUpdaterService::class)->resetToChain($event, $chain);
+
+        $event->refresh();
+        $this->assertEquals('Chain Title', $event->title);
+        $this->assertEmpty($event->overridden_fields);
+        $this->assertFalse($event->has_chain_conflict);
+        $this->assertEmpty($event->pending_conflict_fields);
+    }
+
     public function test_mark_field_overridden_adds_field(): void
     {
         $event = Event::factory()->create(['overridden_fields' => []]);

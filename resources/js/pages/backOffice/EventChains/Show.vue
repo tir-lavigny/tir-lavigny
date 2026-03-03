@@ -12,7 +12,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, hasPermissionTo } from '@/lib/utils';
 import { ChainEvent, EventChain, PaginatedChainEvents, type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, CalendarDays, Eye, Link2Off, PenBox, Repeat, Trash2 } from 'lucide-vue-next';
+import { AlertTriangle, CalendarDays, Eye, Link2Off, PenBox, RefreshCcw, Repeat, Trash2 } from 'lucide-vue-next';
 import { marked } from 'marked';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
@@ -127,6 +127,16 @@ const detachEvent = (eventId: number) => {
     form.post(route('bo.events.detach', { event: eventId }), {
         onSuccess: () => toast.success('Événement détaché de la série.'),
         onError: () => toast.error('Erreur lors du détachement.'),
+    });
+};
+
+// ─── Reset to chain ──────────────────────────────────────────────────────────
+
+const resetToChain = (eventId: number) => {
+    const form = useForm({});
+    form.post(route('bo.event-chains.reset-to-chain', { eventChain: props.chain.id, event: eventId }), {
+        onSuccess: () => toast.success('Événement réinitialisé aux valeurs de la série.'),
+        onError: () => toast.error('Erreur lors de la réinitialisation.'),
     });
 };
 
@@ -333,6 +343,37 @@ const handlePageChange = (p: number = 1) => {
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent><p>Résoudre les conflits de cet événement</p></TooltipContent>
+                            </Tooltip>
+
+                            <!-- Reset to chain: only for events that diverge but have no pending conflicts -->
+                            <Tooltip
+                                v-if="
+                                    event.has_chain_conflict &&
+                                    (!event.pending_conflict_fields || event.pending_conflict_fields.length === 0) &&
+                                    hasPermissionTo(user, 'edit event chain')
+                                "
+                            >
+                                <TooltipTrigger>
+                                    <AppAlertDialog
+                                        title="Réinitialiser aux valeurs de la série ?"
+                                        description="Toutes vos modifications sur cet événement seront écrasées et remplacées par les valeurs actuelles de la série. Cette action est irréversible."
+                                        cancelText="Annuler"
+                                    >
+                                        <template #trigger>
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                class="text-orange-500 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950"
+                                            >
+                                                <RefreshCcw />
+                                            </Button>
+                                        </template>
+                                        <template #action>
+                                            <Button variant="destructive" @click="resetToChain(event.id)">Réinitialiser</Button>
+                                        </template>
+                                    </AppAlertDialog>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Réinitialiser aux valeurs de la série</p></TooltipContent>
                             </Tooltip>
 
                             <!-- View event -->
