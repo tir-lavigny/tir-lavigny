@@ -176,7 +176,7 @@ class EventController extends Controller implements HasMiddleware
             'body' => 'nullable|string',
         ]);
 
-        $event = Event::findOrFail($id);
+        $event = Event::with('eventChain')->findOrFail($id);
         $event->title = $request->input('title');
         $event->start_datetime = $request->input('start_datetime');
         $event->end_datetime = $request->input('end_datetime');
@@ -193,6 +193,35 @@ class EventController extends Controller implements HasMiddleware
             );
         } else {
             $event->customContent()->delete();
+        }
+
+        // If this event belongs to a chain, track which propagatable fields differ
+        // from the chain so the chain updater can detect and respect the override.
+        if ($event->eventChain) {
+            $chain = $event->eventChain;
+
+            $comparisons = [
+                'title' => [$event->title,       $chain->title],
+                'location_id' => [$event->location_id, $chain->location_id],
+                'content_id' => [$event->content_id,  $chain->content_id],
+                'start_time' => [
+                    \Carbon\Carbon::parse($event->start_datetime)->format('H:i:s'),
+                    \Carbon\Carbon::parse($chain->start_time)->format('H:i:s'),
+                ],
+                'end_time' => [
+                    $event->end_datetime ? \Carbon\Carbon::parse($event->end_datetime)->format('H:i:s') : null,
+                    $chain->end_time ? \Carbon\Carbon::parse($chain->end_time)->format('H:i:s') : null,
+                ],
+                'custom_body' => [$request->input('body'), $chain->custom_body],
+            ];
+
+            foreach ($comparisons as $field => [$eventValue, $chainValue]) {
+                if ($eventValue != $chainValue) {
+                    $event->markFieldOverridden($field);
+                } else {
+                    $event->unmarkFieldOverridden($field);
+                }
+            }
         }
 
         $event->save();
