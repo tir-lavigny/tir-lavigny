@@ -21,6 +21,10 @@ class RolesAndPermissionsSeeder extends Seeder
         $editEventPermission = Permission::firstOrCreate(['name' => 'edit event']);
         $deleteEventPermission = Permission::firstOrCreate(['name' => 'delete event']);
 
+        $createEventChainPermission = Permission::firstOrCreate(['name' => 'create event chain']);
+        $editEventChainPermission = Permission::firstOrCreate(['name' => 'edit event chain']);
+        $deleteEventChainPermission = Permission::firstOrCreate(['name' => 'delete event chain']);
+
         $createPostPermission = Permission::firstOrCreate(['name' => 'create post']);
         $editPostPermission = Permission::firstOrCreate(['name' => 'edit post']);
         $deletePostPermission = Permission::firstOrCreate(['name' => 'delete post']);
@@ -42,6 +46,9 @@ class RolesAndPermissionsSeeder extends Seeder
             $createEventPermission,
             $editEventPermission,
             $deleteEventPermission,
+            $createEventChainPermission,
+            $editEventChainPermission,
+            $deleteEventChainPermission,
             $createPostPermission,
             $editPostPermission,
             $deletePostPermission,
@@ -60,6 +67,9 @@ class RolesAndPermissionsSeeder extends Seeder
             $createEventPermission,
             $editEventPermission,
             $deleteEventPermission,
+            $createEventChainPermission,
+            $editEventChainPermission,
+            $deleteEventChainPermission,
             $createPostPermission,
             $editPostPermission,
             $deletePostPermission,
