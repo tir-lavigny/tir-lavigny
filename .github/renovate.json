@@ -13,7 +13,8 @@
                 "minor",
                 "patch"
             ],
-            "groupName": "all patch and minor versions"
+            "groupName": "all patch and minor versions",
+            "automerge": true
         }
     ]
 }
