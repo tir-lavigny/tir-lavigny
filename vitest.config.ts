@@ -12,5 +12,10 @@ export default defineConfig({
         alias: {
             '@': path.resolve(__dirname, './resources/js'),
         },
+        coverage: {
+            include: ['resources/js/**'],
+            exclude: ['resources/js/**/*.test.ts', 'resources/js/tests/**'],
+            provider: 'v8',
+        },
     },
 });
