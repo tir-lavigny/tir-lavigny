@@ -1,33 +1,35 @@
 import type { Permission, Role } from '@/types';
 
-export function createPermissionFixture(name: string, overrides: Omit<Partial<Permission>, 'name'> = {}): Permission {
+export function createPermission(overrides: Partial<Permission> = {}): Permission {
+    const id = overrides.id ?? Math.floor(Math.random() * 1000);
     return {
-        id: 1,
-        name,
+        id,
+        name: 'edit articles',
         guard_name: 'web',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         pivot: {
             role_id: 1,
-            permission_id: 1,
+            permission_id: id,
         },
         ...overrides,
     };
 }
 
-export function createRoleFixture(name: string, permissions: Permission[], overrides: Omit<Partial<Role>, 'name' | 'permissions'> = {}): Role {
+export function createRole(overrides: Partial<Role> = {}): Role {
+    const id = overrides.id ?? Math.floor(Math.random() * 1000);
     return {
-        id: 1,
-        name,
+        id,
+        name: 'user',
         guard_name: 'web',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         pivot: {
-            model_type: '',
-            model_id: 0,
-            role_id: 1,
+            model_type: 'App\\Models\\User',
+            model_id: 1,
+            role_id: id,
         },
-        permissions,
+        permissions: [],
         ...overrides,
     };
 }
