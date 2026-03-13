@@ -1,5 +1,5 @@
 import { createPermission, createRole, test } from '@/tests';
-import { describe, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest';
 import { ref } from 'vue';
 import * as Utils from './utils';
 
@@ -122,8 +122,13 @@ describe('utils.ts', () => {
     });
 
     describe('debounce', () => {
+        let func: ReturnType<typeof vi.fn>;
+        let debounced: ReturnType<typeof Utils.debounce>;
+
         beforeEach(() => {
             vi.useFakeTimers();
+            func = vi.fn();
+            debounced = Utils.debounce(func, 100);
         });
 
         afterEach(() => {
@@ -131,9 +136,6 @@ describe('utils.ts', () => {
         });
 
         test('delays execution and respects wait time', () => {
-            const func = vi.fn();
-            const debounced = Utils.debounce(func, 100);
-
             debounced();
             expect(func).not.toHaveBeenCalled();
 
@@ -145,9 +147,6 @@ describe('utils.ts', () => {
         });
 
         test('resets timer if called again within wait period', () => {
-            const func = vi.fn();
-            const debounced = Utils.debounce(func, 100);
-
             debounced();
             vi.advanceTimersByTime(50);
             debounced(); // Should reset
@@ -159,24 +158,22 @@ describe('utils.ts', () => {
         });
 
         test('passes arguments correctly', () => {
-            const func = vi.fn();
-            const debounced = Utils.debounce(func, 100);
-
             debounced('arg1', 2);
             vi.runAllTimers();
             expect(func).toHaveBeenCalledWith('arg1', 2);
         });
 
         test('maintains correct this context', () => {
-            let context: any;
-            const func = function (this: any) {
-                context = this;
-            };
-            const obj = { debounced: Utils.debounce(func, 100) };
+            const contextFunc = vi.fn(function (this: any) {
+                // No-op
+            });
+            const obj = { debounced: Utils.debounce(contextFunc, 100) };
 
             obj.debounced();
             vi.runAllTimers();
-            expect(context).toBe(obj);
+
+            // Vitest (and Jest) store the 'this' context in mock.instances
+            expect(contextFunc.mock.instances[0]).toBe(obj);
         });
     });
 
