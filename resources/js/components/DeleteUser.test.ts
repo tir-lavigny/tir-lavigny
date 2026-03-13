@@ -1,9 +1,9 @@
+import { useForm } from '@inertiajs/vue3';
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import DeleteUser from './DeleteUser.vue';
-import { useForm } from '@inertiajs/vue3';
 
-// Since Dialog uses Teleport and is complex to test, we mainly test the trigger 
+// Since Dialog uses Teleport and is complex to test, we mainly test the trigger
 // and the form behavior if possible.
 describe('DeleteUser.vue', () => {
     it('renders the initial state', () => {
@@ -19,10 +19,10 @@ describe('DeleteUser.vue', () => {
                     DialogFooter: true,
                     DialogTrigger: true,
                     DialogClose: true,
-                }
-            }
+                },
+            },
         });
-        
+
         expect(wrapper.text()).toContain('Supprimer le compte');
         expect(wrapper.text()).toContain('Avertissement');
     });
@@ -47,10 +47,10 @@ describe('DeleteUser.vue', () => {
 
         const wrapper = mount(DeleteUser, {
             global: {
-                // We don't stub Dialog here so we can find the form if it was rendered, 
+                // We don't stub Dialog here so we can find the form if it was rendered,
                 // but Dialog is usually hidden by default.
                 // In a real scenario, we would trigger the dialog open first.
-            }
+            },
         });
 
         // Since the form is inside the DialogContent which is not rendered by default,

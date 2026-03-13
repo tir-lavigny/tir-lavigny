@@ -1,7 +1,7 @@
+import { Button } from '@/components/ui/button';
 import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 import AppPagination from './AppPagination.vue';
-import { Button } from '@/components/ui/button';
 
 describe('AppPagination.vue', () => {
     it('renders correct number of pages', () => {
@@ -11,9 +11,9 @@ describe('AppPagination.vue', () => {
                 itemsPerPage: 10,
             },
         });
-        
+
         // Should have buttons for 1, 2, 3, 4, 5
-        const buttons = wrapper.findAllComponents(Button).filter(b => !isNaN(Number(b.text())));
+        const buttons = wrapper.findAllComponents(Button).filter((b) => !isNaN(Number(b.text())));
         expect(buttons).toHaveLength(5);
     });
 
@@ -24,10 +24,10 @@ describe('AppPagination.vue', () => {
                 itemsPerPage: 10,
             },
         });
-        
-        const page2Button = wrapper.findAllComponents(Button).find(b => b.text() === '2');
+
+        const page2Button = wrapper.findAllComponents(Button).find((b) => b.text() === '2');
         await page2Button?.trigger('click');
-        
+
         expect(wrapper.emitted('page-changed')).toBeTruthy();
         expect(wrapper.emitted('page-changed')?.[0]).toEqual([2]);
     });
@@ -40,7 +40,7 @@ describe('AppPagination.vue', () => {
                 showFirstLast: false,
             },
         });
-        
+
         // PaginationFirst and PaginationLast are functional components or components that we can check by their existence
         // In shadcn-vue, these often render as specific components
         expect(wrapper.findComponent({ name: 'PaginationFirst' }).exists()).toBe(false);
@@ -55,7 +55,7 @@ describe('AppPagination.vue', () => {
                 showPrevNext: false,
             },
         });
-        
+
         expect(wrapper.findComponent({ name: 'PaginationPrevious' }).exists()).toBe(false);
         expect(wrapper.findComponent({ name: 'PaginationNext' }).exists()).toBe(false);
     });
@@ -68,7 +68,7 @@ describe('AppPagination.vue', () => {
                 siblingCount: 1,
             },
         });
-        
+
         expect(wrapper.findComponent({ name: 'PaginationEllipsis' }).exists()).toBe(true);
     });
 });

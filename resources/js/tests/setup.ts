@@ -1,5 +1,5 @@
-import { vi } from 'vitest';
 import { config } from '@vue/test-utils';
+import { vi } from 'vitest';
 
 // Mock Ziggy's route function
 const routeMock = vi.fn().mockImplementation((name) => {

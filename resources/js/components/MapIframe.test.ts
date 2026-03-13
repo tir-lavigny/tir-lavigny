@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils';
+import L from 'leaflet';
 import { describe, expect, it, vi } from 'vitest';
 import MapIframe from './MapIframe.vue';
-import L from 'leaflet';
 
 describe('MapIframe.vue', () => {
     it('renders correctly with given dimensions', () => {
@@ -13,7 +13,7 @@ describe('MapIframe.vue', () => {
                 width: '100%',
             },
         });
-        
+
         expect(wrapper.element.style.height).toBe('500px');
         expect(wrapper.element.style.width).toBe('100%');
     });
@@ -25,7 +25,7 @@ describe('MapIframe.vue', () => {
                 longitude: 6.5,
             },
         });
-        
+
         expect(L.map).toHaveBeenCalled();
         expect(L.tileLayer).toHaveBeenCalled();
         expect(L.marker).toHaveBeenCalledWith([46.5, 6.5], expect.any(Object));
@@ -38,9 +38,9 @@ describe('MapIframe.vue', () => {
                 longitude: 6.5,
             },
         });
-        
+
         await wrapper.setProps({ latitude: 47.0, longitude: 7.0 });
-        
+
         expect(L.marker).toHaveBeenLastCalledWith([47.0, 7.0], expect.any(Object));
     });
 
@@ -59,7 +59,7 @@ describe('MapIframe.vue', () => {
                 title: 'My Location',
             },
         });
-        
+
         expect(markerMock.bindPopup).toHaveBeenCalled();
         expect(markerMock.openPopup).toHaveBeenCalled();
     });

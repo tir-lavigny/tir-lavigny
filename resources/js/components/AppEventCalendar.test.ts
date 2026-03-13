@@ -1,8 +1,7 @@
 import { mount } from '@vue/test-utils';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import AppEventCalendar from './AppEventCalendar.vue';
-import { today, getLocalTimeZone } from '@internationalized/date';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { toast } from 'vue-sonner';
+import AppEventCalendar from './AppEventCalendar.vue';
 
 // Mock internationalized date
 vi.mock('@internationalized/date', () => ({
@@ -20,9 +19,7 @@ vi.mock('vue-sonner', () => ({
 
 describe('AppEventCalendar.vue', () => {
     const groupedEvents = {
-        '2025-01-01': [
-            { id: 1, title: 'Event 1', start_date: '2025-01-01T10:00:00', end_date: '2025-01-01T12:00:00' }
-        ]
+        '2025-01-01': [{ id: 1, title: 'Event 1', start_date: '2025-01-01T10:00:00', end_date: '2025-01-01T12:00:00' }],
     };
 
     beforeEach(() => {
@@ -40,10 +37,10 @@ describe('AppEventCalendar.vue', () => {
             global: {
                 stubs: {
                     Calendar: { template: '<div />' },
-                }
-            }
+                },
+            },
         });
-        
+
         expect(wrapper.text()).toContain("Aucun événement pour l'instant.");
     });
 
@@ -57,10 +54,10 @@ describe('AppEventCalendar.vue', () => {
                 stubs: {
                     Calendar: { template: '<div />' },
                     AppEventCalendarCard: true,
-                }
-            }
+                },
+            },
         });
-        
+
         expect(wrapper.find('#date-2025-01-01').exists()).toBe(true);
     });
 
@@ -81,11 +78,11 @@ describe('AppEventCalendar.vue', () => {
             global: {
                 stubs: {
                     Calendar: { template: '<div />' },
-                }
-            }
+                },
+            },
         });
 
-        const copyButton = wrapper.findAll('button').find(b => b.text().includes('Google'));
+        const copyButton = wrapper.findAll('button').find((b) => b.text().includes('Google'));
         await copyButton?.trigger('click');
 
         expect(clipboardMock.writeText).toHaveBeenCalled();

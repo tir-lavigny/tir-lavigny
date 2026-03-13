@@ -1,7 +1,7 @@
+import { useAppearance } from '@/composables/useAppearance';
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import AppearanceTabs from './AppearanceTabs.vue';
-import { useAppearance } from '@/composables/useAppearance';
 
 // Mock useAppearance
 vi.mock('@/composables/useAppearance', () => ({
@@ -17,7 +17,7 @@ describe('AppearanceTabs.vue', () => {
 
         const wrapper = mount(AppearanceTabs);
         const buttons = wrapper.findAll('button');
-        
+
         expect(buttons).toHaveLength(3);
         expect(wrapper.text()).toContain('Light');
         expect(wrapper.text()).toContain('Dark');
@@ -32,10 +32,10 @@ describe('AppearanceTabs.vue', () => {
         });
 
         const wrapper = mount(AppearanceTabs);
-        const lightButton = wrapper.findAll('button').find(b => b.text().includes('Light'));
-        
+        const lightButton = wrapper.findAll('button').find((b) => b.text().includes('Light'));
+
         await lightButton?.trigger('click');
-        
+
         expect(updateAppearance).toHaveBeenCalledWith('light');
     });
 
@@ -46,8 +46,8 @@ describe('AppearanceTabs.vue', () => {
         });
 
         const wrapper = mount(AppearanceTabs);
-        const darkButton = wrapper.findAll('button').find(b => b.text().includes('Dark'));
-        
+        const darkButton = wrapper.findAll('button').find((b) => b.text().includes('Dark'));
+
         // Check for active classes (shadow-xs or similar from the component)
         expect(darkButton?.classes()).toContain('bg-white');
     });

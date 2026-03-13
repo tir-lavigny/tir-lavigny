@@ -1,8 +1,8 @@
-import { mount } from '@vue/test-utils';
-import { describe, expect, it, vi } from 'vitest';
-import AppEventChainItem from './AppEventChainItem.vue';
+import { createPermission, createRole } from '@/tests/fixtures/role';
 import { createUser } from '@/tests/fixtures/user';
-import { createRole, createPermission } from '@/tests/fixtures/role';
+import { mount } from '@vue/test-utils';
+import { describe, expect, it } from 'vitest';
+import AppEventChainItem from './AppEventChainItem.vue';
 
 describe('AppEventChainItem.vue', () => {
     const mockEvent: any = {
@@ -17,27 +17,27 @@ describe('AppEventChainItem.vue', () => {
     };
 
     const adminUser = createUser({
-        roles: [createRole({ name: 'admin', permissions: [createPermission({ name: 'edit event chain' })] })]
+        roles: [createRole({ name: 'admin', permissions: [createPermission({ name: 'edit event chain' })] })],
     });
 
     const regularUser = createUser({
-        roles: [createRole({ name: 'user', permissions: [] })]
+        roles: [createRole({ name: 'user', permissions: [] })],
     });
 
     it('renders event details correctly', () => {
         const wrapper = mount(AppEventChainItem, {
             props: { event: mockEvent, user: regularUser },
-            global: { 
-                stubs: { 
-                    Link: true, 
+            global: {
+                stubs: {
+                    Link: true,
                     AppAlertDialog: true,
                     Tooltip: { template: '<div><slot /></div>' },
                     TooltipTrigger: { template: '<div><slot /></div>' },
                     TooltipContent: { template: '<div><slot /></div>' },
-                } 
-            }
+                },
+            },
         });
-        
+
         expect(wrapper.text()).toContain('Event Title');
         expect(wrapper.text()).toContain('Room 1');
     });
@@ -46,17 +46,17 @@ describe('AppEventChainItem.vue', () => {
         const eventWithConflicts = { ...mockEvent, pending_conflict_fields: ['title'] };
         const wrapper = mount(AppEventChainItem, {
             props: { event: eventWithConflicts, user: adminUser },
-            global: { 
-                stubs: { 
-                    Link: true, 
+            global: {
+                stubs: {
+                    Link: true,
                     AppAlertDialog: true,
                     Tooltip: { template: '<div><slot /></div>' },
                     TooltipTrigger: { template: '<div><slot /></div>' },
                     TooltipContent: { template: '<div><slot /></div>' },
-                } 
-            }
+                },
+            },
         });
-        
+
         expect(wrapper.text()).toContain('1 conflit');
     });
 
@@ -64,17 +64,17 @@ describe('AppEventChainItem.vue', () => {
         const eventWithConflicts = { ...mockEvent, pending_conflict_fields: ['title'] };
         const wrapper = mount(AppEventChainItem, {
             props: { event: eventWithConflicts, user: adminUser },
-            global: { 
-                stubs: { 
-                    Link: true, 
+            global: {
+                stubs: {
+                    Link: true,
                     AppAlertDialog: true,
                     Tooltip: { template: '<div><slot /></div>' },
                     TooltipTrigger: { template: '<div><slot /></div>' },
                     TooltipContent: { template: '<div><slot /></div>' },
-                } 
-            }
+                },
+            },
         });
-        
+
         expect(wrapper.text()).toContain('Résoudre');
     });
 
@@ -82,20 +82,20 @@ describe('AppEventChainItem.vue', () => {
         const eventWithConflicts = { ...mockEvent, pending_conflict_fields: ['title'] };
         const wrapper = mount(AppEventChainItem, {
             props: { event: eventWithConflicts, user: adminUser },
-            global: { 
-                stubs: { 
-                    Link: true, 
+            global: {
+                stubs: {
+                    Link: true,
                     AppAlertDialog: true,
                     Tooltip: { template: '<div><slot /></div>' },
                     TooltipTrigger: { template: '<div><slot /></div>' },
                     TooltipContent: { template: '<div><slot /></div>' },
-                } 
-            }
+                },
+            },
         });
-        
-        const resolveButton = wrapper.findAll('button').find(b => b.text().includes('Résoudre'));
+
+        const resolveButton = wrapper.findAll('button').find((b) => b.text().includes('Résoudre'));
         await resolveButton?.trigger('click');
-        
+
         expect(wrapper.emitted('open-conflict-dialog')).toBeTruthy();
         expect(wrapper.emitted('open-conflict-dialog')?.[0]).toEqual([eventWithConflicts]);
     });
