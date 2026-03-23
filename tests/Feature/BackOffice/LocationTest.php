@@ -5,6 +5,7 @@ namespace Tests\Feature\BackOffice;
 use App\Models\Event;
 use App\Models\Location;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,7 +16,7 @@ class LocationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $this->actingAs($admin);
