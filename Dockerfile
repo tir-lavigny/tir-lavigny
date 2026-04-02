@@ -1,5 +1,5 @@
-ARG PHP_VERSION=8.3
-ARG NODE_VERSION=22
+ARG PHP_VERSION=8.4
+ARG NODE_VERSION=24
 
 # Stage 1 - Composer deps: needed by Vite (ziggy-js aliased to vendor/tightenco/ziggy)
 # Uses a pinned PHP version - composer:2 bundles latest PHP which may break the lockfile
