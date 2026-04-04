@@ -15,7 +15,7 @@ import { handleTabKey, hasPermissionTo } from '@/lib/utils';
 import { Content, type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { useMediaQuery } from '@vueuse/core';
-import { Plus, Save, Undo2 } from 'lucide-vue-next';
+import { Plus, Save, Undo2 } from '@lucide/vue';
 import { marked } from 'marked';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';

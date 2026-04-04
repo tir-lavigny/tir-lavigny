@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { Event, Post } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { Mail, MapPin } from 'lucide-vue-next';
+import { Mail, MapPin } from '@lucide/vue';
 import { computed } from 'vue';
 
 const props = defineProps<{

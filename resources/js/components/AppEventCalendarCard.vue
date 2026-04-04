@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { ArrowRight, Calendar, MapPin } from 'lucide-vue-next';
+import { ArrowRight, Calendar, MapPin } from '@lucide/vue';
 
 defineProps<{
     event: Event;

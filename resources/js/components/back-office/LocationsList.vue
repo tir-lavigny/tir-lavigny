@@ -3,7 +3,7 @@ import { P } from '@/components/typography/texts';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDate } from '@/lib/utils';
 import { Location } from '@/types';
-import { Edit } from 'lucide-vue-next';
+import { Edit } from '@lucide/vue';
 
 withDefaults(
     defineProps<{

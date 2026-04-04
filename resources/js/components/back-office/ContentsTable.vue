@@ -16,7 +16,7 @@ import {
     getSortedRowModel,
     useVueTable,
 } from '@tanstack/vue-table';
-import { ArrowUpDown, ChevronDown, Edit, Eye, Trash2 } from 'lucide-vue-next';
+import { ArrowUpDown, ChevronDown, Edit, Eye, Trash2 } from '@lucide/vue';
 import { h, ref } from 'vue';
 
 const props = withDefaults(

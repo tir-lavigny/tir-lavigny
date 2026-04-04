@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { formatDate } from '@/lib/utils';
 import { Post } from '@/types';
 import { Link, useForm } from '@inertiajs/vue3';
-import { ArrowRight, PenBox, Trash2 } from 'lucide-vue-next';
+import { ArrowRight, PenBox, Trash2 } from '@lucide/vue';
 import { toast } from 'vue-sonner';
 
 const props = withDefaults(

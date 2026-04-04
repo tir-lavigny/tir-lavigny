@@ -11,7 +11,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import { PaginatedEvents, type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Plus, Search, Undo2 } from 'lucide-vue-next';
+import { Plus, Search, Undo2 } from '@lucide/vue';
 import { ref, useTemplateRef, watch } from 'vue';
 
 const page = usePage<SharedData>();

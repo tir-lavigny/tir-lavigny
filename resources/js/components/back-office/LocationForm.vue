@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useForm } from '@inertiajs/vue3';
-import { Undo2 } from 'lucide-vue-next';
+import { Undo2 } from '@lucide/vue';
 import { watch } from 'vue';
 
 const props = withDefaults(

@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { formatDate } from '@/lib/utils';
 import { Post } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { ArrowRight } from 'lucide-vue-next';
+import { ArrowRight } from '@lucide/vue';
 
 defineProps<{
     post: Post;

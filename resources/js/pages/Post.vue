@@ -6,7 +6,7 @@ import { formatDate } from '@/lib/utils';
 import { Post } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import DOMPurify from 'dompurify';
-import { Calendar } from 'lucide-vue-next';
+import { Calendar } from '@lucide/vue';
 import { marked } from 'marked';
 import { ref, watchEffect } from 'vue';
 

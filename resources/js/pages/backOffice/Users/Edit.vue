@@ -13,7 +13,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, hasPermissionTo } from '@/lib/utils';
 import { Role, User, type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { Save, Undo2 } from 'lucide-vue-next';
+import { Save, Undo2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
