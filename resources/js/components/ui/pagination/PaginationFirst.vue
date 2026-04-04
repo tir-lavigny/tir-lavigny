@@ -4,7 +4,7 @@ import type { HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
 import { buttonVariants, type ButtonVariants } from '@/components/ui/button'
 import { reactiveOmit } from '@vueuse/core'
-import { ChevronLeftIcon } from 'lucide-vue-next'
+import { ChevronLeftIcon } from '@lucide/vue'
 import { PaginationFirst, useForwardProps } from 'reka-ui'
 
 const props = withDefaults(defineProps<PaginationFirstProps & {

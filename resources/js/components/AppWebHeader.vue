@@ -19,7 +19,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Calendar, House, LayoutDashboard, Menu, Moon, Sun, Target } from 'lucide-vue-next';
+import { Calendar, House, LayoutDashboard, Menu, Moon, Sun, Target } from '@lucide/vue';
 import { computed } from 'vue';
 
 interface Props {

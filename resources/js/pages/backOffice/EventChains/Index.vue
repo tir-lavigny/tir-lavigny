@@ -10,7 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, hasPermissionTo } from '@/lib/utils';
 import { PaginatedEventChains, type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { CalendarDays, Eye, PenBox, Plus, Search } from 'lucide-vue-next';
+import { CalendarDays, Eye, PenBox, Plus, Search } from '@lucide/vue';
 import { ref, watch } from 'vue';
 
 const page = usePage<SharedData>();

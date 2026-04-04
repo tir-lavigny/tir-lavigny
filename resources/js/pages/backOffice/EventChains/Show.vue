@@ -13,7 +13,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, hasPermissionTo } from '@/lib/utils';
 import { ChainEvent, EventChain, PaginatedChainEvents, type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, PenBox, Repeat, Trash2 } from 'lucide-vue-next';
+import { AlertTriangle, PenBox, Repeat, Trash2 } from '@lucide/vue';
 import { marked } from 'marked';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';

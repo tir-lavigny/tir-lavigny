@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate } from '@/lib/utils';
 import { ActivityLog, type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { ArrowRight, Calendar, CalendarRange, FileText, Layers, MapPin, Pencil, Plus, Trash2, User } from 'lucide-vue-next';
+import { ArrowRight, Calendar, CalendarRange, FileText, Layers, MapPin, Pencil, Plus, Trash2, User } from '@lucide/vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

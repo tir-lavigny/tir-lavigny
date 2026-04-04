@@ -7,7 +7,7 @@ import { hasRole } from '@/lib/utils';
 import type { SharedData } from '@/types';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Calendar, FileText, LayoutGrid, MapPin, Newspaper, PanelTop, Repeat, ScanEye, Telescope, Users } from 'lucide-vue-next';
+import { Calendar, FileText, LayoutGrid, MapPin, Newspaper, PanelTop, Repeat, ScanEye, Telescope, Users } from '@lucide/vue';
 import AppLogo from './AppLogo.vue';
 
 const user = usePage<SharedData>().props.auth.user;

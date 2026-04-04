@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { type DateValue, getLocalTimeZone, today } from '@internationalized/date';
-import { CalendarSync, Copy } from 'lucide-vue-next';
+import { CalendarSync, Copy } from '@lucide/vue';
 import { type Ref, ref, watchEffect } from 'vue';
 import { toast } from 'vue-sonner';
 

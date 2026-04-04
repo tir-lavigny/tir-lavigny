@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { formatDate, hasPermissionTo } from '@/lib/utils';
 import { ChainEvent, User } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { AlertTriangle, CalendarDays, Eye, Link2Off, PenBox, RefreshCcw } from 'lucide-vue-next';
+import { AlertTriangle, CalendarDays, Eye, Link2Off, PenBox, RefreshCcw } from '@lucide/vue';
 
 defineProps<{
     event: ChainEvent;
