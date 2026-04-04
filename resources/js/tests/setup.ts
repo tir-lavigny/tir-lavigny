@@ -60,16 +60,28 @@ vi.mock('@inertiajs/vue3', async () => {
         ...actual,
         usePage: () => ({
             url: '/',
+            component: '',
             props: {
                 auth: {
                     user: null,
                 },
+                ziggy: {
+                    location: 'http://localhost/',
+                },
+                sidebarOpen: false,
             },
+            version: null,
+            scrollRegions: [],
+            rememberedState: {},
         }),
         useForm: vi.fn().mockImplementation((data) => ({
             ...data,
             processing: false,
+            progress: null,
             errors: {},
+            isDirty: false,
+            recentlySuccessful: false,
+            wasSuccessful: false,
             delete: vi.fn(),
             post: vi.fn(),
             put: vi.fn(),
@@ -77,6 +89,8 @@ vi.mock('@inertiajs/vue3', async () => {
             reset: vi.fn(),
             clearErrors: vi.fn(),
             setError: vi.fn(),
+            transform: vi.fn().mockReturnThis(),
+            submit: vi.fn(),
         })),
     };
 });
