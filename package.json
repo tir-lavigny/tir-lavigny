@@ -29,7 +29,7 @@
         "tw-animate-css": "^1.2.5",
         "typescript-eslint": "^8.23.0",
         "vitest": "^4.1.0",
-        "vue-tsc": "^2.2.4"
+        "vue-tsc": "^3.0.0"
     },
     "dependencies": {
         "@inertiajs/vue3": "^3.0",
