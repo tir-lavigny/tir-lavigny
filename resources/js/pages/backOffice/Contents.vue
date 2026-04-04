@@ -38,13 +38,13 @@ const showPreview = ref(false);
 const isMobile = useMediaQuery('(max-width: 768px)');
 
 const updateForm = useForm({
-    id: null,
+    id: null as number | null,
     title: '',
     body: '',
 });
 
 const deleteForm = useForm({
-    id: null,
+    id: null as number | null,
 });
 
 const flushUpdateForm = () => {
