@@ -26,8 +26,7 @@ createServer((page) =>
             };
 
             // Create route function wrapping ziggy with SSR config...
-            const route = ((...args: Parameters<typeof ziggyRoute>) =>
-                (ziggyRoute as (...args: any[]) => any)(...args.slice(0, 3), ziggyConfig)) as typeof ziggyRoute;
+            const route = ((name: string, params?: any, absolute?: boolean) => ziggyRoute(name, params, absolute, ziggyConfig)) as typeof ziggyRoute;
 
             // Make route function available globally...
             app.config.globalProperties.route = route;
