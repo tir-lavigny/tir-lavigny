@@ -15,7 +15,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { handleTabKey } from '@/lib/utils';
 import { Content, EventChain, Location, type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Save, Undo2 } from 'lucide-vue-next';
+import { Save, Undo2 } from '@lucide/vue';
 import { marked } from 'marked';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';

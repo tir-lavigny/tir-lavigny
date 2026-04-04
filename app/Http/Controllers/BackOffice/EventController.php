@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Content;
 use App\Models\Event;
 use App\Models\Location;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -205,12 +206,12 @@ class EventController extends Controller implements HasMiddleware
                 'location_id' => [$event->location_id, $chain->location_id],
                 'content_id' => [$event->content_id,  $chain->content_id],
                 'start_time' => [
-                    \Carbon\Carbon::parse($event->start_datetime)->format('H:i:s'),
-                    \Carbon\Carbon::parse($chain->start_time)->format('H:i:s'),
+                    Carbon::parse($event->start_datetime)->format('H:i:s'),
+                    Carbon::parse($chain->start_time)->format('H:i:s'),
                 ],
                 'end_time' => [
-                    $event->end_datetime ? \Carbon\Carbon::parse($event->end_datetime)->format('H:i:s') : null,
-                    $chain->end_time ? \Carbon\Carbon::parse($chain->end_time)->format('H:i:s') : null,
+                    $event->end_datetime ? Carbon::parse($event->end_datetime)->format('H:i:s') : null,
+                    $chain->end_time ? Carbon::parse($chain->end_time)->format('H:i:s') : null,
                 ],
                 'custom_body' => [$request->input('body'), $chain->custom_body],
             ];

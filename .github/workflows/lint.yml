@@ -15,8 +15,9 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    if: github.actor != 'renovate[bot]'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -38,7 +39,7 @@ jobs:
         run: npm run lint
 
       - name: Commit Changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: 'style: format code'
           commit_options: '--no-verify'

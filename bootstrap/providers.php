@@ -1,8 +1,13 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\LaravelPulse4xxServiceProvider;
+use App\Providers\PulseRequestsServiceProvider;
+use App\Providers\TelescopeServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\LaravelPulse4xxServiceProvider::class,
-    App\Providers\PulseRequestsServiceProvider::class,
-    App\Providers\TelescopeServiceProvider::class,
+    AppServiceProvider::class,
+    LaravelPulse4xxServiceProvider::class,
+    PulseRequestsServiceProvider::class,
+    TelescopeServiceProvider::class,
 ];

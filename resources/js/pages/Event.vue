@@ -6,7 +6,7 @@ import WebLayout from '@/layouts/WebLayout.vue';
 import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { Calendar, Clock, MapPin } from 'lucide-vue-next';
+import { Calendar, Clock, MapPin } from '@lucide/vue';
 import { marked } from 'marked';
 
 defineProps<{

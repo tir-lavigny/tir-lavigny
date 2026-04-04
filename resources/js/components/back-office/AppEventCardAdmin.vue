@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { Link, useForm } from '@inertiajs/vue3';
-import { ArrowRight, Calendar, MapPin, PenBox, Repeat, Trash2 } from 'lucide-vue-next';
+import { ArrowRight, Calendar, MapPin, PenBox, Repeat, Trash2 } from '@lucide/vue';
 import { toast } from 'vue-sonner';
 
 const props = withDefaults(

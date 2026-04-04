@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { valueUpdater } from '@/lib/utils';
 import { Content } from '@/types';
+import { ArrowUpDown, ChevronDown, Edit, Eye, Trash2 } from '@lucide/vue';
 import type { ColumnDef, ColumnFiltersState, ExpandedState, SortingState, VisibilityState } from '@tanstack/vue-table';
 import {
     FlexRender,
@@ -16,7 +17,6 @@ import {
     getSortedRowModel,
     useVueTable,
 } from '@tanstack/vue-table';
-import { ArrowUpDown, ChevronDown, Edit, Eye, Trash2 } from 'lucide-vue-next';
 import { h, ref } from 'vue';
 
 const props = withDefaults(

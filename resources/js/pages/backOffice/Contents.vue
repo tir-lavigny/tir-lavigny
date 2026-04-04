@@ -14,8 +14,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { handleTabKey, hasPermissionTo } from '@/lib/utils';
 import { Content, type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Plus, Save, Undo2 } from '@lucide/vue';
 import { useMediaQuery } from '@vueuse/core';
-import { Plus, Save, Undo2 } from 'lucide-vue-next';
 import { marked } from 'marked';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
@@ -38,13 +38,13 @@ const showPreview = ref(false);
 const isMobile = useMediaQuery('(max-width: 768px)');
 
 const updateForm = useForm({
-    id: null,
+    id: null as number | null,
     title: '',
     body: '',
 });
 
 const deleteForm = useForm({
-    id: null,
+    id: null as number | null,
 });
 
 const flushUpdateForm = () => {
