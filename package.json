@@ -9,7 +9,8 @@
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
-        "test": "vitest"
+        "test": "vitest",
+        "tsc": "vue-tsc --noEmit"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -50,7 +51,7 @@
         "tailwind-merge": "^3.0.0",
         "tailwindcss": "^4.1.1",
         "tailwindcss-animate": "^1.0.7",
-        "typescript": "^5.2.2",
+        "typescript": "^6.0.0",
         "vaul-vue": "^0.4.1",
         "vite": "^6.2.0",
         "vue": "^3.5.13",
