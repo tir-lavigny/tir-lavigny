@@ -19,7 +19,16 @@ vi.mock('vue-sonner', () => ({
 
 describe('AppEventCalendar.vue', () => {
     const groupedEvents = {
-        '2025-01-01': [{ id: 1, title: 'Event 1', start_date: '2025-01-01T10:00:00', end_date: '2025-01-01T12:00:00' }],
+        '2025-01-01': [
+            {
+                id: 1,
+                title: 'Event 1',
+                start_datetime: '2025-01-01T10:00:00',
+                end_datetime: '2025-01-01T12:00:00',
+                created_at: '2025-01-01T00:00:00',
+                updated_at: '2025-01-01T00:00:00',
+            },
+        ],
     };
 
     beforeEach(() => {
