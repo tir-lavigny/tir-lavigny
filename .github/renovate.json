@@ -14,7 +14,8 @@
                 "patch"
             ],
             "groupName": "all patch and minor versions",
-            "automerge": true
+            "automerge": true,
+            "minimumReleaseAge": "7 days"
         }
     ]
 }
