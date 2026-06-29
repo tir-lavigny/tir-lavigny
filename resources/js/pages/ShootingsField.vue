@@ -42,7 +42,7 @@ defineProps<{
                             tir en campagne ait lieu à Etoy, par exemple, tout en y participant sous les couleurs de la Société de tir de Lavigny.
                         </P>
                         <img
-                            src="/images/tirMilitaire.jpg"
+                            src="/images/tirCampagne.webp"
                             alt="Tir fédéral en campagne"
                             class="mt-4 h-96 w-full rounded-lg object-cover object-center md:col-span-2 md:row-span-2"
                         />
