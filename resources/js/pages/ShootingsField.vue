@@ -28,9 +28,9 @@ defineProps<{
                             planifier votre tir.
                         </P>
                         <P>
-                            Le tir fédéral est la plus grande fête de tir au monde. Pendant tout un week-end, l'une des plus anciennes traditions de
-                            tir est célébrée dans une ambiance conviviale et sportive à l'échelle nationale. Une fête pour les tireurs et tous ceux
-                            qui aiment le tir ou souhaitent s'y essayer.
+                            Le tir fédéral est la plus grande fête de tir au monde. Pendant tout un week-end au mois de mai, l'une des plus anciennes
+                            traditions de tir est célébrée dans une ambiance conviviale et sportive à l'échelle nationale. Une fête pour les tireurs
+                            et tous ceux qui aiment le tir ou souhaitent s'y essayer.
                         </P>
                         <P>
                             Sont autorisés à participer les tireuses et tireurs qui atteignent l’âge de 10 ans au cours de l’année de la compétition
