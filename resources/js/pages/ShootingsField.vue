@@ -53,14 +53,21 @@ defineProps<{
                             Les tirs sont organisés en trois séries de tir, chacune avec un temps imparti. Le tir est effectué à 300 mètres sur des
                             cibles B.
                         </P>
-                        <OrderedList class="mt-0">
-                            <li>Six coups sont tirés en 6 minutes et affiché un par un.</li>
-                            <li>
-                                Deux séries de trois coups chacune sont tirées en 60 secondes chacune. L'affichage a lieu après chaque série de trois
-                                coups.
-                            </li>
-                            <li>Six coups sont tirés en 60 secondes. Affichage a lieu à la fin.</li>
-                        </OrderedList>
+                        <div class="flex flex-col gap-2 lg:flex-row lg:gap-4">
+                            <OrderedList class="mt-4">
+                                <li>Six coups sont tirés en 6 minutes et affiché un par un.</li>
+                                <li>
+                                    Deux séries de trois coups chacune sont tirées en 60 secondes chacune. L'affichage a lieu après chaque série de
+                                    trois coups.
+                                </li>
+                                <li>Six coups sont tirés en 60 secondes. Affichage a lieu à la fin.</li>
+                            </OrderedList>
+                            <img
+                                src="/images/cibleB.png"
+                                alt="Cible B"
+                                class="mt-4 h-96 w-full rounded-lg object-cover object-center md:col-span-2 md:row-span-2"
+                            />
+                        </div>
                     </div>
                     <div class="text-pretty">
                         <H2>Plus d'informations</H2>
