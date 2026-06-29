@@ -21,7 +21,11 @@ Route::get('/events/calendar/feed.ics', [EventController::class, 'feed_calendar'
 
 Route::get('/posts/{public_id}', [PostController::class, 'show'])->name('posts.show');
 
-Route::get('/shootings', [ShootingController::class, 'index'])->name('shootings');
+Route::redirect('/shootings', '/shootings/ods', 308);
+
+Route::get('/shootings/ods', [ShootingController::class, 'indexODS'])->name('shootings');
+
+Route::get('/shootings/field', [ShootingController::class, 'indexField'])->name('shootings.field');
 
 Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/', function () {

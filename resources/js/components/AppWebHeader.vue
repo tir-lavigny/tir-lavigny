@@ -58,6 +58,11 @@ const mainNavItems: NavItem[] = [
         href: 'shootings',
         icon: Target,
     },
+    {
+        title: 'Tir fédéral en campagne',
+        href: 'shootings.field',
+        icon: Target,
+    },
 ];
 
 const rightNavItems: NavItem[] = [

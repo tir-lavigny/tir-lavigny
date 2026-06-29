@@ -4,5 +4,6 @@ export { default as Large } from './large.vue';
 export { default as Lead } from './lead.vue';
 export { default as List } from './list.vue';
 export { default as Muted } from './muted.vue';
+export { default as OrderedList } from './orderedList.vue';
 export { default as P } from './p.vue';
 export { default as Small } from './small.vue';
