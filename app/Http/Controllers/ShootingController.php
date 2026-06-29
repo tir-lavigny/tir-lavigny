@@ -29,7 +29,7 @@ class ShootingController extends Controller
     {
         $events = $this->getShootingEvents('Tir fédéral en campagne');
 
-        return Inertia::render('Shootings', [
+        return Inertia::render('ShootingsField', [
             'events' => $events,
         ]);
     }
