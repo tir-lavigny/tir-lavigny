@@ -3,7 +3,7 @@ import AppEventCard from '@/components/AppEventCard.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
 import TextLink from '@/components/TextLink.vue';
 import { H2 } from '@/components/typography/headings';
-import { List, P } from '@/components/typography/texts';
+import { OrderedList, P } from '@/components/typography/texts';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { Event } from '@/types';
 import { Head } from '@inertiajs/vue3';
@@ -49,14 +49,18 @@ defineProps<{
                     </div>
                     <div class="text-pretty">
                         <H2>Programme</H2>
-                        <List class="mt-0">
-                            <li>1re partie : Six coups sont tirés en 6 minutes et affiché un par un.</li>
+                        <P>
+                            Les tirs sont organisés en trois séries de tir, chacune avec un temps imparti. Le tir est effectué à 300 mètres sur des
+                            cibles B.
+                        </P>
+                        <OrderedList class="mt-0">
+                            <li>Six coups sont tirés en 6 minutes et affiché un par un.</li>
                             <li>
-                                2e partie : Deux séries de trois coups chacune sont tirées en 60 secondes chacune. L'affichage a lieu après chaque
-                                série de trois coups.
+                                Deux séries de trois coups chacune sont tirées en 60 secondes chacune. L'affichage a lieu après chaque série de trois
+                                coups.
                             </li>
-                            <li>3e partie : Six coups sont tirés en 60 secondes. Affichage a lieu à la fin.</li>
-                        </List>
+                            <li>Six coups sont tirés en 60 secondes. Affichage a lieu à la fin.</li>
+                        </OrderedList>
                     </div>
                     <div class="text-pretty">
                         <H2>Plus d'informations</H2>
