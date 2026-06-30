@@ -52,7 +52,7 @@ defineProps<{
                             <li>Le livret de service</li>
                             <li>Le livret de tir ou le livret de performances militaire</li>
                             <li>La pièce d’identité officielle</li>
-                            <li>Son L’arme de service personnelle avec la trousse de nettoyage</li>
+                            <li>L'arme de service personnelle avec la trousse de nettoyage</li>
                             <li>La protection d’ouïe personnelle</li>
                         </List>
                     </div>
