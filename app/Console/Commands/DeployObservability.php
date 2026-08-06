@@ -39,7 +39,7 @@ class DeployObservability extends Command
 
         $this->info('Starting new process ...');
 
-        $process = Process::background('php artisan nightwatch:agent');
+        $process = Process::start('nohup php artisan nightwatch:agent > /dev/null 2>&1 &');
         $pid = $process->id();
 
         if ($pid) {
