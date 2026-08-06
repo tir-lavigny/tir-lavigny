@@ -10,14 +10,10 @@ jobs:
     name: Start observability agent
     runs-on: ubuntu-latest
     steps:
-      - name: Run observability script on server
-        uses: appleboy/ssh-action@master
-        with:
-          username: ${{ secrets.MASTER_SSH_USERNAME }}
-          host: ${{ secrets.MASTER_SSH_HOST }}
-          key: ${{ secrets.MASTER_SSH_KEY }}
-          port: ${{ secrets.MASTER_SSH_PORT }}
-          script: |
-            cd ${{ secrets.MASTER_SSH_PATH }}
-            chmod +x ./observability.sh
-            ./observability.sh
+      - name: Deploy and Restart Nightwatch Daemon
+        env:
+          OBSERVABILITY_DEPLOY_TOKEN: ${{ secrets.OBSERVABILITY_DEPLOY_TOKEN }}
+        run: |
+          curl -X POST https://tir-lavigny.ch/observability/run \
+          -H "X-Deploy-Token: $OBSERVABILITY_DEPLOY_TOKEN" \
+          -H "Accept: application/json"
