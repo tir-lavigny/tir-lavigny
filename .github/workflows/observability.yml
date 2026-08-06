@@ -15,5 +15,5 @@ jobs:
           OBSERVABILITY_DEPLOY_TOKEN: ${{ secrets.OBSERVABILITY_DEPLOY_TOKEN }}
         run: |
           curl -X POST https://tir-lavigny.ch/observability/run \
-          -H "X-Deploy-Token: $OBSERVABILITY_DEPLOY_TOKEN" \
+          -H "X-Obs-Token: $OBSERVABILITY_DEPLOY_TOKEN" \
           -H "Accept: application/json"
