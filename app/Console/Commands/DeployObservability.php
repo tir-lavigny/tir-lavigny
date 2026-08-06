@@ -18,7 +18,7 @@ class DeployObservability extends Command
 
         $this->info('Checking for existing observability process ...');
 
-        $statusCheck = Process::run('php artisan nightwatch:status');
+        $statusCheck = Process::path(base_path())->run('php artisan nightwatch:status');
 
         if ($statusCheck->successful()) {
             $this->info('Existing observability process found.');
@@ -27,9 +27,9 @@ class DeployObservability extends Command
                 $pid = trim(Storage::disk('local')->get($pidFile));
 
                 if (! empty($pid)) {
-                    Process::run("kill -15 {$pid}");
+                    Process::path(base_path())->run("kill -15 {$pid}");
                     sleep(2);
-                    Process::run("kill -9 {$pid}");
+                    Process::path(base_path())->run("kill -9 {$pid}");
                 }
                 Storage::disk('local')->delete($pidFile);
             }
@@ -39,7 +39,7 @@ class DeployObservability extends Command
 
         $this->info('Starting new process ...');
 
-        $process = Process::start('nohup php artisan nightwatch:agent > /dev/null 2>&1 &');
+        $process = Process::path(base_path())->start('nohup php artisan nightwatch:agent > /dev/null 2>&1 &');
         $pid = $process->id();
 
         if ($pid) {
@@ -48,7 +48,7 @@ class DeployObservability extends Command
 
         sleep(5);
 
-        $finalCheck = Process::run('php artisan nightwatch:status');
+        $finalCheck = Process::path(base_path())->run('php artisan nightwatch:status');
 
         if ($finalCheck->successful()) {
             $this->info('Observability process started successfully.');
