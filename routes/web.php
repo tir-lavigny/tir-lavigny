@@ -9,7 +9,6 @@ use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
-use App\Http\Controllers\ObservabilityController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ShootingController;
 use Illuminate\Support\Facades\Route;
@@ -86,7 +85,5 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
 
     require __DIR__.'/settings.php';
 });
-
-Route::post('/observability/run', [ObservabilityController::class, 'run'])->name('observability.deploy');
 
 require __DIR__.'/auth.php';
