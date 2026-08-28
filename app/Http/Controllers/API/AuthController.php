@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Cookie;
 
 class AuthController extends Controller
 {
@@ -49,7 +50,7 @@ class AuthController extends Controller
         );
     }
 
-    private function refreshCookie(string $refreshToken): \Symfony\Component\HttpFoundation\Cookie
+    private function refreshCookie(string $refreshToken): Cookie
     {
         return cookie(
             'refreshToken',
