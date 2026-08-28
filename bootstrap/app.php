@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ForceJson;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -16,11 +17,16 @@ use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+
+        $middleware->api(prepend: [
+            ForceJson::class,
+        ]);
 
         $middleware->web(append: [
             HandleAppearance::class,
@@ -37,6 +43,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->respond(function ($response, Throwable $exception, Request $request) {
             if ($response instanceof Response) {
+                if ($request->is('api/*')) {
+                    return response()->json([
+                        'message' => $exception->getMessage(),
+                    ], $response->getStatusCode());
+                }
                 if (! app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [500, 503, 404, 403])) {
                     return Inertia::render('ErrorPage', ['status' => $response->getStatusCode()])
                         ->toResponse($request)
