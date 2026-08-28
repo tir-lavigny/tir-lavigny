@@ -6,6 +6,9 @@ use App\DTOs\TokenData;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property-read TokenData $resource
+ */
 class TokenResource extends JsonResource
 {
     public static $wrap = null;

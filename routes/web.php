@@ -4,6 +4,7 @@ use App\Http\Controllers\BackOffice\DashboardController;
 use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
+use App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\BackOffice\UserController as BackOfficeUserController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EventController;
@@ -84,6 +85,94 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     ]);
 
     require __DIR__.'/settings.php';
+
+    // ── Register Management ──
+    Route::middleware('permission:manage products')->prefix('register')->group(function () {
+        Route::resource('products', Register\ProductController::class)->names([
+            'index' => 'bo.register.products.index',
+            'create' => 'bo.register.products.create',
+            'store' => 'bo.register.products.store',
+            'show' => 'bo.register.products.show',
+            'edit' => 'bo.register.products.edit',
+            'update' => 'bo.register.products.update',
+            'destroy' => 'bo.register.products.destroy',
+        ]);
+        Route::post('products/{product}/attach-child', [Register\ProductController::class, 'attachChild'])
+            ->name('bo.register.products.attach-child');
+        Route::delete('products/{product}/detach-child/{child}', [Register\ProductController::class, 'detachChild'])
+            ->name('bo.register.products.detach-child');
+    });
+
+    Route::middleware('permission:manage categories')->prefix('register')->group(function () {
+        Route::resource('categories', Register\CategoryController::class)->except('show')->names([
+            'index' => 'bo.register.categories.index',
+            'create' => 'bo.register.categories.create',
+            'store' => 'bo.register.categories.store',
+            'edit' => 'bo.register.categories.edit',
+            'update' => 'bo.register.categories.update',
+            'destroy' => 'bo.register.categories.destroy',
+        ]);
+    });
+
+    Route::middleware('permission:manage vouchers')->prefix('register')->group(function () {
+        Route::resource('vouchers', Register\VoucherController::class)->except('show')->names([
+            'index' => 'bo.register.vouchers.index',
+            'create' => 'bo.register.vouchers.create',
+            'store' => 'bo.register.vouchers.store',
+            'edit' => 'bo.register.vouchers.edit',
+            'update' => 'bo.register.vouchers.update',
+            'destroy' => 'bo.register.vouchers.destroy',
+        ]);
+    });
+
+    Route::middleware('permission:manage seasons')->prefix('register')->group(function () {
+        Route::resource('seasons', Register\SeasonController::class)->names([
+            'index' => 'bo.register.seasons.index',
+            'create' => 'bo.register.seasons.create',
+            'store' => 'bo.register.seasons.store',
+            'show' => 'bo.register.seasons.show',
+            'edit' => 'bo.register.seasons.edit',
+            'update' => 'bo.register.seasons.update',
+            'destroy' => 'bo.register.seasons.destroy',
+        ]);
+    });
+
+    Route::middleware('permission:manage members')->prefix('register')->group(function () {
+        Route::resource('members', Register\MemberController::class)->names([
+            'index' => 'bo.register.members.index',
+            'create' => 'bo.register.members.create',
+            'store' => 'bo.register.members.store',
+            'edit' => 'bo.register.members.edit',
+            'update' => 'bo.register.members.update',
+            'destroy' => 'bo.register.members.destroy',
+        ]);
+    });
+
+    Route::middleware('permission:manage operating days')->prefix('register')->group(function () {
+        Route::resource('operating-days', Register\OperatingDayController::class)->only(['index', 'show', 'update'])->names([
+            'index' => 'bo.register.operating-days.index',
+            'show' => 'bo.register.operating-days.show',
+            'update' => 'bo.register.operating-days.update',
+        ]);
+    });
+
+    Route::middleware('permission:refund ticket')->prefix('register')->group(function () {
+        Route::post('tickets/{ticket}/refund', [Register\TicketController::class, 'refund'])
+            ->name('bo.register.tickets.refund');
+    });
+
+    Route::middleware('permission:view reports')->prefix('register/reports')->group(function () {
+        Route::get('day/{operatingDay}', [Register\ReportController::class, 'dayDetail'])
+            ->name('bo.register.reports.day-detail');
+        Route::get('day/{operatingDay}/summary', [Register\ReportController::class, 'daySummary'])
+            ->name('bo.register.reports.day-summary');
+        Route::get('day/{operatingDay}/balance', [Register\ReportController::class, 'dayBalance'])
+            ->name('bo.register.reports.day-balance');
+        Route::get('period', [Register\ReportController::class, 'period'])
+            ->name('bo.register.reports.period');
+        Route::get('season/{season}', [Register\ReportController::class, 'season'])
+            ->name('bo.register.reports.season');
+    });
 });
 
 require __DIR__.'/auth.php';

@@ -41,6 +41,29 @@ class RolesAndPermissionsSeeder extends Seeder
         $editUserPermission = Permission::firstOrCreate(['name' => 'edit user']);
         $deleteUserPermission = Permission::firstOrCreate(['name' => 'delete user']);
 
+        // Register permissions
+        $viewRegisterPermission = Permission::firstOrCreate(['name' => 'view register']);
+        $openDayPermission = Permission::firstOrCreate(['name' => 'open day']);
+        $closeDayPermission = Permission::firstOrCreate(['name' => 'close day']);
+        $reopenDayPermission = Permission::firstOrCreate(['name' => 'reopen day']);
+        $addCashRemarkPermission = Permission::firstOrCreate(['name' => 'add cash remark']);
+        $createTicketPermission = Permission::firstOrCreate(['name' => 'create ticket']);
+        $viewTicketsPermission = Permission::firstOrCreate(['name' => 'view tickets']);
+        $refundTicketPermission = Permission::firstOrCreate(['name' => 'refund ticket']);
+        $addProductToTicketPermission = Permission::firstOrCreate(['name' => 'add product to ticket']);
+        $applyVoucherToTicketPermission = Permission::firstOrCreate(['name' => 'apply voucher to ticket']);
+        $manageProductsPermission = Permission::firstOrCreate(['name' => 'manage products']);
+        $manageCategoriesPermission = Permission::firstOrCreate(['name' => 'manage categories']);
+        $manageVouchersPermission = Permission::firstOrCreate(['name' => 'manage vouchers']);
+        $manageSeasonsPermission = Permission::firstOrCreate(['name' => 'manage seasons']);
+        $manageMembersPermission = Permission::firstOrCreate(['name' => 'manage members']);
+        $manageOperatingDaysPermission = Permission::firstOrCreate(['name' => 'manage operating days']);
+        $viewReportsPermission = Permission::firstOrCreate(['name' => 'view reports']);
+        $manageRegisterSettingsPermission = Permission::firstOrCreate(['name' => 'manage register settings']);
+
+        $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
+        $accountantRole = Role::firstOrCreate(['name' => 'accountant']);
+
         // Assign permissions to roles
         $adminRole->syncPermissions([
             $createEventPermission,
@@ -61,6 +84,24 @@ class RolesAndPermissionsSeeder extends Seeder
             $createUserPermission,
             $editUserPermission,
             $deleteUserPermission,
+            $viewRegisterPermission,
+            $openDayPermission,
+            $closeDayPermission,
+            $reopenDayPermission,
+            $addCashRemarkPermission,
+            $createTicketPermission,
+            $viewTicketsPermission,
+            $refundTicketPermission,
+            $addProductToTicketPermission,
+            $applyVoucherToTicketPermission,
+            $manageProductsPermission,
+            $manageCategoriesPermission,
+            $manageVouchersPermission,
+            $manageSeasonsPermission,
+            $manageMembersPermission,
+            $manageOperatingDaysPermission,
+            $viewReportsPermission,
+            $manageRegisterSettingsPermission,
         ]);
 
         $editorRole->syncPermissions([
@@ -79,6 +120,23 @@ class RolesAndPermissionsSeeder extends Seeder
             $createContentPermission,
             $editContentPermission,
             $deleteContentPermission,
+        ]);
+
+        $cashierRole->syncPermissions([
+            $viewRegisterPermission,
+            $openDayPermission,
+            $closeDayPermission,
+            $addCashRemarkPermission,
+            $createTicketPermission,
+            $viewTicketsPermission,
+            $addProductToTicketPermission,
+            $applyVoucherToTicketPermission,
+        ]);
+
+        $accountantRole->syncPermissions([
+            $viewRegisterPermission,
+            $viewTicketsPermission,
+            $viewReportsPermission,
         ]);
     }
 }
