@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\Register;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -18,4 +19,30 @@ Route::prefix('auth')->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])
             ->name('api.logout');
     });
+});
+
+Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->group(function () {
+    Route::post('/days', [Register\OperatingDayController::class, 'store'])
+        ->name('api.register.operating-days.store');
+    Route::patch('/days/{operatingDay}', [Register\OperatingDayController::class, 'update'])
+        ->name('api.register.operating-days.update');
+    Route::get('/days/current', [Register\OperatingDayController::class, 'current'])
+        ->name('api.register.operating-days.current');
+    Route::get('/days/{operatingDay}', [Register\OperatingDayController::class, 'show'])
+        ->name('api.register.operating-days.show');
+
+    Route::post('/tickets', [Register\TicketController::class, 'store'])
+        ->name('api.register.tickets.store');
+    Route::get('/tickets/{ticket}', [Register\TicketController::class, 'show'])
+        ->name('api.register.tickets.show');
+
+    Route::get('/products', [Register\ProductController::class, 'index'])
+        ->name('api.register.products.index');
+    Route::get('/products/{product}', [Register\ProductController::class, 'show'])
+        ->name('api.register.products.show');
+    Route::get('/categories', [Register\CategoryController::class, 'index'])
+        ->name('api.register.categories.index');
+
+    Route::post('/vouchers/validate', [Register\VoucherValidationController::class, 'validate'])
+        ->name('api.register.vouchers.validate');
 });
