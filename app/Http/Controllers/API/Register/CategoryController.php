@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Http\Controllers\API\Register;
+
+use App\Http\Controllers\Controller;
+use App\Models\Category;
+use Illuminate\Http\JsonResponse;
+
+class CategoryController extends Controller
+{
+    public function index(): JsonResponse
+    {
+        $categories = Category::where('is_restricted', false)
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json(['data' => $categories]);
+    }
+}
