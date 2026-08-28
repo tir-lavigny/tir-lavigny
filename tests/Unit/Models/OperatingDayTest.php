@@ -4,7 +4,6 @@ namespace Tests\Unit\Models;
 
 use App\Models\OperatingDay;
 use App\Models\Ticket;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
