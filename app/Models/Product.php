@@ -1,0 +1,56 @@
+<?php
+
+namespace App\Models;
+
+use App\LogsActivity;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Product extends Model
+{
+    use HasFactory, LogsActivity, SoftDeletes;
+
+    protected $fillable = [
+        'name',
+        'picture',
+        'unit_price',
+        'allows_custom_price',
+        'category_id',
+    ];
+
+    protected $casts = [
+        'unit_price' => 'decimal:2',
+        'allows_custom_price' => 'boolean',
+    ];
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function childProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_product', 'product_id', 'child_product_id')
+            ->withPivot('quantity');
+    }
+
+    public function parentProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_product', 'child_product_id', 'product_id')
+            ->withPivot('quantity');
+    }
+
+    public function ticketItems(): HasMany
+    {
+        return $this->hasMany(TicketItem::class);
+    }
+
+    public function vouchers(): HasMany
+    {
+        return $this->hasMany(Voucher::class);
+    }
+}
