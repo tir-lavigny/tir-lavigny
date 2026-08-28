@@ -13,10 +13,8 @@ use App\Http\Controllers\API\Register;
 Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->group(function () {
 
     // ── Day operations ──
-    Route::post('/days/open', [Register\OperatingDayController::class, 'open']);
-    Route::post('/days/{operatingDay}/close', [Register\OperatingDayController::class, 'close']);
-    Route::post('/days/{operatingDay}/reopen', [Register\OperatingDayController::class, 'reopen']);
-    Route::post('/days/{operatingDay}/cash-remark', [Register\OperatingDayController::class, 'addCashRemark']);
+    Route::post('/days', [Register\OperatingDayController::class, 'store']);
+    Route::patch('/days/{operatingDay}', [Register\OperatingDayController::class, 'update']);
     Route::get('/days/current', [Register\OperatingDayController::class, 'current']);
     Route::get('/days/{operatingDay}', [Register\OperatingDayController::class, 'show']);
 
@@ -89,10 +87,8 @@ Route::middleware(['auth', 'verified'])->prefix('back-office')->group(function (
 
 | Method | Endpoint | Permission | Description |
 |---|---|---|---|
-| POST | `/api/register/days/open` | open day | Opens a new operating day |
-| POST | `/api/register/days/{day}/close` | close day | Closes the day, recalculates totals |
-| POST | `/api/register/days/{day}/reopen` | reopen day | Re-opens a closed day (admin) |
-| POST | `/api/register/days/{day}/cash-remark` | add cash remark | Stores cash remark |
+| POST | `/api/register/days` | open day | Opens a new operating day |
+| PATCH | `/api/register/days/{day}` | close day / reopen day / add cash remark | Updates status or cash_remark |
 | GET | `/api/register/days/current` | view register | Returns current open day |
 | GET | `/api/register/days/{day}` | view register | Day with tickets |
 | POST | `/api/register/tickets` | create ticket | Creates ticket with items |

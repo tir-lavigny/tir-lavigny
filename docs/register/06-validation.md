@@ -6,9 +6,8 @@
 app/Http/Requests/
 ├── API/
 │   └── Register/
-│       ├── OpenDayRequest.php
-│       ├── CloseDayRequest.php
-│       ├── AddCashRemarkRequest.php
+│       ├── StoreDayRequest.php
+│       ├── UpdateDayRequest.php
 │       ├── StoreTicketRequest.php
 │       └── VoucherValidateRequest.php
 └── BackOffice/
@@ -32,7 +31,7 @@ All requests extend `Illuminate\Foundation\Http\FormRequest` and implement `auth
 
 ## API Form Requests
 
-### OpenDayRequest
+### StoreDayRequest
 
 ```php
 'season_id' => ['required', 'exists:seasons,id,deleted_at,NULL'],
@@ -42,19 +41,17 @@ All requests extend `Illuminate\Foundation\Http\FormRequest` and implement `auth
 - `NoOpenDayExists` — No operating day with `closed_at IS NULL` for the same season.
 - `DateNotDuplicate` — No operating day with same `date` for the same season.
 
-### CloseDayRequest
+### UpdateDayRequest
 
 ```php
+'status'         => ['sometimes', 'string', Rule::in(['open', 'closed']],
 'closing_balance' => ['nullable', 'numeric', 'min:0'],
+'cash_remark'    => ['nullable', 'string', 'max:5000'],
 ```
 
-- Day must be open (validated in controller logic).
-
-### AddCashRemarkRequest
-
-```php
-'cash_remark' => ['required', 'string', 'max:5000'],
-```
+- If `status = "closed"`: day must be open (validated in controller). `closing_balance` is optional.
+- If `status = "open"`: requires `reopen day` permission (validated in controller).
+- `cash_remark` can be sent alone or alongside a status change.
 
 ### StoreTicketRequest
 

@@ -32,10 +32,8 @@ app/Http/Controllers/
 ```php
 class OperatingDayController extends Controller
 {
-    public function open(OpenDayRequest $request): JsonResponse
-    public function close(OperatingDay $operatingDay): JsonResponse
-    public function reopen(OperatingDay $operatingDay): JsonResponse
-    public function addCashRemark(OperatingDay $operatingDay, AddCashRemarkRequest $request): JsonResponse
+    public function store(StoreDayRequest $request): JsonResponse
+    public function update(UpdateDayRequest $request, OperatingDay $operatingDay): JsonResponse
     public function current(): JsonResponse
     public function show(OperatingDay $operatingDay): JsonResponse
 }
@@ -43,10 +41,8 @@ class OperatingDayController extends Controller
 
 | Method | Logic |
 |---|---|
-| `open()` | Validates via `OpenDayRequest` (no open day exists for season, date not duplicate). Creates `OperatingDay` with `date = today`, `started_at = now`, `season_id`. Returns the created day. |
-| `close()` | Validates day is open. Calls `$day->recalculateTotals()`. Sets `closed_at = now`. Optionally accepts `closing_balance` in request body. Returns updated day. |
-| `reopen()` | Checks `$request->user()->can('reopen day')`. Sets `closed_at = null`. Returns updated day. |
-| `addCashRemark()` | Validates request. Updates `cash_remark`. Returns day. |
+| `store()` | Validates via `StoreDayRequest` (no open day exists for season, date not duplicate). Creates `OperatingDay` with `date = today`, `started_at = now`, `season_id`. Returns the created day. |
+| `update()` | Validates via `UpdateDayRequest`. Determines action from payload: `status = "closed"` → validates day is open, calls `recalculateTotals()`, sets `closed_at = now` (optionally accepts `closing_balance`); `status = "open"` → checks `reopen day` permission, sets `closed_at = null`; `cash_remark` → updates `cash_remark`. Returns updated day. |
 | `current()` | Returns the currently open day for today's date, or 404. Eager-loads tickets for quick reference. |
 | `show()` | Returns operating day with tickets (using `withTrashed()` for refunded tickets) and ticket items. |
 
