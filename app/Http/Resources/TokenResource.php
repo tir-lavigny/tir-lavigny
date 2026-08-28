@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources;
 
-use App\Models\User;
+use App\DTOs\TokenData;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,21 +10,16 @@ class TokenResource extends JsonResource
 {
     public static $wrap = null;
 
-    public function __construct(
-        string $accessToken,
-        ?User $user = null,
-    ) {
-        parent::__construct([
-            'accessToken' => $accessToken,
-            'user' => $user ? UserResource::make($user) : null,
-        ]);
+    public function __construct(TokenData $data)
+    {
+        parent::__construct($data);
     }
 
     public function toArray(Request $request): array
     {
-        return array_filter([
-            'accessToken' => $this->resource['accessToken'],
-            'user' => $this->resource['user'],
-        ], fn ($v) => $v !== null);
+        return [
+            'accessToken' => $this->resource->accessToken,
+            'user' => $this->resource->user ? new UserResource($this->resource->user) : null,
+        ];
     }
 }

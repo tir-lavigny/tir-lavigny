@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\DTOs\TokenData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\TokenResource;
@@ -28,7 +29,8 @@ class AuthController extends Controller
         $user = Auth::user();
         $tokens = $this->generateTokens($user);
 
-        return $this->success(new TokenResource($tokens['accessToken'], $user))
+        return (new TokenResource(new TokenData($tokens['accessToken'], $user)))
+            ->response()
             ->withCookie($this->refreshCookie($tokens['refreshToken']));
     }
 
@@ -37,7 +39,8 @@ class AuthController extends Controller
         $request->user()->tokens()->delete();
         $tokens = $this->generateTokens($request->user());
 
-        return $this->success(new TokenResource($tokens['accessToken']))
+        return (new TokenResource(new TokenData($tokens['accessToken'])))
+            ->response()
             ->withCookie($this->refreshCookie($tokens['refreshToken']));
     }
 
