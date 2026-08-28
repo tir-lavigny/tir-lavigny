@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ForceJson;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -23,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        $middleware->api(prepend: [
+            ForceJson::class,
+        ]);
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
@@ -38,6 +43,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->respond(function ($response, Throwable $exception, Request $request) {
             if ($response instanceof Response) {
+                if ($request->is('api/*')) {
+                    return response()->json([
+                        'message' => $exception->getMessage(),
+                    ], $response->getStatusCode());
+                }
                 if (! app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [500, 503, 404, 403])) {
                     return Inertia::render('ErrorPage', ['status' => $response->getStatusCode()])
                         ->toResponse($request)
