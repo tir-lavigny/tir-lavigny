@@ -61,8 +61,8 @@ Schema::create('seasons', function (Blueprint $table) {
     $table->string('name');
     $table->date('start_date');
     $table->date('end_date');
-    $table->decimal('initial_balance', 10, 2)->default(0);
-    $table->decimal('expected_end_balance', 10, 2)->nullable();
+    $table->decimal('initial_balance', 10, 2);
+    $table->decimal('end_balance', 10, 2)->nullable();
     $table->softDeletes();
     $table->timestamps();
 });
@@ -134,6 +134,7 @@ Schema::create('ticket_items', function (Blueprint $table) {
     $table->unsignedInteger('quantity');
     $table->decimal('unit_price', 10, 2);
     $table->decimal('subtotal', 10, 2);
+    $table->softDeletes();
     $table->timestamps();
 
     $table->index('ticket_id');

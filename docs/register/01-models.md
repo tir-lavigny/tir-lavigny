@@ -10,7 +10,7 @@ Following Laravel conventions: snake_case table names, singular model names, cle
 | Day.remarks | **cash_remark** | Clarifies it's about cash register reconciliation |
 | Day.total_amount | **closing_balance** | Distinguishes from ticket totals |
 | Season.start_amount | **initial_balance** | Cash in register at season start |
-| Season.end_amount | **expected_end_balance** | Expected cash at season end |
+| Season.end_amount | **end_balance** | Expected cash at season end |
 | TicketItem.total_price | **subtotal** | Standard term for line-item total |
 
 ## Product
@@ -56,8 +56,8 @@ Following Laravel conventions: snake_case table names, singular model names, cle
 | `name` | string | required |
 | `start_date` | date | required |
 | `end_date` | date | required, after_or_equal:start_date |
-| `initial_balance` | decimal(10,2) | default 0 |
-| `expected_end_balance` | decimal(10,2) | nullable |
+| `initial_balance` | decimal(10,2) | required |
+| `end_balance` | decimal(10,2) | nullable |
 | `created_at` | timestamp | |
 | `updated_at` | timestamp | |
 | `deleted_at` | timestamp | nullable (SoftDeletes) |
@@ -150,7 +150,8 @@ Following Laravel conventions: snake_case table names, singular model names, cle
 | `deleted_at` | timestamp | nullable (SoftDeletes = refunded) |
 
 ### Notes
-- Soft delete = refund. Refunded tickets still appear in reports via `withTrashed()`
+- Soft delete = refund. Refunded tickets and their items are soft-deleted together.
+- Restoring a ticket restores its items.
 - Tickets are finalized at creation (no draft state)
 
 ### Relationships
@@ -170,6 +171,7 @@ Following Laravel conventions: snake_case table names, singular model names, cle
 | `subtotal` | decimal(10,2) | computed: qty * unit_price - discount |
 | `created_at` | timestamp | |
 | `updated_at` | timestamp | |
+| `deleted_at` | timestamp | nullable (SoftDeletes, cascaded from Ticket) |
 
 ### Relationships
 - `belongsTo(Product::class)`
