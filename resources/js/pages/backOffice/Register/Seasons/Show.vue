@@ -44,11 +44,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <dl class="grid grid-cols-2 gap-4">
                         <div>
                             <dt class="text-muted-foreground text-sm">Date de début</dt>
-                            <dd class="font-medium">{{ formatDate(season.start_date, 'dd.MM.yyyy') }}</dd>
+                            <dd class="font-medium">{{ formatDate(season.start_date, 'DD.MM.YYYY') }}</dd>
                         </div>
                         <div>
                             <dt class="text-muted-foreground text-sm">Date de fin</dt>
-                            <dd class="font-medium">{{ formatDate(season.end_date, 'dd.MM.yyyy') }}</dd>
+                            <dd class="font-medium">{{ formatDate(season.end_date, 'DD.MM.YYYY') }}</dd>
                         </div>
                         <div>
                             <dt class="text-muted-foreground text-sm">Solde initial</dt>
