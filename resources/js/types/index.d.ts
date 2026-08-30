@@ -187,3 +187,129 @@ export interface ActivityLog {
     created_at: string; // ISO 8601 format
     updated_at: string; // ISO 8601 format
 }
+
+// ── Register ──
+
+export interface Category {
+    id: number;
+    name: string;
+    is_restricted: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Product {
+    id: number;
+    name: string;
+    picture?: string;
+    unit_price: number;
+    allows_custom_price: boolean;
+    category_id: number;
+    category?: Category;
+    childProducts?: Product[];
+    parentProducts?: Product[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Season {
+    id: number;
+    name: string;
+    start_date: string;
+    end_date: string;
+    initial_balance: number;
+    end_balance?: number;
+    operatingDays?: OperatingDay[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Member {
+    id: number;
+    first_name: string;
+    last_name: string;
+    member_number: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Voucher {
+    id: number;
+    discount_percent?: number;
+    discount_fixed?: number;
+    product_id: number;
+    season_id: number;
+    member_id: number;
+    product?: Product;
+    season?: Season;
+    member?: Member;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface OperatingDay {
+    id: number;
+    date: string;
+    started_at: string;
+    closed_at?: string;
+    season_id: number;
+    cash_remark?: string;
+    closing_balance?: number;
+    total_cash: number;
+    total_twint: number;
+    season?: Season;
+    tickets?: Ticket[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Ticket {
+    id: number;
+    total: number;
+    payment_method: 'cash' | 'twint';
+    operating_day_id: number;
+    member_id?: number;
+    sold_at: string;
+    ticketItems?: TicketItem[];
+    member?: Member;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TicketItem {
+    id: number;
+    product_id: number;
+    ticket_id: number;
+    voucher_id?: number;
+    quantity: number;
+    unit_price: number;
+    subtotal: number;
+    product?: Product;
+    voucher?: Voucher;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedCategories extends PaginatedData<Category> {
+    data?: Category[];
+}
+
+export interface PaginatedProducts extends PaginatedData<Product> {
+    data?: Product[];
+}
+
+export interface PaginatedSeasons extends PaginatedData<Season> {
+    data?: Season[];
+}
+
+export interface PaginatedMembers extends PaginatedData<Member> {
+    data?: Member[];
+}
+
+export interface PaginatedVouchers extends PaginatedData<Voucher> {
+    data?: Voucher[];
+}
+
+export interface PaginatedOperatingDays extends PaginatedData<OperatingDay> {
+    data?: OperatingDay[];
+}

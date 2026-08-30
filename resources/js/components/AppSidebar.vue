@@ -7,7 +7,7 @@ import { hasRole } from '@/lib/utils';
 import type { SharedData } from '@/types';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Calendar, FileText, LayoutGrid, MapPin, Newspaper, PanelTop, Repeat, ScanEye, Telescope, Users } from '@lucide/vue';
+import { Calendar, CalendarDays, FileText, LayoutGrid, MapPin, Newspaper, PanelTop, Repeat, ScanEye, ShoppingCart, Tag, Telescope, Ticket, Users } from '@lucide/vue';
 import AppLogo from './AppLogo.vue';
 
 const user = usePage<SharedData>().props.auth.user;
@@ -50,6 +50,39 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
+const registerNavItems: NavItem[] = [
+    {
+        title: 'Produits',
+        href: route('bo.register.products.index'),
+        icon: ShoppingCart,
+    },
+    {
+        title: 'Catégories',
+        href: route('bo.register.categories.index'),
+        icon: Tag,
+    },
+    {
+        title: 'Saisons',
+        href: route('bo.register.seasons.index'),
+        icon: Calendar,
+    },
+    {
+        title: 'Membres',
+        href: route('bo.register.members.index'),
+        icon: Users,
+    },
+    {
+        title: 'Bons',
+        href: route('bo.register.vouchers.index'),
+        icon: Ticket,
+    },
+    {
+        title: 'Journées',
+        href: route('bo.register.operating-days.index'),
+        icon: CalendarDays,
+    },
+];
+
 const footerNavItems: NavItem[] = [
     ...(hasRole(user, 'admin')
         ? [
@@ -89,6 +122,7 @@ const footerNavItems: NavItem[] = [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
+            <NavMain :items="registerNavItems" label="Caisse" />
         </SidebarContent>
 
         <SidebarFooter>
