@@ -175,6 +175,15 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         Route::get('season/{season}/export', [Register\ReportExportController::class, 'export'])
             ->name('bo.register.reports.season-export');
     });
+
+    Route::middleware('permission:restore register')->prefix('register')->group(function () {
+        Route::get('trash', [Register\TrashController::class, 'index'])
+            ->name('bo.register.trash.index');
+        Route::post('trash/{type}/{id}/restore', [Register\TrashController::class, 'restore'])
+            ->name('bo.register.trash.restore');
+        Route::delete('trash/{type}/{id}', [Register\TrashController::class, 'forceDelete'])
+            ->name('bo.register.trash.force-delete');
+    });
 });
 
 require __DIR__.'/auth.php';

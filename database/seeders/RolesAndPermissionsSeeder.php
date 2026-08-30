@@ -60,6 +60,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $manageOperatingDaysPermission = Permission::firstOrCreate(['name' => 'manage operating days']);
         $viewReportsPermission = Permission::firstOrCreate(['name' => 'view reports']);
         $manageRegisterSettingsPermission = Permission::firstOrCreate(['name' => 'manage register settings']);
+        $restoreRegisterPermission = Permission::firstOrCreate(['name' => 'restore register']);
 
         $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
         $accountantRole = Role::firstOrCreate(['name' => 'accountant']);
@@ -102,6 +103,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $manageOperatingDaysPermission,
             $viewReportsPermission,
             $manageRegisterSettingsPermission,
+            $restoreRegisterPermission,
         ]);
 
         $editorRole->syncPermissions([
