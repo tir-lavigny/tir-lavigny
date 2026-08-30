@@ -17,7 +17,7 @@ import { toast } from 'vue-sonner';
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
 
-const props = defineProps<{ categories: Category[] }>();
+defineProps<{ categories: Category[] }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Produits', href: route('bo.register.products.index') },
@@ -32,7 +32,10 @@ const handleSubmit = () => {
         return;
     }
     form.post(route('bo.register.products.store'), {
-        onSuccess: () => { form.reset(); toast.success('Produit créé.'); },
+        onSuccess: () => {
+            form.reset();
+            toast.success('Produit créé.');
+        },
         onError: () => toast.error('Erreur lors de la création.'),
     });
 };

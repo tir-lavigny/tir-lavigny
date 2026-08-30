@@ -111,7 +111,9 @@ const handleSubmit = () => {
                             <Select v-model="form.member_id">
                                 <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem v-for="m in members" :key="m.id" :value="String(m.id)">{{ m.first_name }} {{ m.last_name }}</SelectItem>
+                                    <SelectItem v-for="m in members" :key="m.id" :value="String(m.id)"
+                                        >{{ m.first_name }} {{ m.last_name }}</SelectItem
+                                    >
                                 </SelectContent>
                             </Select>
                             <InputError :message="form.errors.member_id" />
@@ -122,8 +124,12 @@ const handleSubmit = () => {
                         <div class="grid gap-2">
                             <Label>Type de réduction</Label>
                             <div class="flex gap-2">
-                                <Button :variant="discountType === 'percent' ? 'default' : 'outline'" @click="discountType = 'percent'" type="button">Pourcentage (%)</Button>
-                                <Button :variant="discountType === 'fixed' ? 'default' : 'outline'" @click="discountType = 'fixed'" type="button">Montant fixe (CHF)</Button>
+                                <Button :variant="discountType === 'percent' ? 'default' : 'outline'" @click="discountType = 'percent'" type="button"
+                                    >Pourcentage (%)</Button
+                                >
+                                <Button :variant="discountType === 'fixed' ? 'default' : 'outline'" @click="discountType = 'fixed'" type="button"
+                                    >Montant fixe (CHF)</Button
+                                >
                             </div>
                         </div>
                         <div class="grid gap-2">
@@ -136,7 +142,7 @@ const handleSubmit = () => {
                                 min="0"
                                 max="100"
                                 step="0.01"
-                                class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                class="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:outline-none"
                             />
                             <input
                                 v-else
@@ -145,7 +151,7 @@ const handleSubmit = () => {
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                class="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:outline-none"
                             />
                             <InputError :message="form.errors.discount_percent ?? form.errors.discount_fixed" />
                         </div>

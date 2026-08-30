@@ -206,7 +206,7 @@ export interface Product {
     allows_custom_price: boolean;
     category_id: number;
     category?: Category;
-    childProducts?: Product[];
+    childProducts?: (Product & { pivot?: { quantity: number } })[];
     parentProducts?: Product[];
     created_at: string;
     updated_at: string;

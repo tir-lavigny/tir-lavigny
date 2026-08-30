@@ -15,11 +15,9 @@ import { toast } from 'vue-sonner';
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Bons', href: route('bo.register.vouchers.index') },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Bons', href: route('bo.register.vouchers.index') }];
 
-const props = defineProps<{
+defineProps<{
     vouchers: PaginatedVouchers;
 }>();
 
@@ -64,7 +62,7 @@ const formatDiscount = (voucher: any) => {
                         <p class="font-medium">
                             {{ formatDiscount(voucher) }}
                         </p>
-                        <p class="text-sm text-muted-foreground">
+                        <p class="text-muted-foreground text-sm">
                             <span v-if="voucher.product">{{ voucher.product.name }}</span>
                             <span v-if="voucher.member"> · {{ voucher.member.first_name }} {{ voucher.member.last_name }}</span>
                             <span v-if="voucher.season"> · {{ voucher.season.name }}</span>
@@ -79,7 +77,12 @@ const formatDiscount = (voucher: any) => {
                             </TooltipTrigger>
                             <TooltipContent><p>Modifier</p></TooltipContent>
                         </Tooltip>
-                        <AppAlertDialog v-if="hasPermissionTo(user, 'manage vouchers')" title="Supprimer ce bon ?" description="Cette action est irréversible.">
+                        <AppAlertDialog
+                            v-if="hasPermissionTo(user, 'manage vouchers')"
+                            title="Supprimer ce bon ?"
+                            description="Cette action est irréversible."
+                            cancelText="Annuler"
+                        >
                             <template #trigger>
                                 <Button size="icon" variant="destructive"><Trash2 /></Button>
                             </template>
@@ -89,9 +92,7 @@ const formatDiscount = (voucher: any) => {
                         </AppAlertDialog>
                     </div>
                 </div>
-                <Muted v-if="vouchers.data?.length" class="my-4 flex items-center justify-center">
-                    {{ vouchers.total }} bon(s) trouvé(s)
-                </Muted>
+                <Muted v-if="vouchers.data?.length" class="my-4 flex items-center justify-center"> {{ vouchers.total }} bon(s) trouvé(s) </Muted>
                 <Muted v-else class="my-4 flex items-center justify-center">Aucun bon trouvé</Muted>
                 <AppPagination
                     :items-per-page="vouchers.per_page"

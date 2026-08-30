@@ -5,14 +5,10 @@ import { Muted } from '@/components/typography/texts';
 import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate } from '@/lib/utils';
-import type { BreadcrumbItem, PaginatedOperatingDays, SharedData } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import type { BreadcrumbItem, PaginatedOperatingDays } from '@/types';
+import { Head, Link, router } from '@inertiajs/vue3';
 
-const page = usePage<SharedData>();
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Journées', href: route('bo.register.operating-days.index') },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Journées', href: route('bo.register.operating-days.index') }];
 
 const props = defineProps<{
     operatingDays: PaginatedOperatingDays;
@@ -20,7 +16,11 @@ const props = defineProps<{
 }>();
 
 const handlePageChange = (p: number = 1) => {
-    router.get(route('bo.register.operating-days.index'), { page: p, season_id: props.filters.season_id }, { preserveState: true, preserveScroll: true });
+    router.get(
+        route('bo.register.operating-days.index'),
+        { page: p, season_id: props.filters.season_id },
+        { preserveState: true, preserveScroll: true },
+    );
 };
 </script>
 
@@ -35,10 +35,13 @@ const handlePageChange = (p: number = 1) => {
                     </div>
                 </div>
                 <div v-for="day in operatingDays.data" :key="day.id" class="mb-4">
-                    <Link :href="route('bo.register.operating-days.show', day.id)" class="flex items-center justify-between rounded-lg border p-4 hover:bg-accent">
+                    <Link
+                        :href="route('bo.register.operating-days.show', day.id)"
+                        class="hover:bg-accent flex items-center justify-between rounded-lg border p-4"
+                    >
                         <div>
                             <p class="font-medium hover:underline">{{ formatDate(day.date, 'dd.MM.yyyy') }}</p>
-                            <p class="text-sm text-muted-foreground">
+                            <p class="text-muted-foreground text-sm">
                                 <span v-if="day.season">{{ day.season.name }} · </span>
                                 Espèces: {{ day.total_cash.toFixed(2) }} CHF · Twint: {{ day.total_twint.toFixed(2) }} CHF
                             </p>

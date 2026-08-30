@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import InputError from '@/components/InputError.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -63,10 +62,20 @@ const handleReopen = () => {
                 <Badge :variant="isOpen ? 'default' : 'secondary'">{{ isOpen ? 'Ouverte' : 'Fermée' }}</Badge>
             </div>
             <div class="flex gap-2">
-                <Button v-if="isOpen && hasPermissionTo(user, 'close day')" variant="destructive" @click="handleClose" :disabled="closeForm.processing">
+                <Button
+                    v-if="isOpen && hasPermissionTo(user, 'close day')"
+                    variant="destructive"
+                    @click="handleClose"
+                    :disabled="closeForm.processing"
+                >
                     <Lock class="mr-2 size-4" /> Fermer
                 </Button>
-                <Button v-if="!isOpen && hasPermissionTo(user, 'reopen day')" variant="outline" @click="handleReopen" :disabled="reopenForm.processing">
+                <Button
+                    v-if="!isOpen && hasPermissionTo(user, 'reopen day')"
+                    variant="outline"
+                    @click="handleReopen"
+                    :disabled="reopenForm.processing"
+                >
                     <Unlock class="mr-2 size-4" /> Rouvrir
                 </Button>
             </div>
@@ -75,11 +84,15 @@ const handleReopen = () => {
             <div class="grid grid-cols-3 gap-4">
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Total Espèces</CardTitle></CardHeader>
-                    <CardContent><p class="text-2xl font-bold">{{ operatingDay.total_cash.toFixed(2) }} CHF</p></CardContent>
+                    <CardContent
+                        ><p class="text-2xl font-bold">{{ operatingDay.total_cash.toFixed(2) }} CHF</p></CardContent
+                    >
                 </Card>
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Total Twint</CardTitle></CardHeader>
-                    <CardContent><p class="text-2xl font-bold">{{ operatingDay.total_twint.toFixed(2) }} CHF</p></CardContent>
+                    <CardContent
+                        ><p class="text-2xl font-bold">{{ operatingDay.total_twint.toFixed(2) }} CHF</p></CardContent
+                    >
                 </Card>
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Solde clôture</CardTitle></CardHeader>
@@ -91,10 +104,13 @@ const handleReopen = () => {
 
             <Separator />
 
-            <div v-if="!isOpen && hasPermissionTo(user, 'manage operating days')" class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
+            <div
+                v-if="!isOpen && hasPermissionTo(user, 'manage operating days')"
+                class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4"
+            >
                 <H3>Solde de clôture</H3>
                 <div class="mt-4 flex items-end gap-4">
-                    <div class="grid gap-2 w-48">
+                    <div class="grid w-48 gap-2">
                         <Label for="closing_balance">Montant (CHF)</Label>
                         <Input id="closing_balance" v-model="closeForm.closing_balance" type="number" step="0.01" min="0" />
                     </div>
@@ -102,7 +118,10 @@ const handleReopen = () => {
                 </div>
             </div>
 
-            <div v-if="hasPermissionTo(user, 'manage operating days')" class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
+            <div
+                v-if="hasPermissionTo(user, 'manage operating days')"
+                class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4"
+            >
                 <H3>Remarque</H3>
                 <div class="mt-4 flex flex-col gap-4">
                     <Textarea v-model="remarkForm.cash_remark" placeholder="Remarque après vérification de la caisse..." rows="3" />
@@ -138,7 +157,7 @@ const handleReopen = () => {
                     </TableRow>
                 </TableBody>
             </Table>
-            <p v-else class="text-sm text-muted-foreground">Aucun ticket.</p>
+            <p v-else class="text-muted-foreground text-sm">Aucun ticket.</p>
         </div>
     </AppLayout>
 </template>

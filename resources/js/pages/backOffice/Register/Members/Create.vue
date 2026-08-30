@@ -28,7 +28,10 @@ const handleSubmit = () => {
         return;
     }
     form.post(route('bo.register.members.store'), {
-        onSuccess: () => { form.reset(); toast.success('Membre créé.'); },
+        onSuccess: () => {
+            form.reset();
+            toast.success('Membre créé.');
+        },
         onError: () => toast.error('Erreur lors de la création.'),
     });
 };

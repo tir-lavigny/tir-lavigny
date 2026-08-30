@@ -17,7 +17,7 @@ import { toast } from 'vue-sonner';
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
 
-const props = defineProps<{
+defineProps<{
     products: Product[];
     seasons: Season[];
     members: Member[];
@@ -52,7 +52,10 @@ const handleSubmit = () => {
         return;
     }
     form.post(route('bo.register.vouchers.store'), {
-        onSuccess: () => { form.reset(); toast.success('Bon créé.'); },
+        onSuccess: () => {
+            form.reset();
+            toast.success('Bon créé.');
+        },
         onError: () => toast.error('Erreur lors de la création.'),
     });
 };
@@ -108,7 +111,9 @@ const handleSubmit = () => {
                             <Select v-model="form.member_id">
                                 <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem v-for="m in members" :key="m.id" :value="String(m.id)">{{ m.first_name }} {{ m.last_name }}</SelectItem>
+                                    <SelectItem v-for="m in members" :key="m.id" :value="String(m.id)"
+                                        >{{ m.first_name }} {{ m.last_name }}</SelectItem
+                                    >
                                 </SelectContent>
                             </Select>
                             <InputError :message="form.errors.member_id" />
@@ -119,8 +124,12 @@ const handleSubmit = () => {
                         <div class="grid gap-2">
                             <Label>Type de réduction</Label>
                             <div class="flex gap-2">
-                                <Button :variant="discountType === 'percent' ? 'default' : 'outline'" @click="discountType = 'percent'" type="button">Pourcentage (%)</Button>
-                                <Button :variant="discountType === 'fixed' ? 'default' : 'outline'" @click="discountType = 'fixed'" type="button">Montant fixe (CHF)</Button>
+                                <Button :variant="discountType === 'percent' ? 'default' : 'outline'" @click="discountType = 'percent'" type="button"
+                                    >Pourcentage (%)</Button
+                                >
+                                <Button :variant="discountType === 'fixed' ? 'default' : 'outline'" @click="discountType = 'fixed'" type="button"
+                                    >Montant fixe (CHF)</Button
+                                >
                             </div>
                         </div>
                         <div class="grid gap-2">
@@ -135,15 +144,7 @@ const handleSubmit = () => {
                                 step="0.01"
                                 required
                             />
-                            <Input
-                                v-else
-                                id="discount_value"
-                                v-model="form.discount_fixed"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                required
-                            />
+                            <Input v-else id="discount_value" v-model="form.discount_fixed" type="number" min="0" step="0.01" required />
                             <InputError :message="form.errors.discount_percent ?? form.errors.discount_fixed" />
                         </div>
                     </div>

@@ -33,7 +33,11 @@ const showAttach = ref(false);
 
 const handleAttach = () => {
     attachForm.post(route('bo.register.products.attach-child', props.product.id), {
-        onSuccess: () => { attachForm.reset(); showAttach.value = false; toast.success('Sous-produit ajouté.'); },
+        onSuccess: () => {
+            attachForm.reset();
+            showAttach.value = false;
+            toast.success('Sous-produit ajouté.');
+        },
         onError: () => toast.error("Erreur lors de l'ajout."),
     });
 };
@@ -68,16 +72,20 @@ const handleDetach = (childId: number) => {
                 <CardContent>
                     <dl class="grid grid-cols-2 gap-4">
                         <div>
-                            <dt class="text-sm text-muted-foreground">Prix unitaire</dt>
+                            <dt class="text-muted-foreground text-sm">Prix unitaire</dt>
                             <dd class="font-medium">{{ product.unit_price.toFixed(2) }} CHF</dd>
                         </div>
                         <div>
-                            <dt class="text-sm text-muted-foreground">Catégorie</dt>
+                            <dt class="text-muted-foreground text-sm">Catégorie</dt>
                             <dd class="font-medium">{{ product.category?.name ?? '—' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-sm text-muted-foreground">Prix libre</dt>
-                            <dd><Badge :variant="product.allows_custom_price ? 'default' : 'secondary'">{{ product.allows_custom_price ? 'Oui' : 'Non' }}</Badge></dd>
+                            <dt class="text-muted-foreground text-sm">Prix libre</dt>
+                            <dd>
+                                <Badge :variant="product.allows_custom_price ? 'default' : 'secondary'">{{
+                                    product.allows_custom_price ? 'Oui' : 'Non'
+                                }}</Badge>
+                            </dd>
                         </div>
                     </dl>
                 </CardContent>
@@ -96,7 +104,7 @@ const handleDetach = (childId: number) => {
             </div>
 
             <div v-if="showAttach" class="flex items-end gap-4 rounded-lg border p-4">
-                <div class="grid gap-2 flex-1">
+                <div class="grid flex-1 gap-2">
                     <Label for="child_product_id">Produit</Label>
                     <Select v-model="attachForm.child_product_id">
                         <SelectTrigger><SelectValue placeholder="Sélectionner un produit" /></SelectTrigger>
@@ -106,7 +114,7 @@ const handleDetach = (childId: number) => {
                     </Select>
                     <InputError :message="attachForm.errors.child_product_id" />
                 </div>
-                <div class="grid gap-2 w-24">
+                <div class="grid w-24 gap-2">
                     <Label for="quantity">Quantité</Label>
                     <Input id="quantity" v-model="attachForm.quantity" type="number" min="1" />
                 </div>
@@ -117,9 +125,14 @@ const handleDetach = (childId: number) => {
                 <div v-for="child in product.childProducts" :key="child.id" class="flex items-center justify-between rounded-lg border p-4">
                     <div>
                         <p class="font-medium">{{ child.name }}</p>
-                        <p class="text-sm text-muted-foreground">Quantité: {{ child.pivot?.quantity }}</p>
+                        <p class="text-muted-foreground text-sm">Quantité: {{ child.pivot?.quantity }}</p>
                     </div>
-                    <AppAlertDialog v-if="hasPermissionTo(user, 'manage products')" title="Retirer ce sous-produit ?">
+                    <AppAlertDialog
+                        v-if="hasPermissionTo(user, 'manage products')"
+                        title="Retirer ce sous-produit ?"
+                        description="Le sous-produit sera détaché."
+                        cancelText="Annuler"
+                    >
                         <template #trigger>
                             <Button size="icon" variant="destructive"><Trash2 /></Button>
                         </template>
@@ -129,7 +142,7 @@ const handleDetach = (childId: number) => {
                     </AppAlertDialog>
                 </div>
             </div>
-            <p v-else class="text-sm text-muted-foreground">Aucun sous-produit.</p>
+            <p v-else class="text-muted-foreground text-sm">Aucun sous-produit.</p>
         </div>
     </AppLayout>
 </template>

@@ -17,9 +17,7 @@ import { toast } from 'vue-sonner';
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Saisons', href: route('bo.register.seasons.index') },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Saisons', href: route('bo.register.seasons.index') }];
 
 const props = defineProps<{
     seasons: PaginatedSeasons;
@@ -32,9 +30,13 @@ const handlePageChange = (p: number = 1) => {
     router.get(route('bo.register.seasons.index'), { page: p, search: filters.value.search }, { preserveState: true, preserveScroll: true });
 };
 
-watch(filters, (f) => {
-    router.get(route('bo.register.seasons.index'), { page: 1, search: f.search }, { preserveState: true, preserveScroll: true });
-}, { deep: true });
+watch(
+    filters,
+    (f) => {
+        router.get(route('bo.register.seasons.index'), { page: 1, search: f.search }, { preserveState: true, preserveScroll: true });
+    },
+    { deep: true },
+);
 
 const handleDelete = (id: number) => {
     useForm({}).delete(route('bo.register.seasons.destroy', id), {
@@ -73,7 +75,7 @@ const handleDelete = (id: number) => {
                 <div v-for="season in seasons.data" :key="season.id" class="mb-4 flex items-center justify-between rounded-lg border p-4">
                     <Link :href="route('bo.register.seasons.show', season.id)" class="flex-1">
                         <p class="font-medium hover:underline">{{ season.name }}</p>
-                        <p class="text-sm text-muted-foreground">
+                        <p class="text-muted-foreground text-sm">
                             {{ formatDate(season.start_date, 'dd.MM.yyyy') }} — {{ formatDate(season.end_date, 'dd.MM.yyyy') }}
                         </p>
                     </Link>
@@ -86,7 +88,12 @@ const handleDelete = (id: number) => {
                             </TooltipTrigger>
                             <TooltipContent><p>Modifier</p></TooltipContent>
                         </Tooltip>
-                        <AppAlertDialog v-if="hasPermissionTo(user, 'manage seasons')" title="Supprimer cette saison ?" description="Cette action est irréversible.">
+                        <AppAlertDialog
+                            v-if="hasPermissionTo(user, 'manage seasons')"
+                            title="Supprimer cette saison ?"
+                            description="Cette action est irréversible."
+                            cancelText="Annuler"
+                        >
                             <template #trigger>
                                 <Button size="icon" variant="destructive"><Trash2 /></Button>
                             </template>
@@ -96,9 +103,7 @@ const handleDelete = (id: number) => {
                         </AppAlertDialog>
                     </div>
                 </div>
-                <Muted v-if="seasons.data?.length" class="my-4 flex items-center justify-center">
-                    {{ seasons.total }} saison(s) trouvée(s)
-                </Muted>
+                <Muted v-if="seasons.data?.length" class="my-4 flex items-center justify-center"> {{ seasons.total }} saison(s) trouvée(s) </Muted>
                 <Muted v-else class="my-4 flex items-center justify-center">Aucune saison trouvée</Muted>
                 <AppPagination
                     :items-per-page="seasons.per_page"

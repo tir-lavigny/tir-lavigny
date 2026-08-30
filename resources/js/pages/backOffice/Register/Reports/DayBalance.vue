@@ -3,10 +3,8 @@ import { H1 } from '@/components/typography/headings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate } from '@/lib/utils';
-import type { BreadcrumbItem, OperatingDay, SharedData } from '@/types';
-import { Head, usePage } from '@inertiajs/vue3';
-
-const page = usePage<SharedData>();
+import type { BreadcrumbItem, OperatingDay } from '@/types';
+import { Head } from '@inertiajs/vue3';
 
 const props = defineProps<{ operatingDay: OperatingDay }>();
 
@@ -26,15 +24,21 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="grid grid-cols-3 gap-4">
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Total Espèces</CardTitle></CardHeader>
-                    <CardContent><p class="text-2xl font-bold">{{ operatingDay.total_cash.toFixed(2) }} CHF</p></CardContent>
+                    <CardContent
+                        ><p class="text-2xl font-bold">{{ operatingDay.total_cash.toFixed(2) }} CHF</p></CardContent
+                    >
                 </Card>
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Total Twint</CardTitle></CardHeader>
-                    <CardContent><p class="text-2xl font-bold">{{ operatingDay.total_twint.toFixed(2) }} CHF</p></CardContent>
+                    <CardContent
+                        ><p class="text-2xl font-bold">{{ operatingDay.total_twint.toFixed(2) }} CHF</p></CardContent
+                    >
                 </Card>
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Solde clôture</CardTitle></CardHeader>
-                    <CardContent><p class="text-2xl font-bold">{{ operatingDay.closing_balance?.toFixed(2) ?? '—' }} CHF</p></CardContent>
+                    <CardContent
+                        ><p class="text-2xl font-bold">{{ operatingDay.closing_balance?.toFixed(2) ?? '—' }} CHF</p></CardContent
+                    >
                 </Card>
             </div>
         </div>

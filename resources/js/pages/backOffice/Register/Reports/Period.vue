@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { H1, H3 } from '@/components/typography/headings';
+import { H1 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,12 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate } from '@/lib/utils';
-import type { BreadcrumbItem, OperatingDay, SharedData } from '@/types';
-import { Head, router, usePage } from '@inertiajs/vue3';
-import { Download } from 'lucide-vue-next';
+import type { BreadcrumbItem, OperatingDay } from '@/types';
+import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-
-const page = usePage<SharedData>();
 
 const props = defineProps<{
     operatingDays: OperatingDay[];
@@ -31,7 +28,11 @@ const to = ref(props.filters.to || '');
 const detail = ref(props.filters.detail || 'balance');
 
 const handleFilter = () => {
-    router.get(route('bo.register.reports.period'), { from: from.value, to: to.value, detail: detail.value }, { preserveState: true, preserveScroll: true });
+    router.get(
+        route('bo.register.reports.period'),
+        { from: from.value, to: to.value, detail: detail.value },
+        { preserveState: true, preserveScroll: true },
+    );
 };
 </script>
 

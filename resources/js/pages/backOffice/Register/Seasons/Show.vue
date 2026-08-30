@@ -43,19 +43,19 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <CardContent>
                     <dl class="grid grid-cols-2 gap-4">
                         <div>
-                            <dt class="text-sm text-muted-foreground">Date de début</dt>
+                            <dt class="text-muted-foreground text-sm">Date de début</dt>
                             <dd class="font-medium">{{ formatDate(season.start_date, 'dd.MM.yyyy') }}</dd>
                         </div>
                         <div>
-                            <dt class="text-sm text-muted-foreground">Date de fin</dt>
+                            <dt class="text-muted-foreground text-sm">Date de fin</dt>
                             <dd class="font-medium">{{ formatDate(season.end_date, 'dd.MM.yyyy') }}</dd>
                         </div>
                         <div>
-                            <dt class="text-sm text-muted-foreground">Solde initial</dt>
+                            <dt class="text-muted-foreground text-sm">Solde initial</dt>
                             <dd class="font-medium">{{ season.initial_balance.toFixed(2) }} CHF</dd>
                         </div>
                         <div>
-                            <dt class="text-sm text-muted-foreground">Solde final</dt>
+                            <dt class="text-muted-foreground text-sm">Solde final</dt>
                             <dd class="font-medium">{{ season.end_balance?.toFixed(2) ?? '—' }} CHF</dd>
                         </div>
                     </dl>
@@ -74,11 +74,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                     v-for="day in season.operatingDays"
                     :key="day.id"
                     :href="route('bo.register.operating-days.show', day.id)"
-                    class="flex items-center justify-between rounded-lg border p-4 hover:bg-accent"
+                    class="hover:bg-accent flex items-center justify-between rounded-lg border p-4"
                 >
                     <div>
                         <p class="font-medium">{{ formatDate(day.date, 'dd.MM.yyyy') }}</p>
-                        <p class="text-sm text-muted-foreground">
+                        <p class="text-muted-foreground text-sm">
                             Espèces: {{ day.total_cash.toFixed(2) }} CHF | Twint: {{ day.total_twint.toFixed(2) }} CHF
                         </p>
                     </div>
@@ -87,7 +87,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </Badge>
                 </Link>
             </div>
-            <p v-else class="text-sm text-muted-foreground">Aucune journée d'opération.</p>
+            <p v-else class="text-muted-foreground text-sm">Aucune journée d'opération.</p>
         </div>
     </AppLayout>
 </template>

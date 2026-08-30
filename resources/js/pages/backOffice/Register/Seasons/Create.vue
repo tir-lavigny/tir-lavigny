@@ -28,7 +28,10 @@ const handleSubmit = () => {
         return;
     }
     form.post(route('bo.register.seasons.store'), {
-        onSuccess: () => { form.reset(); toast.success('Saison créée.'); },
+        onSuccess: () => {
+            form.reset();
+            toast.success('Saison créée.');
+        },
         onError: () => toast.error('Erreur lors de la création.'),
     });
 };

@@ -18,9 +18,7 @@ import { useForm } from '@inertiajs/vue3';
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Catégories', href: route('bo.register.categories.index') },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Catégories', href: route('bo.register.categories.index') }];
 
 const props = defineProps<{
     categories: PaginatedCategories;
@@ -33,9 +31,13 @@ const handlePageChange = (p: number = 1) => {
     router.get(route('bo.register.categories.index'), { page: p, search: filters.value.search }, { preserveState: true, preserveScroll: true });
 };
 
-watch(filters, (f) => {
-    router.get(route('bo.register.categories.index'), { page: 1, search: f.search }, { preserveState: true, preserveScroll: true });
-}, { deep: true });
+watch(
+    filters,
+    (f) => {
+        router.get(route('bo.register.categories.index'), { page: 1, search: f.search }, { preserveState: true, preserveScroll: true });
+    },
+    { deep: true },
+);
 
 const handleDelete = (id: number) => {
     const form = useForm({});
@@ -75,7 +77,7 @@ const handleDelete = (id: number) => {
                 <div v-for="category in categories.data" :key="category.id" class="mb-4 flex items-center justify-between rounded-lg border p-4">
                     <div>
                         <p class="font-medium">{{ category.name }}</p>
-                        <p class="text-sm text-muted-foreground">{{ category.is_restricted ? 'Restreinte' : 'Publique' }}</p>
+                        <p class="text-muted-foreground text-sm">{{ category.is_restricted ? 'Restreinte' : 'Publique' }}</p>
                     </div>
                     <div class="flex gap-2">
                         <Tooltip v-if="hasPermissionTo(user, 'manage categories')">
@@ -86,7 +88,12 @@ const handleDelete = (id: number) => {
                             </TooltipTrigger>
                             <TooltipContent><p>Modifier</p></TooltipContent>
                         </Tooltip>
-                        <AppAlertDialog v-if="hasPermissionTo(user, 'manage categories')" title="Supprimer cette catégorie ?" description="Cette action est irréversible.">
+                        <AppAlertDialog
+                            v-if="hasPermissionTo(user, 'manage categories')"
+                            title="Supprimer cette catégorie ?"
+                            description="Cette action est irréversible."
+                            cancelText="Annuler"
+                        >
                             <template #trigger>
                                 <Button size="icon" variant="destructive"><Trash2 /></Button>
                             </template>

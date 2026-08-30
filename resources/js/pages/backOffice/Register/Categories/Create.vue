@@ -29,7 +29,10 @@ const handleSubmit = () => {
         return;
     }
     form.post(route('bo.register.categories.store'), {
-        onSuccess: () => { form.reset(); toast.success('Catégorie créée.'); },
+        onSuccess: () => {
+            form.reset();
+            toast.success('Catégorie créée.');
+        },
         onError: () => toast.error('Erreur lors de la création.'),
     });
 };

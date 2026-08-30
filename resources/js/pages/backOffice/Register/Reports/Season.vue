@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { H1, H3 } from '@/components/typography/headings';
+import { H1 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,12 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate } from '@/lib/utils';
-import type { BreadcrumbItem, OperatingDay, Season, SharedData } from '@/types';
-import { Head, router, usePage } from '@inertiajs/vue3';
-import { Download } from 'lucide-vue-next';
+import type { BreadcrumbItem, OperatingDay, Season } from '@/types';
+import { Head, router } from '@inertiajs/vue3';
+import { Download } from '@lucide/vue';
 import { ref } from 'vue';
-
-const page = usePage<SharedData>();
 
 const props = defineProps<{
     season: Season;
@@ -27,7 +25,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const detail = ref(props.filters.detail || 'balance');
 
-const handleDetailChange = (value: string) => {
+const handleDetailChange = (value: unknown) => {
+    if (typeof value !== 'string') return;
     detail.value = value;
     router.get(route('bo.register.reports.season', props.season.id), { detail: value }, { preserveState: true, preserveScroll: true });
 };

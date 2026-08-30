@@ -17,9 +17,7 @@ import { toast } from 'vue-sonner';
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Membres', href: route('bo.register.members.index') },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Membres', href: route('bo.register.members.index') }];
 
 const props = defineProps<{
     members: PaginatedMembers;
@@ -32,9 +30,13 @@ const handlePageChange = (p: number = 1) => {
     router.get(route('bo.register.members.index'), { page: p, search: filters.value.search }, { preserveState: true, preserveScroll: true });
 };
 
-watch(filters, (f) => {
-    router.get(route('bo.register.members.index'), { page: 1, search: f.search }, { preserveState: true, preserveScroll: true });
-}, { deep: true });
+watch(
+    filters,
+    (f) => {
+        router.get(route('bo.register.members.index'), { page: 1, search: f.search }, { preserveState: true, preserveScroll: true });
+    },
+    { deep: true },
+);
 
 const handleDelete = (id: number) => {
     useForm({}).delete(route('bo.register.members.destroy', id), {
@@ -73,7 +75,7 @@ const handleDelete = (id: number) => {
                 <div v-for="member in members.data" :key="member.id" class="mb-4 flex items-center justify-between rounded-lg border p-4">
                     <div>
                         <p class="font-medium">{{ member.first_name }} {{ member.last_name }}</p>
-                        <p class="text-sm text-muted-foreground">N° {{ member.member_number }}</p>
+                        <p class="text-muted-foreground text-sm">N° {{ member.member_number }}</p>
                     </div>
                     <div class="flex gap-2">
                         <Tooltip v-if="hasPermissionTo(user, 'manage members')">
@@ -84,7 +86,12 @@ const handleDelete = (id: number) => {
                             </TooltipTrigger>
                             <TooltipContent><p>Modifier</p></TooltipContent>
                         </Tooltip>
-                        <AppAlertDialog v-if="hasPermissionTo(user, 'manage members')" title="Supprimer ce membre ?" description="Cette action est irréversible.">
+                        <AppAlertDialog
+                            v-if="hasPermissionTo(user, 'manage members')"
+                            title="Supprimer ce membre ?"
+                            description="Cette action est irréversible."
+                            cancelText="Annuler"
+                        >
                             <template #trigger>
                                 <Button size="icon" variant="destructive"><Trash2 /></Button>
                             </template>
@@ -94,9 +101,7 @@ const handleDelete = (id: number) => {
                         </AppAlertDialog>
                     </div>
                 </div>
-                <Muted v-if="members.data?.length" class="my-4 flex items-center justify-center">
-                    {{ members.total }} membre(s) trouvé(s)
-                </Muted>
+                <Muted v-if="members.data?.length" class="my-4 flex items-center justify-center"> {{ members.total }} membre(s) trouvé(s) </Muted>
                 <Muted v-else class="my-4 flex items-center justify-center">Aucun membre trouvé</Muted>
                 <AppPagination
                     :items-per-page="members.per_page"
