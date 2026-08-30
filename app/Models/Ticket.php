@@ -17,6 +17,7 @@ class Ticket extends Model
         'total',
         'payment_method',
         'operating_day_id',
+        'member_id',
     ];
 
     protected $casts = [
@@ -37,6 +38,11 @@ class Ticket extends Model
     public function operatingDay(): BelongsTo
     {
         return $this->belongsTo(OperatingDay::class);
+    }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
     }
 
     public function ticketItems(): HasMany

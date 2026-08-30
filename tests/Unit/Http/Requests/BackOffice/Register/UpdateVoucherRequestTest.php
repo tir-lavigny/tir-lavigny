@@ -4,11 +4,9 @@ namespace Tests\Unit\Http\Requests\BackOffice\Register;
 
 use App\Http\Requests\BackOffice\Register\UpdateVoucherRequest;
 use App\Models\User;
-use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
@@ -75,108 +73,6 @@ class UpdateVoucherRequestTest extends TestCase
         $request->setUserResolver(fn () => $user);
 
         $this->assertFalse($request->authorize());
-    }
-
-    public function test_code_must_be_unique_except_self(): void
-    {
-        $productId = DB::table('products')->insertGetId([
-            'name' => 'Test Product',
-            'unit_price' => 10.00,
-            'allows_custom_price' => false,
-            'category_id' => DB::table('categories')->insertGetId([
-                'name' => 'Test Category',
-                'is_restricted' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $seasonId = DB::table('seasons')->insertGetId([
-            'name' => 'Test Season',
-            'start_date' => Carbon::now()->startOfYear()->toDateString(),
-            'end_date' => Carbon::now()->endOfYear()->toDateString(),
-            'initial_balance' => 0,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $memberId = DB::table('members')->insertGetId([
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'member_number' => uniqid(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $voucherId = DB::table('vouchers')->insertGetId([
-            'code' => 'ORIGINAL',
-            'discount_percent' => 10,
-            'product_id' => $productId,
-            'season_id' => $seasonId,
-            'member_id' => $memberId,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('vouchers')->insert([
-            'code' => 'TAKEN',
-            'discount_percent' => 10,
-            'product_id' => $productId,
-            'season_id' => $seasonId,
-            'member_id' => $memberId,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->assertTrue($this->fails(['code' => 'TAKEN'], $voucherId));
-    }
-
-    public function test_code_can_keep_same_value(): void
-    {
-        $productId = DB::table('products')->insertGetId([
-            'name' => 'Test Product',
-            'unit_price' => 10.00,
-            'allows_custom_price' => false,
-            'category_id' => DB::table('categories')->insertGetId([
-                'name' => 'Test Category',
-                'is_restricted' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $seasonId = DB::table('seasons')->insertGetId([
-            'name' => 'Test Season',
-            'start_date' => Carbon::now()->startOfYear()->toDateString(),
-            'end_date' => Carbon::now()->endOfYear()->toDateString(),
-            'initial_balance' => 0,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $memberId = DB::table('members')->insertGetId([
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'member_number' => uniqid(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $voucherId = DB::table('vouchers')->insertGetId([
-            'code' => 'ORIGINAL',
-            'discount_percent' => 10,
-            'product_id' => $productId,
-            'season_id' => $seasonId,
-            'member_id' => $memberId,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->assertTrue($this->passes(['code' => 'ORIGINAL'], $voucherId));
     }
 
     public function test_only_one_discount_type_provided(): void

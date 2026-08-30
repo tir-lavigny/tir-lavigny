@@ -43,6 +43,6 @@ Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->g
     Route::get('/categories', [Register\CategoryController::class, 'index'])
         ->name('api.register.categories.index');
 
-    Route::post('/vouchers/validate', [Register\VoucherValidationController::class, 'validate'])
-        ->name('api.register.vouchers.validate');
+    Route::get('/members/{member}/vouchers', [Register\MemberController::class, 'vouchers'])
+        ->name('api.register.members.vouchers');
 });

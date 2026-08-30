@@ -17,6 +17,7 @@ class TicketFactory extends Factory
             'total' => fake()->randomFloat(2, 1, 100),
             'payment_method' => fake()->randomElement(['cash', 'twint']),
             'operating_day_id' => OperatingDay::factory(),
+            'member_id' => null,
         ];
     }
 

@@ -23,7 +23,7 @@ class VoucherController extends Controller implements HasMiddleware
     public function index(): Response
     {
         $vouchers = Voucher::with(['product', 'season', 'member'])
-            ->orderBy('code')
+            ->orderBy('id')
             ->paginate(15);
 
         return Inertia::render('backOffice/Register/Vouchers/Index', [

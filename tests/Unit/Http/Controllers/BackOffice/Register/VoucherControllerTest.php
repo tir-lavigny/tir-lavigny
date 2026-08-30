@@ -54,23 +54,25 @@ class VoucherControllerTest extends TestCase
         $member = Member::factory()->create();
 
         $voucher = Voucher::create([
-            'code' => 'NEWCODE',
             'discount_percent' => 15.00,
             'product_id' => $product->id,
             'season_id' => $season->id,
             'member_id' => $member->id,
         ]);
 
-        $this->assertDatabaseHas('vouchers', ['code' => 'NEWCODE']);
+        $this->assertDatabaseHas('vouchers', [
+            'id' => $voucher->id,
+            'discount_percent' => 15.00,
+        ]);
     }
 
     public function test_voucher_model_can_be_updated(): void
     {
-        $voucher = Voucher::factory()->percent()->create(['code' => 'OLD']);
+        $voucher = Voucher::factory()->percent()->create();
 
-        $voucher->update(['code' => 'UPDATED']);
+        $voucher->update(['discount_percent' => 25.00]);
 
-        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'code' => 'UPDATED']);
+        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'discount_percent' => 25.00]);
     }
 
     public function test_voucher_model_soft_deletes(): void

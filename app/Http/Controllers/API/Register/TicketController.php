@@ -36,8 +36,8 @@ class TicketController extends Controller
                 $discount = 0;
                 $voucherId = null;
 
-                if (! empty($item['voucher_code'])) {
-                    $voucher = Voucher::where('code', $item['voucher_code'])
+                if (! empty($item['voucher_id'])) {
+                    $voucher = Voucher::where('id', $item['voucher_id'])
                         ->whereNull('deleted_at')
                         ->firstOrFail();
 
@@ -66,6 +66,7 @@ class TicketController extends Controller
                 'total' => $total,
                 'payment_method' => $request->input('payment_method'),
                 'operating_day_id' => $day->id,
+                'member_id' => $request->input('member_id'),
             ]);
 
             foreach ($ticketItems as $itemData) {
