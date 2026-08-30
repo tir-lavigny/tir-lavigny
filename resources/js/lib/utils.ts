@@ -10,6 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(date: string, format: string, options?: UseDateFormatOptions) {
+    if (!date) return '—';
     date = date.replace('Z', '');
     const dateObj = new Date(date);
 
