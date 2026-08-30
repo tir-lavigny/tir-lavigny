@@ -70,7 +70,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow v-for="item in ticket.ticketItems" :key="item.id">
+                        <TableRow v-for="item in ticket.ticket_items" :key="item.id">
                             <TableCell>{{ item.product?.name ?? '—' }}</TableCell>
                             <TableCell class="text-center">{{ item.quantity }}</TableCell>
                             <TableCell class="text-right">{{ formatMoney(item.unit_price) }} CHF</TableCell>

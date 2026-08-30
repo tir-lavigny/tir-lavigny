@@ -219,7 +219,7 @@ export interface Season {
     end_date: string;
     initial_balance: number;
     end_balance?: number;
-    operatingDays?: OperatingDay[];
+    operating_days?: OperatingDay[];
     created_at: string;
     updated_at: string;
 }
@@ -270,7 +270,7 @@ export interface Ticket {
     operating_day_id: number;
     member_id?: number;
     sold_at: string;
-    ticketItems?: TicketItem[];
+    ticket_items?: TicketItem[];
     member?: Member;
     created_at: string;
     updated_at: string;

@@ -120,7 +120,6 @@ const handleDetach = (childId: number) => {
                 </div>
                 <Button @click="handleAttach" :disabled="attachForm.processing">Ajouter</Button>
             </div>
-            {{ product }}
             <div v-if="product.child_products?.length" class="flex flex-col gap-2">
                 <div v-for="child in product.child_products" :key="child.id" class="flex items-center justify-between rounded-lg border p-4">
                     <div>

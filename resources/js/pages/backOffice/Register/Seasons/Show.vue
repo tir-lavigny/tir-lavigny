@@ -66,12 +66,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 
             <div class="flex items-center justify-between">
                 <H3>Journées d'opération</H3>
-                <Badge variant="secondary">{{ season.operatingDays?.length ?? 0 }}</Badge>
+                <Badge variant="secondary">{{ season.operating_days?.length ?? 0 }}</Badge>
             </div>
 
-            <div v-if="season.operatingDays?.length" class="flex flex-col gap-2">
+            <div v-if="season.operating_days?.length" class="flex flex-col gap-2">
                 <Link
-                    v-for="day in season.operatingDays"
+                    v-for="day in season.operating_days"
                     :key="day.id"
                     :href="route('bo.register.operating-days.show', day.id)"
                     class="hover:bg-accent flex items-center justify-between rounded-lg border p-4"
