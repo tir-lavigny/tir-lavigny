@@ -80,7 +80,10 @@ const handleDelete = (id: number) => {
                 <div v-for="category in categories.data" :key="category.id" class="mb-4 flex items-center justify-between rounded-lg border p-4">
                     <div>
                         <p class="font-medium">{{ category.name }}</p>
-                        <p class="text-muted-foreground text-sm">{{ category.is_restricted ? 'Restreinte' : 'Publique' }}</p>
+                        <p class="text-sm text-muted-foreground">
+                            {{ category.is_restricted ? 'Restreinte' : 'Publique' }}
+                            · {{ category.products_count ?? 0 }} produit(s)
+                        </p>
                     </div>
                     <div class="flex gap-2">
                         <Tooltip v-if="hasPermissionTo(user, 'manage categories')">
