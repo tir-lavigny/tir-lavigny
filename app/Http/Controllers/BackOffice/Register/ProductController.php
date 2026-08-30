@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Register\StoreProductRequest;
 use App\Http\Requests\BackOffice\Register\UpdateProductRequest;
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -39,7 +40,9 @@ class ProductController extends Controller implements HasMiddleware
 
     public function create(): Response
     {
-        return Inertia::render('backOffice/Register/Products/Create');
+        return Inertia::render('backOffice/Register/Products/Create', [
+            'categories' => Category::whereNull('deleted_at')->orderBy('name')->get(),
+        ]);
     }
 
     public function store(StoreProductRequest $request)
@@ -64,6 +67,7 @@ class ProductController extends Controller implements HasMiddleware
 
         return Inertia::render('backOffice/Register/Products/Edit', [
             'product' => $product,
+            'categories' => Category::whereNull('deleted_at')->orderBy('name')->get(),
         ]);
     }
 
