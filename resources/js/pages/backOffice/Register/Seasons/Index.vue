@@ -79,7 +79,7 @@ const handleDelete = (id: number) => {
                     <Link :href="route('bo.register.seasons.show', season.id)" class="flex-1">
                         <p class="font-medium hover:underline">{{ season.name }}</p>
                         <p class="text-muted-foreground text-sm">
-                            {{ formatDate(season.start_date, 'dd.MM.yyyy') }} — {{ formatDate(season.end_date, 'dd.MM.yyyy') }}
+                            {{ formatDate(season.start_date, 'DD.MM.YYYY') }} — {{ formatDate(season.end_date, 'DD.MM.YYYY') }}
                         </p>
                     </Link>
                     <div class="flex gap-2">
