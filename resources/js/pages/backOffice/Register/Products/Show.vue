@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import AppLayout from '@/layouts/AppLayout.vue';
 import InputError from '@/components/InputError.vue';
 import { formatMoney, hasPermissionTo } from '@/lib/utils';
-import type { BreadcrumbItem, Category, Product, SharedData } from '@/types';
+import type { BreadcrumbItem, Product, SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
@@ -21,7 +21,7 @@ import AppAlertDialog from '@/components/AppAlertDialog.vue';
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
 
-const props = defineProps<{ product: Product; categories: Category[] }>();
+const props = defineProps<{ product: Product; products: Product[] }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Produits', href: route('bo.register.products.index') },
@@ -109,7 +109,7 @@ const handleDetach = (childId: number) => {
                     <Select v-model="attachForm.child_product_id">
                         <SelectTrigger><SelectValue placeholder="Sélectionner un produit" /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem v-for="p in categories" :key="p.id" :value="String(p.id)">{{ p.name }}</SelectItem>
+                            <SelectItem v-for="p in products" :key="p.id" :value="String(p.id)">{{ p.name }}</SelectItem>
                         </SelectContent>
                     </Select>
                     <InputError :message="attachForm.errors.child_product_id" />
