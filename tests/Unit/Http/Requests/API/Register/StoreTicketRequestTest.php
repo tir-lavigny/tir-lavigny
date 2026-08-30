@@ -118,6 +118,7 @@ class StoreTicketRequestTest extends TestCase
         $this->assertTrue($this->passes([
             'payment_method' => 'cash',
             'operating_day_id' => $operatingDayId,
+            'sold_at' => now()->toDateTimeString(),
             'items' => [['product_id' => $productId, 'quantity' => 1]],
         ]));
     }
@@ -130,6 +131,7 @@ class StoreTicketRequestTest extends TestCase
         $this->assertTrue($this->passes([
             'payment_method' => 'twint',
             'operating_day_id' => $operatingDayId,
+            'sold_at' => now()->toDateTimeString(),
             'items' => [['product_id' => $productId, 'quantity' => 1]],
         ]));
     }
@@ -225,6 +227,7 @@ class StoreTicketRequestTest extends TestCase
         $data = [
             'payment_method' => 'cash',
             'operating_day_id' => $operatingDayId,
+            'sold_at' => now()->toDateTimeString(),
             'items' => [['product_id' => $productId, 'quantity' => 1, 'custom_unit_price' => 15.00]],
         ];
 
@@ -246,6 +249,7 @@ class StoreTicketRequestTest extends TestCase
         $data = [
             'payment_method' => 'cash',
             'operating_day_id' => $operatingDayId,
+            'sold_at' => now()->toDateTimeString(),
             'items' => [['product_id' => $productId, 'quantity' => 1]],
         ];
 

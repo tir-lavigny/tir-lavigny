@@ -67,6 +67,7 @@ class TicketController extends Controller
                 'payment_method' => $request->input('payment_method'),
                 'operating_day_id' => $day->id,
                 'member_id' => $request->input('member_id'),
+                'sold_at' => $request->input('sold_at'),
             ]);
 
             foreach ($ticketItems as $itemData) {

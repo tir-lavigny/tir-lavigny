@@ -20,6 +20,7 @@ class StoreTicketRequest extends FormRequest
             'payment_method' => ['required', 'string', Rule::in(['cash', 'twint'])],
             'operating_day_id' => ['required', 'exists:operating_days,id'],
             'member_id' => ['nullable', 'exists:members,id,deleted_at,NULL'],
+            'sold_at' => ['required', 'date'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id,deleted_at,NULL'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],

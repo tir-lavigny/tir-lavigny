@@ -18,10 +18,12 @@ class Ticket extends Model
         'payment_method',
         'operating_day_id',
         'member_id',
+        'sold_at',
     ];
 
     protected $casts = [
         'total' => 'decimal:2',
+        'sold_at' => 'datetime',
     ];
 
     protected static function booted(): void

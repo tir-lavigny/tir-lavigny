@@ -18,6 +18,7 @@ class TicketFactory extends Factory
             'payment_method' => fake()->randomElement(['cash', 'twint']),
             'operating_day_id' => OperatingDay::factory(),
             'member_id' => null,
+            'sold_at' => fake()->dateTimeThisYear(),
         ];
     }
 
