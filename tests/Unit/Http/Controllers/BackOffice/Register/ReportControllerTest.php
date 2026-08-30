@@ -69,8 +69,9 @@ class ReportControllerTest extends TestCase
     public function test_season_returns_inertia_response(): void
     {
         $season = Season::factory()->create();
+        $request = Request::create("/register/reports/season/{$season->id}", 'GET');
 
-        $response = $this->controller->season($season);
+        $response = $this->controller->season($request, $season);
 
         $this->assertInstanceOf(Response::class, $response);
     }
@@ -80,8 +81,9 @@ class ReportControllerTest extends TestCase
         $season = Season::factory()->create();
         OperatingDay::factory()->create(['season_id' => $season->id]);
         OperatingDay::factory()->create(['season_id' => $season->id]);
+        $request = Request::create("/register/reports/season/{$season->id}", 'GET');
 
-        $response = $this->controller->season($season);
+        $response = $this->controller->season($request, $season);
 
         $this->assertInstanceOf(Response::class, $response);
     }

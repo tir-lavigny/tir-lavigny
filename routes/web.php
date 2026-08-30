@@ -172,6 +172,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             ->name('bo.register.reports.period');
         Route::get('season/{season}', [Register\ReportController::class, 'season'])
             ->name('bo.register.reports.season');
+        Route::get('season/{season}/export', [Register\ReportExportController::class, 'export'])
+            ->name('bo.register.reports.season-export');
     });
 });
 

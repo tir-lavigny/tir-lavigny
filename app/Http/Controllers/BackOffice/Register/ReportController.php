@@ -72,13 +72,26 @@ class ReportController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function season(Season $season): Response
+    public function season(Request $request, Season $season): Response
     {
-        $days = $season->operatingDays()->orderBy('date')->get();
+        $detail = $request->input('detail', 'balance');
+
+        $days = match ($detail) {
+            'items' => $season->operatingDays()
+                ->with(['tickets.ticketItems.product', 'tickets.ticketItems.voucher'])
+                ->orderBy('date')
+                ->get(),
+            'tickets' => $season->operatingDays()
+                ->with(['tickets'])
+                ->orderBy('date')
+                ->get(),
+            default => $season->operatingDays()->orderBy('date')->get(),
+        };
 
         return Inertia::render('backOffice/Register/Reports/Season', [
             'season' => $season,
             'operatingDays' => $days,
+            'filters' => ['detail' => $detail],
         ]);
     }
 }
