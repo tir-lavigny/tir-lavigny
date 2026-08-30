@@ -1,0 +1,42 @@
+<script setup lang="ts">
+import { H1 } from '@/components/typography/headings';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDate } from '@/lib/utils';
+import type { BreadcrumbItem, OperatingDay, SharedData } from '@/types';
+import { Head, usePage } from '@inertiajs/vue3';
+
+const page = usePage<SharedData>();
+
+const props = defineProps<{ operatingDay: OperatingDay }>();
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Rapports', href: '#' },
+    { title: 'Balance', href: route('bo.register.reports.day-balance', props.operatingDay.id) },
+];
+</script>
+
+<template>
+    <Head :title="'Balance journée ' + formatDate(operatingDay.date, 'dd.MM.yyyy')" />
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="m-4">
+            <H1>Balance du {{ formatDate(operatingDay.date, 'dd.MM.yyyy') }}</H1>
+        </div>
+        <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+            <div class="grid grid-cols-3 gap-4">
+                <Card>
+                    <CardHeader class="pb-2"><CardTitle class="text-sm">Total Espèces</CardTitle></CardHeader>
+                    <CardContent><p class="text-2xl font-bold">{{ operatingDay.total_cash.toFixed(2) }} CHF</p></CardContent>
+                </Card>
+                <Card>
+                    <CardHeader class="pb-2"><CardTitle class="text-sm">Total Twint</CardTitle></CardHeader>
+                    <CardContent><p class="text-2xl font-bold">{{ operatingDay.total_twint.toFixed(2) }} CHF</p></CardContent>
+                </Card>
+                <Card>
+                    <CardHeader class="pb-2"><CardTitle class="text-sm">Solde clôture</CardTitle></CardHeader>
+                    <CardContent><p class="text-2xl font-bold">{{ operatingDay.closing_balance?.toFixed(2) ?? '—' }} CHF</p></CardContent>
+                </Card>
+            </div>
+        </div>
+    </AppLayout>
+</template>
