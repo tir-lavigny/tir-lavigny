@@ -58,6 +58,7 @@ class ProductController extends Controller implements HasMiddleware
 
         return Inertia::render('backOffice/Register/Products/Show', [
             'product' => $product,
+            'categories' => Category::whereNull('deleted_at')->orderBy('name')->get(),
         ]);
     }
 
