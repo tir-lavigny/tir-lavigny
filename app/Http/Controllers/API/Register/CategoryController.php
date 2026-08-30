@@ -11,7 +11,6 @@ class CategoryController extends Controller
     public function index(): JsonResponse
     {
         $categories = Category::where('is_restricted', false)
-            ->whereNull('deleted_at')
             ->orderBy('name')
             ->get();
 

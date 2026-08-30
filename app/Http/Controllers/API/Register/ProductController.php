@@ -11,7 +11,6 @@ class ProductController extends Controller
     public function index(): JsonResponse
     {
         $query = Product::query()
-            ->whereNull('deleted_at')
             ->with(['category', 'childProducts']);
 
         if (! request()->user()->can('manage products')) {

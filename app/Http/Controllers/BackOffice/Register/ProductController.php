@@ -41,7 +41,7 @@ class ProductController extends Controller implements HasMiddleware
     public function create(): Response
     {
         return Inertia::render('backOffice/Register/Products/Create', [
-            'categories' => Category::whereNull('deleted_at')->orderBy('name')->get(),
+            'categories' => Category::orderBy('name')->get(),
         ]);
     }
 
@@ -58,8 +58,7 @@ class ProductController extends Controller implements HasMiddleware
 
         return Inertia::render('backOffice/Register/Products/Show', [
             'product' => $product,
-            'products' => Product::whereNull('deleted_at')
-                ->where('id', '!=', $product->id)
+            'products' => Product::where('id', '!=', $product->id)
                 ->orderBy('name')
                 ->get(),
         ]);
@@ -71,7 +70,7 @@ class ProductController extends Controller implements HasMiddleware
 
         return Inertia::render('backOffice/Register/Products/Edit', [
             'product' => $product,
-            'categories' => Category::whereNull('deleted_at')->orderBy('name')->get(),
+            'categories' => Category::orderBy('name')->get(),
         ]);
     }
 
