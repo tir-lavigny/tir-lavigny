@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import InputError from '@/components/InputError.vue';
-import { hasPermissionTo } from '@/lib/utils';
+import { formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Category, Product, SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash2 } from '@lucide/vue';
@@ -73,7 +73,7 @@ const handleDetach = (childId: number) => {
                     <dl class="grid grid-cols-2 gap-4">
                         <div>
                             <dt class="text-muted-foreground text-sm">Prix unitaire</dt>
-                            <dd class="font-medium">{{ product.unit_price.toFixed(2) }} CHF</dd>
+                            <dd class="font-medium">{{ formatMoney(product.unit_price) }} CHF</dd>
                         </div>
                         <div>
                             <dt class="text-muted-foreground text-sm">Catégorie</dt>

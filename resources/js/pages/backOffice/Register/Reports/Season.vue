@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatMoney } from '@/lib/utils';
 import type { BreadcrumbItem, OperatingDay, Season } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { Download } from '@lucide/vue';
@@ -66,8 +66,8 @@ const handleDetailChange = (value: unknown) => {
                 <TableBody>
                     <TableRow v-for="day in operatingDays" :key="day.id">
                         <TableCell class="font-medium">{{ formatDate(day.date, 'dd.MM.yyyy') }}</TableCell>
-                        <TableCell class="text-right">{{ day.total_cash.toFixed(2) }} CHF</TableCell>
-                        <TableCell class="text-right">{{ day.total_twint.toFixed(2) }} CHF</TableCell>
+                        <TableCell class="text-right">{{ formatMoney(day.total_cash) }} CHF</TableCell>
+                        <TableCell class="text-right">{{ formatMoney(day.total_twint) }} CHF</TableCell>
                         <TableCell>
                             <Badge :variant="day.closed_at ? 'secondary' : 'default'">
                                 {{ day.closed_at ? 'Fermé' : 'Ouvert' }}

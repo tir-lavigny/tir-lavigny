@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { hasPermissionTo } from '@/lib/utils';
+import { formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedProducts, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { Eye, Pencil, Plus, Search, Trash2 } from '@lucide/vue';
@@ -20,10 +20,13 @@ const user = page.props.auth.user;
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Produits', href: route('bo.register.products.index') }];
 
-const props = defineProps<{
-    products: PaginatedProducts;
-    filters: { search?: string };
-}>();
+const props = withDefaults(
+    defineProps<{
+        products: PaginatedProducts;
+        filters?: { search?: string };
+    }>(),
+    { filters: () => ({}) },
+);
 
 const filters = ref({ search: props.filters.search || '' });
 
@@ -77,7 +80,7 @@ const handleDelete = (id: number) => {
                     <Link :href="route('bo.register.products.show', product.id)" class="flex-1">
                         <p class="font-medium hover:underline">{{ product.name }}</p>
                         <div class="text-muted-foreground flex items-center gap-2 text-sm">
-                            <span>{{ product.unit_price.toFixed(2) }} CHF</span>
+                            <span>{{ formatMoney(product.unit_price) }} CHF</span>
                             <span v-if="product.category">· {{ product.category.name }}</span>
                             <Badge v-if="product.allows_custom_price" variant="secondary" class="text-xs">Prix libre</Badge>
                         </div>

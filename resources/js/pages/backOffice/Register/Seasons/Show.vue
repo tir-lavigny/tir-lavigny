@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate, hasPermissionTo } from '@/lib/utils';
+import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Season, SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Pencil } from '@lucide/vue';
@@ -52,11 +52,11 @@ const breadcrumbs: BreadcrumbItem[] = [
                         </div>
                         <div>
                             <dt class="text-muted-foreground text-sm">Solde initial</dt>
-                            <dd class="font-medium">{{ season.initial_balance.toFixed(2) }} CHF</dd>
+                            <dd class="font-medium">{{ formatMoney(season.initial_balance) }} CHF</dd>
                         </div>
                         <div>
                             <dt class="text-muted-foreground text-sm">Solde final</dt>
-                            <dd class="font-medium">{{ season.end_balance?.toFixed(2) ?? '—' }} CHF</dd>
+                            <dd class="font-medium">{{ season.end_balance != null ? formatMoney(season.end_balance) : '—' }} CHF</dd>
                         </div>
                     </dl>
                 </CardContent>
@@ -79,7 +79,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <div>
                         <p class="font-medium">{{ formatDate(day.date, 'dd.MM.yyyy') }}</p>
                         <p class="text-muted-foreground text-sm">
-                            Espèces: {{ day.total_cash.toFixed(2) }} CHF | Twint: {{ day.total_twint.toFixed(2) }} CHF
+                            Espèces: {{ formatMoney(day.total_cash) }} CHF | Twint: {{ formatMoney(day.total_twint) }} CHF
                         </p>
                     </div>
                     <Badge :variant="day.closed_at ? 'secondary' : 'default'">

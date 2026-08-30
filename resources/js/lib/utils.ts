@@ -54,3 +54,7 @@ export const hasPermissionTo = (user: User, permission: string) => {
     }
     return false;
 };
+
+export function formatMoney(value: unknown): string {
+    return Number(value).toFixed(2);
+}

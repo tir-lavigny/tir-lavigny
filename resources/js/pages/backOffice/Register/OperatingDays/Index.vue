@@ -4,16 +4,19 @@ import { H3 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
 import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatMoney } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedOperatingDays } from '@/types';
 import { Head, Link, router } from '@inertiajs/vue3';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Journées', href: route('bo.register.operating-days.index') }];
 
-const props = defineProps<{
-    operatingDays: PaginatedOperatingDays;
-    filters: { season_id?: string };
-}>();
+const props = withDefaults(
+    defineProps<{
+        operatingDays: PaginatedOperatingDays;
+        filters?: { season_id?: string };
+    }>(),
+    { filters: () => ({}) },
+);
 
 const handlePageChange = (p: number = 1) => {
     router.get(
@@ -43,7 +46,7 @@ const handlePageChange = (p: number = 1) => {
                             <p class="font-medium hover:underline">{{ formatDate(day.date, 'dd.MM.yyyy') }}</p>
                             <p class="text-muted-foreground text-sm">
                                 <span v-if="day.season">{{ day.season.name }} · </span>
-                                Espèces: {{ day.total_cash.toFixed(2) }} CHF · Twint: {{ day.total_twint.toFixed(2) }} CHF
+                                Espèces: {{ formatMoney(day.total_cash) }} CHF · Twint: {{ formatMoney(day.total_twint) }} CHF
                             </p>
                         </div>
                         <Badge :variant="day.closed_at ? 'secondary' : 'default'">

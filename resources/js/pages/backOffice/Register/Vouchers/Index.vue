@@ -6,7 +6,7 @@ import { Muted } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { hasPermissionTo } from '@/lib/utils';
+import { formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedVouchers, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash2 } from '@lucide/vue';
@@ -34,7 +34,7 @@ const handleDelete = (id: number) => {
 
 const formatDiscount = (voucher: any) => {
     if (voucher.discount_percent) return `${voucher.discount_percent}%`;
-    if (voucher.discount_fixed) return `${voucher.discount_fixed.toFixed(2)} CHF`;
+    if (voucher.discount_fixed) return `${formatMoney(voucher.discount_fixed)} CHF`;
     return '—';
 };
 </script>

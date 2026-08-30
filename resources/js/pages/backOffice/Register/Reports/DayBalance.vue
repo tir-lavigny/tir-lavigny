@@ -2,7 +2,7 @@
 import { H1 } from '@/components/typography/headings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatMoney } from '@/lib/utils';
 import type { BreadcrumbItem, OperatingDay } from '@/types';
 import { Head } from '@inertiajs/vue3';
 
@@ -25,19 +25,21 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Total Espèces</CardTitle></CardHeader>
                     <CardContent
-                        ><p class="text-2xl font-bold">{{ operatingDay.total_cash.toFixed(2) }} CHF</p></CardContent
+                        ><p class="text-2xl font-bold">{{ formatMoney(operatingDay.total_cash) }} CHF</p></CardContent
                     >
                 </Card>
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Total Twint</CardTitle></CardHeader>
                     <CardContent
-                        ><p class="text-2xl font-bold">{{ operatingDay.total_twint.toFixed(2) }} CHF</p></CardContent
+                        ><p class="text-2xl font-bold">{{ formatMoney(operatingDay.total_twint) }} CHF</p></CardContent
                     >
                 </Card>
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Solde clôture</CardTitle></CardHeader>
                     <CardContent
-                        ><p class="text-2xl font-bold">{{ operatingDay.closing_balance?.toFixed(2) ?? '—' }} CHF</p></CardContent
+                        ><p class="text-2xl font-bold">
+                            {{ operatingDay.closing_balance != null ? formatMoney(operatingDay.closing_balance) : '—' }} CHF
+                        </p></CardContent
                     >
                 </Card>
             </div>

@@ -19,10 +19,13 @@ const user = page.props.auth.user;
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Saisons', href: route('bo.register.seasons.index') }];
 
-const props = defineProps<{
-    seasons: PaginatedSeasons;
-    filters: { search?: string };
-}>();
+const props = withDefaults(
+    defineProps<{
+        seasons: PaginatedSeasons;
+        filters?: { search?: string };
+    }>(),
+    { filters: () => ({}) },
+);
 
 const filters = ref({ search: props.filters.search || '' });
 
