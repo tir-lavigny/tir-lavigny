@@ -20,6 +20,7 @@
         "laravel/tinker": "^3.0.0",
         "spatie/icalendar-generator": "^3.2",
         "spatie/laravel-permission": "^8.0",
+        "spatie/simple-excel": "^3.10",
         "tightenco/ziggy": "^2.4"
     },
     "require-dev": {
