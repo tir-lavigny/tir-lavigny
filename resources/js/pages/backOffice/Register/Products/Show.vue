@@ -120,9 +120,9 @@ const handleDetach = (childId: number) => {
                 </div>
                 <Button @click="handleAttach" :disabled="attachForm.processing">Ajouter</Button>
             </div>
-
-            <div v-if="product.childProducts?.length" class="flex flex-col gap-2">
-                <div v-for="child in product.childProducts" :key="child.id" class="flex items-center justify-between rounded-lg border p-4">
+            {{ product }}
+            <div v-if="product.child_products?.length" class="flex flex-col gap-2">
+                <div v-for="child in product.child_products" :key="child.id" class="flex items-center justify-between rounded-lg border p-4">
                     <div>
                         <p class="font-medium">{{ child.name }}</p>
                         <p class="text-muted-foreground text-sm">Quantité: {{ child.pivot?.quantity }}</p>
