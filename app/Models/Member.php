@@ -22,4 +22,15 @@ class Member extends Model
     {
         return $this->hasMany(Voucher::class);
     }
+
+    protected static function booted(): void
+    {
+        static::deleted(function (Member $member) {
+            $member->vouchers()->whereDoesntHave('ticketItems')->delete();
+        });
+
+        static::restored(function (Member $member) {
+            $member->vouchers()->whereDoesntHave('ticketItems')->restore();
+        });
+    }
 }

@@ -68,8 +68,12 @@ class SeasonController extends Controller implements HasMiddleware
 
     public function destroy(Season $season)
     {
-        $season->delete();
+        try {
+            $season->delete();
 
-        return redirect()->route('bo.register.seasons.index')->with('success', 'Season deleted successfully.');
+            return redirect()->route('bo.register.seasons.index')->with('success', 'Saison supprimée.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['delete' => $e->getMessage()]);
+        }
     }
 }

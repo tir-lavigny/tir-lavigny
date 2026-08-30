@@ -59,4 +59,13 @@ class OperatingDay extends Model
             'total_twint' => $totals->get('twint', 0),
         ]);
     }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (OperatingDay $day) {
+            if ($day->tickets()->exists()) {
+                abort(422, 'Impossible de supprimer cette journée car elle contient des tickets.');
+            }
+        });
+    }
 }
