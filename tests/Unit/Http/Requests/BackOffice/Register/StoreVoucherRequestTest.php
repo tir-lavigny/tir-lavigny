@@ -120,45 +120,9 @@ class StoreVoucherRequestTest extends TestCase
         $this->assertFalse($request->authorize());
     }
 
-    public function test_code_is_required(): void
-    {
-        $this->assertTrue($this->fails([
-            'discount_percent' => 10,
-            'product_id' => 1,
-            'season_id' => 1,
-            'member_id' => 1,
-        ]));
-    }
-
-    public function test_code_must_be_unique(): void
-    {
-        $productId = $this->createProduct();
-        $seasonId = $this->createSeason();
-        $memberId = $this->createMember();
-
-        DB::table('vouchers')->insert([
-            'code' => 'EXISTING',
-            'discount_percent' => 10,
-            'product_id' => $productId,
-            'season_id' => $seasonId,
-            'member_id' => $memberId,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->assertTrue($this->fails([
-            'code' => 'EXISTING',
-            'discount_percent' => 10,
-            'product_id' => $productId,
-            'season_id' => $seasonId,
-            'member_id' => $memberId,
-        ]));
-    }
-
     public function test_only_one_discount_type_provided(): void
     {
         $this->assertTrue($this->fails([
-            'code' => 'NEWCODE',
             'discount_percent' => 10,
             'discount_fixed' => 5.00,
             'product_id' => 1,
@@ -170,7 +134,6 @@ class StoreVoucherRequestTest extends TestCase
     public function test_at_least_one_discount_type_required(): void
     {
         $this->assertTrue($this->fails([
-            'code' => 'NEWCODE',
             'product_id' => 1,
             'season_id' => 1,
             'member_id' => 1,
@@ -180,7 +143,6 @@ class StoreVoucherRequestTest extends TestCase
     public function test_product_id_is_required(): void
     {
         $this->assertTrue($this->fails([
-            'code' => 'NEWCODE',
             'discount_percent' => 10,
             'season_id' => 1,
             'member_id' => 1,
@@ -190,7 +152,6 @@ class StoreVoucherRequestTest extends TestCase
     public function test_season_id_is_required(): void
     {
         $this->assertTrue($this->fails([
-            'code' => 'NEWCODE',
             'discount_percent' => 10,
             'product_id' => 1,
             'member_id' => 1,
@@ -200,7 +161,6 @@ class StoreVoucherRequestTest extends TestCase
     public function test_member_id_is_required(): void
     {
         $this->assertTrue($this->fails([
-            'code' => 'NEWCODE',
             'discount_percent' => 10,
             'product_id' => 1,
             'season_id' => 1,
@@ -214,7 +174,6 @@ class StoreVoucherRequestTest extends TestCase
         $memberId = $this->createMember();
 
         $this->assertTrue($this->passes([
-            'code' => 'NEWCODE',
             'discount_percent' => 10,
             'product_id' => $productId,
             'season_id' => $seasonId,
@@ -229,7 +188,6 @@ class StoreVoucherRequestTest extends TestCase
         $memberId = $this->createMember();
 
         $this->assertTrue($this->passes([
-            'code' => 'NEWCODE',
             'discount_fixed' => 5.00,
             'product_id' => $productId,
             'season_id' => $seasonId,
@@ -240,7 +198,6 @@ class StoreVoucherRequestTest extends TestCase
     public function test_discount_percent_must_be_between_0_and_100(): void
     {
         $this->assertTrue($this->fails([
-            'code' => 'NEWCODE',
             'discount_percent' => 101,
             'product_id' => 1,
             'season_id' => 1,
@@ -251,7 +208,6 @@ class StoreVoucherRequestTest extends TestCase
     public function test_discount_fixed_must_be_non_negative(): void
     {
         $this->assertTrue($this->fails([
-            'code' => 'NEWCODE',
             'discount_fixed' => -1,
             'product_id' => 1,
             'season_id' => 1,

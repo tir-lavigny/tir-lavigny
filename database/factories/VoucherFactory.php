@@ -16,7 +16,6 @@ class VoucherFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => strtoupper(fake()->bothify('???####')),
             'discount_percent' => fake()->randomElement([5, 10, 15, 20, null]),
             'discount_fixed' => fn (array $attributes) => $attributes['discount_percent'] === null
                 ? fake()->randomFloat(2, 1, 10)

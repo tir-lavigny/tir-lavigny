@@ -4,7 +4,6 @@ namespace App\Http\Requests\BackOffice\Register;
 
 use App\Rules\Register\OnlyOneDiscountType;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateVoucherRequest extends FormRequest
 {
@@ -16,7 +15,6 @@ class UpdateVoucherRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => ['sometimes', 'string', 'max:255', Rule::unique('vouchers')->ignore($this->route('voucher'))],
             'discount_percent' => ['nullable', 'numeric', 'between:0,100'],
             'discount_fixed' => ['nullable', 'numeric', 'min:0'],
             'product_id' => ['sometimes', 'exists:products,id,deleted_at,NULL'],

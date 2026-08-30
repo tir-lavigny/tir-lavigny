@@ -33,7 +33,6 @@ class VoucherControllerTest extends TestCase
         $product = Product::factory()->create(['category_id' => $category->id]);
         $season = Season::factory()->create();
         Voucher::factory()->percent()->create([
-            'code' => 'TEST10',
             'product_id' => $product->id,
             'season_id' => $season->id,
         ]);
@@ -51,7 +50,6 @@ class VoucherControllerTest extends TestCase
         $member = Member::factory()->create();
 
         $response = $this->post(route('bo.register.vouchers.store'), [
-            'code' => 'NEWCODE',
             'discount_percent' => 15.00,
             'product_id' => $product->id,
             'season_id' => $season->id,
@@ -59,35 +57,19 @@ class VoucherControllerTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('vouchers', ['code' => 'NEWCODE']);
+        $this->assertDatabaseHas('vouchers', [
+            'discount_percent' => 15.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+            'member_id' => $member->id,
+        ]);
     }
 
     public function test_store_validates_required_fields(): void
     {
         $response = $this->post(route('bo.register.vouchers.store'), []);
 
-        $response->assertSessionHasErrors(['code', 'product_id', 'season_id']);
-    }
-
-    public function test_store_validates_code_unique(): void
-    {
-        $category = Category::factory()->create(['is_restricted' => false]);
-        $product = Product::factory()->create(['category_id' => $category->id]);
-        $season = Season::factory()->create();
-        Voucher::factory()->percent()->create([
-            'code' => 'DUP',
-            'product_id' => $product->id,
-            'season_id' => $season->id,
-        ]);
-
-        $response = $this->post(route('bo.register.vouchers.store'), [
-            'code' => 'DUP',
-            'discount_percent' => 10.00,
-            'product_id' => $product->id,
-            'season_id' => $season->id,
-        ]);
-
-        $response->assertSessionHasErrors(['code']);
+        $response->assertSessionHasErrors(['product_id', 'season_id', 'member_id']);
     }
 
     public function test_edit_returns_form(): void
@@ -101,17 +83,17 @@ class VoucherControllerTest extends TestCase
 
     public function test_update_modifies_voucher(): void
     {
-        $voucher = Voucher::factory()->percent()->create(['code' => 'OLD']);
+        $voucher = Voucher::factory()->percent()->create();
 
         $response = $this->put(route('bo.register.vouchers.update', $voucher), [
-            'code' => 'UPDATED',
-            'discount_percent' => $voucher->discount_percent,
+            'discount_percent' => 25.00,
             'product_id' => $voucher->product_id,
             'season_id' => $voucher->season_id,
+            'member_id' => $voucher->member_id,
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'code' => 'UPDATED']);
+        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'discount_percent' => 25.00]);
     }
 
     public function test_destroy_soft_deletes_voucher(): void
@@ -133,12 +115,13 @@ class VoucherControllerTest extends TestCase
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = Product::factory()->create(['category_id' => $category->id]);
         $season = Season::factory()->create();
+        $member = Member::factory()->create();
 
         $response = $this->post(route('bo.register.vouchers.store'), [
-            'code' => 'NOPE',
             'discount_percent' => 10.00,
             'product_id' => $product->id,
             'season_id' => $season->id,
+            'member_id' => $member->id,
         ]);
 
         $response->assertForbidden();

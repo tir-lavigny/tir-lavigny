@@ -163,7 +163,6 @@ class TicketControllerTest extends TestCase
             'unit_price' => 10.00,
         ]);
         $voucher = Voucher::factory()->percent()->create([
-            'code' => 'SAVE10',
             'discount_percent' => 10.00,
             'product_id' => $product->id,
             'season_id' => $season->id,
@@ -173,7 +172,7 @@ class TicketControllerTest extends TestCase
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'items' => [
-                ['product_id' => $product->id, 'quantity' => 1, 'voucher_code' => 'SAVE10'],
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
             ],
         ]));
 

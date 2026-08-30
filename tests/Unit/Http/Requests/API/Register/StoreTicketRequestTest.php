@@ -259,7 +259,7 @@ class StoreTicketRequestTest extends TestCase
         $this->assertTrue($validator->passes());
     }
 
-    public function test_voucher_code_must_exist(): void
+    public function test_voucher_id_must_exist(): void
     {
         $operatingDayId = $this->createOperatingDay();
         $productId = $this->createProduct();
@@ -267,7 +267,7 @@ class StoreTicketRequestTest extends TestCase
         $this->assertTrue($this->fails([
             'payment_method' => 'cash',
             'operating_day_id' => $operatingDayId,
-            'items' => [['product_id' => $productId, 'quantity' => 1, 'voucher_code' => 'INVALID']],
+            'items' => [['product_id' => $productId, 'quantity' => 1, 'voucher_id' => 9999]],
         ]));
     }
 }

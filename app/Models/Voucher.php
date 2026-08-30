@@ -14,7 +14,6 @@ class Voucher extends Model
     use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
-        'code',
         'discount_percent',
         'discount_fixed',
         'product_id',
