@@ -197,6 +197,7 @@ export interface Category {
     products_count?: number;
     created_at: string;
     updated_at: string;
+    deleted_at?: string;
 }
 
 export interface Product {
@@ -211,6 +212,7 @@ export interface Product {
     parent_products?: Product[];
     created_at: string;
     updated_at: string;
+    deleted_at?: string;
 }
 
 export interface Season {
@@ -223,6 +225,7 @@ export interface Season {
     operating_days?: OperatingDay[];
     created_at: string;
     updated_at: string;
+    deleted_at?: string;
 }
 
 export interface Member {
@@ -232,6 +235,7 @@ export interface Member {
     member_number: string;
     created_at: string;
     updated_at: string;
+    deleted_at?: string;
 }
 
 export interface Voucher {
@@ -246,6 +250,7 @@ export interface Voucher {
     member?: Member;
     created_at: string;
     updated_at: string;
+    deleted_at?: string;
 }
 
 export interface OperatingDay {
@@ -273,8 +278,10 @@ export interface Ticket {
     sold_at: string;
     ticket_items?: TicketItem[];
     member?: Member;
+    operating_day?: OperatingDay;
     created_at: string;
     updated_at: string;
+    deleted_at?: string;
 }
 
 export interface TicketItem {
@@ -305,6 +312,10 @@ export interface PaginatedSeasons extends PaginatedData<Season> {
 
 export interface PaginatedMembers extends PaginatedData<Member> {
     data?: Member[];
+}
+
+export interface PaginatedTickets extends PaginatedData<Ticket> {
+    data?: Ticket[];
 }
 
 export interface PaginatedVouchers extends PaginatedData<Voucher> {

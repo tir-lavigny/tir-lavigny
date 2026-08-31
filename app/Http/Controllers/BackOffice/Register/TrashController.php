@@ -26,7 +26,7 @@ class TrashController extends Controller implements HasMiddleware
         ];
     }
 
-    private const TYPE_MAP = [
+    protected const TYPE_MAP = [
         'category' => Category::class,
         'product' => Product::class,
         'season' => Season::class,
@@ -98,12 +98,18 @@ class TrashController extends Controller implements HasMiddleware
             ], 422);
         }
 
-        $model->forceDelete();
+        try {
+            $model->forceDelete();
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Impossible de supprimer définitivement cet élément. Une contrainte de base de données empêche la suppression.',
+            ], 422);
+        }
 
         return response()->json(['success' => true, 'message' => 'Élément supprimé définitivement.']);
     }
 
-    private function resolveType(string $type): string
+    protected function resolveType(string $type): string
     {
         if (! isset(self::TYPE_MAP[$type])) {
             abort(422, 'Type d\'élément invalide.');
@@ -112,7 +118,7 @@ class TrashController extends Controller implements HasMiddleware
         return self::TYPE_MAP[$type];
     }
 
-    private function getItemLabel($model, string $type): string
+    protected function getItemLabel($model, string $type): string
     {
         return match ($type) {
             'category' => $model->name,
@@ -125,20 +131,40 @@ class TrashController extends Controller implements HasMiddleware
         };
     }
 
-    private function getChildrenCounts($model, string $type): array
+    protected function getChildrenCounts($model, string $type): array
     {
         return match ($type) {
             'category' => $this->getChildrenForCategory($model),
             'ticket' => $this->getChildrenForTicket($model),
             'member' => $this->getChildrenForMember($model),
+            'season' => $this->getChildrenForSeason($model),
             default => [],
         };
     }
 
-    private function getChildrenForCategory(Category $category): array
+    protected function getChildrenForSeason(Season $season): array
+    {
+        $totalDays = \App\Models\OperatingDay::where('season_id', $season->id)->count();
+        $trashedVouchers = Voucher::where('season_id', $season->id)->onlyTrashed()->count();
+        $activeVouchers = Voucher::where('season_id', $season->id)->count();
+        $children = [];
+
+        if ($totalDays > 0) {
+            $children[] = ['type' => 'operating_day', 'count' => $totalDays, 'label' => $totalDays.' journée(s)'];
+        }
+
+        $totalVouchers = $trashedVouchers + $activeVouchers;
+        if ($totalVouchers > 0) {
+            $children[] = ['type' => 'voucher', 'count' => $totalVouchers, 'label' => $totalVouchers.' bon(s)'];
+        }
+
+        return $children;
+    }
+
+    protected function getChildrenForCategory(Category $category): array
     {
         $trashedProducts = Product::where('category_id', $category->id)->onlyTrashed()->count();
-        $activeProducts = Product::where('category_id', $category->id)->count();
+        $activeProducts = Product::where('category_id', $category->id)->withoutTrashed()->count();
         $children = [];
 
         if ($trashedProducts > 0) {
@@ -151,10 +177,10 @@ class TrashController extends Controller implements HasMiddleware
         return $children;
     }
 
-    private function getChildrenForTicket(Ticket $ticket): array
+    protected function getChildrenForTicket(Ticket $ticket): array
     {
         $trashedItems = TicketItem::where('ticket_id', $ticket->id)->onlyTrashed()->count();
-        $activeItems = TicketItem::where('ticket_id', $ticket->id)->count();
+        $activeItems = TicketItem::where('ticket_id', $ticket->id)->withoutTrashed()->count();
         $children = [];
 
         if ($trashedItems > 0) {
@@ -167,10 +193,10 @@ class TrashController extends Controller implements HasMiddleware
         return $children;
     }
 
-    private function getChildrenForMember(Member $member): array
+    protected function getChildrenForMember(Member $member): array
     {
         $trashedVouchers = Voucher::where('member_id', $member->id)->onlyTrashed()->count();
-        $activeVouchers = Voucher::where('member_id', $member->id)->count();
+        $activeVouchers = Voucher::where('member_id', $member->id)->withoutTrashed()->count();
         $children = [];
 
         if ($trashedVouchers > 0) {

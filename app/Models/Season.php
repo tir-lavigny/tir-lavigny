@@ -36,13 +36,4 @@ class Season extends Model
     {
         return $this->hasMany(Voucher::class);
     }
-
-    protected static function booted(): void
-    {
-        static::deleting(function (Season $season) {
-            if ($season->operatingDays()->exists() || $season->vouchers()->exists()) {
-                abort(422, 'Impossible de supprimer cette saison car elle contient des journées ou des bons.');
-            }
-        });
-    }
 }

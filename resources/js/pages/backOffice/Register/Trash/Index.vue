@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import type { BreadcrumbItem } from '@/types';
+import type {
+    BreadcrumbItem,
+    PaginatedCategories,
+    PaginatedMembers,
+    PaginatedProducts,
+    PaginatedSeasons,
+    PaginatedTickets,
+    PaginatedVouchers,
+} from '@/types';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
 import { Button } from '@/components/ui/button';
@@ -19,13 +27,19 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Corbeille', href: route('bo.register.trash.index') },
 ];
 
+interface CascadeChild {
+    type: string;
+    count: number;
+    label: string;
+}
+
 const props = defineProps<{
-    categories: any;
-    products: any;
-    seasons: any;
-    members: any;
-    tickets: any;
-    vouchers: any;
+    categories: PaginatedCategories;
+    products: PaginatedProducts;
+    seasons: PaginatedSeasons;
+    members: PaginatedMembers;
+    tickets: PaginatedTickets;
+    vouchers: PaginatedVouchers;
     memberFilter: number | null;
 }>();
 
@@ -36,7 +50,7 @@ const restoreDialog = ref({
     type: '',
     id: 0,
     label: '',
-    willRestore: [] as Array<{ type: string; count: number; label: string }>,
+    willRestore: [] as CascadeChild[],
     processing: false,
 });
 
@@ -83,19 +97,29 @@ const confirmForceDelete = () => {
     });
 };
 
-const openRestoreDialog = (type: string, id: number, label: string) => {
-    useForm({}).post(route('bo.register.trash.restore', { type, id }), {
-        onSuccess: (data: any) => {
-            restoreDialog.value = {
-                open: true,
-                type,
-                id,
-                label,
-                willRestore: data.will_restore || [],
-                processing: false,
-            };
-        },
-    });
+const openRestoreDialog = async (type: string, id: number, label: string) => {
+    try {
+        const response = await fetch(route('bo.register.trash.restore', { type, id }), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
+            },
+            body: JSON.stringify({}),
+        });
+        const data = await response.json();
+        restoreDialog.value = {
+            open: true,
+            type,
+            id,
+            label,
+            willRestore: data.will_restore || [],
+            processing: false,
+        };
+    } catch {
+        toast.error('Erreur lors du chargement des informations de restauration.');
+    }
 };
 
 const openForceDeleteDialog = (type: string, id: number, label: string) => {
@@ -173,7 +197,7 @@ const handlePageChange = (tab: string, page: number) => {
                                 :total-items="categories.total"
                                 :items-per-page="categories.per_page"
                                 :default-page="categories.current_page"
-                                @page-change="(p) => handlePageChange('categories', p)"
+                                @page-changed="(p) => handlePageChange('categories', p)"
                             />
                         </div>
                     </TabsContent>
@@ -214,7 +238,7 @@ const handlePageChange = (tab: string, page: number) => {
                                 :total-items="products.total"
                                 :items-per-page="products.per_page"
                                 :default-page="products.current_page"
-                                @page-change="(p) => handlePageChange('products', p)"
+                                @page-changed="(p) => handlePageChange('products', p)"
                             />
                         </div>
                     </TabsContent>
@@ -253,7 +277,7 @@ const handlePageChange = (tab: string, page: number) => {
                                 :total-items="seasons.total"
                                 :items-per-page="seasons.per_page"
                                 :default-page="seasons.current_page"
-                                @page-change="(p) => handlePageChange('seasons', p)"
+                                @page-changed="(p) => handlePageChange('seasons', p)"
                             />
                         </div>
                     </TabsContent>
@@ -302,7 +326,7 @@ const handlePageChange = (tab: string, page: number) => {
                                 :total-items="members.total"
                                 :items-per-page="members.per_page"
                                 :default-page="members.current_page"
-                                @page-change="(p) => handlePageChange('members', p)"
+                                @page-changed="(p) => handlePageChange('members', p)"
                             />
                         </div>
                     </TabsContent>
@@ -351,7 +375,7 @@ const handlePageChange = (tab: string, page: number) => {
                                 :total-items="tickets.total"
                                 :items-per-page="tickets.per_page"
                                 :default-page="tickets.current_page"
-                                @page-change="(p) => handlePageChange('tickets', p)"
+                                @page-changed="(p) => handlePageChange('tickets', p)"
                             />
                         </div>
                     </TabsContent>
@@ -373,7 +397,7 @@ const handlePageChange = (tab: string, page: number) => {
                                     <TableCell class="font-medium">#{{ item.id }}</TableCell>
                                     <TableCell>{{ item.member ? item.member.first_name + ' ' + item.member.last_name : '—' }}</TableCell>
                                     <TableCell>{{ item.product?.name ?? '—' }}</TableCell>
-                                    <TableCell>{{ item.discount_percent ? item.discount_percent + '%' : item.discount_amount + ' CHF' }}</TableCell>
+                                    <TableCell>{{ item.discount_percent ? item.discount_percent + '%' : item.discount_fixed + ' CHF' }}</TableCell>
                                     <TableCell>{{ formatDate(item.deleted_at, 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
@@ -400,7 +424,7 @@ const handlePageChange = (tab: string, page: number) => {
                                 :total-items="vouchers.total"
                                 :items-per-page="vouchers.per_page"
                                 :default-page="vouchers.current_page"
-                                @page-change="(p) => handlePageChange('vouchers', p)"
+                                @page-changed="(p) => handlePageChange('vouchers', p)"
                             />
                         </div>
                     </TabsContent>
