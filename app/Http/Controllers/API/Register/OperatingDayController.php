@@ -34,10 +34,10 @@ class OperatingDayController extends Controller
             $operatingDay->recalculateTotals();
             $operatingDay->update([
                 'closed_at' => Carbon::now(),
-                'closing_balance' => $request->input('closing_balance'),
+                'closing_balance' => $operatingDay->closing_balance,
             ]);
         } elseif ($status === 'open') {
-            $operatingDay->update(['closed_at' => null]);
+            $operatingDay->update(['closed_at' => null, 'closing_balance' => null]);
         } else {
             $operatingDay->update($request->only(['cash_remark']));
         }

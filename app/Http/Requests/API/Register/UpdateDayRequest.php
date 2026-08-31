@@ -26,7 +26,6 @@ class UpdateDayRequest extends FormRequest
     {
         return [
             'status' => ['sometimes', 'string', Rule::in(['open', 'closed'])],
-            'closing_balance' => ['nullable', 'numeric', 'min:0'],
             'cash_remark' => ['nullable', 'string', 'max:5000'],
         ];
     }
