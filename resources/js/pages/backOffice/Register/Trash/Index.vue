@@ -33,6 +33,12 @@ interface CascadeChild {
     label: string;
 }
 
+interface MemberOption {
+    id: number;
+    first_name: string;
+    last_name: string;
+}
+
 const props = defineProps<{
     categories: PaginatedCategories;
     products: PaginatedProducts;
@@ -41,9 +47,11 @@ const props = defineProps<{
     tickets: PaginatedTickets;
     vouchers: PaginatedVouchers;
     memberFilter: number | null;
+    allMembers: MemberOption[];
 }>();
 
 const activeTab = ref('categories');
+const selectedMemberId = ref<string>(props.memberFilter ? String(props.memberFilter) : '');
 
 const restoreDialog = ref({
     open: false,
@@ -136,10 +144,18 @@ const handlePageChange = (tab: string, page: number) => {
     const routeName = 'bo.register.trash.index';
     const params: Record<string, any> = {};
     params[`${tab}_page`] = page;
-    if (props.memberFilter) {
-        params.member_id = props.memberFilter;
+    if (selectedMemberId.value) {
+        params.member_id = selectedMemberId.value;
     }
     router.get(route(routeName), params, { preserveState: true, preserveScroll: true });
+};
+
+const handleMemberFilterChange = () => {
+    const params: Record<string, any> = {};
+    if (selectedMemberId.value) {
+        params.member_id = selectedMemberId.value;
+    }
+    router.get(route('bo.register.trash.index'), params, { preserveState: true, preserveScroll: true });
 };
 </script>
 
@@ -175,7 +191,7 @@ const handlePageChange = (tab: string, page: number) => {
                             <TableBody>
                                 <TableRow v-for="item in categories.data" :key="item.id">
                                     <TableCell class="font-medium">{{ item.name }}</TableCell>
-                                    <TableCell>{{ formatDate(item.deleted_at, 'DD.MM.YYYY') }}</TableCell>
+                                    <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
                                             <Button size="sm" variant="outline" @click="openRestoreDialog('category', item.id, item.name)">
@@ -216,7 +232,7 @@ const handlePageChange = (tab: string, page: number) => {
                                 <TableRow v-for="item in products.data" :key="item.id">
                                     <TableCell class="font-medium">{{ item.name }}</TableCell>
                                     <TableCell>{{ item.category?.name ?? '—' }}</TableCell>
-                                    <TableCell>{{ formatDate(item.deleted_at, 'DD.MM.YYYY') }}</TableCell>
+                                    <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
                                             <Button size="sm" variant="outline" @click="openRestoreDialog('product', item.id, item.name)">
@@ -255,7 +271,7 @@ const handlePageChange = (tab: string, page: number) => {
                             <TableBody>
                                 <TableRow v-for="item in seasons.data" :key="item.id">
                                     <TableCell class="font-medium">{{ item.name }}</TableCell>
-                                    <TableCell>{{ formatDate(item.deleted_at, 'DD.MM.YYYY') }}</TableCell>
+                                    <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
                                             <Button size="sm" variant="outline" @click="openRestoreDialog('season', item.id, item.name)">
@@ -296,7 +312,7 @@ const handlePageChange = (tab: string, page: number) => {
                                 <TableRow v-for="item in members.data" :key="item.id">
                                     <TableCell class="font-medium">{{ item.first_name }} {{ item.last_name }}</TableCell>
                                     <TableCell>{{ item.member_number }}</TableCell>
-                                    <TableCell>{{ formatDate(item.deleted_at, 'DD.MM.YYYY') }}</TableCell>
+                                    <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
                                             <Button
@@ -349,7 +365,7 @@ const handlePageChange = (tab: string, page: number) => {
                                     <TableCell>{{ item.operating_day?.date ?? '—' }}</TableCell>
                                     <TableCell>{{ item.member ? item.member.first_name + ' ' + item.member.last_name : '—' }}</TableCell>
                                     <TableCell>{{ item.total }} CHF</TableCell>
-                                    <TableCell>{{ formatDate(item.deleted_at, 'DD.MM.YYYY') }}</TableCell>
+                                    <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
                                             <Button size="sm" variant="outline" @click="openRestoreDialog('ticket', item.id, 'Ticket #' + item.id)">
@@ -381,6 +397,17 @@ const handlePageChange = (tab: string, page: number) => {
                     </TabsContent>
 
                     <TabsContent value="vouchers">
+                        <div class="mb-4 flex items-center gap-4">
+                            <label class="text-sm font-medium">Filtrer par membre :</label>
+                            <select
+                                v-model="selectedMemberId"
+                                class="border-input focus-visible:ring-ring flex h-9 w-full max-w-xs rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:outline-none"
+                                @change="handleMemberFilterChange"
+                            >
+                                <option value="">Tous les membres</option>
+                                <option v-for="m in allMembers" :key="m.id" :value="m.id">{{ m.first_name }} {{ m.last_name }}</option>
+                            </select>
+                        </div>
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -398,7 +425,7 @@ const handlePageChange = (tab: string, page: number) => {
                                     <TableCell>{{ item.member ? item.member.first_name + ' ' + item.member.last_name : '—' }}</TableCell>
                                     <TableCell>{{ item.product?.name ?? '—' }}</TableCell>
                                     <TableCell>{{ item.discount_percent ? item.discount_percent + '%' : item.discount_fixed + ' CHF' }}</TableCell>
-                                    <TableCell>{{ formatDate(item.deleted_at, 'DD.MM.YYYY') }}</TableCell>
+                                    <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
                                             <Button size="sm" variant="outline" @click="openRestoreDialog('voucher', item.id, 'Bon #' + item.id)">
