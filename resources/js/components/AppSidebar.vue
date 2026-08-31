@@ -69,6 +69,16 @@ const mainNavItems: NavItem[] = [
 
 const registerNavItems: NavItem[] = [
     {
+        title: 'Saisons',
+        href: route('bo.register.seasons.index'),
+        icon: Calendar,
+    },
+    {
+        title: 'Journées',
+        href: route('bo.register.operating-days.index'),
+        icon: CalendarDays,
+    },
+    {
         title: 'Produits',
         href: route('bo.register.products.index'),
         icon: ShoppingCart,
@@ -79,24 +89,14 @@ const registerNavItems: NavItem[] = [
         icon: Tag,
     },
     {
-        title: 'Saisons',
-        href: route('bo.register.seasons.index'),
-        icon: Calendar,
-    },
-    {
-        title: 'Membres',
-        href: route('bo.register.members.index'),
-        icon: Users,
-    },
-    {
         title: 'Bons',
         href: route('bo.register.vouchers.index'),
         icon: Ticket,
     },
     {
-        title: 'Journées',
-        href: route('bo.register.operating-days.index'),
-        icon: CalendarDays,
+        title: 'Membres',
+        href: route('bo.register.members.index'),
+        icon: Users,
     },
     ...(hasPermissionTo(user, 'view reports')
         ? [
