@@ -152,16 +152,16 @@ class SeasonControllerTest extends TestCase
 
     public function test_end_balance_is_computed_from_operating_days(): void
     {
-        $season = Season::factory()->create();
+        $season = Season::factory()->create(['initial_balance' => 100.00]);
         OperatingDay::factory()->create(['season_id' => $season->id, 'total_cash' => 100.00]);
         OperatingDay::factory()->create(['season_id' => $season->id, 'total_cash' => 200.00]);
 
-        $this->assertEquals(300.00, $season->end_balance);
+        $this->assertEquals(400.00, $season->end_balance);
     }
 
     public function test_end_balance_returns_zero_when_no_operating_days(): void
     {
-        $season = Season::factory()->create();
+        $season = Season::factory()->create(['initial_balance' => 0]);
 
         $this->assertEquals(0.0, $season->end_balance);
     }

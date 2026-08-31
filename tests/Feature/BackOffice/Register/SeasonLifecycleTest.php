@@ -82,7 +82,7 @@ class SeasonLifecycleTest extends TestCase
         $season = Season::factory()->create(['initial_balance' => 500.00]);
 
         $this->assertEquals(500.00, $season->initial_balance);
-        $this->assertEquals(0, $season->end_balance);
+        $this->assertEquals(500.00, $season->end_balance);
 
         // ─── Step 2: Open Day 1 (today) ──────────────────────────────────
         $this->post(route('bo.register.operating-days.store'), [
@@ -202,7 +202,7 @@ class SeasonLifecycleTest extends TestCase
 
         // ─── Step 10: Verify Season end_balance ──────────────────────────
         $season->refresh();
-        $this->assertEquals(40.00, $season->end_balance);
+        $this->assertEquals(540.00, $season->end_balance);
 
         // ─── Step 11: Refund a ticket on Day 1 ───────────────────────────
         $ticketToRefund = Ticket::where('operating_day_id', $day1->id)->first();

@@ -39,7 +39,7 @@ class Season extends Model
 
     public function getEndBalanceAttribute(): ?float
     {
-        return (float) $this->operatingDays()->sum('total_cash');
+        return $this->initial_balance + $this->operatingDays()->sum('total_cash');
     }
 
     protected static function booted(): void
