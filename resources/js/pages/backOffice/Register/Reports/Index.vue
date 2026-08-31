@@ -8,7 +8,7 @@ import type { BreadcrumbItem, Season } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarDays, CalendarRange } from '@lucide/vue';
 
-const props = defineProps<{
+defineProps<{
     seasons: (Season & { operating_days_count: number })[];
 }>();
 
@@ -37,12 +37,7 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Rapports', href: route('bo.regi
             <H3>Rapport par saison</H3>
 
             <template v-if="seasons.length">
-                <Link
-                    v-for="season in seasons"
-                    :key="season.id"
-                    :href="route('bo.register.reports.season', season.id)"
-                    class="block"
-                >
+                <Link v-for="season in seasons" :key="season.id" :href="route('bo.register.reports.season', season.id)" class="block">
                     <Card class="hover:bg-accent/50 transition-colors">
                         <CardHeader class="flex flex-row items-center gap-3 pb-2">
                             <CalendarDays class="text-muted-foreground size-5" />
@@ -50,8 +45,8 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Rapports', href: route('bo.regi
                         </CardHeader>
                         <CardContent>
                             <p class="text-muted-foreground text-sm">
-                                {{ formatDate(season.start_date, 'DD.MM.YYYY') }} — {{ formatDate(season.end_date, 'DD.MM.YYYY') }}
-                                · {{ season.operating_days_count }} journée(s)
+                                {{ formatDate(season.start_date, 'DD.MM.YYYY') }} — {{ formatDate(season.end_date, 'DD.MM.YYYY') }} ·
+                                {{ season.operating_days_count }} journée(s)
                             </p>
                         </CardContent>
                     </Card>
