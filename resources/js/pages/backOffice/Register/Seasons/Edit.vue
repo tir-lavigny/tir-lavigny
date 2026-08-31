@@ -25,8 +25,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const form = useForm({
     name: props.season.name,
-    start_date: props.season.start_date,
-    end_date: props.season.end_date,
+    start_date: props.season.start_date?.slice(0, 10),
+    end_date: props.season.end_date?.slice(0, 10),
     initial_balance: props.season.initial_balance,
 });
 
