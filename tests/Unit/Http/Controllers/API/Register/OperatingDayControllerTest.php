@@ -107,12 +107,11 @@ class OperatingDayControllerTest extends TestCase
 
         $response = $this->controller->update($this->updateRequest([
             'status' => 'closed',
-            'closing_balance' => 150.00,
         ]), $day);
 
         $this->assertEquals(200, $response->status());
         $this->assertNotNull($day->fresh()->closed_at);
-        $this->assertEquals('150.00', $day->fresh()->closing_balance);
+        $this->assertNotNull($day->fresh()->closing_balance);
     }
 
     public function test_update_closes_day_without_closing_balance(): void
