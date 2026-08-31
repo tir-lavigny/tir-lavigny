@@ -12,6 +12,7 @@ use App\Models\TicketItem;
 use App\Models\Voucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use ReflectionClass;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class TrashControllerTest extends TestCase
@@ -19,6 +20,7 @@ class TrashControllerTest extends TestCase
     use RefreshDatabase;
 
     private TrashController $controller;
+
     private ReflectionClass $reflection;
 
     protected function setUp(): void
@@ -48,7 +50,7 @@ class TrashControllerTest extends TestCase
 
     public function test_resolve_type_throws_for_invalid_type(): void
     {
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         $this->callProtected('resolveType', ['invalid']);
     }
 

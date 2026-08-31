@@ -60,6 +60,19 @@ class OperatingDay extends Model
         ]);
     }
 
+    public function getClosingBalanceAttribute(): ?float
+    {
+        if ($this->closed_at !== null && $this->attributes['closing_balance'] !== null) {
+            return (float) $this->attributes['closing_balance'];
+        }
+
+        $previousDaysCash = $this->season->operatingDays()
+            ->where('id', '<=', $this->id)
+            ->sum('total_cash');
+
+        return $this->season->initial_balance + $previousDaysCash;
+    }
+
     protected static function booted(): void
     {
         static::deleting(function (OperatingDay $day) {

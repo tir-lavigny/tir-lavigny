@@ -132,7 +132,7 @@ class OperatingDayControllerTest extends TestCase
 
         $this->assertEquals(200, $response->status());
         $this->assertNotNull($day->fresh()->closed_at);
-        $this->assertNull($day->fresh()->closing_balance);
+        $this->assertNotNull($day->fresh()->closing_balance);
     }
 
     public function test_update_reopens_closed_day(): void

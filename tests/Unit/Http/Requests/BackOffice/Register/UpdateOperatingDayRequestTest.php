@@ -80,31 +80,10 @@ class UpdateOperatingDayRequestTest extends TestCase
         $this->assertTrue($this->passes([]));
     }
 
-    public function test_closing_balance_must_be_numeric(): void
-    {
-        $this->assertTrue($this->fails(['closing_balance' => 'abc']));
-    }
-
-    public function test_closing_balance_must_be_non_negative(): void
-    {
-        $this->assertTrue($this->fails(['closing_balance' => -1]));
-    }
-
-    public function test_closing_balance_accepts_zero(): void
-    {
-        $this->assertTrue($this->passes(['closing_balance' => 0]));
-    }
-
-    public function test_closing_balance_is_nullable(): void
-    {
-        $this->assertTrue($this->passes([]));
-    }
-
     public function test_passes_with_valid_data(): void
     {
         $this->assertTrue($this->passes([
             'cash_remark' => 'All good',
-            'closing_balance' => 500.00,
         ]));
     }
 }

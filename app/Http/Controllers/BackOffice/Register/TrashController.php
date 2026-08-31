@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Member;
+use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
 use App\Models\Ticket;
@@ -145,7 +146,7 @@ class TrashController extends Controller implements HasMiddleware
 
     protected function getChildrenForSeason(Season $season): array
     {
-        $totalDays = \App\Models\OperatingDay::where('season_id', $season->id)->count();
+        $totalDays = OperatingDay::where('season_id', $season->id)->count();
         $trashedVouchers = Voucher::where('season_id', $season->id)->onlyTrashed()->count();
         $activeVouchers = Voucher::where('season_id', $season->id)->count();
         $children = [];

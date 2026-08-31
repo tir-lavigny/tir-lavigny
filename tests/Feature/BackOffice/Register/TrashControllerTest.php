@@ -4,6 +4,7 @@ namespace Tests\Feature\BackOffice\Register;
 
 use App\Models\Category;
 use App\Models\Member;
+use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
 use App\Models\Ticket;
@@ -107,7 +108,7 @@ class TrashControllerTest extends TestCase
         $otherVoucher = Voucher::factory()->create(['member_id' => $otherMember->id]);
         $otherVoucher->delete();
 
-        $response = $this->get(route('bo.register.trash.index') . '?member_id=' . $member->id);
+        $response = $this->get(route('bo.register.trash.index').'?member_id='.$member->id);
 
         $response->assertOk();
     }
@@ -282,7 +283,7 @@ class TrashControllerTest extends TestCase
     public function test_force_delete_season_blocks_with_operating_days(): void
     {
         $season = Season::factory()->create();
-        \App\Models\OperatingDay::factory()->create(['season_id' => $season->id]);
+        OperatingDay::factory()->create(['season_id' => $season->id]);
         $season->delete();
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'season', 'id' => $season->id]));

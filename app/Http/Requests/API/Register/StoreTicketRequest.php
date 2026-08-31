@@ -24,7 +24,7 @@ class StoreTicketRequest extends FormRequest
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id,deleted_at,NULL'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.custom_unit_price' => ['nullable', 'numeric', 'min:0'],
+            'items.*.custom_unit_price' => ['nullable', 'numeric'],
             'items.*.voucher_id' => ['nullable', 'integer', 'exists:vouchers,id,deleted_at,NULL'],
         ];
     }

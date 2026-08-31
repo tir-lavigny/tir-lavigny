@@ -33,7 +33,7 @@ const handleSubmit = () => {
         onSuccess: () => {
             toast.success('Journée ouverte avec succès.');
         },
-        onError: () => toast.error('Erreur lors de l\'ouverture de la journée.'),
+        onError: () => toast.error("Erreur lors de l'ouverture de la journée."),
     });
 };
 </script>

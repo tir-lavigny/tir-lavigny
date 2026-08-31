@@ -78,23 +78,67 @@ class OperatingDayControllerTest extends TestCase
         ]);
     }
 
-    public function test_update_modifies_closing_balance(): void
+    public function test_closing_balance_is_computed_from_previous_days(): void
     {
-        $season = Season::factory()->create();
+        $season = Season::factory()->create(['initial_balance' => 500.00]);
+
+        $day1 = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'total_cash' => 100.00,
+        ]);
+
+        $day2 = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'total_cash' => 150.00,
+        ]);
+
+        // closing_balance = initial_balance + sum(total_cash for all days up to today)
+        // = 500 + 100 + 150 = 750
+        $this->assertEquals(750.00, $day2->closing_balance);
+    }
+
+    public function test_closing_balance_persists_when_day_is_closed(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 500.00]);
         $day = OperatingDay::factory()->create([
             'season_id' => $season->id,
+            'total_cash' => 200.00,
+            'closed_at' => null,
             'closing_balance' => null,
         ]);
-
-        $response = $this->put(route('bo.register.operating-days.update', $day), [
-            'closing_balance' => 250.00,
+        Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 200.00,
         ]);
 
-        $response->assertRedirect();
-        $this->assertDatabaseHas('operating_days', [
-            'id' => $day->id,
-            'closing_balance' => 250.00,
+        $this->put(route('bo.register.operating-days.update', $day), [
+            'status' => 'closed',
         ]);
+
+        $day->refresh();
+        $this->assertNotNull($day->closed_at);
+        $this->assertNotNull($day->closing_balance);
+        $this->assertEquals(700.00, $day->closing_balance);
+    }
+
+    public function test_closing_balance_cleared_when_day_is_reopened(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 500.00]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'total_cash' => 200.00,
+            'closed_at' => Carbon::now(),
+            'closing_balance' => 700.00,
+        ]);
+
+        $this->put(route('bo.register.operating-days.update', $day), [
+            'status' => 'open',
+        ]);
+
+        $day->refresh();
+        $this->assertNull($day->closed_at);
+        // When reopened, closing_balance is cleared from DB and computed on the fly
+        $this->assertEquals(700.00, $day->closing_balance);
     }
 
     public function test_update_requires_permission(): void

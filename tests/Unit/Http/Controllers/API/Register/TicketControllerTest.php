@@ -219,6 +219,38 @@ class TicketControllerTest extends TestCase
         ]);
     }
 
+    public function test_store_allows_negative_custom_unit_price(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->allowsCustomPrice()->create([
+            'category_id' => $category->id,
+            'unit_price' => 0.00,
+        ]);
+
+        $this->controller->store($this->storeRequest([
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'custom_unit_price' => -25.00],
+            ],
+        ]));
+
+        $this->assertDatabaseHas('ticket_items', [
+            'product_id' => $product->id,
+            'unit_price' => -25.00,
+            'subtotal' => -25.00,
+        ]);
+    }
+
     public function test_store_recalculates_day_totals(): void
     {
         $season = Season::factory()->create([

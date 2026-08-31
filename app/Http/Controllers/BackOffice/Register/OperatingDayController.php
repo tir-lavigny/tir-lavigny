@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Register\StoreOperatingDayRequest;
 use App\Http\Requests\BackOffice\Register\UpdateOperatingDayRequest;
 use App\Models\OperatingDay;
+use App\Models\Product;
 use App\Models\Season;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -64,6 +65,7 @@ class OperatingDayController extends Controller implements HasMiddleware
 
         return Inertia::render('backOffice/Register/OperatingDays/Show', [
             'operatingDay' => $operatingDay,
+            'correctionProduct' => Product::where('name', 'Correction')->first(),
         ]);
     }
 
@@ -79,12 +81,12 @@ class OperatingDayController extends Controller implements HasMiddleware
             $operatingDay->recalculateTotals();
             $operatingDay->update([
                 'closed_at' => Carbon::now(),
-                'closing_balance' => $request->input('closing_balance'),
+                'closing_balance' => $operatingDay->closing_balance,
             ]);
         } elseif ($status === 'open') {
-            $operatingDay->update(['closed_at' => null]);
+            $operatingDay->update(['closed_at' => null, 'closing_balance' => null]);
         } else {
-            $operatingDay->update($request->only(['cash_remark', 'closing_balance']));
+            $operatingDay->update($request->only(['cash_remark']));
         }
 
         return redirect()->route('bo.register.operating-days.show', $operatingDay)

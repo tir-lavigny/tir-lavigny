@@ -32,13 +32,15 @@ class ReportExportControllerTest extends TestCase
         $season = Season::factory()->create([
             'start_date' => Carbon::now()->startOfYear(),
             'end_date' => Carbon::now()->endOfYear(),
+            'initial_balance' => 0,
         ]);
         OperatingDay::factory()->create([
             'season_id' => $season->id,
             'date' => Carbon::parse('2026-03-15'),
             'total_cash' => 150.50,
             'total_twint' => 50.25,
-            'closing_balance' => 200.75,
+            'closed_at' => Carbon::now(),
+            'closing_balance' => 150.50,
         ]);
 
         $rows = iterator_to_array($this->controller->getRows($season, 'balance'));
@@ -47,24 +49,27 @@ class ReportExportControllerTest extends TestCase
         $this->assertEquals('15.03.2026', $rows[0]['Date']);
         $this->assertEquals('150,50', $rows[0]['Total Espèces']);
         $this->assertEquals('50,25', $rows[0]['Total Twint']);
-        $this->assertEquals('200,75', $rows[0]['Solde Clôture']);
+        $this->assertEquals('150,50', $rows[0]['Solde Clôture']);
     }
 
-    public function test_balance_rows_leave_closing_balance_empty_when_null(): void
+    public function test_balance_rows_computed_closing_balance_when_open(): void
     {
         $season = Season::factory()->create([
             'start_date' => Carbon::now()->startOfYear(),
             'end_date' => Carbon::now()->endOfYear(),
+            'initial_balance' => 100.00,
         ]);
         OperatingDay::factory()->create([
             'season_id' => $season->id,
+            'total_cash' => 50.00,
+            'closed_at' => null,
             'closing_balance' => null,
         ]);
 
         $rows = iterator_to_array($this->controller->getRows($season, 'balance'));
 
         $this->assertCount(1, $rows);
-        $this->assertEquals('', $rows[0]['Solde Clôture']);
+        $this->assertEquals('150,00', $rows[0]['Solde Clôture']);
     }
 
     public function test_ticket_rows_contain_correct_data(): void
