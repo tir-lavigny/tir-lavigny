@@ -36,4 +36,9 @@ class Season extends Model
     {
         return $this->hasMany(Voucher::class);
     }
+
+    public function getEndBalanceAttribute(): ?float
+    {
+        return (float) $this->operatingDays()->sum('total_cash');
+    }
 }

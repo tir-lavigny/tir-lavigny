@@ -28,7 +28,6 @@ const form = useForm({
     start_date: props.season.start_date,
     end_date: props.season.end_date,
     initial_balance: props.season.initial_balance,
-    end_balance: props.season.end_balance ?? '',
 });
 
 const handleSubmit = () => {
@@ -84,17 +83,10 @@ const handleSubmit = () => {
                             <InputError :message="form.errors.end_date" />
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="grid gap-2">
-                            <Label for="initial_balance">Solde initial (CHF)</Label>
-                            <Input id="initial_balance" v-model="form.initial_balance" type="number" step="0.01" min="0" required />
-                            <InputError :message="form.errors.initial_balance" />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="end_balance">Solde final (CHF)</Label>
-                            <Input id="end_balance" v-model="form.end_balance" type="number" step="0.01" min="0" />
-                            <InputError :message="form.errors.end_balance" />
-                        </div>
+                    <div class="grid gap-2">
+                        <Label for="initial_balance">Solde initial (CHF)</Label>
+                        <Input id="initial_balance" v-model="form.initial_balance" type="number" step="0.01" min="0" required />
+                        <InputError :message="form.errors.initial_balance" />
                     </div>
                 </div>
             </div>

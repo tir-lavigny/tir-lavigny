@@ -149,8 +149,10 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     });
 
     Route::middleware('permission:manage operating days')->prefix('register')->group(function () {
-        Route::resource('operating-days', Register\OperatingDayController::class)->only(['index', 'show', 'update'])->names([
+        Route::resource('operating-days', Register\OperatingDayController::class)->only(['index', 'create', 'store', 'show', 'update'])->names([
             'index' => 'bo.register.operating-days.index',
+            'create' => 'bo.register.operating-days.create',
+            'store' => 'bo.register.operating-days.store',
             'show' => 'bo.register.operating-days.show',
             'update' => 'bo.register.operating-days.update',
         ]);

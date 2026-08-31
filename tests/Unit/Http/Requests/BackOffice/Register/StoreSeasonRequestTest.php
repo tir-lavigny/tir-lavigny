@@ -122,17 +122,6 @@ class StoreSeasonRequestTest extends TestCase
         ]));
     }
 
-    public function test_end_balance_must_be_numeric(): void
-    {
-        $this->assertTrue($this->fails([
-            'name' => 'Season 2026',
-            'start_date' => Carbon::now()->startOfYear()->toDateString(),
-            'end_date' => Carbon::now()->endOfYear()->toDateString(),
-            'initial_balance' => 0,
-            'end_balance' => 'abc',
-        ]));
-    }
-
     public function test_passes_with_valid_data(): void
     {
         $this->assertTrue($this->passes([

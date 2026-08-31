@@ -17,10 +17,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 </script>
 
 <template>
-    <Head :title="'Détail journée ' + formatDate(operatingDay.date, 'dd.MM.yyyy')" />
+    <Head :title="'Détail journée ' + formatDate(operatingDay.date, 'DD.MM.YYYY')" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="m-4 flex flex-row items-center justify-between">
-            <H1>Détail du {{ formatDate(operatingDay.date, 'dd.MM.yyyy') }}</H1>
+            <H1>Détail du {{ formatDate(operatingDay.date, 'DD.MM.YYYY') }}</H1>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="grid grid-cols-3 gap-4">

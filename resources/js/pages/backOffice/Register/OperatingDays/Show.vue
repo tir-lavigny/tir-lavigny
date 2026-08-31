@@ -13,6 +13,7 @@ import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, OperatingDay, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { Lock, Unlock } from '@lucide/vue';
+import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
 const page = usePage<SharedData>();
@@ -22,14 +23,14 @@ const props = defineProps<{ operatingDay: OperatingDay }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Journées', href: route('bo.register.operating-days.index') },
-    { title: formatDate(props.operatingDay.date, 'dd.MM.yyyy'), href: route('bo.register.operating-days.show', props.operatingDay.id) },
+    { title: formatDate(props.operatingDay.date, 'DD.MM.YYYY'), href: route('bo.register.operating-days.show', props.operatingDay.id) },
 ];
 
 const remarkForm = useForm({ cash_remark: props.operatingDay.cash_remark ?? '' });
 const closeForm = useForm({ status: 'closed', closing_balance: props.operatingDay.closing_balance ?? 0 });
 const reopenForm = useForm({ status: 'open' });
 
-const isOpen = !props.operatingDay.closed_at;
+const isOpen = computed(() => !props.operatingDay.closed_at);
 
 const handleSaveRemark = () => {
     remarkForm.put(route('bo.register.operating-days.update', props.operatingDay.id), {
@@ -54,11 +55,11 @@ const handleReopen = () => {
 </script>
 
 <template>
-    <Head :title="'Journée ' + formatDate(operatingDay.date, 'dd.MM.yyyy')" />
+    <Head :title="'Journée ' + formatDate(operatingDay.date, 'DD.MM.YYYY')" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="m-4 flex flex-row items-center justify-between">
             <div class="flex items-center gap-3">
-                <H1>Journée du {{ formatDate(operatingDay.date, 'dd.MM.yyyy') }}</H1>
+                <H1>Journée du {{ formatDate(operatingDay.date, 'dddd DD MMMM YYYY') }}</H1>
                 <Badge :variant="isOpen ? 'default' : 'secondary'">{{ isOpen ? 'Ouverte' : 'Fermée' }}</Badge>
             </div>
             <div class="flex gap-2">

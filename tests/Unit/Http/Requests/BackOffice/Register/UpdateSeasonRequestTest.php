@@ -79,11 +79,6 @@ class UpdateSeasonRequestTest extends TestCase
         $this->assertTrue($this->fails(['initial_balance' => -1]));
     }
 
-    public function test_end_balance_must_be_numeric(): void
-    {
-        $this->assertTrue($this->fails(['end_balance' => 'abc']));
-    }
-
     public function test_passes_with_empty_data(): void
     {
         $this->assertTrue($this->passes([]));
@@ -96,7 +91,6 @@ class UpdateSeasonRequestTest extends TestCase
             'start_date' => Carbon::now()->startOfYear()->toDateString(),
             'end_date' => Carbon::now()->endOfYear()->toDateString(),
             'initial_balance' => 2000.00,
-            'end_balance' => 500.00,
         ]));
     }
 }

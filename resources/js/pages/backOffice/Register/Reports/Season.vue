@@ -65,7 +65,7 @@ const handleDetailChange = (value: unknown) => {
                 </TableHeader>
                 <TableBody>
                     <TableRow v-for="day in operatingDays" :key="day.id">
-                        <TableCell class="font-medium">{{ formatDate(day.date, 'dd.MM.yyyy') }}</TableCell>
+                        <TableCell class="font-medium">{{ formatDate(day.date, 'DD.MM.YYYY') }}</TableCell>
                         <TableCell class="text-right">{{ formatMoney(day.total_cash) }} CHF</TableCell>
                         <TableCell class="text-right">{{ formatMoney(day.total_twint) }} CHF</TableCell>
                         <TableCell>

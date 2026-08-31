@@ -6,6 +6,7 @@ use App\Models\OperatingDay;
 use App\Models\Season;
 use App\Models\Ticket;
 use App\Models\User;
+use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -107,6 +108,80 @@ class OperatingDayControllerTest extends TestCase
 
         $response = $this->put(route('bo.register.operating-days.update', $day), [
             'cash_remark' => 'Test',
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_create_returns_form(): void
+    {
+        $response = $this->get(route('bo.register.operating-days.create'));
+
+        $response->assertOk();
+    }
+
+    public function test_store_creates_operating_day(): void
+    {
+        $season = Season::factory()->create();
+        $today = Carbon::today();
+
+        $response = $this->post(route('bo.register.operating-days.store'), [
+            'season_id' => $season->id,
+            'date' => $today->toDateString(),
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('operating_days', [
+            'season_id' => $season->id,
+        ]);
+    }
+
+    public function test_store_validates_required_fields(): void
+    {
+        $response = $this->post(route('bo.register.operating-days.store'), []);
+
+        $response->assertSessionHasErrors(['season_id', 'date']);
+    }
+
+    public function test_store_validates_date_not_in_future(): void
+    {
+        $season = Season::factory()->create();
+
+        $response = $this->post(route('bo.register.operating-days.store'), [
+            'season_id' => $season->id,
+            'date' => Carbon::tomorrow()->toDateString(),
+        ]);
+
+        $response->assertSessionHasErrors(['date']);
+    }
+
+    public function test_store_prevents_duplicate_date_per_season(): void
+    {
+        $season = Season::factory()->create();
+        OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::today()->toDateString(),
+        ]);
+
+        $response = $this->post(route('bo.register.operating-days.store'), [
+            'season_id' => $season->id,
+            'date' => Carbon::today()->toDateString(),
+        ]);
+
+        $response->assertSessionHasErrors();
+    }
+
+    public function test_store_requires_permission(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('view register');
+        $this->actingAs($user);
+
+        $season = Season::factory()->create();
+
+        $response = $this->post(route('bo.register.operating-days.store'), [
+            'season_id' => $season->id,
+            'date' => Carbon::today()->toDateString(),
         ]);
 
         $response->assertForbidden();

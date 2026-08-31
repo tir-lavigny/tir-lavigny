@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\BackOffice\Register;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BackOffice\Register\StoreOperatingDayRequest;
 use App\Http\Requests\BackOffice\Register\UpdateOperatingDayRequest;
 use App\Models\OperatingDay;
+use App\Models\Season;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -35,6 +37,25 @@ class OperatingDayController extends Controller implements HasMiddleware
             'operatingDays' => $days,
             'filters' => ['season_id' => $seasonId ?? null],
         ]);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('backOffice/Register/OperatingDays/Create', [
+            'seasons' => Season::orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    public function store(StoreOperatingDayRequest $request)
+    {
+        $day = OperatingDay::create([
+            'date' => $request->input('date'),
+            'started_at' => Carbon::now(),
+            'season_id' => $request->input('season_id'),
+        ]);
+
+        return redirect()->route('bo.register.operating-days.show', $day)
+            ->with('success', 'Journée ouverte avec succès.');
     }
 
     public function show(OperatingDay $operatingDay): Response

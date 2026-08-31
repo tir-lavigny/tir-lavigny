@@ -3,10 +3,16 @@ import AppPagination from '@/components/AppPagination.vue';
 import { H3 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate, formatMoney } from '@/lib/utils';
-import type { BreadcrumbItem, PaginatedOperatingDays } from '@/types';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
+import type { BreadcrumbItem, PaginatedOperatingDays, SharedData } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Plus } from '@lucide/vue';
+
+const page = usePage<SharedData>();
+const user = page.props.auth.user;
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Journées', href: route('bo.register.operating-days.index') }];
 
@@ -35,6 +41,14 @@ const handlePageChange = (p: number = 1) => {
                 <div class="mb-4 flex w-full flex-row">
                     <div class="flex flex-1 items-center justify-between">
                         <H3>Journées d'opération</H3>
+                        <Tooltip v-if="hasPermissionTo(user, 'open day')">
+                            <TooltipTrigger>
+                                <Link :href="route('bo.register.operating-days.create')">
+                                    <Button size="icon"><Plus /></Button>
+                                </Link>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Ouvrir une journée</p></TooltipContent>
+                        </Tooltip>
                     </div>
                 </div>
                 <div v-for="day in operatingDays.data" :key="day.id" class="mb-4">
@@ -43,7 +57,7 @@ const handlePageChange = (p: number = 1) => {
                         class="hover:bg-accent flex items-center justify-between rounded-lg border p-4"
                     >
                         <div>
-                            <p class="font-medium hover:underline">{{ formatDate(day.date, 'dd.MM.yyyy') }}</p>
+                            <p class="font-medium hover:underline">{{ formatDate(day.date, 'DD.MM.YYYY') }}</p>
                             <p class="text-muted-foreground text-sm">
                                 <span v-if="day.season">{{ day.season.name }} · </span>
                                 Espèces: {{ formatMoney(day.total_cash) }} CHF · Twint: {{ formatMoney(day.total_twint) }} CHF

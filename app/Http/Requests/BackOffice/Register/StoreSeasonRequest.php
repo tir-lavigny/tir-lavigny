@@ -18,7 +18,6 @@ class StoreSeasonRequest extends FormRequest
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'initial_balance' => ['required', 'numeric', 'min:0'],
-            'end_balance' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

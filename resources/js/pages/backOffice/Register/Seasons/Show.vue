@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BreadcrumbItem, Season, SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Pencil } from '@lucide/vue';
@@ -77,7 +78,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     class="hover:bg-accent flex items-center justify-between rounded-lg border p-4"
                 >
                     <div>
-                        <p class="font-medium">{{ formatDate(day.date, 'dd.MM.yyyy') }}</p>
+                        <p class="font-medium">{{ formatDate(day.date, 'DD.MM.YYYY') }}</p>
                         <p class="text-muted-foreground text-sm">
                             Espèces: {{ formatMoney(day.total_cash) }} CHF | Twint: {{ formatMoney(day.total_twint) }} CHF
                         </p>

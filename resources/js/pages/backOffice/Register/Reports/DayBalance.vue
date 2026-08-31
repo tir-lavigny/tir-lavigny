@@ -15,10 +15,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 </script>
 
 <template>
-    <Head :title="'Balance journée ' + formatDate(operatingDay.date, 'dd.MM.yyyy')" />
+    <Head :title="'Balance journée ' + formatDate(operatingDay.date, 'DD.MM.YYYY')" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="m-4">
-            <H1>Balance du {{ formatDate(operatingDay.date, 'dd.MM.yyyy') }}</H1>
+            <H1>Balance du {{ formatDate(operatingDay.date, 'DD.MM.YYYY') }}</H1>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="grid grid-cols-3 gap-4">

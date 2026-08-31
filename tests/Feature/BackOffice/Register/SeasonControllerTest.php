@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\BackOffice\Register;
 
+use App\Models\OperatingDay;
 use App\Models\Season;
 use App\Models\User;
 use Carbon\Carbon;
@@ -122,5 +123,21 @@ class SeasonControllerTest extends TestCase
         ]);
 
         $response->assertForbidden();
+    }
+
+    public function test_end_balance_is_computed_from_operating_days(): void
+    {
+        $season = Season::factory()->create();
+        OperatingDay::factory()->create(['season_id' => $season->id, 'total_cash' => 100.00]);
+        OperatingDay::factory()->create(['season_id' => $season->id, 'total_cash' => 200.00]);
+
+        $this->assertEquals(300.00, $season->end_balance);
+    }
+
+    public function test_end_balance_returns_zero_when_no_operating_days(): void
+    {
+        $season = Season::factory()->create();
+
+        $this->assertEquals(0.0, $season->end_balance);
     }
 }
