@@ -164,6 +164,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     });
 
     Route::middleware('permission:view reports')->prefix('register/reports')->group(function () {
+        Route::get('/', [Register\ReportController::class, 'index'])
+            ->name('bo.register.reports.index');
         Route::get('day/{operatingDay}', [Register\ReportController::class, 'dayDetail'])
             ->name('bo.register.reports.day-detail');
         Route::get('day/{operatingDay}/summary', [Register\ReportController::class, 'daySummary'])

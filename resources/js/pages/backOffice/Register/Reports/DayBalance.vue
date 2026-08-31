@@ -9,7 +9,7 @@ import { Head } from '@inertiajs/vue3';
 const props = defineProps<{ operatingDay: OperatingDay }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Rapports', href: '#' },
+    { title: 'Rapports', href: route('bo.register.reports.index') },
     { title: 'Balance', href: route('bo.register.reports.day-balance', props.operatingDay.id) },
 ];
 </script>

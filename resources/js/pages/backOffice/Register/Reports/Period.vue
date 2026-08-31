@@ -19,7 +19,7 @@ const props = defineProps<{
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Rapports', href: '#' },
+    { title: 'Rapports', href: route('bo.register.reports.index') },
     { title: 'Période', href: route('bo.register.reports.period') },
 ];
 

@@ -26,6 +26,16 @@ class ReportControllerTest extends TestCase
         $this->actingAs($this->admin);
     }
 
+    public function test_index_returns_report_page(): void
+    {
+        Season::factory()->create();
+        Season::factory()->create();
+
+        $response = $this->get(route('bo.register.reports.index'));
+
+        $response->assertOk();
+    }
+
     public function test_day_detail_returns_report(): void
     {
         $season = Season::factory()->create();

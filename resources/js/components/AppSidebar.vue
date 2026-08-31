@@ -8,6 +8,7 @@ import type { SharedData } from '@/types';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import {
+    BarChart3,
     Calendar,
     CalendarDays,
     FileText,
@@ -97,6 +98,15 @@ const registerNavItems: NavItem[] = [
         href: route('bo.register.operating-days.index'),
         icon: CalendarDays,
     },
+    ...(hasPermissionTo(user, 'view reports')
+        ? [
+              {
+                  title: 'Rapports',
+                  href: route('bo.register.reports.index'),
+                  icon: BarChart3,
+              },
+          ]
+        : []),
     ...(hasPermissionTo(user, 'restore register')
         ? [
               {
