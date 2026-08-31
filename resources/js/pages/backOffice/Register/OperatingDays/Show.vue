@@ -3,8 +3,7 @@ import { H1, H3 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import Label from '@/components/ui/label/Label.vue';
+
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,8 +11,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, OperatingDay, Product, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { Lock, Undo2, Unlock } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { Lock, Unlock } from '@lucide/vue';
+import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
 const page = usePage<SharedData>();
@@ -32,15 +31,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 const remarkForm = useForm({ cash_remark: props.operatingDay.cash_remark ?? '' });
 const closeForm = useForm({ status: 'closed' });
 const reopenForm = useForm({ status: 'open' });
-
-const correctionAmount = ref<number | null>(null);
-const correctionForm = useForm({
-    payment_method: 'cash',
-    operating_day_id: props.operatingDay.id,
-    member_id: null,
-    sold_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
-    items: [] as Array<{ product_id: number; quantity: number; custom_unit_price: number }>,
-});
 
 const isOpen = computed(() => !props.operatingDay.closed_at);
 
@@ -62,28 +52,6 @@ const handleReopen = () => {
     reopenForm.put(route('bo.register.operating-days.update', props.operatingDay.id), {
         onSuccess: () => toast.success('Journée rouverte.'),
         onError: () => toast.error('Erreur lors de la réouverture.'),
-    });
-};
-
-const handleCorrection = () => {
-    if (!correctionAmount.value || !props.correctionProduct) return;
-
-    correctionForm.items = [
-        {
-            product_id: props.correctionProduct.id,
-            quantity: 1,
-            custom_unit_price: correctionAmount.value,
-        },
-    ];
-
-    correctionForm.post(route('api.register.tickets.store'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            toast.success('Correction appliquée.');
-            correctionAmount.value = null;
-            router.reload({ only: ['operatingDay'] });
-        },
-        onError: () => toast.error("Erreur lors de l'application de la correction."),
     });
 };
 </script>
@@ -138,20 +106,6 @@ const handleCorrection = () => {
             </div>
 
             <Separator />
-
-            <div
-                v-if="correctionProduct && hasPermissionTo(user, 'create ticket')"
-                class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4"
-            >
-                <H3>Correction</H3>
-                <div class="mt-4 flex items-end gap-4">
-                    <div class="grid w-48 gap-2">
-                        <Label for="correction_amount">Montant (CHF)</Label>
-                        <Input id="correction_amount" v-model="correctionAmount" type="number" step="0.01" placeholder="Positif ou négatif" />
-                    </div>
-                    <Button @click="handleCorrection" :disabled="!correctionAmount || correctionForm.processing"> Appliquer </Button>
-                </div>
-            </div>
 
             <div
                 v-if="hasPermissionTo(user, 'manage operating days')"
