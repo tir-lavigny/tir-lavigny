@@ -3,11 +3,17 @@
 namespace App\Http\Controllers\BackOffice\Register;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BackOffice\Register\StoreOperatingDayRequest;
 use App\Http\Requests\BackOffice\Register\UpdateOperatingDayRequest;
+use App\Mail\OperatingDayClosed;
 use App\Models\OperatingDay;
+use App\Models\Product;
+use App\Models\Season;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -36,18 +42,62 @@ class OperatingDayController extends Controller implements HasMiddleware
         ]);
     }
 
+    public function create(): Response
+    {
+        return Inertia::render('backOffice/Register/OperatingDays/Create', [
+            'seasons' => Season::orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    public function store(StoreOperatingDayRequest $request)
+    {
+        $day = OperatingDay::create([
+            'date' => $request->input('date'),
+            'started_at' => Carbon::now(),
+            'season_id' => $request->input('season_id'),
+        ]);
+
+        return redirect()->route('bo.register.operating-days.show', $day)
+            ->with('success', 'Journée ouverte avec succès.');
+    }
+
     public function show(OperatingDay $operatingDay): Response
     {
-        $operatingDay->load(['tickets.ticketItems.product', 'tickets.ticketItems.voucher']);
+        $operatingDay->load(['tickets.ticketItems.product', 'tickets.ticketItems.voucher', 'season']);
 
         return Inertia::render('backOffice/Register/OperatingDays/Show', [
             'operatingDay' => $operatingDay,
+            'correctionProduct' => Product::where('name', 'Correction')->first(),
         ]);
     }
 
     public function update(UpdateOperatingDayRequest $request, OperatingDay $operatingDay)
     {
-        $operatingDay->update($request->validated());
+        $status = $request->input('status');
+
+        if ($status === 'closed') {
+            if (! $operatingDay->isOpen()) {
+                return redirect()->back()->withErrors(['status' => 'This operating day is already closed.']);
+            }
+
+            $operatingDay->recalculateTotals();
+            $operatingDay->update([
+                'closed_at' => Carbon::now(),
+                'closing_balance' => $operatingDay->closing_balance,
+            ]);
+
+            if (! empty($operatingDay->cash_remark)) {
+                try {
+                    Mail::to(env('APP_USER_EMAIL'))->send(new OperatingDayClosed($operatingDay));
+                } catch (\Throwable) {
+                    // Don't fail the close if email fails
+                }
+            }
+        } elseif ($status === 'open') {
+            $operatingDay->update(['closed_at' => null, 'closing_balance' => null]);
+        } else {
+            $operatingDay->update($request->only(['cash_remark']));
+        }
 
         return redirect()->route('bo.register.operating-days.show', $operatingDay)
             ->with('success', 'Operating day updated successfully.');

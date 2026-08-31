@@ -149,8 +149,10 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     });
 
     Route::middleware('permission:manage operating days')->prefix('register')->group(function () {
-        Route::resource('operating-days', Register\OperatingDayController::class)->only(['index', 'show', 'update'])->names([
+        Route::resource('operating-days', Register\OperatingDayController::class)->only(['index', 'create', 'store', 'show', 'update'])->names([
             'index' => 'bo.register.operating-days.index',
+            'create' => 'bo.register.operating-days.create',
+            'store' => 'bo.register.operating-days.store',
             'show' => 'bo.register.operating-days.show',
             'update' => 'bo.register.operating-days.update',
         ]);
@@ -162,6 +164,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     });
 
     Route::middleware('permission:view reports')->prefix('register/reports')->group(function () {
+        Route::get('/', [Register\ReportController::class, 'index'])
+            ->name('bo.register.reports.index');
         Route::get('day/{operatingDay}', [Register\ReportController::class, 'dayDetail'])
             ->name('bo.register.reports.day-detail');
         Route::get('day/{operatingDay}/summary', [Register\ReportController::class, 'daySummary'])
@@ -174,6 +178,15 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             ->name('bo.register.reports.season');
         Route::get('season/{season}/export', [Register\ReportExportController::class, 'export'])
             ->name('bo.register.reports.season-export');
+    });
+
+    Route::middleware('permission:restore register')->prefix('register')->group(function () {
+        Route::get('trash', [Register\TrashController::class, 'index'])
+            ->name('bo.register.trash.index');
+        Route::post('trash/{type}/{id}/restore', [Register\TrashController::class, 'restore'])
+            ->name('bo.register.trash.restore');
+        Route::delete('trash/{type}/{id}', [Register\TrashController::class, 'forceDelete'])
+            ->name('bo.register.trash.force-delete');
     });
 });
 

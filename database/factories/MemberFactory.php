@@ -15,7 +15,6 @@ class MemberFactory extends Factory
         return [
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
-            'member_number' => fake()->unique()->numerify('######'),
         ];
     }
 }

@@ -15,11 +15,21 @@ class Member extends Model
     protected $fillable = [
         'first_name',
         'last_name',
-        'member_number',
     ];
 
     public function vouchers(): HasMany
     {
         return $this->hasMany(Voucher::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleted(function (Member $member) {
+            $member->vouchers()->whereDoesntHave('ticketItems')->delete();
+        });
+
+        static::restored(function (Member $member) {
+            $member->vouchers()->whereDoesntHave('ticketItems')->restore();
+        });
     }
 }

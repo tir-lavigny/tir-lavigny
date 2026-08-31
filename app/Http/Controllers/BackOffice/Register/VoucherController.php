@@ -5,6 +5,9 @@ namespace App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Register\StoreVoucherRequest;
 use App\Http\Requests\BackOffice\Register\UpdateVoucherRequest;
+use App\Models\Member;
+use App\Models\Product;
+use App\Models\Season;
 use App\Models\Voucher;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -33,7 +36,11 @@ class VoucherController extends Controller implements HasMiddleware
 
     public function create(): Response
     {
-        return Inertia::render('backOffice/Register/Vouchers/Create');
+        return Inertia::render('backOffice/Register/Vouchers/Create', [
+            'products' => Product::orderBy('name')->get(),
+            'seasons' => Season::orderBy('name')->get(),
+            'members' => Member::orderBy('last_name')->get(),
+        ]);
     }
 
     public function store(StoreVoucherRequest $request)
@@ -49,6 +56,9 @@ class VoucherController extends Controller implements HasMiddleware
 
         return Inertia::render('backOffice/Register/Vouchers/Edit', [
             'voucher' => $voucher,
+            'products' => Product::orderBy('name')->get(),
+            'seasons' => Season::orderBy('name')->get(),
+            'members' => Member::orderBy('last_name')->get(),
         ]);
     }
 

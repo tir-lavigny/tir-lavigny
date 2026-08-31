@@ -172,17 +172,15 @@ All requests extend `Illuminate\Foundation\Http\FormRequest` and implement `auth
 ### StoreMemberRequest
 
 ```php
-'first_name'    => ['required', 'string', 'max:255'],
-'last_name'     => ['required', 'string', 'max:255'],
-'member_number' => ['required', 'string', 'max:255', Rule::unique('members')],
+'first_name' => ['required', 'string', 'max:255'],
+'last_name'  => ['required', 'string', 'max:255'],
 ```
 
 ### UpdateMemberRequest
 
 ```php
-'first_name'    => ['sometimes', 'string', 'max:255'],
-'last_name'     => ['sometimes', 'string', 'max:255'],
-'member_number' => ['sometimes', 'string', 'max:255', Rule::unique('members')->ignore($this->route('member'))],
+'first_name' => ['sometimes', 'string', 'max:255'],
+'last_name'  => ['sometimes', 'string', 'max:255'],
 ```
 
 ### UpdateOperatingDayRequest

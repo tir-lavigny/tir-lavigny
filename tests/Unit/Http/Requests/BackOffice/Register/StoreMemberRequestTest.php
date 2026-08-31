@@ -6,7 +6,6 @@ use App\Http\Requests\BackOffice\Register\StoreMemberRequest;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
@@ -70,7 +69,6 @@ class StoreMemberRequestTest extends TestCase
     {
         $this->assertTrue($this->fails([
             'last_name' => 'Doe',
-            'member_number' => '12345',
         ]));
     }
 
@@ -78,32 +76,6 @@ class StoreMemberRequestTest extends TestCase
     {
         $this->assertTrue($this->fails([
             'first_name' => 'John',
-            'member_number' => '12345',
-        ]));
-    }
-
-    public function test_member_number_is_required(): void
-    {
-        $this->assertTrue($this->fails([
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-        ]));
-    }
-
-    public function test_member_number_must_be_unique(): void
-    {
-        DB::table('members')->insert([
-            'first_name' => 'Jane',
-            'last_name' => 'Smith',
-            'member_number' => '12345',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->assertTrue($this->fails([
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'member_number' => '12345',
         ]));
     }
 
@@ -112,7 +84,6 @@ class StoreMemberRequestTest extends TestCase
         $this->assertTrue($this->passes([
             'first_name' => 'John',
             'last_name' => 'Doe',
-            'member_number' => '12345',
         ]));
     }
 }

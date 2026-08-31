@@ -37,14 +37,12 @@ class MemberControllerTest extends TestCase
         $response = $this->post(route('bo.register.members.store'), [
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
-            'member_number' => 'M001',
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('members', [
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
-            'member_number' => 'M001',
         ]);
     }
 
@@ -52,20 +50,7 @@ class MemberControllerTest extends TestCase
     {
         $response = $this->post(route('bo.register.members.store'), []);
 
-        $response->assertSessionHasErrors(['first_name', 'last_name', 'member_number']);
-    }
-
-    public function test_store_validates_member_number_unique(): void
-    {
-        Member::factory()->create(['member_number' => 'M001']);
-
-        $response = $this->post(route('bo.register.members.store'), [
-            'first_name' => 'Pierre',
-            'last_name' => 'Martin',
-            'member_number' => 'M001',
-        ]);
-
-        $response->assertSessionHasErrors(['member_number']);
+        $response->assertSessionHasErrors(['first_name', 'last_name']);
     }
 
     public function test_edit_returns_form(): void
@@ -84,7 +69,6 @@ class MemberControllerTest extends TestCase
         $response = $this->put(route('bo.register.members.update', $member), [
             'first_name' => 'Pierre',
             'last_name' => $member->last_name,
-            'member_number' => $member->member_number,
         ]);
 
         $response->assertRedirect();
@@ -110,7 +94,6 @@ class MemberControllerTest extends TestCase
         $response = $this->post(route('bo.register.members.store'), [
             'first_name' => 'Test',
             'last_name' => 'User',
-            'member_number' => 'M999',
         ]);
 
         $response->assertForbidden();

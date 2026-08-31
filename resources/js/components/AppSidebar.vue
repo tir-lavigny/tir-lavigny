@@ -3,11 +3,28 @@ import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { hasRole } from '@/lib/utils';
+import { hasPermissionTo, hasRole } from '@/lib/utils';
 import type { SharedData } from '@/types';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Calendar, FileText, LayoutGrid, MapPin, Newspaper, PanelTop, Repeat, ScanEye, Telescope, Users } from '@lucide/vue';
+import {
+    BarChart3,
+    Calendar,
+    CalendarDays,
+    FileText,
+    LayoutGrid,
+    MapPin,
+    Newspaper,
+    PanelTop,
+    Repeat,
+    ScanEye,
+    ShoppingCart,
+    Tag,
+    Telescope,
+    Ticket,
+    Trash2,
+    Users,
+} from '@lucide/vue';
 import AppLogo from './AppLogo.vue';
 
 const user = usePage<SharedData>().props.auth.user;
@@ -50,6 +67,57 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
+const registerNavItems: NavItem[] = [
+    {
+        title: 'Saisons',
+        href: route('bo.register.seasons.index'),
+        icon: Calendar,
+    },
+    {
+        title: 'Journées',
+        href: route('bo.register.operating-days.index'),
+        icon: CalendarDays,
+    },
+    {
+        title: 'Produits',
+        href: route('bo.register.products.index'),
+        icon: ShoppingCart,
+    },
+    {
+        title: 'Catégories',
+        href: route('bo.register.categories.index'),
+        icon: Tag,
+    },
+    {
+        title: 'Bons',
+        href: route('bo.register.vouchers.index'),
+        icon: Ticket,
+    },
+    {
+        title: 'Membres',
+        href: route('bo.register.members.index'),
+        icon: Users,
+    },
+    ...(hasPermissionTo(user, 'view reports')
+        ? [
+              {
+                  title: 'Rapports',
+                  href: route('bo.register.reports.index'),
+                  icon: BarChart3,
+              },
+          ]
+        : []),
+    ...(hasPermissionTo(user, 'restore register')
+        ? [
+              {
+                  title: 'Corbeille',
+                  href: route('bo.register.trash.index'),
+                  icon: Trash2,
+              },
+          ]
+        : []),
+];
+
 const footerNavItems: NavItem[] = [
     ...(hasRole(user, 'admin')
         ? [
@@ -89,6 +157,7 @@ const footerNavItems: NavItem[] = [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
+            <NavMain :items="registerNavItems" label="Caisse" />
         </SidebarContent>
 
         <SidebarFooter>

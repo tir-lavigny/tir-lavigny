@@ -97,7 +97,6 @@ class StoreVoucherRequestTest extends TestCase
         return DB::table('members')->insertGetId([
             'first_name' => 'John',
             'last_name' => 'Doe',
-            'member_number' => uniqid(),
             'created_at' => now(),
             'updated_at' => now(),
         ]);

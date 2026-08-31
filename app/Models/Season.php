@@ -36,4 +36,21 @@ class Season extends Model
     {
         return $this->hasMany(Voucher::class);
     }
+
+    public function getEndBalanceAttribute(): ?float
+    {
+        return $this->initial_balance + $this->operatingDays()->sum('total_cash');
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Season $season) {
+            if ($season->operatingDays()->exists()) {
+                abort(422, 'Impossible de supprimer cette saison car elle contient des journées.');
+            }
+            if ($season->vouchers()->exists()) {
+                abort(422, 'Impossible de supprimer cette saison car elle contient des bons.');
+            }
+        });
+    }
 }

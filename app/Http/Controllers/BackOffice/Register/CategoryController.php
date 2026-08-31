@@ -22,7 +22,7 @@ class CategoryController extends Controller implements HasMiddleware
 
     public function index(): Response
     {
-        $categories = Category::orderBy('name')->paginate(15);
+        $categories = Category::withCount('products')->orderBy('name')->paginate(15);
 
         return Inertia::render('backOffice/Register/Categories/Index', [
             'categories' => $categories,

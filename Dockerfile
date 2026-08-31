@@ -8,6 +8,10 @@ FROM php:${PHP_VERSION}-alpine AS composer-deps
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
+
+RUN apk add --no-cache zlib-dev libzip-dev \
+    && docker-php-ext-install zip
+
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
 

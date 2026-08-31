@@ -9,7 +9,6 @@ Schema::create('members', function (Blueprint $table) {
     $table->id();
     $table->string('first_name');
     $table->string('last_name');
-    $table->string('member_number')->unique();
     $table->softDeletes();
     $table->timestamps();
 });

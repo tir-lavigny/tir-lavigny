@@ -27,9 +27,7 @@ class TicketController extends Controller
             $total = 0;
 
             foreach ($items as $item) {
-                $product = Product::where('id', $item['product_id'])
-                    ->whereNull('deleted_at')
-                    ->firstOrFail();
+                $product = Product::findOrFail($item['product_id']);
 
                 $unitPrice = $item['custom_unit_price'] ?? $product->unit_price;
                 $quantity = $item['quantity'];
@@ -37,9 +35,7 @@ class TicketController extends Controller
                 $voucherId = null;
 
                 if (! empty($item['voucher_id'])) {
-                    $voucher = Voucher::where('id', $item['voucher_id'])
-                        ->whereNull('deleted_at')
-                        ->firstOrFail();
+                    $voucher = Voucher::findOrFail($item['voucher_id']);
 
                     $voucherId = $voucher->id;
 

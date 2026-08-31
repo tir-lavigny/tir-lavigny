@@ -20,6 +20,17 @@ class ReportController extends Controller implements HasMiddleware
         ];
     }
 
+    public function index(): Response
+    {
+        $seasons = Season::withCount('operatingDays')
+            ->orderByDesc('start_date')
+            ->get();
+
+        return Inertia::render('backOffice/Register/Reports/Index', [
+            'seasons' => $seasons,
+        ]);
+    }
+
     public function dayDetail(OperatingDay $operatingDay): Response
     {
         $operatingDay->load(['tickets.ticketItems.product', 'tickets.ticketItems.voucher']);

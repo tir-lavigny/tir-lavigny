@@ -28,7 +28,7 @@ class Voucher extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class)->withTrashed();
     }
 
     public function season(): BelongsTo
@@ -38,7 +38,7 @@ class Voucher extends Model
 
     public function member(): BelongsTo
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(Member::class)->withTrashed();
     }
 
     public function ticketItems(): HasMany
@@ -49,5 +49,14 @@ class Voucher extends Model
     public function isUsed(): bool
     {
         return $this->ticketItems()->exists();
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Voucher $voucher) {
+            if ($voucher->ticketItems()->exists()) {
+                abort(422, 'Impossible de supprimer ce bon car il a été utilisé.');
+            }
+        });
     }
 }

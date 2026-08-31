@@ -25,4 +25,15 @@ class Category extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    protected static function booted(): void
+    {
+        static::deleted(function (Category $category) {
+            $category->products()->delete();
+        });
+
+        static::restored(function (Category $category) {
+            $category->products()->restore();
+        });
+    }
 }

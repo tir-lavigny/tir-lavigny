@@ -41,13 +41,11 @@ class MemberControllerTest extends TestCase
         $member = Member::create([
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
-            'member_number' => 'M001',
         ]);
 
         $this->assertDatabaseHas('members', [
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
-            'member_number' => 'M001',
         ]);
     }
 

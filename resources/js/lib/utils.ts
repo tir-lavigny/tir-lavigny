@@ -10,6 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(date: string, format: string, options?: UseDateFormatOptions) {
+    if (!date) return '—';
     date = date.replace('Z', '');
     const dateObj = new Date(date);
 
@@ -54,3 +55,7 @@ export const hasPermissionTo = (user: User, permission: string) => {
     }
     return false;
 };
+
+export function formatMoney(value: unknown): string {
+    return Number(value).toFixed(2);
+}
