@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, OperatingDay, Product, SharedData } from '@/types';
@@ -28,18 +27,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: formatDate(props.operatingDay.date, 'DD.MM.YYYY'), href: route('bo.register.operating-days.show', props.operatingDay.id) },
 ];
 
-const remarkForm = useForm({ cash_remark: props.operatingDay.cash_remark ?? '' });
 const closeForm = useForm({ status: 'closed' });
 const reopenForm = useForm({ status: 'open' });
 
 const isOpen = computed(() => !props.operatingDay.closed_at);
-
-const handleSaveRemark = () => {
-    remarkForm.put(route('bo.register.operating-days.update', props.operatingDay.id), {
-        onSuccess: () => toast.success('Remarque enregistrée.'),
-        onError: () => toast.error('Erreur lors de la sauvegarde.'),
-    });
-};
 
 const handleClose = () => {
     closeForm.put(route('bo.register.operating-days.update', props.operatingDay.id), {
@@ -107,16 +98,11 @@ const handleReopen = () => {
 
             <Separator />
 
-            <div
-                v-if="hasPermissionTo(user, 'manage operating days')"
-                class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4"
-            >
+            <div class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
                 <H3>Remarque</H3>
-                <div class="mt-4 flex flex-col gap-4">
-                    <Textarea v-model="remarkForm.cash_remark" placeholder="Remarque après vérification de la caisse..." rows="3" />
-                    <div class="flex justify-end">
-                        <Button @click="handleSaveRemark" :disabled="remarkForm.processing">Enregistrer la remarque</Button>
-                    </div>
+                <div class="mt-4">
+                    <p v-if="operatingDay.cash_remark" class="text-sm">{{ operatingDay.cash_remark }}</p>
+                    <p v-else class="text-muted-foreground text-sm">Aucune remarque</p>
                 </div>
             </div>
 
