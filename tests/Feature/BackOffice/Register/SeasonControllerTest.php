@@ -5,6 +5,7 @@ namespace Tests\Feature\BackOffice\Register;
 use App\Models\OperatingDay;
 use App\Models\Season;
 use App\Models\User;
+use App\Models\Voucher;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -107,6 +108,30 @@ class SeasonControllerTest extends TestCase
 
         $response->assertRedirect();
         $this->assertSoftDeleted('seasons', ['id' => $season->id]);
+    }
+
+    public function test_destroy_blocks_season_with_operating_days(): void
+    {
+        $season = Season::factory()->create();
+        OperatingDay::factory()->create(['season_id' => $season->id]);
+
+        $response = $this->delete(route('bo.register.seasons.destroy', $season));
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('delete');
+        $this->assertDatabaseHas('seasons', ['id' => $season->id, 'deleted_at' => null]);
+    }
+
+    public function test_destroy_blocks_season_with_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        Voucher::factory()->create(['season_id' => $season->id]);
+
+        $response = $this->delete(route('bo.register.seasons.destroy', $season));
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('delete');
+        $this->assertDatabaseHas('seasons', ['id' => $season->id, 'deleted_at' => null]);
     }
 
     public function test_store_requires_permission(): void

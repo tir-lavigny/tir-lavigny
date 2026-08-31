@@ -12,6 +12,7 @@ use App\Models\Ticket;
 use App\Models\TicketItem;
 use App\Models\Voucher;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -62,7 +63,7 @@ class TrashController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function restore(Request $request, string $type, int $id): JsonResponse
+    public function restore(Request $request, string $type, int $id): JsonResponse|RedirectResponse
     {
         $modelClass = $this->resolveType($type);
 
@@ -82,7 +83,7 @@ class TrashController extends Controller implements HasMiddleware
 
         $model->restore();
 
-        return response()->json(['success' => true, 'message' => 'Élément restauré avec succès.']);
+        return redirect()->back()->with('success', 'Élément restauré avec succès.');
     }
 
     public function forceDelete(Request $request, string $type, int $id): JsonResponse
@@ -137,10 +138,11 @@ class TrashController extends Controller implements HasMiddleware
     {
         return match ($type) {
             'category' => $this->getChildrenForCategory($model),
+            'product' => $this->getChildrenForProduct($model),
             'ticket' => $this->getChildrenForTicket($model),
             'member' => $this->getChildrenForMember($model),
             'season' => $this->getChildrenForSeason($model),
-            default => [],
+            'voucher' => $this->getChildrenForVoucher($model),
         };
     }
 
@@ -206,6 +208,46 @@ class TrashController extends Controller implements HasMiddleware
         }
         if ($activeVouchers > 0) {
             $children[] = ['type' => 'voucher', 'count' => $activeVouchers, 'label' => $activeVouchers.' bon(s) actif(s)'];
+        }
+
+        return $children;
+    }
+
+    protected function getChildrenForProduct(Product $product): array
+    {
+        $trashedTicketItems = TicketItem::where('product_id', $product->id)->onlyTrashed()->count();
+        $activeTicketItems = TicketItem::where('product_id', $product->id)->withoutTrashed()->count();
+        $trashedVouchers = Voucher::where('product_id', $product->id)->onlyTrashed()->count();
+        $activeVouchers = Voucher::where('product_id', $product->id)->withoutTrashed()->count();
+        $children = [];
+
+        if ($trashedTicketItems > 0) {
+            $children[] = ['type' => 'ticket_item', 'count' => $trashedTicketItems, 'label' => $trashedTicketItems.' article(s) de ticket supprimé(s)'];
+        }
+        if ($activeTicketItems > 0) {
+            $children[] = ['type' => 'ticket_item', 'count' => $activeTicketItems, 'label' => $activeTicketItems.' article(s) de ticket actif(s)'];
+        }
+        if ($trashedVouchers > 0) {
+            $children[] = ['type' => 'voucher', 'count' => $trashedVouchers, 'label' => $trashedVouchers.' bon(s) supprimé(s)'];
+        }
+        if ($activeVouchers > 0) {
+            $children[] = ['type' => 'voucher', 'count' => $activeVouchers, 'label' => $activeVouchers.' bon(s) actif(s)'];
+        }
+
+        return $children;
+    }
+
+    protected function getChildrenForVoucher(Voucher $voucher): array
+    {
+        $trashedTicketItems = TicketItem::where('voucher_id', $voucher->id)->onlyTrashed()->count();
+        $activeTicketItems = TicketItem::where('voucher_id', $voucher->id)->withoutTrashed()->count();
+        $children = [];
+
+        if ($trashedTicketItems > 0) {
+            $children[] = ['type' => 'ticket_item', 'count' => $trashedTicketItems, 'label' => $trashedTicketItems.' article(s) de ticket supprimé(s)'];
+        }
+        if ($activeTicketItems > 0) {
+            $children[] = ['type' => 'ticket_item', 'count' => $activeTicketItems, 'label' => $activeTicketItems.' article(s) de ticket actif(s)'];
         }
 
         return $children;

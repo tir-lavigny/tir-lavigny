@@ -7,14 +7,12 @@ import Label from '@/components/ui/label/Label.vue';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem, SharedData } from '@/types';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import type { BreadcrumbItem } from '@/types';
+import { Head, useForm } from '@inertiajs/vue3';
 import { Save, Undo2 } from '@lucide/vue';
 import { toast } from 'vue-sonner';
 
-const page = usePage<SharedData>();
-
-const props = defineProps<{
+defineProps<{
     seasons: { id: number; name: string }[];
 }>();
 

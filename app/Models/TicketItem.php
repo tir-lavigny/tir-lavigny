@@ -29,7 +29,7 @@ class TicketItem extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class)->withTrashed();
     }
 
     public function ticket(): BelongsTo
@@ -39,6 +39,6 @@ class TicketItem extends Model
 
     public function voucher(): BelongsTo
     {
-        return $this->belongsTo(Voucher::class);
+        return $this->belongsTo(Voucher::class)->withTrashed();
     }
 }
