@@ -15,7 +15,6 @@ class Member extends Model
     protected $fillable = [
         'first_name',
         'last_name',
-        'member_number',
     ];
 
     public function vouchers(): HasMany

@@ -20,7 +20,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Créer', href: route('bo.register.members.create') },
 ];
 
-const form = useForm({ first_name: '', last_name: '', member_number: '' });
+const form = useForm({ first_name: '', last_name: '' });
 
 const handleSubmit = () => {
     if (!hasPermissionTo(user, 'manage members')) {
@@ -72,11 +72,6 @@ const handleSubmit = () => {
                             <Input id="last_name" v-model="form.last_name" type="text" placeholder="Nom" maxlength="255" required />
                             <InputError :message="form.errors.last_name" />
                         </div>
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="member_number">Numéro de membre</Label>
-                        <Input id="member_number" v-model="form.member_number" type="text" placeholder="Ex: 1234" maxlength="255" required />
-                        <InputError :message="form.errors.member_number" />
                     </div>
                 </div>
             </div>

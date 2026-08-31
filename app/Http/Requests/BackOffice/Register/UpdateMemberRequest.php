@@ -3,7 +3,6 @@
 namespace App\Http\Requests\BackOffice\Register;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateMemberRequest extends FormRequest
 {
@@ -17,7 +16,6 @@ class UpdateMemberRequest extends FormRequest
         return [
             'first_name' => ['sometimes', 'string', 'max:255'],
             'last_name' => ['sometimes', 'string', 'max:255'],
-            'member_number' => ['sometimes', 'string', 'max:255', Rule::unique('members')->ignore($this->route('member'))],
         ];
     }
 }

@@ -232,7 +232,6 @@ export interface Member {
     id: number;
     first_name: string;
     last_name: string;
-    member_number: string;
     created_at: string;
     updated_at: string;
     deleted_at?: string;

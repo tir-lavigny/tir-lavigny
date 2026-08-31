@@ -78,7 +78,6 @@ const handleDelete = (id: number) => {
                 <div v-for="member in members.data" :key="member.id" class="mb-4 flex items-center justify-between rounded-lg border p-4">
                     <div>
                         <p class="font-medium">{{ member.first_name }} {{ member.last_name }}</p>
-                        <p class="text-muted-foreground text-sm">N° {{ member.member_number }}</p>
                     </div>
                     <div class="flex gap-2">
                         <Tooltip v-if="hasPermissionTo(user, 'restore register')">

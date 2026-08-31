@@ -101,7 +101,6 @@ Following Laravel conventions: snake_case table names, singular model names, cle
 | `id` | bigIncrements | PK |
 | `first_name` | string | required |
 | `last_name` | string | required |
-| `member_number` | string | unique |
 | `created_at` | timestamp | |
 | `updated_at` | timestamp | |
 | `deleted_at` | timestamp | nullable (SoftDeletes) |

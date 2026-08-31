@@ -7,7 +7,6 @@ use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
@@ -72,40 +71,6 @@ class UpdateMemberRequestTest extends TestCase
         $this->assertFalse($request->authorize());
     }
 
-    public function test_member_number_must_be_unique_except_self(): void
-    {
-        $memberId = DB::table('members')->insertGetId([
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'member_number' => 'ORIGINAL',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('members')->insert([
-            'first_name' => 'Jane',
-            'last_name' => 'Smith',
-            'member_number' => 'TAKEN',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->assertTrue($this->fails(['member_number' => 'TAKEN'], $memberId));
-    }
-
-    public function test_member_number_can_keep_same_value(): void
-    {
-        $memberId = DB::table('members')->insertGetId([
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'member_number' => 'ORIGINAL',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->assertTrue($this->passes(['member_number' => 'ORIGINAL'], $memberId));
-    }
-
     public function test_passes_with_empty_data(): void
     {
         $this->assertTrue($this->passes([]));
@@ -116,7 +81,6 @@ class UpdateMemberRequestTest extends TestCase
         $this->assertTrue($this->passes([
             'first_name' => 'Jane',
             'last_name' => 'Smith',
-            'member_number' => '99999',
         ]));
     }
 }

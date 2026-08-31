@@ -25,7 +25,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 const form = useForm({
     first_name: props.member.first_name,
     last_name: props.member.last_name,
-    member_number: props.member.member_number,
 });
 
 const handleSubmit = () => {
@@ -75,11 +74,6 @@ const handleSubmit = () => {
                             <Input id="last_name" v-model="form.last_name" type="text" placeholder="Nom" maxlength="255" required />
                             <InputError :message="form.errors.last_name" />
                         </div>
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="member_number">Numéro de membre</Label>
-                        <Input id="member_number" v-model="form.member_number" type="text" placeholder="Ex: 1234" maxlength="255" required />
-                        <InputError :message="form.errors.member_number" />
                     </div>
                 </div>
             </div>

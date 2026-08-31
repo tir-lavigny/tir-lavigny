@@ -303,7 +303,6 @@ const handleMemberFilterChange = () => {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Nom</TableHead>
-                                    <TableHead>Numéro</TableHead>
                                     <TableHead>Supprimé le</TableHead>
                                     <TableHead class="text-right">Actions</TableHead>
                                 </TableRow>
@@ -311,7 +310,6 @@ const handleMemberFilterChange = () => {
                             <TableBody>
                                 <TableRow v-for="item in members.data" :key="item.id">
                                     <TableCell class="font-medium">{{ item.first_name }} {{ item.last_name }}</TableCell>
-                                    <TableCell>{{ item.member_number }}</TableCell>
                                     <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
@@ -333,7 +331,7 @@ const handleMemberFilterChange = () => {
                                     </TableCell>
                                 </TableRow>
                                 <TableRow v-if="members.data?.length === 0">
-                                    <TableCell colspan="4" class="text-muted-foreground text-center">Aucun membre supprimé</TableCell>
+                                    <TableCell colspan="3" class="text-muted-foreground text-center">Aucun membre supprimé</TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
