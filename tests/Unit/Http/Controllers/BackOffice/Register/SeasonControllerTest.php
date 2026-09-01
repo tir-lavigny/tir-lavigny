@@ -3,10 +3,16 @@
 namespace Tests\Unit\Http\Controllers\BackOffice\Register;
 
 use App\Http\Controllers\BackOffice\Register\SeasonController;
+use App\Models\Category;
+use App\Models\Member;
+use App\Models\Product;
 use App\Models\Season;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class SeasonControllerTest extends TestCase
@@ -74,5 +80,51 @@ class SeasonControllerTest extends TestCase
         $season->delete();
 
         $this->assertSoftDeleted('seasons', ['id' => $season->id]);
+    }
+
+    public function test_preview_base_vouchers_returns_json_response(): void
+    {
+        $this->createBasePackageProducts();
+        $season = Season::factory()->create();
+        Member::factory()->count(2)->create();
+
+        $response = $this->controller->previewBaseVouchers($season);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+    }
+
+    public function test_generate_base_vouchers_returns_redirect_response(): void
+    {
+        $this->createBasePackageProducts();
+        $season = Season::factory()->create();
+        Member::factory()->count(2)->create();
+
+        $response = $this->controller->generateBaseVouchers($season);
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+    }
+
+    public function test_preview_base_vouchers_throws_when_product_missing(): void
+    {
+        $season = Season::factory()->create();
+
+        $this->expectException(HttpException::class);
+        $this->controller->previewBaseVouchers($season);
+    }
+
+    public function test_generate_base_vouchers_throws_when_product_missing(): void
+    {
+        $season = Season::factory()->create();
+
+        $this->expectException(HttpException::class);
+        $this->controller->generateBaseVouchers($season);
+    }
+
+    private function createBasePackageProducts(): void
+    {
+        $category = Category::factory()->create(['is_restricted' => false]);
+        Product::factory()->create(['name' => 'Tir du jeudi', 'category_id' => $category->id]);
+        Product::factory()->create(['name' => 'Ouverture', 'category_id' => $category->id]);
+        Product::factory()->create(['name' => 'Clôture', 'category_id' => $category->id]);
     }
 }

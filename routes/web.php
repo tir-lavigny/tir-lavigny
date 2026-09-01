@@ -126,6 +126,11 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     });
 
     Route::middleware('permission:manage seasons')->prefix('register')->group(function () {
+        Route::get('seasons/{season}/preview-base-vouchers', [Register\SeasonController::class, 'previewBaseVouchers'])
+            ->name('bo.register.seasons.preview-base-vouchers');
+        Route::post('seasons/{season}/generate-base-vouchers', [Register\SeasonController::class, 'generateBaseVouchers'])
+            ->name('bo.register.seasons.generate-base-vouchers');
+
         Route::resource('seasons', Register\SeasonController::class)->names([
             'index' => 'bo.register.seasons.index',
             'create' => 'bo.register.seasons.create',
