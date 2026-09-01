@@ -39,6 +39,16 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
+    @if(isset($page['props']['og']))
+        <meta property="og:title" content="{{ $page['props']['og']['title'] ?? config('app.name') }}" />
+        <meta property="og:description" content="{{ $page['props']['og']['description'] ?? '' }}" />
+        <meta property="og:image" content="{{ $page['props']['og']['image'] ?? asset('/images/hero.jpg') }}" />
+        <meta property="og:type" content="{{ $page['props']['og']['type'] ?? 'website' }}" />
+    @endif
+    <meta property="og:url" content="{{ url()->current() }}" />
+    <meta property="og:locale" content="{{ str_replace('-', '_', app()->getLocale()) }}" />
+    <meta property="og:site_name" content="{{ config('app.name') }}" />
+
     @routes
     @vite(['resources/js/app.ts'])
     @inertiaHead

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Spatie\IcalendarGenerator\Components\Calendar as IcalCalendar;
 use Spatie\IcalendarGenerator\Components\Event as IcalEvent;
@@ -18,6 +19,12 @@ class EventController extends Controller
 
         return Inertia::render('Events', [
             'events' => $events,
+            'og' => [
+                'title' => 'Événements - '.config('app.name'),
+                'description' => 'Consultez le calendrier des événements de la Société de tir de Lavigny: tirs obligatoires, compétitions et activités.',
+                'image' => asset('/images/hero.jpg'),
+                'type' => 'website',
+            ],
         ]);
     }
 
@@ -29,7 +36,27 @@ class EventController extends Controller
         return Inertia::render('Event', [
             'event' => $event,
             'content' => $content,
+            'og' => [
+                'title' => $event->title,
+                'description' => $this->cleanOgDescription($content),
+                'image' => asset('/images/hero.jpg'),
+                'type' => 'event',
+            ],
         ]);
+    }
+
+    private function cleanOgDescription(?string $html): string
+    {
+        $text = strip_tags($html ?? '');
+        $text = preg_replace('/#{1,6}\s/', '', $text);
+        $text = preg_replace('/\*\*|__/', '', $text);
+        $text = preg_replace('/\*|_/', '', $text);
+        $text = preg_replace('/\[(.+?)\]\(.+?\)/', '$1', $text);
+        $text = preg_replace('/!\[.*?\]\(.+?\)/', '', $text);
+        $text = preg_replace('/`{1,3}[^`]*`{1,3}/', '', $text);
+        $text = preg_replace('/\s+/', ' ', $text);
+
+        return Str::limit(trim($text), 160, '...');
     }
 
     public function feed_calendar()
