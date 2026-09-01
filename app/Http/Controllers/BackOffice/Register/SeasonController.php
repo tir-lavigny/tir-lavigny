@@ -16,7 +16,6 @@ use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\HttpKernel\Exception\HttpHttpException;
 
 class SeasonController extends Controller implements HasMiddleware
 {
