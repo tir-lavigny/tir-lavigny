@@ -195,6 +195,7 @@ class SeasonControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonCount(3, 'plan');
+        $response->assertJsonPath('total_members', 3);
     }
 
     public function test_preview_excludes_members_with_all_vouchers(): void

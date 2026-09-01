@@ -91,7 +91,10 @@ class SeasonController extends Controller implements HasMiddleware
         $members = Member::all();
         $plan = $this->computePlan($season, $members, $basePackage, $products);
 
-        return response()->json(['plan' => $plan]);
+        return response()->json([
+            'plan' => $plan,
+            'total_members' => $members->count(),
+        ]);
     }
 
     public function generateBaseVouchers(Season $season): RedirectResponse

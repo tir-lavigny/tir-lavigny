@@ -42,7 +42,7 @@ const loading = ref(false);
 const generating = ref(false);
 
 const totalMembersImpacted = ref(0);
-const totalMembersInScope = ref(0);
+const totalMembers = ref(0);
 
 async function fetchPreview() {
     loading.value = true;
@@ -55,6 +55,7 @@ async function fetchPreview() {
         });
         const data = await response.json();
         previewData.value = data.plan;
+        totalMembers.value = data.total_members;
 
         const memberIds = new Set(data.plan.map((p: MemberPlan) => p.member_id));
         totalMembersImpacted.value = memberIds.size;
@@ -170,12 +171,16 @@ function confirmGenerate() {
             <DialogContent class="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Aperçu des bons à générer</DialogTitle>
-                    <DialogDescription> Les bons suivants seront créés pour la saison {{ season.name }}. </DialogDescription>
+                    <DialogDescription>
+                        <template v-if="previewData.length > 0">
+                            {{ totalMembersImpacted }} / {{ totalMembers }} membre(s) recevront des bons.
+                        </template>
+                        <template v-else>
+                            Tous les membres ont déjà leur paket de bons complet.
+                        </template>
+                    </DialogDescription>
                 </DialogHeader>
-                <div v-if="previewData.length === 0" class="py-4">
-                    <p class="text-muted-foreground text-sm">Tous les membres ont déjà leur paket de bons complet.</p>
-                </div>
-                <div v-else class="max-h-96 overflow-y-auto">
+                <div v-if="previewData.length > 0" class="max-h-96 overflow-y-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
