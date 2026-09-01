@@ -4,12 +4,27 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BreadcrumbItem, Season, SharedData } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { Pencil } from '@lucide/vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Pencil, Package } from '@lucide/vue';
+import { ref } from 'vue';
+import { toast } from 'vue-sonner';
+
+interface VoucherPlan {
+    product_name: string;
+    count: number;
+}
+
+interface MemberPlan {
+    member_id: number;
+    member_name: string;
+    vouchers: VoucherPlan[];
+}
 
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
@@ -20,6 +35,56 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Saisons', href: route('bo.register.seasons.index') },
     { title: props.season.name, href: route('bo.register.seasons.show', props.season.id) },
 ];
+
+const showPreviewDialog = ref(false);
+const previewData = ref<MemberPlan[]>([]);
+const loading = ref(false);
+const generating = ref(false);
+
+const totalMembersImpacted = ref(0);
+const totalMembersInScope = ref(0);
+
+async function fetchPreview() {
+    loading.value = true;
+    try {
+        const response = await fetch(route('bo.register.seasons.preview-base-vouchers', props.season.id), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
+            },
+        });
+        const data = await response.json();
+        previewData.value = data.plan;
+
+        const memberIds = new Set(data.plan.map((p: MemberPlan) => p.member_id));
+        totalMembersImpacted.value = memberIds.size;
+
+        showPreviewDialog.value = true;
+    } catch {
+        toast.error('Erreur lors du chargement de l\'aperçu.');
+    } finally {
+        loading.value = false;
+    }
+}
+
+const form = useForm({});
+
+function confirmGenerate() {
+    generating.value = true;
+    form.post(route('bo.register.seasons.generate-base-vouchers', props.season.id), {
+        onSuccess: () => {
+            toast.success('Bons de base générés avec succès.');
+            showPreviewDialog.value = false;
+            previewData.value = [];
+        },
+        onError: () => {
+            toast.error('Erreur lors de la génération des bons.');
+        },
+        onFinish: () => {
+            generating.value = false;
+        },
+    });
+}
 </script>
 
 <template>
@@ -27,14 +92,24 @@ const breadcrumbs: BreadcrumbItem[] = [
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="m-4 flex flex-row items-center justify-between">
             <H1>{{ season.name }}</H1>
-            <Tooltip v-if="hasPermissionTo(user, 'manage seasons')">
-                <TooltipTrigger>
-                    <Link :href="route('bo.register.seasons.edit', season.id)">
-                        <Button size="icon" variant="outline"><Pencil /></Button>
-                    </Link>
-                </TooltipTrigger>
-                <TooltipContent><p>Modifier</p></TooltipContent>
-            </Tooltip>
+            <div v-if="hasPermissionTo(user, 'manage seasons')" class="flex items-center gap-2">
+                <Tooltip>
+                    <TooltipTrigger>
+                        <Button :loading="loading" variant="outline" @click="fetchPreview">
+                            <Package class="mr-1 h-4 w-4" /> Générer les bons de base
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Générer le paket de bons pour tous les membres</p></TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger>
+                        <Link :href="route('bo.register.seasons.edit', season.id)">
+                            <Button size="icon" variant="outline"><Pencil /></Button>
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Modifier</p></TooltipContent>
+                </Tooltip>
+            </div>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <Card>
@@ -90,5 +165,47 @@ const breadcrumbs: BreadcrumbItem[] = [
             </div>
             <p v-else class="text-muted-foreground text-sm">Aucune journée d'opération.</p>
         </div>
+
+        <Dialog v-model:open="showPreviewDialog">
+            <DialogContent class="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Aperçu des bons à générer</DialogTitle>
+                    <DialogDescription>
+                        Les bons suivants seront créés pour la saison {{ season.name }}.
+                    </DialogDescription>
+                </DialogHeader>
+                <div v-if="previewData.length === 0" class="py-4">
+                    <p class="text-muted-foreground text-sm">Tous les membres ont déjà leur paket de bons complet.</p>
+                </div>
+                <div v-else class="max-h-96 overflow-y-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Membre</TableHead>
+                                <TableHead>Produit</TableHead>
+                                <TableHead class="text-right">Quantité</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <template v-for="memberPlan in previewData" :key="memberPlan.member_id">
+                                <TableRow v-for="(voucher, vIndex) in memberPlan.vouchers" :key="`${memberPlan.member_id}-${vIndex}`">
+                                    <TableCell v-if="vIndex === 0" class="font-medium" :rowspan="memberPlan.vouchers.length">
+                                        {{ memberPlan.member_name }}
+                                    </TableCell>
+                                    <TableCell>{{ voucher.product_name }}</TableCell>
+                                    <TableCell class="text-right">{{ voucher.count }}</TableCell>
+                                </TableRow>
+                            </template>
+                        </TableBody>
+                    </Table>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" @click="showPreviewDialog = false">Annuler</Button>
+                    <Button :disabled="previewData.length === 0 || generating" :loading="generating" @click="confirmGenerate">
+                        <Package class="mr-1 h-4 w-4" /> Confirmer la génération
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>

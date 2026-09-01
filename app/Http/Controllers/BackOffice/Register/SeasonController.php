@@ -5,11 +5,18 @@ namespace App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Register\StoreSeasonRequest;
 use App\Http\Requests\BackOffice\Register\UpdateSeasonRequest;
+use App\Models\Member;
+use App\Models\Product;
 use App\Models\Season;
+use App\Models\Voucher;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpKernel\Exception\HttpHttpException;
 
 class SeasonController extends Controller implements HasMiddleware
 {
@@ -75,5 +82,111 @@ class SeasonController extends Controller implements HasMiddleware
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['delete' => $e->getMessage()]);
         }
+    }
+
+    public function previewBaseVouchers(Season $season): JsonResponse
+    {
+        $basePackage = $this->getBasePackage();
+        $products = $this->resolveProducts($basePackage);
+        $members = Member::all();
+        $plan = $this->computePlan($season, $members, $basePackage, $products);
+
+        return response()->json(['plan' => $plan]);
+    }
+
+    public function generateBaseVouchers(Season $season): RedirectResponse
+    {
+        $basePackage = $this->getBasePackage();
+        $products = $this->resolveProducts($basePackage);
+        $members = Member::all();
+        $plan = $this->computePlan($season, $members, $basePackage, $products);
+
+        DB::transaction(function () use ($plan, $season) {
+            foreach ($plan as $memberPlan) {
+                foreach ($memberPlan['vouchers'] as $voucherPlan) {
+                    if ($voucherPlan['count'] <= 0) {
+                        continue;
+                    }
+
+                    $product = Product::where('name', $voucherPlan['product_name'])->first();
+
+                    for ($i = 0; $i < $voucherPlan['count']; $i++) {
+                        Voucher::create([
+                            'discount_percent' => 100.00,
+                            'discount_fixed' => null,
+                            'product_id' => $product->id,
+                            'season_id' => $season->id,
+                            'member_id' => $memberPlan['member_id'],
+                        ]);
+                    }
+                }
+            }
+        });
+
+        return redirect()->back()->with('success', 'Bons de base générés avec succès.');
+    }
+
+    private function getBasePackage(): array
+    {
+        return [
+            'Tir du jeudi' => 3,
+            'Ouverture' => 1,
+            'Clôture' => 1,
+        ];
+    }
+
+    private function resolveProducts(array $basePackage): array
+    {
+        $products = [];
+
+        foreach ($basePackage as $name => $count) {
+            $product = Product::whereRaw('LOWER(name) = ?', [strtolower($name)])->first();
+
+            if (! $product) {
+                abort(422, "Produit introuvable : {$name}");
+            }
+
+            $products[$name] = $product;
+        }
+
+        return $products;
+    }
+
+    private function computePlan(Season $season, $members, array $basePackage, array $products): array
+    {
+        $plan = [];
+
+        foreach ($members as $member) {
+            $vouchers = [];
+
+            foreach ($basePackage as $productName => $requiredCount) {
+                $product = $products[$productName];
+
+                $existingCount = Voucher::where('member_id', $member->id)
+                    ->where('season_id', $season->id)
+                    ->where('product_id', $product->id)
+                    ->withoutTrashed()
+                    ->count();
+
+                $missing = $requiredCount - $existingCount;
+
+                if ($missing > 0) {
+                    $vouchers[] = [
+                        'product_name' => $productName,
+                        'count' => $missing,
+                    ];
+                }
+            }
+
+            if (count($vouchers) > 0) {
+                $plan[] = [
+                    'member_id' => $member->id,
+                    'member_name' => $member->first_name.' '.$member->last_name,
+                    'vouchers' => $vouchers,
+                ];
+            }
+        }
+
+        return $plan;
     }
 }

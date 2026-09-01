@@ -2,8 +2,12 @@
 
 namespace Tests\Feature\BackOffice\Register;
 
+use App\Models\Category;
+use App\Models\Member;
 use App\Models\OperatingDay;
+use App\Models\Product;
 use App\Models\Season;
+use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Voucher;
 use Carbon\Carbon;
@@ -164,5 +168,349 @@ class SeasonControllerTest extends TestCase
         $season = Season::factory()->create(['initial_balance' => 0]);
 
         $this->assertEquals(0.0, $season->end_balance);
+    }
+
+    // ─── Preview Base Vouchers ────────────────────────────────────────────
+
+    public function test_preview_requires_manage_seasons_permission(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('view register');
+        $this->actingAs($user);
+
+        $season = Season::factory()->create();
+
+        $response = $this->get(route('bo.register.seasons.preview-base-vouchers', $season));
+
+        $response->assertForbidden();
+    }
+
+    public function test_preview_returns_plan_for_members_without_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        $this->createBasePackageProducts();
+        Member::factory()->count(3)->create();
+
+        $response = $this->get(route('bo.register.seasons.preview-base-vouchers', $season));
+
+        $response->assertOk();
+        $response->assertJsonCount(3, 'plan');
+    }
+
+    public function test_preview_excludes_members_with_all_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        Voucher::factory()->percent()->count(3)->create([
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'product_id' => $products['Tir du jeudi']->id,
+        ]);
+        Voucher::factory()->percent()->create([
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'product_id' => $products['Ouverture']->id,
+        ]);
+        Voucher::factory()->percent()->create([
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'product_id' => $products['Clôture']->id,
+        ]);
+
+        $response = $this->get(route('bo.register.seasons.preview-base-vouchers', $season));
+
+        $response->assertOk();
+        $response->assertJsonCount(0, 'plan');
+    }
+
+    public function test_preview_calculates_missing_count(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        Voucher::factory()->percent()->create([
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'product_id' => $products['Tir du jeudi']->id,
+        ]);
+
+        $response = $this->get(route('bo.register.seasons.preview-base-vouchers', $season));
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'plan');
+        $response->assertJsonFragment([
+            'member_id' => $member->id,
+            'vouchers' => [
+                ['product_name' => 'Tir du jeudi', 'count' => 2],
+                ['product_name' => 'Ouverture', 'count' => 1],
+                ['product_name' => 'Clôture', 'count' => 1],
+            ],
+        ]);
+    }
+
+    public function test_preview_handles_soft_deleted_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        $voucher = Voucher::factory()->percent()->create([
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'product_id' => $products['Ouverture']->id,
+        ]);
+        $voucher->delete();
+
+        $response = $this->get(route('bo.register.seasons.preview-base-vouchers', $season));
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'plan');
+        $response->assertJsonFragment([
+            'member_id' => $member->id,
+            'vouchers' => [
+                ['product_name' => 'Tir du jeudi', 'count' => 3],
+                ['product_name' => 'Ouverture', 'count' => 1],
+                ['product_name' => 'Clôture', 'count' => 1],
+            ],
+        ]);
+    }
+
+    public function test_preview_handles_used_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        $voucher = Voucher::factory()->percent()->create([
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'product_id' => $products['Clôture']->id,
+        ]);
+        $ticket = Ticket::factory()->create([
+            'operating_day_id' => OperatingDay::factory()->create(['season_id' => $season->id])->id,
+            'member_id' => $member->id,
+        ]);
+        $ticket->ticketItems()->create([
+            'product_id' => $products['Clôture']->id,
+            'voucher_id' => $voucher->id,
+            'quantity' => 1,
+            'unit_price' => 5.00,
+            'subtotal' => 0.00,
+        ]);
+
+        $response = $this->get(route('bo.register.seasons.preview-base-vouchers', $season));
+
+        $response->assertOk();
+        $response->assertJsonCount(1, 'plan');
+        $response->assertJsonFragment([
+            'member_id' => $member->id,
+            'vouchers' => [
+                ['product_name' => 'Tir du jeudi', 'count' => 3],
+                ['product_name' => 'Ouverture', 'count' => 1],
+            ],
+        ]);
+    }
+
+    public function test_preview_does_not_create_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        $this->createBasePackageProducts();
+        Member::factory()->count(2)->create();
+
+        $this->get(route('bo.register.seasons.preview-base-vouchers', $season));
+
+        $this->assertDatabaseCount('vouchers', 0);
+    }
+
+    public function test_preview_handles_missing_product(): void
+    {
+        $season = Season::factory()->create();
+
+        $response = $this->get(route('bo.register.seasons.preview-base-vouchers', $season));
+
+        $response->assertStatus(422);
+    }
+
+    // ─── Generate Base Vouchers ───────────────────────────────────────────
+
+    public function test_generate_requires_manage_seasons_permission(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('view register');
+        $this->actingAs($user);
+
+        $season = Season::factory()->create();
+
+        $response = $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
+
+        $response->assertForbidden();
+    }
+
+    public function test_generate_creates_vouchers_for_all_members(): void
+    {
+        $season = Season::factory()->create();
+        $this->createBasePackageProducts();
+        Member::factory()->count(3)->create();
+
+        $response = $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
+
+        $response->assertRedirect();
+        $this->assertDatabaseCount('vouchers', 15);
+    }
+
+    public function test_generate_skips_members_with_all_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        foreach ($products as $productName => $product) {
+            $count = match ($productName) {
+                'Tir du jeudi' => 3,
+                'Ouverture' => 1,
+                'Clôture' => 1,
+            };
+            Voucher::factory()->percent()->count($count)->create([
+                'member_id' => $member->id,
+                'season_id' => $season->id,
+                'product_id' => $product->id,
+            ]);
+        }
+
+        $response = $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
+
+        $response->assertRedirect();
+        $this->assertDatabaseCount('vouchers', 5);
+    }
+
+    public function test_generate_creates_only_missing_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        Voucher::factory()->percent()->create([
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'product_id' => $products['Ouverture']->id,
+        ]);
+
+        $response = $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
+
+        $response->assertRedirect();
+        $this->assertDatabaseCount('vouchers', 5);
+    }
+
+    public function test_generate_does_not_overcount(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        Voucher::factory()->percent()->count(3)->create([
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'product_id' => $products['Tir du jeudi']->id,
+        ]);
+
+        $response = $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
+
+        $response->assertRedirect();
+        $this->assertDatabaseCount('vouchers', 5);
+        $this->assertEquals(3, Voucher::where([
+            'product_id' => $products['Tir du jeudi']->id,
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+        ])->count());
+    }
+
+    public function test_generate_handles_soft_deleted_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        $voucher = Voucher::factory()->percent()->create([
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'product_id' => $products['Ouverture']->id,
+        ]);
+        $voucher->delete();
+
+        $response = $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
+
+        $response->assertRedirect();
+        $this->assertEquals(5, Voucher::withoutTrashed()->count());
+    }
+
+    public function test_generate_sets_correct_discount_percent(): void
+    {
+        $season = Season::factory()->create();
+        $this->createBasePackageProducts();
+        Member::factory()->create();
+
+        $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
+
+        $this->assertDatabaseHas('vouchers', [
+            'discount_percent' => 100.00,
+            'discount_fixed' => null,
+        ]);
+    }
+
+    public function test_generate_sets_correct_foreign_keys(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
+
+        foreach ($products as $productName => $product) {
+            $count = match ($productName) {
+                'Tir du jeudi' => 3,
+                'Ouverture' => 1,
+                'Clôture' => 1,
+            };
+            $this->assertEquals($count, Voucher::where([
+                'product_id' => $product->id,
+                'season_id' => $season->id,
+                'member_id' => $member->id,
+            ])->count());
+        }
+    }
+
+    public function test_generate_handles_missing_product(): void
+    {
+        $season = Season::factory()->create();
+
+        $response = $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
+
+        $response->assertStatus(422);
+        $this->assertDatabaseCount('vouchers', 0);
+    }
+
+    public function test_generate_no_members_returns_success(): void
+    {
+        $season = Season::factory()->create();
+        $this->createBasePackageProducts();
+
+        $response = $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
+
+        $response->assertRedirect();
+        $this->assertDatabaseCount('vouchers', 0);
+    }
+
+    private function createBasePackageProducts(): array
+    {
+        $category = Category::factory()->create(['is_restricted' => false]);
+
+        return [
+            'Tir du jeudi' => Product::factory()->create(['name' => 'Tir du jeudi', 'category_id' => $category->id]),
+            'Ouverture' => Product::factory()->create(['name' => 'Ouverture', 'category_id' => $category->id]),
+            'Clôture' => Product::factory()->create(['name' => 'Clôture', 'category_id' => $category->id]),
+        ];
     }
 }
