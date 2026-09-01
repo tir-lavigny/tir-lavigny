@@ -22,6 +22,12 @@ class ShootingController extends Controller
 
         return Inertia::render('Shootings', [
             'events' => $events,
+            'og' => [
+                'title' => 'Tirs militaires - '.config('app.name'),
+                'description' => 'Venez effectuer vos tirs obligatoires au stand de Lavigny.',
+                'image' => asset('/images/tirMilitaire.jpg'),
+                'type' => 'website',
+            ],
         ]);
     }
 
@@ -31,6 +37,12 @@ class ShootingController extends Controller
 
         return Inertia::render('ShootingsField', [
             'events' => $events,
+            'og' => [
+                'title' => 'Tir fédéral en campagne - '.config('app.name'),
+                'description' => 'Le tir fédéral est la plus grande fête de tir au monde. Participez sous les couleurs de la Société de tir de Lavigny.',
+                'image' => asset('/images/tirCampagne.webp'),
+                'type' => 'website',
+            ],
         ]);
     }
 }
