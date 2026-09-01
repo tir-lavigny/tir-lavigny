@@ -11,7 +11,7 @@ import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BreadcrumbItem, Season, SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { Pencil, Package } from '@lucide/vue';
+import { Pencil, Ticket } from '@lucide/vue';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -61,7 +61,7 @@ async function fetchPreview() {
 
         showPreviewDialog.value = true;
     } catch {
-        toast.error('Erreur lors du chargement de l\'aperçu.');
+        toast.error("Erreur lors du chargement de l'aperçu.");
     } finally {
         loading.value = false;
     }
@@ -96,7 +96,7 @@ function confirmGenerate() {
                 <Tooltip>
                     <TooltipTrigger>
                         <Button :loading="loading" variant="outline" @click="fetchPreview">
-                            <Package class="mr-1 h-4 w-4" /> Générer les bons de base
+                            <Ticket class="mr-1 h-4 w-4" /> Générer les bons de base
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent><p>Générer le paket de bons pour tous les membres</p></TooltipContent>
@@ -170,9 +170,7 @@ function confirmGenerate() {
             <DialogContent class="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Aperçu des bons à générer</DialogTitle>
-                    <DialogDescription>
-                        Les bons suivants seront créés pour la saison {{ season.name }}.
-                    </DialogDescription>
+                    <DialogDescription> Les bons suivants seront créés pour la saison {{ season.name }}. </DialogDescription>
                 </DialogHeader>
                 <div v-if="previewData.length === 0" class="py-4">
                     <p class="text-muted-foreground text-sm">Tous les membres ont déjà leur paket de bons complet.</p>
@@ -202,7 +200,7 @@ function confirmGenerate() {
                 <DialogFooter>
                     <Button variant="outline" @click="showPreviewDialog = false">Annuler</Button>
                     <Button :disabled="previewData.length === 0 || generating" :loading="generating" @click="confirmGenerate">
-                        <Package class="mr-1 h-4 w-4" /> Confirmer la génération
+                        <Ticket class="mr-1 h-4 w-4" /> Confirmer la génération
                     </Button>
                 </DialogFooter>
             </DialogContent>
