@@ -100,7 +100,7 @@ function confirmGenerate() {
                             <Ticket class="mr-1 h-4 w-4" /> Générer les bons de base
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent><p>Générer le paket de bons pour tous les membres</p></TooltipContent>
+                    <TooltipContent><p>Générer le paquet de bons pour tous les membres</p></TooltipContent>
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger>
@@ -175,9 +175,7 @@ function confirmGenerate() {
                         <template v-if="previewData.length > 0">
                             {{ totalMembersImpacted }} / {{ totalMembers }} membre(s) recevront des bons.
                         </template>
-                        <template v-else>
-                            Tous les membres ont déjà leur paket de bons complet.
-                        </template>
+                        <template v-else> Tous les membres ont déjà leur paquet de bons complet. </template>
                     </DialogDescription>
                 </DialogHeader>
                 <div v-if="previewData.length > 0" class="max-h-96 overflow-y-auto">
@@ -191,7 +189,11 @@ function confirmGenerate() {
                         </TableHeader>
                         <TableBody>
                             <template v-for="memberPlan in previewData" :key="memberPlan.member_id">
-                                <TableRow v-for="(voucher, vIndex) in memberPlan.vouchers" :key="`${memberPlan.member_id}-${vIndex}`">
+                                <TableRow
+                                    v-for="(voucher, vIndex) in memberPlan.vouchers"
+                                    :key="`${memberPlan.member_id}-${vIndex}`"
+                                    class="hover:bg-background"
+                                >
                                     <TableCell v-if="vIndex === 0" class="font-medium" :rowspan="memberPlan.vouchers.length">
                                         {{ memberPlan.member_name }}
                                     </TableCell>
