@@ -168,7 +168,7 @@ class SeasonController extends Controller implements HasMiddleware
                 $existingCount = Voucher::where('member_id', $member->id)
                     ->where('season_id', $season->id)
                     ->where('product_id', $product->id)
-                    ->withoutTrashed()
+                    ->withTrashed()
                     ->count();
 
                 $missing = $requiredCount - $existingCount;

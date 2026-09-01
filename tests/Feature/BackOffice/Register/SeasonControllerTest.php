@@ -273,7 +273,6 @@ class SeasonControllerTest extends TestCase
             'member_id' => $member->id,
             'vouchers' => [
                 ['product_name' => 'Tir du jeudi', 'count' => 3],
-                ['product_name' => 'Ouverture', 'count' => 1],
                 ['product_name' => 'Clôture', 'count' => 1],
             ],
         ]);
@@ -444,7 +443,7 @@ class SeasonControllerTest extends TestCase
         $response = $this->post(route('bo.register.seasons.generate-base-vouchers', $season));
 
         $response->assertRedirect();
-        $this->assertEquals(5, Voucher::withoutTrashed()->count());
+        $this->assertEquals(4, Voucher::withoutTrashed()->count());
     }
 
     public function test_generate_sets_correct_discount_percent(): void
