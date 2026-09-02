@@ -22,6 +22,9 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->group(function () {
+    Route::get('/seasons/current', [Register\SeasonController::class, 'getCurrentSeason'])
+        ->name('api.register.seasons.current');
+
     Route::post('/days', [Register\OperatingDayController::class, 'store'])
         ->name('api.register.operating-days.store');
     Route::patch('/days/{operatingDay}', [Register\OperatingDayController::class, 'update'])
