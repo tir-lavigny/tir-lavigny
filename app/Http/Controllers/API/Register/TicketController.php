@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\Register;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\API\Register\StoreTicketPreviewRequest;
 use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\OperatingDay;
 use App\Models\Ticket;
@@ -58,7 +59,7 @@ class TicketController extends Controller
         return response()->json(['data' => $ticket]);
     }
 
-    public function preview(StoreTicketRequest $request, TicketCalculator $calculator): JsonResponse
+    public function preview(StoreTicketPreviewRequest $request, TicketCalculator $calculator): JsonResponse
     {
         $day = OperatingDay::findOrFail($request->input('operating_day_id'));
 
