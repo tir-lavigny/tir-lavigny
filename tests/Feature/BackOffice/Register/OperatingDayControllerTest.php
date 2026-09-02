@@ -143,23 +143,6 @@ class OperatingDayControllerTest extends TestCase
         $this->assertEquals(700.00, $day->closing_balance);
     }
 
-    public function test_close_sends_email_when_remark_present(): void
-    {
-        Mail::fake();
-
-        $season = Season::factory()->create();
-        $day = OperatingDay::factory()->create([
-            'season_id' => $season->id,
-            'cash_remark' => 'Short 5 CHF',
-        ]);
-
-        $this->put(route('bo.register.operating-days.update', $day), [
-            'status' => 'closed',
-        ]);
-
-        Mail::assertSent(OperatingDayClosed::class);
-    }
-
     public function test_close_does_not_send_email_when_no_remark(): void
     {
         Mail::fake();

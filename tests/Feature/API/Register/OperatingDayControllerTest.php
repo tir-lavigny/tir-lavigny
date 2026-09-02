@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\API\Register;
 
+use App\Mail\OperatingDayClosed;
 use App\Models\OperatingDay;
 use App\Models\Season;
 use App\Models\Ticket;
@@ -9,6 +10,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\Feature\API\AuthTestHelper;
 use Tests\TestCase;
 
@@ -302,5 +304,22 @@ class OperatingDayControllerTest extends TestCase
         $response = $this->getJson(route('api.register.operating-days.show', 9999), $this->authHeaders());
 
         $response->assertNotFound();
+    }
+
+    public function test_close_sends_email_when_remark_present(): void
+    {
+        Mail::fake();
+
+        $season = Season::factory()->create();
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+        ]);
+
+        $this->patchJson(route('api.register.operating-days.update', $day), [
+            'status' => 'closed',
+            'cash_remark' => 'Short 5 CHF',
+        ], $this->authHeaders());
+
+        Mail::assertSent(OperatingDayClosed::class);
     }
 }

@@ -219,7 +219,7 @@ class OperatingDayControllerTest extends TestCase
         $this->assertEquals(404, $response->status());
     }
 
-    public function test_current_returns_404_when_today_is_closed(): void
+    public function test_current_returns_closed_day_for_today(): void
     {
         $season = Season::factory()->create([
             'start_date' => Carbon::now()->startOfYear(),
@@ -237,7 +237,7 @@ class OperatingDayControllerTest extends TestCase
         $request = Request::create('/api/register/operating-days/current', 'GET');
         $response = $this->controller->current($request);
 
-        $this->assertEquals(404, $response->status());
+        $this->assertEquals(200, $response->status());
     }
 
     public function test_current_eager_loads_tickets(): void
