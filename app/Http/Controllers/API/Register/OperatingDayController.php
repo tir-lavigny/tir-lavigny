@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\API\Register\StoreDayRequest;
 use App\Http\Requests\API\Register\UpdateDayRequest;
 use App\Http\Resources\OperatingDayResource;
+use App\Mail\OperatingDayClosed;
 use App\Models\OperatingDay;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Mail;
+
+use function Illuminate\Log\log;
 
 class OperatingDayController extends Controller
 {
@@ -26,6 +30,7 @@ class OperatingDayController extends Controller
     public function update(UpdateDayRequest $request, OperatingDay $operatingDay): JsonResponse
     {
         $status = $request->input('status');
+        $cash_remark = $request->input('cash_remark');
 
         if ($status === 'closed') {
             if (! $operatingDay->isOpen()) {
@@ -36,7 +41,17 @@ class OperatingDayController extends Controller
             $operatingDay->update([
                 'closed_at' => Carbon::now(),
                 'closing_balance' => $operatingDay->closing_balance,
+                'cash_remark' => $cash_remark,
             ]);
+
+            if (! empty($cash_remark)) {
+                try {
+                    Mail::to(env('APP_USER_EMAIL'))->send(new OperatingDayClosed($operatingDay));
+                } catch (\Throwable $e) {
+                    // Don't fail the close if email fails
+                    log('error', ['exception' => $e->getMessage()]);
+                }
+            }
         } elseif ($status === 'open') {
             $operatingDay->update(['closed_at' => null, 'closing_balance' => null]);
         } else {
