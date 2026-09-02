@@ -26,7 +26,7 @@ class AuthController extends Controller
             return $this->error('Wrong credentials.', 401);
         }
 
-        $user = Auth::user();
+        $user = Auth::user()?->load('roles', 'roles.permissions');
         $tokens = $this->generateTokens($user);
 
         return (new TokenResource(new TokenData($tokens['accessToken'], $user)))
