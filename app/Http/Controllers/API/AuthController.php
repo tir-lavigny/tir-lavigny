@@ -62,10 +62,15 @@ class AuthController extends Controller
 
     private function refreshCookie(string $refreshToken): Cookie
     {
+        $host = parse_url(env('APP_URL'))['host'];
+        $parts = explode('.', $host);
+        $rootDomain = implode('.', array_slice($parts, -2));
+
         return cookie(
             'refreshToken',
             $refreshToken,
             config('sanctum.rt_expiration'),
+            domain: '.'.$rootDomain,
             path: '/',
             secure: true,
             httpOnly: true,
