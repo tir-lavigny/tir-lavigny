@@ -23,6 +23,7 @@ class TicketControllerTest extends TestCase
     use RefreshDatabase;
 
     private TicketController $controller;
+
     private TicketCalculator $calculator;
 
     protected function setUp(): void

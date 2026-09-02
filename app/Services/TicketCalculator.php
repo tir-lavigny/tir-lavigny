@@ -11,7 +11,6 @@ class TicketCalculator
      * Compute ticket total and line items from request data.
      *
      * @param  array<int, array{product_id: int, quantity: int, custom_unit_price?: float, voucher_id?: int}>  $items
-     *
      * @return array{total: float, items: array<int, array{product_id: int, voucher_id: int|null, quantity: int, unit_price: float, subtotal: float}>}
      */
     public function compute(array $items): array
