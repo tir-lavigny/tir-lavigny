@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\Register;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MemberResource;
 use App\Models\Member;
 use App\Models\OperatingDay;
 use Carbon\Carbon;
@@ -10,6 +11,13 @@ use Illuminate\Http\JsonResponse;
 
 class MemberController extends Controller
 {
+    public function index(): JsonResponse
+    {
+        $members = Member::all();
+
+        return response()->json(['data' => MemberResource::collection($members)]);
+    }
+
     public function vouchers(Member $member): JsonResponse
     {
         $day = OperatingDay::whereDate('date', Carbon::today())
