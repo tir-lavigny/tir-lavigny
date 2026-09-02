@@ -6,6 +6,7 @@ use App\DTOs\TokenData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\TokenResource;
+use App\Http\Resources\UserResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\User;
 use App\TokenAbility;
@@ -42,6 +43,12 @@ class AuthController extends Controller
         return (new TokenResource(new TokenData($tokens['accessToken'])))
             ->response()
             ->withCookie($this->refreshCookie($tokens['refreshToken']));
+    }
+
+    public function me(Request $request): JsonResponse
+    {
+        return (new UserResource($request->user()))
+            ->response();
     }
 
     public function logout(Request $request): Response
