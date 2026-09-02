@@ -64,7 +64,6 @@ class OperatingDayController extends Controller
     public function current(): JsonResponse
     {
         $day = OperatingDay::whereDate('date', Carbon::today())
-            ->whereNull('closed_at')
             ->with('tickets.ticketItems.product', 'tickets.ticketItems.voucher')
             ->first();
 
