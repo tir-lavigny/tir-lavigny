@@ -36,6 +36,8 @@ Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->g
 
     Route::post('/tickets', [Register\TicketController::class, 'store'])
         ->name('api.register.tickets.store');
+    Route::post('/tickets/preview', [Register\TicketController::class, 'preview'])
+        ->name('api.register.tickets.preview');
     Route::get('/tickets/{ticket}', [Register\TicketController::class, 'show'])
         ->name('api.register.tickets.show');
 

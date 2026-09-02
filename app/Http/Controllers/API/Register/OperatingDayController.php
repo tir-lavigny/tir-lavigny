@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\Register;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\Register\StoreDayRequest;
 use App\Http\Requests\API\Register\UpdateDayRequest;
+use App\Http\Resources\OperatingDayResource;
 use App\Models\OperatingDay;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ class OperatingDayController extends Controller
             'season_id' => $request->input('season_id'),
         ]);
 
-        return response()->json(['data' => $day], 201);
+        return response()->json(['data' => new OperatingDayResource($day)], 201);
     }
 
     public function update(UpdateDayRequest $request, OperatingDay $operatingDay): JsonResponse
@@ -42,30 +43,34 @@ class OperatingDayController extends Controller
             $operatingDay->update($request->only(['cash_remark']));
         }
 
-        return response()->json(['data' => $operatingDay->fresh()]);
+        return response()->json(['data' => new OperatingDayResource($operatingDay->fresh())]);
     }
 
     public function current(): JsonResponse
     {
         $day = OperatingDay::whereDate('date', Carbon::today())
             ->whereNull('closed_at')
-            ->with('tickets')
+            ->with('tickets.ticketItems.product', 'tickets.ticketItems.voucher')
             ->first();
 
         if (! $day) {
             return response()->json(['message' => 'No open operating day for today.'], 404);
         }
 
-        return response()->json(['data' => $day]);
+        return response()->json(['data' => new OperatingDayResource($day)]);
     }
 
     public function show(OperatingDay $operatingDay): JsonResponse
     {
-        $operatingDay->tickets = $operatingDay->tickets()
-            ->withTrashed()
-            ->with(['ticketItems.product', 'ticketItems.voucher'])
-            ->get();
+        $operatingDay->load([
+            'tickets.ticketItems.product',
+            'tickets.ticketItems.voucher',
+        ]);
 
-        return response()->json(['data' => $operatingDay]);
+        $operatingDay->setRelation('tickets', $operatingDay->tickets()->withTrashed()
+            ->with(['ticketItems.product', 'ticketItems.voucher'])
+            ->get());
+
+        return response()->json(['data' => new OperatingDayResource($operatingDay)]);
     }
 }

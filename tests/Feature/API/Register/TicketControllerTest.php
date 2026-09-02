@@ -361,4 +361,148 @@ class TicketControllerTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    // --- preview() ---
+
+    public function test_preview_returns_total_without_writing_to_db(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'unit_price' => 5.00,
+        ]);
+
+        $response = $this->postJson(route('api.register.tickets.preview'), [
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 2],
+            ],
+        ], $this->authHeaders());
+
+        $response->assertOk();
+        $response->json('total', 10.00);
+        $this->assertDatabaseCount('tickets', 0);
+        $this->assertDatabaseCount('ticket_items', 0);
+    }
+
+    public function test_preview_computes_voucher_discount(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->subMonth(),
+            'end_date' => Carbon::now()->addMonth(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'unit_price' => 10.00,
+        ]);
+        $voucher = Voucher::factory()->percent()->create([
+            'discount_percent' => 10.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $response = $this->postJson(route('api.register.tickets.preview'), [
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
+            ],
+        ], $this->authHeaders());
+
+        $response->assertOk();
+        $response->json('items.0.subtotal', 9.00);
+    }
+
+    public function test_preview_fails_for_closed_operating_day(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+
+        $response = $this->postJson(route('api.register.tickets.preview'), [
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+        ], $this->authHeaders());
+
+        $response->assertUnprocessable();
+    }
+
+    public function test_preview_requires_authentication(): void
+    {
+        $response = $this->postJson(route('api.register.tickets.preview'), [
+            'payment_method' => 'cash',
+            'operating_day_id' => 1,
+            'items' => [['product_id' => 1, 'quantity' => 1]],
+        ]);
+
+        $response->assertUnauthorized();
+    }
+
+    public function test_preview_matches_store_computation(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'unit_price' => 7.50,
+        ]);
+        $voucher = Voucher::factory()->fixed()->create([
+            'discount_fixed' => 2.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $payload = [
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 3, 'voucher_id' => $voucher->id],
+            ],
+        ];
+
+        $previewResponse = $this->postJson(route('api.register.tickets.preview'), $payload, $this->authHeaders());
+        $storeResponse = $this->postJson(route('api.register.tickets.store'), $payload, $this->authHeaders());
+
+        $previewResponse->assertOk();
+        $storeResponse->assertCreated();
+
+        $previewTotal = $previewResponse->json('total');
+        $storeTotal = $storeResponse->json('data.total');
+
+        $this->assertEquals($storeTotal, $previewTotal);
+    }
 }

@@ -5,15 +5,14 @@ namespace App\Http\Controllers\API\Register;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\OperatingDay;
-use App\Models\Product;
 use App\Models\Ticket;
-use App\Models\Voucher;
+use App\Services\TicketCalculator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class TicketController extends Controller
 {
-    public function store(StoreTicketRequest $request): JsonResponse
+    public function store(StoreTicketRequest $request, TicketCalculator $calculator): JsonResponse
     {
         $day = OperatingDay::findOrFail($request->input('operating_day_id'));
 
@@ -21,52 +20,18 @@ class TicketController extends Controller
             return response()->json(['message' => 'The operating day is closed.'], 422);
         }
 
-        $ticket = DB::transaction(function () use ($request, $day) {
-            $items = $request->input('items');
-            $ticketItems = [];
-            $total = 0;
+        $result = $calculator->compute($request->input('items'));
 
-            foreach ($items as $item) {
-                $product = Product::findOrFail($item['product_id']);
-
-                $unitPrice = $item['custom_unit_price'] ?? $product->unit_price;
-                $quantity = $item['quantity'];
-                $discount = 0;
-                $voucherId = null;
-
-                if (! empty($item['voucher_id'])) {
-                    $voucher = Voucher::findOrFail($item['voucher_id']);
-
-                    $voucherId = $voucher->id;
-
-                    if ($voucher->discount_percent !== null) {
-                        $discount = $unitPrice * ($voucher->discount_percent / 100);
-                    } else {
-                        $discount = $voucher->discount_fixed;
-                    }
-                }
-
-                $subtotal = ($unitPrice * $quantity) - $discount;
-                $total += $subtotal;
-
-                $ticketItems[] = [
-                    'product_id' => $product->id,
-                    'voucher_id' => $voucherId,
-                    'quantity' => $quantity,
-                    'unit_price' => $unitPrice,
-                    'subtotal' => $subtotal,
-                ];
-            }
-
+        $ticket = DB::transaction(function () use ($request, $day, $result) {
             $ticket = Ticket::create([
-                'total' => $total,
+                'total' => $result['total'],
                 'payment_method' => $request->input('payment_method'),
                 'operating_day_id' => $day->id,
                 'member_id' => $request->input('member_id'),
                 'sold_at' => $request->input('sold_at'),
             ]);
 
-            foreach ($ticketItems as $itemData) {
+            foreach ($result['items'] as $itemData) {
                 $ticket->ticketItems()->create($itemData);
             }
 
@@ -91,5 +56,21 @@ class TicketController extends Controller
         $ticket->setRelation('ticketItems', $allItems);
 
         return response()->json(['data' => $ticket]);
+    }
+
+    public function preview(StoreTicketRequest $request, TicketCalculator $calculator): JsonResponse
+    {
+        $day = OperatingDay::findOrFail($request->input('operating_day_id'));
+
+        if (! $day->isOpen()) {
+            return response()->json(['message' => 'The operating day is closed.'], 422);
+        }
+
+        $result = $calculator->compute($request->input('items'));
+
+        return response()->json([
+            'total' => $result['total'],
+            'items' => $result['items'],
+        ]);
     }
 }

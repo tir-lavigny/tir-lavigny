@@ -12,6 +12,7 @@ use App\Models\Ticket;
 use App\Models\TicketItem;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Services\TicketCalculator;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -22,12 +23,14 @@ class TicketControllerTest extends TestCase
     use RefreshDatabase;
 
     private TicketController $controller;
+    private TicketCalculator $calculator;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(RolesAndPermissionsSeeder::class);
-        $this->controller = new TicketController;
+        $this->controller = $this->app->make(TicketController::class);
+        $this->calculator = $this->app->make(TicketCalculator::class);
     }
 
     private function storeRequest(array $data = []): StoreTicketRequest
@@ -66,7 +69,7 @@ class TicketControllerTest extends TestCase
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 2],
             ],
-        ]));
+        ]), $this->calculator);
 
         $this->assertEquals(201, $response->status());
         $this->assertDatabaseHas('tickets', [
@@ -99,7 +102,7 @@ class TicketControllerTest extends TestCase
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 3],
             ],
-        ]));
+        ]), $this->calculator);
 
         $this->assertDatabaseHas('ticket_items', [
             'product_id' => $product->id,
@@ -141,7 +144,7 @@ class TicketControllerTest extends TestCase
                 ['product_id' => $product1->id, 'quantity' => 2],
                 ['product_id' => $product2->id, 'quantity' => 1],
             ],
-        ]));
+        ]), $this->calculator);
 
         $this->assertDatabaseHas('tickets', [
             'total' => 13.00,
@@ -178,7 +181,7 @@ class TicketControllerTest extends TestCase
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
             ],
-        ]));
+        ]), $this->calculator);
 
         $this->assertDatabaseHas('ticket_items', [
             'product_id' => $product->id,
@@ -210,7 +213,7 @@ class TicketControllerTest extends TestCase
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1, 'custom_unit_price' => 7.50],
             ],
-        ]));
+        ]), $this->calculator);
 
         $this->assertDatabaseHas('ticket_items', [
             'product_id' => $product->id,
@@ -242,7 +245,7 @@ class TicketControllerTest extends TestCase
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1, 'custom_unit_price' => -25.00],
             ],
-        ]));
+        ]), $this->calculator);
 
         $this->assertDatabaseHas('ticket_items', [
             'product_id' => $product->id,
@@ -276,7 +279,7 @@ class TicketControllerTest extends TestCase
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1],
             ],
-        ]));
+        ]), $this->calculator);
 
         $day->refresh();
         $this->assertEquals('25.00', $day->total_cash);
@@ -301,7 +304,7 @@ class TicketControllerTest extends TestCase
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1],
             ],
-        ]));
+        ]), $this->calculator);
 
         $this->assertEquals(422, $response->status());
     }
