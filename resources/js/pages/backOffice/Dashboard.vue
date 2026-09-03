@@ -9,7 +9,23 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate } from '@/lib/utils';
 import { ActivityLog, type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { ArrowRight, Calendar, CalendarRange, FileText, Layers, MapPin, Pencil, Plus, Trash2, User } from '@lucide/vue';
+import {
+    ArrowRight,
+    CalendarRange,
+    Layers,
+    Pencil,
+    Plus,
+    User,
+    Calendar,
+    CalendarDays,
+    FileText,
+    MapPin,
+    ShoppingCart,
+    Tag,
+    Ticket,
+    Trash2,
+    Users,
+} from '@lucide/vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -64,6 +80,18 @@ const modelIcon = (model: string) => {
             return Layers;
         case 'user':
             return User;
+        case 'ticket':
+            return Ticket;
+        case 'season':
+            return CalendarDays;
+        case 'product':
+            return ShoppingCart;
+        case 'category':
+            return Tag;
+        case 'member':
+            return Users;
+        case 'voucher':
+            return Tag;
         default:
             return FileText;
     }
@@ -91,6 +119,20 @@ const translateModel = (model: string) => {
             return 'utilisateur';
         case 'activitylog':
             return "journal d'activité";
+        case 'ticket':
+            return 'ticket';
+        case 'ticketitem':
+            return 'élément de tiquet';
+        case 'season':
+            return 'saison';
+        case 'product':
+            return 'produit';
+        case 'category':
+            return 'catégorie';
+        case 'member':
+            return 'membre';
+        case 'voucher':
+            return 'bon';
         default:
             return cleanModelName(model);
     }
@@ -104,12 +146,15 @@ const translateModel = (model: string) => {
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border">
+                    <!-- Display some register stats -->
                     <PlaceholderPattern />
                 </div>
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border">
+                    <!-- Display some events stats -->
                     <PlaceholderPattern />
                 </div>
                 <div class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border">
+                    <!-- Display some website visit stats if infomanial has an API -->
                     <PlaceholderPattern />
                 </div>
             </div>
@@ -144,7 +189,6 @@ const translateModel = (model: string) => {
                                         {{ formatDate(activity.created_at, 'ddd DD MMMM YYYY à HH:mm') }}
                                     </p>
                                 </div>
-                                {{ activity.model }}
                                 <Button
                                     v-if="route().has(`bo.${cleanModelName(activity.model)}s.show`)"
                                     :variant="activity.action === 'deleted' ? 'outline' : 'outline'"
