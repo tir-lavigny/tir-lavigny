@@ -112,11 +112,7 @@ const handleSubmit = () => {
 
                         <div class="space-y-2">
                             <Label>Rôles</Label>
-                            <SelectMulti
-                                v-model="form.roles"
-                                :options="roleOptions"
-                                placeholder="Sélectionner des rôles"
-                            />
+                            <SelectMulti v-model="form.roles" :options="roleOptions" placeholder="Sélectionner des rôles" />
                             <InputError :message="form.errors.roles" />
                         </div>
                     </div>
