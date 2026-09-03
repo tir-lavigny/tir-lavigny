@@ -89,6 +89,7 @@ class StoreTicketPreviewRequest extends FormRequest
 
                             $isUsed = DB::table('ticket_items')
                                 ->where('voucher_id', $voucherId)
+                                ->whereNull('deleted_at')
                                 ->exists();
 
                             if ($isUsed) {

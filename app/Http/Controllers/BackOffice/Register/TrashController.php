@@ -45,7 +45,10 @@ class TrashController extends Controller implements HasMiddleware
         $members = Member::onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(15, ['*'], 'members_page');
         $tickets = Ticket::with('operatingDay', 'member')->onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(15, ['*'], 'tickets_page');
 
-        $vouchersQuery = Voucher::with(['product', 'season', 'member'])->onlyTrashed()->orderBy('deleted_at', 'desc');
+        $vouchersQuery = Voucher::with(['product', 'season', 'member'])
+            ->onlyTrashed()
+            ->whereDoesntHave('ticketItems')
+            ->orderBy('deleted_at', 'desc');
         if ($memberId = $request->input('member_id')) {
             $vouchersQuery->where('member_id', $memberId);
         }
@@ -65,6 +68,10 @@ class TrashController extends Controller implements HasMiddleware
 
     public function restore(Request $request, string $type, int $id): JsonResponse|RedirectResponse
     {
+        if ($type === 'ticket') {
+            return response()->json(['message' => 'Les tickets ne peuvent pas être restaurés.'], 422);
+        }
+
         $modelClass = $this->resolveType($type);
 
         $model = $modelClass::onlyTrashed()->findOrFail($id);

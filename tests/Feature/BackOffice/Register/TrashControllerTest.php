@@ -159,7 +159,7 @@ class TrashControllerTest extends TestCase
         $this->assertDatabaseHas('products', ['category_id' => $category->id, 'deleted_at' => null]);
     }
 
-    public function test_restore_ticket_also_restores_ticket_items(): void
+    public function test_restore_ticket_returns_422(): void
     {
         $ticket = Ticket::factory()->create();
         $ticketItem = TicketItem::factory()->create(['ticket_id' => $ticket->id]);
@@ -170,9 +170,9 @@ class TrashControllerTest extends TestCase
 
         $response = $this->postJson(route('bo.register.trash.restore', ['type' => 'ticket', 'id' => $ticket->id, 'confirm' => true]));
 
-        $response->assertRedirect();
-        $this->assertDatabaseHas('tickets', ['id' => $ticket->id, 'deleted_at' => null]);
-        $this->assertDatabaseHas('ticket_items', ['id' => $ticketItem->id, 'deleted_at' => null]);
+        $response->assertStatus(422);
+        $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
+        $this->assertSoftDeleted('ticket_items', ['id' => $ticketItem->id]);
     }
 
     public function test_restore_member_restores_unused_vouchers(): void

@@ -195,6 +195,59 @@ class TicketControllerTest extends TestCase
         ]);
     }
 
+    public function test_store_allows_reuse_of_refunded_voucher(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->subMonth(),
+            'end_date' => Carbon::now()->addMonth(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'unit_price' => 10.00,
+        ]);
+        $voucher = Voucher::factory()->percent()->create([
+            'discount_percent' => 10.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 9.00,
+        ]);
+        TicketItem::factory()->create([
+            'ticket_id' => $ticket->id,
+            'product_id' => $product->id,
+            'voucher_id' => $voucher->id,
+            'quantity' => 1,
+            'unit_price' => 10.00,
+            'subtotal' => 9.00,
+        ]);
+
+        $ticket->delete();
+
+        $response = $this->controller->store($this->storeRequest([
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
+            ],
+        ]), $this->calculator);
+
+        $this->assertEquals(201, $response->status());
+        $this->assertDatabaseHas('ticket_items', [
+            'voucher_id' => $voucher->id,
+            'subtotal' => 9.00,
+        ]);
+    }
+
     public function test_store_with_custom_unit_price(): void
     {
         $season = Season::factory()->create([

@@ -365,18 +365,13 @@ const handleMemberFilterChange = () => {
                                     <TableCell>{{ item.total }} CHF</TableCell>
                                     <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
-                                        <div class="flex justify-end gap-2">
-                                            <Button size="sm" variant="outline" @click="openRestoreDialog('ticket', item.id, 'Ticket #' + item.id)">
-                                                <RotateCcw class="mr-1 h-4 w-4" /> Restaurer
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="destructive"
-                                                @click="openForceDeleteDialog('ticket', item.id, 'Ticket #' + item.id)"
-                                            >
-                                                <Trash2 class="mr-1 h-4 w-4" /> Supprimer
-                                            </Button>
-                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            @click="openForceDeleteDialog('ticket', item.id, 'Ticket #' + item.id)"
+                                        >
+                                            <Trash2 class="mr-1 h-4 w-4" /> Supprimer
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                                 <TableRow v-if="tickets.data?.length === 0">
