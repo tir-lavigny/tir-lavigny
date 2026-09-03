@@ -74,6 +74,21 @@ class OperatingDayController extends Controller
         return response()->json(['data' => new OperatingDayResource($day)]);
     }
 
+    public function previousUnclosed(): JsonResponse
+    {
+        $day = OperatingDay::whereDate('date', '<', Carbon::today())
+            ->whereNull('closed_at')
+            ->with('tickets.ticketItems.product', 'tickets.ticketItems.voucher')
+            ->orderBy('date', 'desc')
+            ->first();
+
+        if (! $day) {
+            return response()->json(['message' => 'No previous unclosed operating day found.'], 404);
+        }
+
+        return response()->json(['data' => new OperatingDayResource($day)]);
+    }
+
     public function show(OperatingDay $operatingDay): JsonResponse
     {
         $operatingDay->load([

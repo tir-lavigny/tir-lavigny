@@ -56,6 +56,7 @@ class TicketControllerTest extends TestCase
         $day = OperatingDay::factory()->create([
             'season_id' => $season->id,
             'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
         ]);
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = Product::factory()->create([
@@ -89,6 +90,7 @@ class TicketControllerTest extends TestCase
         $day = OperatingDay::factory()->create([
             'season_id' => $season->id,
             'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
         ]);
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = Product::factory()->create([
@@ -126,6 +128,7 @@ class TicketControllerTest extends TestCase
         $day = OperatingDay::factory()->create([
             'season_id' => $season->id,
             'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
         ]);
         $category = Category::factory()->create(['is_restricted' => false]);
         $product1 = Product::factory()->create([
@@ -163,6 +166,7 @@ class TicketControllerTest extends TestCase
         $day = OperatingDay::factory()->create([
             'season_id' => $season->id,
             'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
         ]);
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = Product::factory()->create([
@@ -200,6 +204,7 @@ class TicketControllerTest extends TestCase
         $day = OperatingDay::factory()->create([
             'season_id' => $season->id,
             'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
         ]);
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = Product::factory()->allowsCustomPrice()->create([
@@ -232,6 +237,7 @@ class TicketControllerTest extends TestCase
         $day = OperatingDay::factory()->create([
             'season_id' => $season->id,
             'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
         ]);
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = Product::factory()->allowsCustomPrice()->create([
@@ -264,6 +270,7 @@ class TicketControllerTest extends TestCase
         $day = OperatingDay::factory()->create([
             'season_id' => $season->id,
             'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
             'total_cash' => 0,
             'total_twint' => 0,
         ]);

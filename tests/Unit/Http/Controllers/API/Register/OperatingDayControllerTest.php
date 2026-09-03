@@ -264,6 +264,136 @@ class OperatingDayControllerTest extends TestCase
         $this->assertCount(1, $data['data']['tickets']);
     }
 
+    // --- previousUnclosed() ---
+
+    public function test_previous_unclosed_returns_unclosed_day_from_past(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::create([
+            'date' => Carbon::yesterday(),
+            'started_at' => Carbon::yesterday()->subHours(8),
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'total_cash' => 0,
+            'total_twint' => 0,
+        ]);
+
+        $request = Request::create('/api/register/operating-days/previous-unclosed', 'GET');
+        $response = $this->controller->previousUnclosed($request);
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertEquals(200, $response->status());
+        $this->assertEquals($day->id, $data['data']['id']);
+    }
+
+    public function test_previous_unclosed_returns_404_when_none_found(): void
+    {
+        $request = Request::create('/api/register/operating-days/previous-unclosed', 'GET');
+        $response = $this->controller->previousUnclosed($request);
+
+        $this->assertEquals(404, $response->status());
+    }
+
+    public function test_previous_unclosed_excludes_today(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        OperatingDay::create([
+            'date' => Carbon::today(),
+            'started_at' => Carbon::now(),
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'total_cash' => 0,
+            'total_twint' => 0,
+        ]);
+
+        $request = Request::create('/api/register/operating-days/previous-unclosed', 'GET');
+        $response = $this->controller->previousUnclosed($request);
+
+        $this->assertEquals(404, $response->status());
+    }
+
+    public function test_previous_unclosed_excludes_closed_days(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        OperatingDay::create([
+            'date' => Carbon::yesterday(),
+            'started_at' => Carbon::yesterday()->subHours(8),
+            'closed_at' => Carbon::yesterday(),
+            'season_id' => $season->id,
+            'total_cash' => 0,
+            'total_twint' => 0,
+        ]);
+
+        $request = Request::create('/api/register/operating-days/previous-unclosed', 'GET');
+        $response = $this->controller->previousUnclosed($request);
+
+        $this->assertEquals(404, $response->status());
+    }
+
+    public function test_previous_unclosed_returns_most_recent(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $oldest = OperatingDay::create([
+            'date' => Carbon::now()->subDays(3),
+            'started_at' => Carbon::now()->subDays(3)->subHours(8),
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'total_cash' => 0,
+            'total_twint' => 0,
+        ]);
+        $recent = OperatingDay::create([
+            'date' => Carbon::yesterday(),
+            'started_at' => Carbon::yesterday()->subHours(8),
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'total_cash' => 0,
+            'total_twint' => 0,
+        ]);
+
+        $request = Request::create('/api/register/operating-days/previous-unclosed', 'GET');
+        $response = $this->controller->previousUnclosed($request);
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertEquals(200, $response->status());
+        $this->assertEquals($recent->id, $data['data']['id']);
+    }
+
+    public function test_previous_unclosed_eager_loads_tickets(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::create([
+            'date' => Carbon::yesterday(),
+            'started_at' => Carbon::yesterday()->subHours(8),
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'total_cash' => 0,
+            'total_twint' => 0,
+        ]);
+        Ticket::factory()->cash()->create(['operating_day_id' => $day->id]);
+
+        $request = Request::create('/api/register/operating-days/previous-unclosed', 'GET');
+        $response = $this->controller->previousUnclosed($request);
+        $data = json_decode($response->getContent(), true);
+
+        $this->assertEquals(200, $response->status());
+        $this->assertCount(1, $data['data']['tickets']);
+    }
+
     // --- show() ---
 
     public function test_show_returns_operating_day_with_tickets(): void

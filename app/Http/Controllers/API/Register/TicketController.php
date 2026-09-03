@@ -21,6 +21,10 @@ class TicketController extends Controller
             return response()->json(['message' => 'The operating day is closed.'], 422);
         }
 
+        if ($day->date < now()->toDateString()) {
+            return response()->json(['message' => 'The operating day is in the past. Can\'t create tickets for it.'], 422);
+        }
+
         $result = $calculator->compute($request->input('items'));
 
         $ticket = DB::transaction(function () use ($request, $day, $result) {

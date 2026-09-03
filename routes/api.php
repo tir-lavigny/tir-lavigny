@@ -33,6 +33,8 @@ Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->g
         ->name('api.register.operating-days.update');
     Route::get('/days/current', [Register\OperatingDayController::class, 'current'])
         ->name('api.register.operating-days.current');
+    Route::get('/days/previous-unclosed', [Register\OperatingDayController::class, 'previousUnclosed'])
+        ->name('api.register.operating-days.previous-unclosed');
     Route::get('/days/{operatingDay}', [Register\OperatingDayController::class, 'show'])
         ->name('api.register.operating-days.show');
 
