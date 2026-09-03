@@ -102,12 +102,14 @@
             <h1>Clôture de journée</h1>
         </div>
         <div class="content">
-            <p>La journée du <strong>{{ $operatingDay->date->format('d.m.Y') }}</strong> (saison {{ $operatingDay->season->name }}) a été clôturée.</p>
+            <p>La journée du <strong>{{ $operatingDay->date->format('d.m.Y') }}</strong> (saison
+                {{ $operatingDay->season->name }}) a été clôturée.</p>
 
             <div class="summary">
                 <p><strong>Total Espèces :</strong> {{ number_format($operatingDay->total_cash, 2, ',', '.') }} CHF</p>
                 <p><strong>Total Twint :</strong> {{ number_format($operatingDay->total_twint, 2, ',', '.') }} CHF</p>
-                <p><strong>Solde clôture :</strong> {{ number_format($operatingDay->closing_balance, 2, ',', '.') }} CHF</p>
+                <p><strong>Solde clôture :</strong> {{ number_format($operatingDay->closing_balance, 2, ',', '.') }} CHF
+                </p>
                 <p><strong>Tickets :</strong> {{ $operatingDay->tickets_count ?? $operatingDay->tickets->count() }}</p>
             </div>
 
@@ -115,7 +117,6 @@
                 <p><strong>Remarque :</strong> {{ $operatingDay->cash_remark }}</p>
             </div>
 
-            <p>Cordialement,<br><strong>Le comité</strong></p>
         </div>
         <div class="footer">
             <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
