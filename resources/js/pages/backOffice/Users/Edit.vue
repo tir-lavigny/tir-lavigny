@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AppSelect from '@/components/AppSelect.vue';
 import InputError from '@/components/InputError.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Small } from '@/components/typography/texts';
@@ -7,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
+import { SelectMulti } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -23,6 +23,7 @@ const currentUser = page.props.auth.user;
 const props = defineProps<{
     user: User;
     roles: Role[];
+    protectedEmail: string;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -39,7 +40,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const form = useForm({
     name: props.user.name,
     email: props.user.email,
-    role: props.user.roles && props.user.roles.length > 0 ? props.user.roles[0].name : '',
+    roles: props.user.roles?.map((r) => r.name) ?? [],
 });
 
 const roleOptions = computed(() =>
@@ -64,10 +65,14 @@ const handleSubmit = () => {
         onSuccess: () => {
             toast.success("L'utilisateur a été modifié avec succès.");
         },
-        onError: () => {
-            toast.error("Une erreur est survenue lors de la modification de l'utilisateur.", {
-                description: 'Veuillez vérifier les informations saisies.',
-            });
+        onError: (errors) => {
+            if (errors.roles) {
+                toast.error(Array.isArray(errors.roles) ? errors.roles[0] : errors.roles);
+            } else {
+                toast.error("Une erreur est survenue lors de la modification de l'utilisateur.", {
+                    description: 'Veuillez vérifier les informations saisies.',
+                });
+            }
         },
         onFinish: () => {
             form.clearErrors();
@@ -115,14 +120,9 @@ const handleSubmit = () => {
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="role">Rôle</Label>
-                            <AppSelect
-                                v-model="form.role"
-                                :options="roleOptions"
-                                placeholder="Sélectionner un rôle"
-                                group-label="Rôles disponibles"
-                            />
-                            <InputError :message="form.errors.role" />
+                            <Label>Rôles</Label>
+                            <SelectMulti v-model="form.roles" :options="roleOptions" placeholder="Sélectionner des rôles" />
+                            <InputError :message="form.errors.roles" />
                         </div>
 
                         <div v-if="user.created_at" class="space-y-2">

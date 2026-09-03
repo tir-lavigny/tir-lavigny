@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import AppSelect from '@/components/AppSelect.vue';
 import InputError from '@/components/InputError.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Small } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
+import { SelectMulti } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -34,18 +34,18 @@ const props = defineProps<{
     roles: Role[];
 }>();
 
-const form = useForm({
-    name: '',
-    email: '',
-    role: '',
-});
-
 const roleOptions = computed(() =>
     props.roles.map((role) => ({
         label: role.name.charAt(0).toUpperCase() + role.name.slice(1),
         value: role.name,
     })),
 );
+
+const form = useForm({
+    name: '',
+    email: '',
+    roles: [] as string[],
+});
 
 const resetForm = () => {
     form.reset();
@@ -111,14 +111,13 @@ const handleSubmit = () => {
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="role">Rôle</Label>
-                            <AppSelect
-                                v-model="form.role"
+                            <Label>Rôles</Label>
+                            <SelectMulti
+                                v-model="form.roles"
                                 :options="roleOptions"
-                                placeholder="Sélectionner un rôle"
-                                group-label="Rôles disponibles"
+                                placeholder="Sélectionner des rôles"
                             />
-                            <InputError :message="form.errors.role" />
+                            <InputError :message="form.errors.roles" />
                         </div>
                     </div>
 

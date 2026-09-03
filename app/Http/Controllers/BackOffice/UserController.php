@@ -78,7 +78,8 @@ class UserController extends Controller implements HasMiddleware
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:users',
-            'role' => 'required|exists:roles,name',
+            'roles' => 'required|array',
+            'roles.*' => 'exists:roles,name',
         ]);
 
         // Generate a random password
@@ -91,8 +92,8 @@ class UserController extends Controller implements HasMiddleware
         $user->email_verified_at = now(); // Auto-verify admin-created users
         $user->save();
 
-        // Assign role
-        $user->assignRole($request->input('role'));
+        // Assign roles
+        $user->syncRoles($request->input('roles'));
 
         // Send email with credentials
         try {
@@ -129,6 +130,7 @@ class UserController extends Controller implements HasMiddleware
         return Inertia::render('backOffice/Users/Edit', [
             'user' => $user,
             'roles' => $roles,
+            'protectedEmail' => env('APP_USER_EMAIL'),
         ]);
     }
 
@@ -138,6 +140,9 @@ class UserController extends Controller implements HasMiddleware
     public function update(Request $request, string $id)
     {
         $user = User::findOrFail($id);
+
+        $protectedEmail = env('APP_USER_EMAIL');
+        $isProtectedUser = $user->email === $protectedEmail;
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -149,15 +154,24 @@ class UserController extends Controller implements HasMiddleware
                 'max:255',
                 Rule::unique('users')->ignore($user->id),
             ],
-            'role' => 'required|exists:roles,name',
+            'roles' => 'required|array',
+            'roles.*' => 'exists:roles,name',
         ]);
+
+        // Prevent removing admin role from the protected user
+        if ($isProtectedUser) {
+            $roles = $request->input('roles');
+            if (! in_array('admin', $roles)) {
+                return back()->withErrors(['roles' => 'Le rôle admin ne peut pas être retiré du compte protégé.']);
+            }
+        }
 
         $user->name = $request->input('name');
         $user->email = $request->input('email');
         $user->save();
 
-        // Update role
-        $user->syncRoles([$request->input('role')]);
+        // Update roles
+        $user->syncRoles($request->input('roles'));
 
         return redirect()->route('bo.users.show', $user->id)->with('success', 'User updated successfully.');
     }
