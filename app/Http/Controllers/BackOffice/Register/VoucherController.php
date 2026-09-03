@@ -25,7 +25,7 @@ class VoucherController extends Controller implements HasMiddleware
 
     public function index(): Response
     {
-        $vouchers = Voucher::with(['product', 'season', 'member'])
+        $vouchers = Voucher::with(['product', 'season', 'member', 'ticketItems'])
             ->orderBy('id')
             ->paginate(15);
 

@@ -247,6 +247,7 @@ export interface Voucher {
     product?: Product;
     season?: Season;
     member?: Member;
+    ticket_items?: TicketItem[];
     created_at: string;
     updated_at: string;
     deleted_at?: string;

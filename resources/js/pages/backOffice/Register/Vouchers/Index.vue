@@ -10,6 +10,7 @@ import { formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedVouchers, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash2 } from '@lucide/vue';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'vue-sonner';
 
 const page = usePage<SharedData>();
@@ -59,16 +60,19 @@ const formatDiscount = (voucher: any) => {
                 </div>
                 <div v-for="voucher in vouchers.data" :key="voucher.id" class="mb-4 flex items-center justify-between rounded-lg border p-4">
                     <div>
-                        <p class="font-medium">
-                            {{ formatDiscount(voucher) }}
-                        </p>
+                        <div class="flex items-center gap-2">
+                            <p class="font-medium">
+                                {{ formatDiscount(voucher) }}
+                            </p>
+                            <Badge v-if="voucher.ticket_items?.length" variant="secondary">Utilisé</Badge>
+                        </div>
                         <p class="text-muted-foreground text-sm">
                             <span v-if="voucher.product">{{ voucher.product.name }}</span>
                             <span v-if="voucher.member"> · {{ voucher.member.first_name }} {{ voucher.member.last_name }}</span>
                             <span v-if="voucher.season"> · {{ voucher.season.name }}</span>
                         </p>
                     </div>
-                    <div class="flex gap-2">
+                    <div v-if="!voucher.ticket_items?.length" class="flex gap-2">
                         <Tooltip v-if="hasPermissionTo(user, 'manage vouchers')">
                             <TooltipTrigger>
                                 <Link :href="route('bo.register.vouchers.edit', voucher.id)">
