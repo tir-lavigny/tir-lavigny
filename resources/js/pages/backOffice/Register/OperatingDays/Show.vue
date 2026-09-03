@@ -143,7 +143,7 @@ function handleRefunded() {
                     <TableRow
                         v-for="ticket in operatingDay.tickets"
                         :key="ticket.id"
-                        class="cursor-pointer transition-colors hover:bg-muted/50"
+                        class="hover:bg-muted/50 cursor-pointer transition-colors"
                         :class="{ 'opacity-50': ticket.deleted_at }"
                         @click="openTicket(ticket)"
                     >
@@ -157,7 +157,7 @@ function handleRefunded() {
                                 {{ ticket.payment_method === 'cash' ? 'Espèces' : 'TWINT' }}
                             </Badge>
                         </TableCell>
-                        <TableCell class="text-right" :class="{ 'line-through text-muted-foreground': ticket.deleted_at }">
+                        <TableCell class="text-right" :class="{ 'text-muted-foreground line-through': ticket.deleted_at }">
                             {{ formatMoney(ticket.total) }} CHF
                         </TableCell>
                     </TableRow>

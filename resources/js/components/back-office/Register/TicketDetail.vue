@@ -65,14 +65,12 @@ function handleRefund() {
                 </Badge>
                 <Badge v-if="isRefunded" variant="destructive">Remboursé</Badge>
             </div>
-            <span class="text-sm text-muted-foreground">{{ formatDate(ticket.sold_at, 'HH:mm') }}</span>
+            <span class="text-muted-foreground text-sm">{{ formatDate(ticket.sold_at, 'HH:mm') }}</span>
         </div>
 
-        <p class="text-2xl font-bold" :class="{ 'line-through text-muted-foreground': isRefunded }">
-            {{ formatMoney(ticket.total) }} CHF
-        </p>
+        <p class="text-2xl font-bold" :class="{ 'text-muted-foreground line-through': isRefunded }">{{ formatMoney(ticket.total) }} CHF</p>
 
-        <div v-if="ticket.member" class="rounded-lg bg-muted/50 px-3 py-2 text-sm">
+        <div v-if="ticket.member" class="bg-muted/50 rounded-lg px-3 py-2 text-sm">
             <span class="text-muted-foreground">Membre :</span>
             <span class="ml-1 font-medium">{{ ticket.member.first_name }} {{ ticket.member.last_name }}</span>
         </div>
@@ -98,7 +96,7 @@ function handleRefund() {
                     </TableCell>
                     <TableCell class="text-center">{{ item.quantity }}</TableCell>
                     <TableCell class="text-right">{{ formatMoney(item.unit_price) }} CHF</TableCell>
-                    <TableCell class="text-right" :class="{ 'line-through text-muted-foreground': isRefunded }">
+                    <TableCell class="text-right" :class="{ 'text-muted-foreground line-through': isRefunded }">
                         {{ formatMoney(item.subtotal) }} CHF
                     </TableCell>
                 </TableRow>
@@ -111,9 +109,7 @@ function handleRefund() {
             <Separator />
             <AlertDialog>
                 <AlertDialogTrigger as-child>
-                    <Button variant="destructive" :disabled="refundForm.processing">
-                        <RotateCcw class="mr-2 size-4" /> Rembourser
-                    </Button>
+                    <Button variant="destructive" :disabled="refundForm.processing"> <RotateCcw class="mr-2 size-4" /> Rembourser </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
