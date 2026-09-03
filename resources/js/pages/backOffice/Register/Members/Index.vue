@@ -10,7 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedMembers, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, Ticket, Trash2 } from '@lucide/vue';
+import { Pencil, Plus, Search, TicketX, Trash2 } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -83,7 +83,7 @@ const handleDelete = (id: number) => {
                         <Tooltip v-if="hasPermissionTo(user, 'restore register')">
                             <TooltipTrigger>
                                 <Link :href="route('bo.register.trash.index') + '?member_id=' + member.id">
-                                    <Button size="icon" variant="outline"><Ticket /></Button>
+                                    <Button size="icon" variant="outline"><TicketX /></Button>
                                 </Link>
                             </TooltipTrigger>
                             <TooltipContent><p>Bons supprimés</p></TooltipContent>
