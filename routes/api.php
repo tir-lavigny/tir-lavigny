@@ -44,6 +44,8 @@ Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->g
         ->name('api.register.tickets.preview');
     Route::get('/tickets/{ticket}', [Register\TicketController::class, 'show'])
         ->name('api.register.tickets.show');
+    Route::post('/tickets/{ticket}/refund', [Register\TicketController::class, 'refund'])
+        ->name('api.register.tickets.refund');
 
     Route::get('/products', [Register\ProductController::class, 'index'])
         ->name('api.register.products.index');

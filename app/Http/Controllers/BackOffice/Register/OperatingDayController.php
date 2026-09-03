@@ -61,7 +61,12 @@ class OperatingDayController extends Controller implements HasMiddleware
 
     public function show(OperatingDay $operatingDay): Response
     {
-        $operatingDay->load(['tickets.ticketItems.product', 'tickets.ticketItems.voucher', 'season']);
+        $operatingDay->load([
+            'tickets' => fn ($q) => $q->withTrashed(),
+            'tickets.ticketItems.product',
+            'tickets.ticketItems.voucher',
+            'season',
+        ]);
 
         return Inertia::render('backOffice/Register/OperatingDays/Show', [
             'operatingDay' => $operatingDay,

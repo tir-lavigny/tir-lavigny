@@ -512,4 +512,117 @@ class TicketControllerTest extends TestCase
 
         $this->assertEquals($storeTotal, $previewTotal);
     }
+
+    // --- refund() ---
+
+    public function test_refund_soft_deletes_ticket(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 5.00,
+        ]);
+        TicketItem::factory()->create([
+            'ticket_id' => $ticket->id,
+            'product_id' => $product->id,
+        ]);
+
+        $this->user->givePermissionTo('refund ticket');
+
+        $response = $this->postJson(route('api.register.tickets.refund', $ticket), [], $this->authHeaders());
+
+        $response->assertOk();
+        $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
+    }
+
+    public function test_refund_recalculates_day_totals(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
+            'total_cash' => 5.00,
+            'total_twint' => 0,
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 5.00,
+        ]);
+        TicketItem::factory()->create([
+            'ticket_id' => $ticket->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'unit_price' => 5.00,
+            'subtotal' => 5.00,
+        ]);
+
+        $this->user->givePermissionTo('refund ticket');
+
+        $this->postJson(route('api.register.tickets.refund', $ticket), [], $this->authHeaders())->assertOk();
+
+        $this->assertEquals('0.00', $day->fresh()->total_cash);
+    }
+
+    public function test_refund_fails_for_closed_operating_day(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 5.00,
+        ]);
+
+        $this->user->givePermissionTo('refund ticket');
+
+        $response = $this->postJson(route('api.register.tickets.refund', $ticket), [], $this->authHeaders());
+
+        $response->assertUnprocessable();
+        $this->assertDatabaseHas('tickets', ['id' => $ticket->id, 'deleted_at' => null]);
+    }
+
+    public function test_refund_requires_permission(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 5.00,
+        ]);
+
+        $response = $this->postJson(route('api.register.tickets.refund', $ticket), [], $this->authHeaders());
+
+        $response->assertForbidden();
+    }
 }

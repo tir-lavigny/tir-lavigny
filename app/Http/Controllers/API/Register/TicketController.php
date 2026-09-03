@@ -9,10 +9,19 @@ use App\Models\OperatingDay;
 use App\Models\Ticket;
 use App\Services\TicketCalculator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 
-class TicketController extends Controller
+class TicketController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:refund ticket', only: ['refund']),
+        ];
+    }
+
     public function store(StoreTicketRequest $request, TicketCalculator $calculator): JsonResponse
     {
         $day = OperatingDay::findOrFail($request->input('operating_day_id'));
@@ -77,5 +86,20 @@ class TicketController extends Controller
             'total' => $result['total'],
             'items' => $result['items'],
         ]);
+    }
+
+    public function refund(Ticket $ticket): JsonResponse
+    {
+        $day = $ticket->operatingDay;
+
+        if (! $day->isOpen()) {
+            return response()->json(['message' => 'The operating day is closed.'], 422);
+        }
+
+        $ticket->delete();
+
+        $day->recalculateTotals();
+
+        return response()->json(['message' => 'Ticket refunded successfully.']);
     }
 }

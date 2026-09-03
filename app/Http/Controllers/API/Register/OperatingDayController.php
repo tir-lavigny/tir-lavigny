@@ -64,7 +64,7 @@ class OperatingDayController extends Controller
     public function current(): JsonResponse
     {
         $day = OperatingDay::whereDate('date', Carbon::today())
-            ->with('tickets.ticketItems.product', 'tickets.ticketItems.voucher')
+            ->with(['tickets' => fn ($q) => $q->withTrashed()], 'tickets.ticketItems.product', 'tickets.ticketItems.voucher')
             ->first();
 
         if (! $day) {
@@ -78,7 +78,7 @@ class OperatingDayController extends Controller
     {
         $day = OperatingDay::whereDate('date', '<', Carbon::today())
             ->whereNull('closed_at')
-            ->with('tickets.ticketItems.product', 'tickets.ticketItems.voucher')
+            ->with(['tickets' => fn ($q) => $q->withTrashed()], 'tickets.ticketItems.product', 'tickets.ticketItems.voucher')
             ->orderBy('date', 'desc')
             ->first();
 
@@ -92,6 +92,7 @@ class OperatingDayController extends Controller
     public function show(OperatingDay $operatingDay): JsonResponse
     {
         $operatingDay->load([
+            'tickets' => fn ($q) => $q->withTrashed(),
             'tickets.ticketItems.product',
             'tickets.ticketItems.voucher',
         ]);

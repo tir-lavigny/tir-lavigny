@@ -373,4 +373,89 @@ class TicketControllerTest extends TestCase
         $this->assertEquals(200, $response->status());
         $this->assertCount(1, $data['data']['ticket_items']);
     }
+
+    // --- refund() ---
+
+    public function test_refund_soft_deletes_ticket(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 5.00,
+        ]);
+        TicketItem::factory()->create([
+            'ticket_id' => $ticket->id,
+            'product_id' => $product->id,
+        ]);
+
+        $response = $this->controller->refund($ticket);
+
+        $this->assertEquals(200, $response->status());
+        $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
+    }
+
+    public function test_refund_recalculates_day_totals(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
+            'total_cash' => 5.00,
+            'total_twint' => 0,
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 5.00,
+        ]);
+        TicketItem::factory()->create([
+            'ticket_id' => $ticket->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'unit_price' => 5.00,
+            'subtotal' => 5.00,
+        ]);
+
+        $this->controller->refund($ticket);
+
+        $day->refresh();
+        $this->assertEquals('0.00', $day->total_cash);
+    }
+
+    public function test_refund_fails_for_closed_operating_day(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 5.00,
+        ]);
+
+        $response = $this->controller->refund($ticket);
+
+        $this->assertEquals(422, $response->status());
+        $this->assertDatabaseHas('tickets', ['id' => $ticket->id, 'deleted_at' => null]);
+    }
 }
