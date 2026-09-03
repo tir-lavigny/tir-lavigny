@@ -63,6 +63,8 @@ class OperatingDayController extends Controller implements HasMiddleware
     {
         $operatingDay->load([
             'tickets' => fn ($q) => $q->withTrashed(),
+            'tickets.member',
+            'tickets.ticketItems' => fn ($q) => $q->withTrashed(),
             'tickets.ticketItems.product',
             'tickets.ticketItems.voucher',
             'season',

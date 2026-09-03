@@ -1,17 +1,21 @@
 <script setup lang="ts">
+import TicketDetail from '@/components/back-office/Register/TicketDetail.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
-import type { BreadcrumbItem, OperatingDay, Product, SharedData } from '@/types';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import type { BreadcrumbItem, OperatingDay, Product, SharedData, Ticket } from '@/types';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { createReusableTemplate, useMediaQuery } from '@vueuse/core';
 import { Lock, Unlock } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 const page = usePage<SharedData>();
@@ -32,12 +36,23 @@ const reopenForm = useForm({ status: 'open' });
 
 const isOpen = computed(() => !props.operatingDay.closed_at);
 
-const handleClose = () => {
+const isDesktop = useMediaQuery('(min-width: 768px)');
+const selectedTicket = ref<Ticket | null>(null);
+const isSheetOpen = ref(false);
+
+const [DefineTicketContent, ReuseTicketContent] = createReusableTemplate<{ ticket: Ticket }>();
+
+function openTicket(ticket: Ticket) {
+    selectedTicket.value = ticket;
+    isSheetOpen.value = true;
+}
+
+function handleClose() {
     closeForm.put(route('bo.register.operating-days.update', props.operatingDay.id), {
         onSuccess: () => toast.success('Journée fermée.'),
         onError: () => toast.error('Erreur lors de la fermeture.'),
     });
-};
+}
 
 const handleReopen = () => {
     reopenForm.put(route('bo.register.operating-days.update', props.operatingDay.id), {
@@ -45,6 +60,11 @@ const handleReopen = () => {
         onError: () => toast.error('Erreur lors de la réouverture.'),
     });
 };
+
+function handleRefunded() {
+    isSheetOpen.value = false;
+    router.reload({ only: ['operatingDay'] });
+}
 </script>
 
 <template>
@@ -120,19 +140,58 @@ const handleReopen = () => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow v-for="ticket in operatingDay.tickets" :key="ticket.id">
-                        <TableCell class="font-medium">{{ ticket.id }}</TableCell>
+                    <TableRow
+                        v-for="ticket in operatingDay.tickets"
+                        :key="ticket.id"
+                        class="cursor-pointer transition-colors hover:bg-muted/50"
+                        :class="{ 'opacity-50': ticket.deleted_at }"
+                        @click="openTicket(ticket)"
+                    >
+                        <TableCell class="font-medium">
+                            {{ ticket.id }}
+                            <Badge v-if="ticket.deleted_at" variant="destructive" class="ml-2">Remboursé</Badge>
+                        </TableCell>
                         <TableCell>{{ formatDate(ticket.sold_at, 'HH:mm') }}</TableCell>
                         <TableCell>
                             <Badge :variant="ticket.payment_method === 'cash' ? 'default' : 'secondary'">
                                 {{ ticket.payment_method === 'cash' ? 'Espèces' : 'TWINT' }}
                             </Badge>
                         </TableCell>
-                        <TableCell class="text-right">{{ formatMoney(ticket.total) }} CHF</TableCell>
+                        <TableCell class="text-right" :class="{ 'line-through text-muted-foreground': ticket.deleted_at }">
+                            {{ formatMoney(ticket.total) }} CHF
+                        </TableCell>
                     </TableRow>
                 </TableBody>
             </Table>
             <p v-else class="text-muted-foreground text-sm">Aucun ticket.</p>
         </div>
+
+        <DefineTicketContent v-slot="{ ticket: slotTicket }">
+            <TicketDetail :ticket="slotTicket" :day-is-open="isOpen" @refunded="handleRefunded" />
+        </DefineTicketContent>
+
+        <Sheet v-if="isDesktop" :open="isSheetOpen" @update:open="isSheetOpen = $event">
+            <SheetContent class="w-full sm:max-w-xl">
+                <ScrollArea class="h-screen pb-4">
+                    <SheetHeader>
+                        <SheetTitle>Ticket #{{ selectedTicket?.id }}</SheetTitle>
+                    </SheetHeader>
+                    <div class="px-4 pt-4">
+                        <ReuseTicketContent v-if="selectedTicket" :ticket="selectedTicket" />
+                    </div>
+                </ScrollArea>
+            </SheetContent>
+        </Sheet>
+
+        <Drawer v-else :open="isSheetOpen" @update:open="isSheetOpen = $event">
+            <DrawerContent>
+                <DrawerHeader>
+                    <DrawerTitle>Ticket #{{ selectedTicket?.id }}</DrawerTitle>
+                </DrawerHeader>
+                <div class="px-4 pb-4">
+                    <ReuseTicketContent v-if="selectedTicket" :ticket="selectedTicket" />
+                </div>
+            </DrawerContent>
+        </Drawer>
     </AppLayout>
 </template>
