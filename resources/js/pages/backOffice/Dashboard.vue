@@ -92,6 +92,8 @@ const modelIcon = (model: string) => {
             return Users;
         case 'voucher':
             return Tag;
+        case 'operatingday':
+            return CalendarDays;
         default:
             return FileText;
     }
@@ -122,7 +124,7 @@ const translateModel = (model: string) => {
         case 'ticket':
             return 'ticket';
         case 'ticketitem':
-            return 'élément de tiquet';
+            return 'élément de ticket';
         case 'season':
             return 'saison';
         case 'product':
@@ -133,6 +135,8 @@ const translateModel = (model: string) => {
             return 'membre';
         case 'voucher':
             return 'bon';
+        case 'operatingday':
+            return "jour d'ouverture";
         default:
             return cleanModelName(model);
     }
