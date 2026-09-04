@@ -16,6 +16,9 @@ class UpdateMemberRequest extends FormRequest
         return [
             'first_name' => ['sometimes', 'string', 'max:255'],
             'last_name' => ['sometimes', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'is_swiss' => ['sometimes', 'boolean'],
+            'tel' => ['nullable', 'string', 'max:255'],
         ];
     }
 }
