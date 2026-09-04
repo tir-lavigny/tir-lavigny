@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BackOffice\DashboardController;
+use App\Http\Controllers\BackOffice\DavController;
 use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
@@ -83,6 +84,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         'update' => 'bo.users.update',
         'destroy' => 'bo.users.destroy',
     ]);
+
+    Route::middleware('permission:manage members')->get('dav', [DavController::class, 'index'])->name('bo.dav.index');
 
     require __DIR__.'/settings.php';
 
