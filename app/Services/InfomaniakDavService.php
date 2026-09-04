@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Member;
 use Illuminate\Support\Str;
 use Sabre\DAV\Client;
 use Sabre\VObject\Reader;
@@ -141,7 +142,7 @@ class InfomaniakDavService
         return $contacts;
     }
 
-    public function createContact(array $data, ?string $addressbookUrl = null): array
+    private function createContact(array $data, ?string $addressbookUrl = null): array
     {
         $url = $addressbookUrl ?? $this->getAddressbookUrl();
 
@@ -188,6 +189,18 @@ class InfomaniakDavService
             'fn' => $data['fn'],
             'vcard_raw' => $vcard,
         ];
+    }
+
+    public function createContactFromMember(Member $member): array
+    {
+        return $this->createContact([
+            'fn' => $member->last_name.' '.$member->first_name,
+            'n_first' => $member->first_name,
+            'n_last' => $member->last_name,
+            'email' => $member->email,
+            'tel' => $member->tel,
+            'category' => 'Actifs',
+        ]);
     }
 
     private function escapeVcardValue(string $value): string
