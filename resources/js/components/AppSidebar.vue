@@ -24,6 +24,7 @@ import {
     Ticket,
     Trash2,
     Users,
+    BookUser,
 } from '@lucide/vue';
 import AppLogo from './AppLogo.vue';
 
@@ -118,6 +119,14 @@ const registerNavItems: NavItem[] = [
         : []),
 ];
 
+const managementNavItems: NavItem[] = [
+    {
+        title: 'Contacts',
+        href: route('bo.dav.index'),
+        icon: BookUser,
+    },
+];
+
 const footerNavItems: NavItem[] = [
     ...(hasRole(user, 'admin')
         ? [
@@ -158,6 +167,7 @@ const footerNavItems: NavItem[] = [
         <SidebarContent>
             <NavMain :items="mainNavItems" />
             <NavMain :items="registerNavItems" label="Caisse" />
+            <NavMain :items="managementNavItems" label="Gestion" />
         </SidebarContent>
 
         <SidebarFooter>

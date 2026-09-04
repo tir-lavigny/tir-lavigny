@@ -12,7 +12,7 @@ import { toast } from 'vue-sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Contacts (DAV)',
+        title: 'Contacts (Infomaniak)',
         href: route('bo.dav.index'),
     },
 ];
@@ -29,7 +29,7 @@ interface Contact {
     vcard_raw: string;
 }
 
-const props = defineProps<{
+defineProps<{
     contacts: Contact[];
 }>();
 
@@ -52,7 +52,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Contacts (DAV)" />
+    <Head title="Contacts" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
