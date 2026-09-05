@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -100,7 +101,7 @@ class UserController extends Controller implements HasMiddleware
             Mail::to($user->email)->send(new UserCreated($user, $password));
         } catch (Exception $e) {
             // Log the error but don't fail the user creation
-            logger()->error('Failed to send user creation email: '.$e->getMessage());
+            Log::error('Failed to send user creation email: '.$e->getMessage());
         }
 
         return redirect()->route('bo.users.show', $user->id)->with('success', 'User created successfully.');
