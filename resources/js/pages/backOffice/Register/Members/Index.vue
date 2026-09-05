@@ -65,14 +65,6 @@ const handleDelete = (id: number) => {
                 <div class="mb-4 flex w-full flex-row">
                     <div class="flex flex-1 items-center justify-between">
                         <H3>Membres</H3>
-                        <Tooltip v-if="hasPermissionTo(user, 'manage members')">
-                            <TooltipTrigger>
-                                <Link :href="route('bo.register.members.create')">
-                                    <Button size="icon"><Plus /></Button>
-                                </Link>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Créer un membre</p></TooltipContent>
-                        </Tooltip>
                     </div>
                 </div>
                 <div v-for="member in members.data" :key="member.id" class="mb-4 flex items-center justify-between rounded-lg border p-4">

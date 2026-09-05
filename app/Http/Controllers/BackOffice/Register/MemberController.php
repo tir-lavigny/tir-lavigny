@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\BackOffice\Register;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\BackOffice\Register\StoreMemberRequest;
 use App\Http\Requests\BackOffice\Register\UpdateMemberRequest;
 use App\Models\Member;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -16,7 +15,7 @@ class MemberController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:manage members', only: ['create', 'store', 'edit', 'update', 'destroy']),
+            new Middleware('permission:manage members', only: ['create', 'edit', 'update', 'destroy']),
         ];
     }
 
@@ -32,13 +31,6 @@ class MemberController extends Controller implements HasMiddleware
     public function create(): Response
     {
         return Inertia::render('backOffice/Register/Members/Create');
-    }
-
-    public function store(StoreMemberRequest $request)
-    {
-        Member::create($request->validated());
-
-        return redirect()->route('bo.register.members.index')->with('success', 'Member created successfully.');
     }
 
     public function edit(Member $member): Response

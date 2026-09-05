@@ -32,27 +32,6 @@ class MemberControllerTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_store_creates_member(): void
-    {
-        $response = $this->post(route('bo.register.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-        ]);
-
-        $response->assertRedirect();
-        $this->assertDatabaseHas('members', [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-        ]);
-    }
-
-    public function test_store_validates_required_fields(): void
-    {
-        $response = $this->post(route('bo.register.members.store'), []);
-
-        $response->assertSessionHasErrors(['first_name', 'last_name']);
-    }
-
     public function test_edit_returns_form(): void
     {
         $member = Member::factory()->create();
@@ -83,19 +62,5 @@ class MemberControllerTest extends TestCase
 
         $response->assertRedirect();
         $this->assertSoftDeleted('members', ['id' => $member->id]);
-    }
-
-    public function test_store_requires_permission(): void
-    {
-        $user = User::factory()->create();
-        $user->givePermissionTo('view register');
-        $this->actingAs($user);
-
-        $response = $this->post(route('bo.register.members.store'), [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-        ]);
-
-        $response->assertForbidden();
     }
 }

@@ -154,10 +154,11 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     });
 
     Route::middleware('permission:manage members')->prefix('register')->group(function () {
-        Route::resource('members', Register\MemberController::class)->names([
+        Route::resource('members', Register\MemberController::class)->only([
+            'index', 'create', 'edit', 'update', 'destroy',
+        ])->names([
             'index' => 'bo.register.members.index',
             'create' => 'bo.register.members.create',
-            'store' => 'bo.register.members.store',
             'edit' => 'bo.register.members.edit',
             'update' => 'bo.register.members.update',
             'destroy' => 'bo.register.members.destroy',
