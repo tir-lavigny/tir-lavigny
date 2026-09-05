@@ -4,8 +4,8 @@ namespace App\Listeners;
 
 use App\Events\MemberRegistrationDavCreated;
 use App\Events\MemberRegistrationFormSubmitted;
-use App\MemberRegistrationStatus;
 use App\Mail\MemberRegistrationError;
+use App\MemberRegistrationStatus;
 use App\Services\InfomaniakDavService;
 use Illuminate\Support\Facades\Mail;
 

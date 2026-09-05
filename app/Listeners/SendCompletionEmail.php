@@ -3,9 +3,9 @@
 namespace App\Listeners;
 
 use App\Events\MemberRegistrationCompleted;
-use App\MemberRegistrationStatus;
 use App\Mail\MemberRegistrationCompleted as MemberRegistrationCompletedMail;
 use App\Mail\MemberRegistrationError;
+use App\MemberRegistrationStatus;
 use Illuminate\Support\Facades\Mail;
 
 class SendCompletionEmail

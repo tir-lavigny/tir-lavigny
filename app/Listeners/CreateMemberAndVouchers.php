@@ -4,8 +4,8 @@ namespace App\Listeners;
 
 use App\Events\MemberRegistrationCompleted;
 use App\Events\MemberRegistrationDavCreated;
-use App\MemberRegistrationStatus;
 use App\Mail\MemberRegistrationError;
+use App\MemberRegistrationStatus;
 use App\Models\Member;
 use App\Models\Product;
 use App\Models\Season;
