@@ -336,6 +336,7 @@ export interface MemberRegistration {
     form_data: Record<string, any> | null;
     form_submitted_at: string | null;
     error_message: string | null;
+    failed_at: string | null;
     member?: Member;
     form_url?: string;
     created_at: string;

@@ -18,6 +18,7 @@ class MemberRegistration extends Model
         'member_id',
         'form_data',
         'form_submitted_at',
+        'failed_at',
         'error_message',
     ];
 
@@ -25,6 +26,7 @@ class MemberRegistration extends Model
         'status' => MemberRegistrationStatus::class,
         'form_data' => 'array',
         'form_submitted_at' => 'datetime',
+        'failed_at' => 'datetime',
     ];
 
     public function member()
@@ -40,8 +42,12 @@ class MemberRegistration extends Model
     protected static function booted(): void
     {
         static::creating(function ($memberRegistration) {
-            $memberRegistration->form_uuid = Str::uuid();
-            $memberRegistration->status = MemberRegistrationStatus::PENDING;
+            if (! $memberRegistration->form_uuid) {
+                $memberRegistration->form_uuid = Str::uuid();
+            }
+            if (! $memberRegistration->status) {
+                $memberRegistration->status = MemberRegistrationStatus::PENDING;
+            }
         });
     }
 }

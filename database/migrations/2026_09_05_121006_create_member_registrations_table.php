@@ -20,6 +20,7 @@ return new class extends Migration
             $table->json('form_data')->nullable();
             $table->timestamp('form_submitted_at')->nullable();
             $table->string('error_message')->nullable();
+            $table->timestamp('failed_at')->nullable();
             $table->timestamps();
         });
     }

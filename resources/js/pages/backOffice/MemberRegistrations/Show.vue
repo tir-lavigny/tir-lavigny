@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate } from '@/lib/utils';
-import type { BreadcrumbItem, MemberRegistration } from '@/types';
-import { Head, usePage } from '@inertiajs/vue3';
-import { Copy, ExternalLink } from '@lucide/vue';
+import type { BreadcrumbItem, MemberRegistration, SharedData } from '@/types';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { Copy, ExternalLink, RotateCcw } from '@lucide/vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{
@@ -22,7 +22,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Détail', href: route('bo.member-registrations.show', props.registration.id) },
 ];
 
-const page = usePage();
+const page = usePage<SharedData>();
 
 const copyToClipboard = async () => {
     try {
@@ -33,12 +33,13 @@ const copyToClipboard = async () => {
     }
 };
 
+const hasFailed = () => props.registration.failed_at !== null;
+
 const statusBadgeVariant = (status: string) => {
+    if (hasFailed()) return 'destructive';
     switch (status) {
         case 'completed':
             return 'secondary';
-        case 'error':
-            return 'destructive';
         default:
             return 'default';
     }
@@ -49,11 +50,29 @@ const statusLabel = (status: string) => {
         pending: 'En attente',
         form_filled: 'Formulaire rempli',
         dav_created: 'DAV créé',
+        member_created: 'Membre créé',
         email_sent: 'Email envoyé',
         completed: 'Terminé',
-        error: 'Erreur',
     };
-    return labels[status] ?? status;
+    const label = labels[status] ?? status;
+    return hasFailed() ? `${label} — Échoué` : label;
+};
+
+const retryLabel = (status: string) => {
+    const labels: Record<string, string> = {
+        form_filled: 'Relancer la création DAV',
+        dav_created: 'Relancer la création du membre',
+        member_created: "Relancer l'envoi de l'email",
+    };
+    return labels[status] ?? 'Réessayer';
+};
+
+const handleRetry = () => {
+    router.post(route('bo.member-registrations.retry', props.registration.id), {}, {
+        preserveScroll: true,
+        onSuccess: () => toast.success('Traitement relancé.'),
+        onError: () => toast.error('Impossible de relancer le traitement.'),
+    });
 };
 
 const flash = page.props.flash as Record<string, string | undefined>;
@@ -110,10 +129,14 @@ const displayUrl = flash?.form_url ?? props.formUrl;
                 </Card>
             </div>
 
-            <Card v-if="registration.error_message" class="border-destructive/50 bg-destructive/5">
+            <Card v-if="hasFailed()" class="border-destructive/50 bg-destructive/5">
                 <CardHeader class="pb-2"><CardTitle class="text-destructive text-sm">Erreur</CardTitle></CardHeader>
                 <CardContent>
                     <P class="text-sm">{{ registration.error_message }}</P>
+                    <Button size="sm" variant="outline" class="mt-3" @click="handleRetry">
+                        <RotateCcw class="mr-2 size-4" />
+                        {{ retryLabel(registration.status) }}
+                    </Button>
                 </CardContent>
             </Card>
 

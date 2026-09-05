@@ -30,10 +30,10 @@ const statusTabs = [
     { label: 'Toutes', value: '' },
     { label: 'En attente', value: 'pending' },
     { label: 'Formulaire rempli', value: 'form_filled' },
-    { label: 'Contact créé', value: 'dav_created' },
+    { label: 'DAV créé', value: 'dav_created' },
+    { label: 'Membre créé', value: 'member_created' },
     { label: 'Email envoyé', value: 'email_sent' },
     { label: 'Terminé', value: 'completed' },
-    { label: 'Erreur', value: 'error' },
 ];
 
 const handleTabClick = (status: string) => {
@@ -52,20 +52,20 @@ const handleGenerate = () => {
     });
 };
 
-const statusBadgeVariant = (status: string) => {
-    switch (status) {
+const statusBadgeVariant = (registration: any) => {
+    if (registration.failed_at) return 'destructive';
+    switch (registration.status) {
         case 'completed':
             return 'secondary';
-        case 'error':
-            return 'destructive';
         default:
             return 'default';
     }
 };
 
-const statusLabel = (status: string) => {
-    const tab = statusTabs.find((t) => t.value === status);
-    return tab?.label ?? status;
+const statusLabel = (registration: any) => {
+    const tab = statusTabs.find((t) => t.value === registration.status);
+    const label = tab?.label ?? registration.status;
+    return registration.failed_at ? `${label} — Échoué` : label;
 };
 </script>
 
@@ -125,8 +125,8 @@ const statusLabel = (status: string) => {
                                 <span v-if="registration.error_message"> · {{ registration.error_message }}</span>
                             </p>
                         </div>
-                        <Badge :variant="statusBadgeVariant(registration.status)">
-                            {{ statusLabel(registration.status) }}
+                        <Badge :variant="statusBadgeVariant(registration)">
+                            {{ statusLabel(registration) }}
                         </Badge>
                     </Link>
                 </div>
