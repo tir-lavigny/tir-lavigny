@@ -11,6 +11,7 @@ use App\Models\Season;
 use App\Models\Ticket;
 use App\Models\TicketItem;
 use App\Models\Voucher;
+use App\Services\InfomaniakDavService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -90,7 +91,15 @@ class TrashController extends Controller implements HasMiddleware
 
         $model->restore();
 
-        return redirect()->back()->with('success', 'Élément restauré avec succès.');
+        if ($type === 'member' && $model->dav_uid) {
+            $davRes = (new InfomaniakDavService)->restoreMember($model);
+
+            if (! $davRes) {
+                return back()->withErrors(['error', 'Membre restauré, mais impossible de récupérer le contact dans Infomaniak.']);
+            }
+        }
+
+        return back();
     }
 
     public function forceDelete(Request $request, string $type, int $id): JsonResponse
@@ -109,6 +118,15 @@ class TrashController extends Controller implements HasMiddleware
         }
 
         try {
+            if ($type === 'member' && $model->dav_uid) {
+                $davRes = (new InfomaniakDavService)->deleteMember($model);
+
+                if (! $davRes) {
+                    return response()->json([
+                        'message' => 'Impossible de supprimer définitivement le membre car la suppression dans Infomaniak a échoué.',
+                    ], 422);
+                }
+            }
             $model->forceDelete();
         } catch (\Exception $e) {
             return response()->json([
