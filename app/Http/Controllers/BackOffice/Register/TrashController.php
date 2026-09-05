@@ -70,7 +70,7 @@ class TrashController extends Controller implements HasMiddleware
     public function restore(Request $request, string $type, int $id, InfomaniakDavService $dav): JsonResponse|RedirectResponse
     {
         if ($type === 'ticket') {
-            abort(422, 'Les tickets ne peuvent pas être restaurés.');
+            return back()->with('error', 'Les tickets ne peuvent pas être restaurés.');
         }
 
         $modelClass = $this->resolveType($type);
@@ -95,7 +95,7 @@ class TrashController extends Controller implements HasMiddleware
             $davRes = $dav->restoreMember($model);
 
             if (! $davRes) {
-                abort(422, 'Membre restauré, mais impossible de récupérer le contact dans Infomaniak.');
+                return back()->with('error', 'Membre restauré, mais impossible de récupérer le contact dans Infomaniak.');
             }
         }
 
@@ -112,7 +112,7 @@ class TrashController extends Controller implements HasMiddleware
         if (count($children) > 0) {
             $labels = array_map(fn ($c) => $c['label'], $children);
 
-            abort(422, 'Impossible de supprimer définitivement car cet élément contient : '.implode(', ', $labels).'. Supprimez-les d\'abord.');
+            return back()->with('error', 'Impossible de supprimer définitivement car cet élément contient : '.implode(', ', $labels).'. Supprimez-les d\'abord.');
         }
 
         try {
@@ -120,12 +120,12 @@ class TrashController extends Controller implements HasMiddleware
                 $davRes = $dav->deleteMember($model);
 
                 if (! $davRes) {
-                    abort(422, 'Impossible de supprimer définitivement le membre car la suppression dans Infomaniak a échoué.');
+                    return back()->with('error', 'Impossible de supprimer définitivement le membre car la suppression dans Infomaniak a échoué.');
                 }
             }
             $model->forceDelete();
         } catch (\Exception $e) {
-            abort(422, 'Impossible de supprimer définitivement cet élément. Une contrainte de base de données empêche la suppression.');
+            return back()->with('error', 'Impossible de supprimer définitivement cet élément. Une contrainte de base de données empêche la suppression.');
         }
 
         return back()->with('success', 'Élément supprimé définitivement.');

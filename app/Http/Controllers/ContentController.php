@@ -82,13 +82,13 @@ class ContentController extends Controller implements HasMiddleware
 
         $content = Content::findOrFail($id);
         if (Content::where('title', $request->title)->where('id', '!=', $id)->exists()) {
-            abort(422, 'Un contenu avec le même titre existe déjà.');
+            return back()->with('error', 'Un contenu avec le même titre existe déjà.');
         }
 
         try {
             $content->update($request->only(['title', 'body']));
         } catch (Exception $e) {
-            abort(422, 'Une erreur est survenue lors de la mise à jour du contenu.');
+            return back()->with('error', 'Une erreur est survenue lors de la mise à jour du contenu.');
         }
 
         return redirect()->back()->with('success', 'Contenu mis à jour avec succès.');
@@ -101,7 +101,7 @@ class ContentController extends Controller implements HasMiddleware
     {
         $content = Content::findOrFail($id);
         if ($content->events()->exists()) {
-            abort(422, 'Impossible de supprimer le contenu car il est associé à des événements.');
+            return back()->with('error', 'Impossible de supprimer le contenu car il est associé à des événements.');
         }
 
         $content->delete();

@@ -53,7 +53,7 @@ class LocationController extends Controller implements HasMiddleware
 
         $location = Location::where('name', $request->name)->first();
         if ($location) {
-            abort(422, 'Ce lieu existe déjà.');
+            return back()->with('error', 'Ce lieu existe déjà.');
         }
 
         Location::create($request->only(['name', 'address', 'latitude', 'longitude']));
@@ -102,7 +102,7 @@ class LocationController extends Controller implements HasMiddleware
     {
         $location = Location::findOrFail($id);
         if ($location->events()->exists()) {
-            abort(422, 'Impossible de supprimer ce lieu car il est associé à des événements.');
+            return back()->with('error', 'Impossible de supprimer ce lieu car il est associé à des événements.');
         }
 
         $location->delete();

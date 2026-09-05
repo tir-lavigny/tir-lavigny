@@ -240,7 +240,7 @@ class EventController extends Controller implements HasMiddleware
         try {
             $event->delete();
         } catch (Exception $e) {
-            abort(422, 'Unable to delete event. Please try again later.');
+            return back()->with('error', 'Unable to delete event. Please try again later.');
         }
 
         return redirect()->route('bo.events.index')->with('success', 'Event deleted successfully.');
