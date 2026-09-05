@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Member;
+use App\Models\MemberRegistration;
 use Illuminate\Support\Str;
 use Sabre\DAV\Client;
 use Sabre\VObject\Reader;
@@ -191,14 +191,14 @@ class InfomaniakDavService
         ];
     }
 
-    public function createContactFromMember(Member $member): array
+    public function createContactFromMemberRegistration(MemberRegistration $registration): array
     {
         return $this->createContact([
-            'fn' => $member->last_name.' '.$member->first_name,
-            'n_first' => $member->first_name,
-            'n_last' => $member->last_name,
-            'email' => $member->email,
-            'tel' => $member->tel,
+            'fn' => $registration->form_data['last_name'].' '.$registration->form_data['first_name'],
+            'n_first' => $registration->form_data['first_name'],
+            'n_last' => $registration->form_data['last_name'],
+            'email' => $registration->form_data['email'],
+            'tel' => $registration->form_data['tel'] ?? '',
             'category' => 'Actifs',
         ]);
     }
