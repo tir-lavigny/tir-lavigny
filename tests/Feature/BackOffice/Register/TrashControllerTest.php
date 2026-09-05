@@ -229,7 +229,7 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'product', 'id' => $product->id]));
 
-        $response->assertOk();
+        $response->assertRedirect();
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
     }
 
@@ -240,7 +240,7 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'product', 'id' => $product->id]));
 
-        $response->assertOk();
+        $response->assertRedirect();
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
     }
 
@@ -334,7 +334,7 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'voucher', 'id' => $voucher->id]));
 
-        $response->assertOk();
+        $response->assertRedirect();
         $this->assertDatabaseMissing('vouchers', ['id' => $voucher->id]);
     }
 

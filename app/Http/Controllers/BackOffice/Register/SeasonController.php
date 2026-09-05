@@ -79,7 +79,7 @@ class SeasonController extends Controller implements HasMiddleware
 
             return redirect()->route('bo.register.seasons.index')->with('success', 'Saison supprimée.');
         } catch (\Exception $e) {
-            return redirect()->back()->withErrors(['delete' => $e->getMessage()]);
+            abort(422, $e->getMessage());
         }
     }
 

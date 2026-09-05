@@ -121,8 +121,7 @@ class SeasonControllerTest extends TestCase
 
         $response = $this->delete(route('bo.register.seasons.destroy', $season));
 
-        $response->assertRedirect();
-        $response->assertSessionHasErrors('delete');
+        $response->assertStatus(422);
         $this->assertDatabaseHas('seasons', ['id' => $season->id, 'deleted_at' => null]);
     }
 
@@ -133,8 +132,7 @@ class SeasonControllerTest extends TestCase
 
         $response = $this->delete(route('bo.register.seasons.destroy', $season));
 
-        $response->assertRedirect();
-        $response->assertSessionHasErrors('delete');
+        $response->assertStatus(422);
         $this->assertDatabaseHas('seasons', ['id' => $season->id, 'deleted_at' => null]);
     }
 

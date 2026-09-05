@@ -70,7 +70,7 @@ class TrashController extends Controller implements HasMiddleware
     public function restore(Request $request, string $type, int $id): JsonResponse|RedirectResponse
     {
         if ($type === 'ticket') {
-            return response()->json(['message' => 'Les tickets ne peuvent pas être restaurés.'], 422);
+            abort(422, 'Les tickets ne peuvent pas être restaurés.');
         }
 
         $modelClass = $this->resolveType($type);
@@ -95,14 +95,14 @@ class TrashController extends Controller implements HasMiddleware
             $davRes = (new InfomaniakDavService)->restoreMember($model);
 
             if (! $davRes) {
-                return back()->withErrors(['error', 'Membre restauré, mais impossible de récupérer le contact dans Infomaniak.']);
+                abort(422, 'Membre restauré, mais impossible de récupérer le contact dans Infomaniak.');
             }
         }
 
         return back();
     }
 
-    public function forceDelete(Request $request, string $type, int $id): JsonResponse
+    public function forceDelete(Request $request, string $type, int $id): RedirectResponse
     {
         $modelClass = $this->resolveType($type);
 
@@ -112,9 +112,7 @@ class TrashController extends Controller implements HasMiddleware
         if (count($children) > 0) {
             $labels = array_map(fn ($c) => $c['label'], $children);
 
-            return response()->json([
-                'message' => 'Impossible de supprimer définitivement car cet élément contient : '.implode(', ', $labels).'. Supprimez-les d\'abord.',
-            ], 422);
+            abort(422, 'Impossible de supprimer définitivement car cet élément contient : '.implode(', ', $labels).'. Supprimez-les d\'abord.');
         }
 
         try {
@@ -122,19 +120,15 @@ class TrashController extends Controller implements HasMiddleware
                 $davRes = (new InfomaniakDavService)->deleteMember($model);
 
                 if (! $davRes) {
-                    return response()->json([
-                        'message' => 'Impossible de supprimer définitivement le membre car la suppression dans Infomaniak a échoué.',
-                    ], 422);
+                    abort(422, 'Impossible de supprimer définitivement le membre car la suppression dans Infomaniak a échoué.');
                 }
             }
             $model->forceDelete();
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Impossible de supprimer définitivement cet élément. Une contrainte de base de données empêche la suppression.',
-            ], 422);
+            abort(422, 'Impossible de supprimer définitivement cet élément. Une contrainte de base de données empêche la suppression.');
         }
 
-        return response()->json(['success' => true, 'message' => 'Élément supprimé définitivement.']);
+        return back()->with('success', 'Élément supprimé définitivement.');
     }
 
     protected function resolveType(string $type): string

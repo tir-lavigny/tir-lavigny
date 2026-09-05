@@ -82,7 +82,7 @@ class OperatingDayController extends Controller implements HasMiddleware
 
         if ($status === 'closed') {
             if (! $operatingDay->isOpen()) {
-                return redirect()->back()->withErrors(['status' => 'This operating day is already closed.']);
+                abort(422, 'This operating day is already closed.');
             }
 
             $operatingDay->recalculateTotals();

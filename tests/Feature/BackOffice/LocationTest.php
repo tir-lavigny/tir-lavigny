@@ -65,8 +65,7 @@ class LocationTest extends TestCase
 
         $response = $this->post(route('locations.store'), $data);
 
-        $response->assertStatus(302);
-        $response->assertSessionHasErrors(['name']);
+        $response->assertStatus(422);
     }
 
     public function test_unauthorized_user_cannot_access_locations(): void
@@ -145,8 +144,7 @@ class LocationTest extends TestCase
 
         $response = $this->delete(route('locations.destroy', $location->id));
 
-        $response->assertStatus(302);
-        $response->assertSessionHasErrors();
+        $response->assertStatus(422);
         $this->assertDatabaseHas('locations', ['id' => $location->id]);
     }
 

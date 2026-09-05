@@ -274,8 +274,7 @@ class ContentTest extends TestCase
 
         $response = $this->delete(route('contents.destroy', $content->id));
 
-        $response->assertStatus(302);
-        $response->assertSessionHasErrors();
+        $response->assertStatus(422);
         $this->assertDatabaseHas('contents', [
             'id' => $content->id,
             'title' => $content->title,
