@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MemberRegistrationFormSubmitted;
 use App\Http\Requests\StoreMemberRegistrationRequest;
 use App\MemberRegistrationStatus;
 use App\Models\MemberRegistration;
@@ -40,6 +41,8 @@ class MemberRegistrationController extends Controller
         $registration->form_submitted_at = now();
         $registration->status = MemberRegistrationStatus::FORM_FILLED;
         $registration->save();
+
+        MemberRegistrationFormSubmitted::dispatch($registration);
 
         return redirect()->route('member-registration.show', $registration->form_uuid)
             ->with('success', 'Votre formulaire a été soumis avec succès.');

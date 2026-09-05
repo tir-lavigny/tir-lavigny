@@ -12,6 +12,7 @@ class MemberRegistration extends Model
     use LogsActivity;
 
     protected $fillable = [
+        'form_uuid',
         'status',
         'dav_uid',
         'member_id',

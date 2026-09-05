@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Events\MemberRegistrationFormSubmitted;
 use App\Models\MemberRegistration;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class MemberRegistrationFormTest extends TestCase
@@ -29,6 +31,8 @@ class MemberRegistrationFormTest extends TestCase
 
     public function test_can_submit_form_with_valid_data(): void
     {
+        Event::fake([MemberRegistrationFormSubmitted::class]);
+
         $registration = MemberRegistration::create();
 
         $data = [
@@ -543,6 +547,8 @@ class MemberRegistrationFormTest extends TestCase
 
     public function test_status_changes_to_form_filled(): void
     {
+        Event::fake([MemberRegistrationFormSubmitted::class]);
+
         $registration = MemberRegistration::create();
 
         $data = [
