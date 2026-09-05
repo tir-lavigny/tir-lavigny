@@ -45,9 +45,7 @@ const generating = ref(false);
 
 const existingDavUidSet = computed(() => new Set(props.existingDavUids));
 
-const contactsToImport = computed(() =>
-    props.contacts.filter((c) => c.category.includes('Actifs') && !existingDavUidSet.value.has(c.uid)),
-);
+const contactsToImport = computed(() => props.contacts.filter((c) => c.category.includes('Actifs') && !existingDavUidSet.value.has(c.uid)));
 
 const toggleExpand = (url: string) => {
     expandedContact.value = expandedContact.value === url ? null : url;

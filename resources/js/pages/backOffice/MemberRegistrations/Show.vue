@@ -68,11 +68,15 @@ const retryLabel = (status: string) => {
 };
 
 const handleRetry = () => {
-    router.post(route('bo.member-registrations.retry', props.registration.id), {}, {
-        preserveScroll: true,
-        onSuccess: () => toast.success('Traitement relancé.'),
-        onError: () => toast.error('Impossible de relancer le traitement.'),
-    });
+    router.post(
+        route('bo.member-registrations.retry', props.registration.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => toast.success('Traitement relancé.'),
+            onError: () => toast.error('Impossible de relancer le traitement.'),
+        },
+    );
 };
 
 const flash = page.props.flash as Record<string, string | undefined>;
