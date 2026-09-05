@@ -51,7 +51,7 @@ class DavController extends Controller
         $created = 0;
 
         foreach ($toImport as $contact) {
-            $parts = explode(' ', $contact['fn'], 2);
+            $parts = explode(';', $contact['n'] ?? '');
             $lastName = $parts[0] ?? '';
             $firstName = $parts[1] ?? '';
 
