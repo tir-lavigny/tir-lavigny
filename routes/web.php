@@ -93,7 +93,10 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         'destroy' => 'bo.users.destroy',
     ]);
 
-    Route::middleware('permission:manage members')->get('dav', [DavController::class, 'index'])->name('bo.dav.index');
+    Route::middleware('permission:manage members')->prefix('dav')->group(function () {
+        Route::get('/', [DavController::class, 'index'])->name('bo.dav.index');
+        Route::post('/import', [DavController::class, 'importFromDav'])->name('bo.dav.import');
+    });
 
     Route::get('member-registrations', [BackOfficeMemberRegistrationController::class, 'index'])
         ->name('bo.member-registrations.index');

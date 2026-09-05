@@ -131,6 +131,7 @@ class InfomaniakDavService
                                 'email' => $this->extractProperty($vcard, 'EMAIL'),
                                 'tel' => $this->extractProperty($vcard, 'TEL'),
                                 'org' => (string) ($vcard->ORG ?? ''),
+                                'category' => $this->extractProperty($vcard, 'CATEGORIES'),
                                 'vcard_raw' => $currentVcard,
                             ];
                         } catch (\Exception $e) {
