@@ -45,19 +45,25 @@ class MemberController extends Controller implements HasMiddleware
     {
         $member->update($request->validated());
 
-        return redirect()->route('bo.register.members.index')->with('success', 'Member updated successfully.');
+        $davRes = (new InfomaniakDavService)->updateMember($member);
+
+        if (! $davRes) {
+            return redirect()->route('bo.register.members.index')->with('error', 'Impossible de mettre à jour le membre dans les contacts.');
+        }
+
+        return redirect()->route('bo.register.members.index')->with('success', 'Membre mis à jour avec succès.');
     }
 
     public function destroy(Member $member)
     {
-        $davRes = (new InfomaniakDavService)->deleteMember($member);
+        $davRes = (new InfomaniakDavService)->softDeleteMember($member);
 
         if (! $davRes) {
-            return redirect()->route('bo.register.members.index')->with('error', 'Failed to delete member from Infomaniak DAV.');
+            return back()->withErrors(['error' => 'Impossible de supprimer le membre dans les contacts.']);
         }
 
         $member->delete();
 
-        return redirect()->route('bo.register.members.index')->with('success', 'Member deleted successfully.');
+        return back();
     }
 }
