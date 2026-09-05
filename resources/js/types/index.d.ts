@@ -334,6 +334,7 @@ export interface MemberRegistration {
     dav_uid: string | null;
     member_id: number | null;
     form_data: Record<string, any> | null;
+    form_submitted_at: string | null;
     error_message: string | null;
     member?: Member;
     form_url?: string;

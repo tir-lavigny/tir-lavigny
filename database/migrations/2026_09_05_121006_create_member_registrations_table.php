@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('dav_uid')->nullable();
             $table->foreignId('member_id')->nullable()->constrained()->nullOnDelete();
             $table->json('form_data')->nullable();
+            $table->timestamp('form_submitted_at')->nullable();
             $table->string('error_message')->nullable();
             $table->timestamps();
         });
