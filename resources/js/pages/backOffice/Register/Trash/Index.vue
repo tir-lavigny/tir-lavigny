@@ -78,8 +78,8 @@ const confirmRestore = () => {
             restoreDialog.value.open = false;
             router.reload({ only: ['categories', 'products', 'seasons', 'members', 'tickets', 'vouchers'] });
         },
-        onError: () => {
-            toast.error('Erreur lors de la restauration.');
+        onError: (errors) => {
+            toast.error(errors.error || 'Erreur lors de la restauration.');
         },
         onFinish: () => {
             restoreDialog.value.processing = false;

@@ -44,7 +44,7 @@ watch(
 const handleDelete = (id: number) => {
     useForm({}).delete(route('bo.register.members.destroy', id), {
         onSuccess: () => toast.success('Membre supprimé.'),
-        onError: () => toast.error('Erreur lors de la suppression.'),
+        onError: (errors) => toast.error(errors.error || 'Une erreur est survenue.'),
     });
 };
 </script>
