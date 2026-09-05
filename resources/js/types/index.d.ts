@@ -232,9 +232,6 @@ export interface Member {
     id: number;
     first_name: string;
     last_name: string;
-    email: string;
-    is_swiss: boolean;
-    tel: string | null;
     dav_uid?: string | null;
     created_at: string;
     updated_at: string;

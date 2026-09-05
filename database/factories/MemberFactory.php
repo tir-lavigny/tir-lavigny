@@ -15,9 +15,6 @@ class MemberFactory extends Factory
         return [
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
-            'email' => fake()->unique()->safeEmail(),
-            'is_swiss' => fake()->boolean(),
-            'tel' => fake()->phoneNumber(),
             'dav_uid' => null,
         ];
     }

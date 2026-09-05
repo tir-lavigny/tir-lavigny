@@ -15,14 +15,7 @@ class Member extends Model
     protected $fillable = [
         'first_name',
         'last_name',
-        'email',
-        'is_swiss',
-        'tel',
         'dav_uid',
-    ];
-
-    protected $casts = [
-        'is_swiss' => 'boolean',
     ];
 
     public function vouchers(): HasMany

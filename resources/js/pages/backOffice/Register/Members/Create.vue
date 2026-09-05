@@ -4,7 +4,6 @@ import { H1, H3 } from '@/components/typography/headings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
-import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
@@ -21,7 +20,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Créer', href: route('bo.register.members.create') },
 ];
 
-const form = useForm({ first_name: '', last_name: '', email: '', is_swiss: false, tel: '' });
+const form = useForm({ first_name: '', last_name: '' });
 
 const handleSubmit = () => {
     if (!hasPermissionTo(user, 'manage members')) {
@@ -73,22 +72,6 @@ const handleSubmit = () => {
                             <Input id="last_name" v-model="form.last_name" type="text" placeholder="Nom" maxlength="255" required />
                             <InputError :message="form.errors.last_name" />
                         </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="grid gap-2">
-                            <Label for="email">Email</Label>
-                            <Input id="email" v-model="form.email" type="email" placeholder="email@example.com" maxlength="255" required />
-                            <InputError :message="form.errors.email" />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="tel">Téléphone</Label>
-                            <Input id="tel" v-model="form.tel" type="text" placeholder="Téléphone" maxlength="255" />
-                            <InputError :message="form.errors.tel" />
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <Switch id="is_swiss" v-model:checked="form.is_swiss" />
-                        <Label for="is_swiss">Suisse</Label>
                     </div>
                 </div>
             </div>

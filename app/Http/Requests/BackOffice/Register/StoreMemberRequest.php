@@ -16,9 +16,6 @@ class StoreMemberRequest extends FormRequest
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'is_swiss' => ['required', 'boolean'],
-            'tel' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

@@ -37,16 +37,12 @@ class MemberControllerTest extends TestCase
         $response = $this->post(route('bo.register.members.store'), [
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
-            'email' => 'jean@example.com',
-            'is_swiss' => true,
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('members', [
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
-            'email' => 'jean@example.com',
-            'is_swiss' => true,
         ]);
     }
 
@@ -54,7 +50,7 @@ class MemberControllerTest extends TestCase
     {
         $response = $this->post(route('bo.register.members.store'), []);
 
-        $response->assertSessionHasErrors(['first_name', 'last_name', 'email', 'is_swiss']);
+        $response->assertSessionHasErrors(['first_name', 'last_name']);
     }
 
     public function test_edit_returns_form(): void
@@ -98,8 +94,6 @@ class MemberControllerTest extends TestCase
         $response = $this->post(route('bo.register.members.store'), [
             'first_name' => 'Test',
             'last_name' => 'User',
-            'email' => 'test@example.com',
-            'is_swiss' => false,
         ]);
 
         $response->assertForbidden();

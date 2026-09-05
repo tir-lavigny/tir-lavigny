@@ -84,8 +84,6 @@ class StoreMemberRequestTest extends TestCase
         $this->assertTrue($this->passes([
             'first_name' => 'John',
             'last_name' => 'Doe',
-            'email' => 'john@example.com',
-            'is_swiss' => true,
         ]));
     }
 }

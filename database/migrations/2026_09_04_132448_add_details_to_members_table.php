@@ -12,9 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('members', function (Blueprint $table) {
-            $table->string('email');
-            $table->boolean('is_swiss');
-            $table->string('tel')->nullable();
             $table->string('dav_uid')->nullable();
         });
     }
@@ -25,9 +22,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('members', function (Blueprint $table) {
-            $table->dropColumn('email');
-            $table->dropColumn('is_swiss');
-            $table->dropColumn('tel');
             $table->dropColumn('dav_uid');
         });
     }
