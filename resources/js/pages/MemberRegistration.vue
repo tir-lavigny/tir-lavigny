@@ -78,12 +78,12 @@ const onSwissChange = (value: boolean | 'indeterminate') => {
 
 const isOtherCountry = computed(() => form.country !== 'Suisse');
 
-const handleCountryChange = (value: string) => {
-    form.country = value;
+const handleCountryChange = (value: string | null) => {
+    form.country = value ?? '';
 };
 
-const handleCantonChange = (value: string) => {
-    form.canton = value;
+const handleCantonChange = (value: string | null) => {
+    form.canton = value ?? '';
 };
 
 const submit = () => {
