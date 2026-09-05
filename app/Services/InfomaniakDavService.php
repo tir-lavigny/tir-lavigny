@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Member;
 use App\Models\MemberRegistration;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Sabre\DAV\Client;
 use Sabre\VObject\Reader;
@@ -127,7 +128,7 @@ class InfomaniakDavService
                                 'vcard_raw' => $currentVcard,
                             ];
                         } catch (\Exception $e) {
-                            logger()->warning('Failed to parse vCard', [
+                            Log::warning('Failed to parse vCard', [
                                 'href' => $currentHref,
                                 'error' => $e->getMessage(),
                             ]);
@@ -143,11 +144,57 @@ class InfomaniakDavService
         return $contacts;
     }
 
+    public function getContact(string $contactUrl): ?array
+    {
+        $response = $this->client->request('GET', $contactUrl);
+
+        if ($response['statusCode'] >= 400) {
+            Log::error('Failed to get contact from Infomaniak DAV', [
+                'contact_url' => $contactUrl,
+                'status_code' => $response['statusCode'],
+                'response_body' => $response['body'],
+            ]);
+            throw new \RuntimeException(sprintf(
+                'DAV GET failed with status %d: %s',
+                $response['statusCode'],
+                $response['body'],
+            ));
+        }
+
+        $vcardRaw = $response['body'];
+
+        if (! $vcardRaw) {
+            return null;
+        }
+
+        try {
+            $vcard = Reader::read(trim($vcardRaw));
+
+            return [
+                'url' => $contactUrl,
+                'uid' => (string) ($vcard->UID ?? ''),
+                'fn' => (string) ($vcard->FN ?? ''),
+                'n' => (string) ($vcard->N ?? ''),
+                'email' => $this->extractProperty($vcard, 'EMAIL'),
+                'tel' => $this->extractProperty($vcard, 'TEL'),
+                'org' => (string) ($vcard->ORG ?? ''),
+                'vcard_raw' => $vcardRaw,
+            ];
+        } catch (\Exception $e) {
+            Log::warning('Failed to parse vCard', [
+                'url' => $contactUrl,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
     private function createContact(array $data, ?string $addressbookUrl = null): array
     {
         $url = $addressbookUrl ?? $this->getAddressbookUrl();
 
-        $uid = Str::uuid7().'@tir-lavigny.ch';
+        $uid = Str::uuid7();
         $filename = $uid.'.vcf';
 
         $vcard = "BEGIN:VCARD\r\n";
@@ -177,6 +224,11 @@ class InfomaniakDavService
         ]);
 
         if ($response['statusCode'] >= 400) {
+            Log::error('Failed to create contact in Infomaniak DAV', [
+                'put_url' => $putUrl,
+                'status_code' => $response['statusCode'],
+                'response_body' => $response['body'],
+            ]);
             throw new \RuntimeException(sprintf(
                 'DAV PUT failed with status %d: %s',
                 $response['statusCode'],
@@ -197,8 +249,56 @@ class InfomaniakDavService
         $response = $this->client->request('DELETE', $contactUrl);
 
         if ($response['statusCode'] >= 400) {
+            Log::error('Failed to delete contact from Infomaniak DAV', [
+                'contact_url' => $contactUrl,
+                'status_code' => $response['statusCode'],
+                'response_body' => $response['body'],
+            ]);
             throw new \RuntimeException(sprintf(
                 'DAV DELETE failed with status %d: %s',
+                $response['statusCode'],
+                $response['body'],
+            ));
+        }
+
+        return true;
+    }
+
+    private function updateContact(string $contactUrl, array $data): bool
+    {
+        $existingContact = $this->getContact($contactUrl);
+
+        if (! $existingContact) {
+            throw new \RuntimeException('Contact not found for update: '.$contactUrl);
+        }
+
+        $vcard = "BEGIN:VCARD\r\n";
+        $vcard .= "VERSION:3.0\r\n";
+        $vcard .= 'UID:'.$existingContact['uid']."\r\n";
+        $vcard .= 'FN:'.$this->escapeVcardValue($data['fn'])."\r\n";
+        $vcard .= 'N:'.$this->escapeVcardValue($data['n_last']).';'.$this->escapeVcardValue($data['n_first']).";;;\r\n";
+
+        if (! empty($data['email'])) {
+            $vcard .= 'EMAIL;TYPE=INTERNET:'.$this->escapeVcardValue($data['email'])."\r\n";
+        }
+
+        if (! empty($data['tel'])) {
+            $vcard .= 'TEL;TYPE=CELL:'.$this->escapeVcardValue($data['tel'])."\r\n";
+        }
+
+        if (! empty($data['category'])) {
+            $vcard .= 'CATEGORIES:'.$this->escapeVcardValue($data['category'])."\r\n";
+        }
+
+        $vcard .= "END:VCARD\r\n";
+
+        $response = $this->client->request('PUT', $contactUrl, $vcard, [
+            'Content-Type' => 'text/vcard; charset=utf-8',
+        ]);
+
+        if ($response['statusCode'] >= 400) {
+            throw new \RuntimeException(sprintf(
+                'DAV PUT failed with status %d: %s',
                 $response['statusCode'],
                 $response['body'],
             ));
@@ -219,6 +319,68 @@ class InfomaniakDavService
         ]);
     }
 
+    public function softDeleteMember(Member $member): bool
+    {
+        if (! $member->dav_uid) {
+            return true; // No DAV UID, nothing to delete
+        }
+
+        $contactUrl = rtrim($this->getAddressbookUrl(), '/').'/'.$member->dav_uid.'.vcf';
+
+        Log::info('Soft deleting contact in Infomaniak DAV', [
+            'member_id' => $member->id,
+            'dav_uid' => $member->dav_uid,
+            'contact_url' => $contactUrl,
+        ]);
+
+        try {
+            $this->updateContact($contactUrl, [
+                'fn' => $member->first_name.' '.$member->last_name,
+                'n_first' => $member->first_name,
+                'n_last' => $member->last_name,
+                'category' => 'Archives',
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to soft delete contact in Infomaniak DAV', [
+                'member_id' => $member->id,
+                'dav_uid' => $member->dav_uid,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    public function restoreMember(Member $member): bool
+    {
+        if (! $member->dav_uid) {
+            return true; // No DAV UID, nothing to restore
+        }
+
+        $contactUrl = rtrim($this->getAddressbookUrl(), '/').'/'.$member->dav_uid.'.vcf';
+
+        try {
+            $this->updateContact($contactUrl, [
+                'fn' => $member->first_name.' '.$member->last_name,
+                'n_first' => $member->first_name,
+                'n_last' => $member->last_name,
+                'category' => 'Actifs',
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to restore contact in Infomaniak DAV', [
+                'member_id' => $member->id,
+                'dav_uid' => $member->dav_uid,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
     public function deleteMember(Member $member): bool
     {
 
@@ -231,7 +393,34 @@ class InfomaniakDavService
         try {
             $this->deleteContact($contactUrl);
         } catch (\Exception $e) {
-            logger()->warning('Failed to delete contact from Infomaniak DAV', [
+            Log::warning('Failed to delete contact from Infomaniak DAV', [
+                'member_id' => $member->id,
+                'dav_uid' => $member->dav_uid,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    public function updateMember(Member $member): bool
+    {
+        if (! $member->dav_uid) {
+            return false; // No DAV UID, cannot update
+        }
+
+        $contactUrl = rtrim($this->getAddressbookUrl(), '/').'/'.$member->dav_uid.'.vcf';
+
+        try {
+            $this->updateContact($contactUrl, [
+                'fn' => $member->first_name.' '.$member->last_name,
+                'n_first' => $member->first_name,
+                'n_last' => $member->last_name,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to update contact in Infomaniak DAV', [
                 'member_id' => $member->id,
                 'dav_uid' => $member->dav_uid,
                 'error' => $e->getMessage(),
