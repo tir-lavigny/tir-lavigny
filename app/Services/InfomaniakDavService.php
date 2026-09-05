@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DavGroupLabels as GroupLabels;
 use App\Models\Member;
 use App\Models\MemberRegistration;
 use Illuminate\Support\Facades\Log;
@@ -9,12 +10,6 @@ use Illuminate\Support\Str;
 use Sabre\DAV\Client;
 use Sabre\VObject\Reader;
 use Sabre\Xml\Reader as XmlReader;
-
-enum GroupLabels: string
-{
-    case ACTIVE_MEMBERS = 'Actifs';
-    case SOFT_DELETED_MEMBERS = 'Archives';
-}
 
 class InfomaniakDavService
 {
