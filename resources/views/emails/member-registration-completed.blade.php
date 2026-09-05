@@ -96,17 +96,24 @@
             <h1>Inscription complétée</h1>
         </div>
         <div class="content">
-            <p>L'inscription de <strong>{{ $registration->form_data['first_name'] }} {{ $registration->form_data['last_name'] }}</strong> a été traitée avec succès.</p>
+            <p>L'inscription de <strong>{{ $registration->form_data['first_name'] }}
+                    {{ $registration->form_data['last_name'] }}</strong> a été traitée avec succès.</p>
 
             <div class="summary">
-                <p><strong>Nom :</strong> {{ $registration->form_data['first_name'] }} {{ $registration->form_data['last_name'] }}</p>
+                <p><strong>Nom :</strong> {{ $registration->form_data['first_name'] }}
+                    {{ $registration->form_data['last_name'] }}</p>
                 <p><strong>Email :</strong> {{ $registration->form_data['email'] }}</p>
                 <p><strong>DAV créé :</strong> Oui (UID: {{ $registration->dav_uid }})</p>
                 <p><strong>Membre créé :</strong> Oui</p>
-                <p><strong>Bons de base :</strong> {{ $registration->member ? $registration->member->vouchers()->where('season_id', optional($registration->member->vouchers()->first()?->season)->id)->count() : 0 }}</p>
+                <p><strong>Bons de base :</strong>
+                    {{ $registration->member? $registration->member->vouchers()->where('season_id', optional($registration->member->vouchers()->first()?->season)->id)->count(): 0 }}
+                </p>
             </div>
 
-            <a href="{{ route('bo.register.members.edit', $registration->member_id) }}" class="btn">Voir le membre</a>
+            <p>Il ne reste plus qu'à l'inscrire dans le SAT</p>
+
+            <a href="{{ route('bo.member-registrations.show', $registration->id) }}" class="btn">Voir le détail de
+                l'inscription</a>
         </div>
         <div class="footer">
             <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>

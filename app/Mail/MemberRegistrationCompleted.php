@@ -20,7 +20,7 @@ class MemberRegistrationCompleted extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Inscription complétée — '.$this->registration->form_data['first_name'].' '.$this->registration->form_data['last_name'],
+            subject: 'Inscription complétée - '.$this->registration->form_data['first_name'].' '.$this->registration->form_data['last_name'],
         );
     }
 
