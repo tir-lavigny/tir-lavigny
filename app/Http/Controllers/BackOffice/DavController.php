@@ -8,10 +8,8 @@ use Inertia\Inertia;
 
 class DavController extends Controller
 {
-    public function index()
+    public function index(InfomaniakDavService $service)
     {
-        $service = new InfomaniakDavService;
-
         try {
             $contacts = $service->getContacts();
         } catch (\Exception $e) {

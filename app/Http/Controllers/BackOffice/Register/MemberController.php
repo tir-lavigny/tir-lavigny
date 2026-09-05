@@ -41,11 +41,11 @@ class MemberController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(UpdateMemberRequest $request, Member $member)
+    public function update(UpdateMemberRequest $request, Member $member, InfomaniakDavService $dav)
     {
         $member->update($request->validated());
 
-        $davRes = (new InfomaniakDavService)->updateMember($member);
+        $davRes = $dav->updateMember($member);
 
         if (! $davRes) {
             return redirect()->route('bo.register.members.index')->with('error', 'Impossible de mettre à jour le membre dans les contacts.');
@@ -54,9 +54,9 @@ class MemberController extends Controller implements HasMiddleware
         return redirect()->route('bo.register.members.index')->with('success', 'Membre mis à jour avec succès.');
     }
 
-    public function destroy(Member $member)
+    public function destroy(Member $member, InfomaniakDavService $dav)
     {
-        $davRes = (new InfomaniakDavService)->softDeleteMember($member);
+        $davRes = $dav->softDeleteMember($member);
 
         if (! $davRes) {
             return back()->withErrors(['error' => 'Impossible de supprimer le membre dans les contacts.']);

@@ -67,7 +67,7 @@ class TrashController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function restore(Request $request, string $type, int $id): JsonResponse|RedirectResponse
+    public function restore(Request $request, string $type, int $id, InfomaniakDavService $dav): JsonResponse|RedirectResponse
     {
         if ($type === 'ticket') {
             abort(422, 'Les tickets ne peuvent pas être restaurés.');
@@ -92,7 +92,7 @@ class TrashController extends Controller implements HasMiddleware
         $model->restore();
 
         if ($type === 'member' && $model->dav_uid) {
-            $davRes = (new InfomaniakDavService)->restoreMember($model);
+            $davRes = $dav->restoreMember($model);
 
             if (! $davRes) {
                 abort(422, 'Membre restauré, mais impossible de récupérer le contact dans Infomaniak.');
@@ -102,7 +102,7 @@ class TrashController extends Controller implements HasMiddleware
         return back();
     }
 
-    public function forceDelete(Request $request, string $type, int $id): RedirectResponse
+    public function forceDelete(Request $request, string $type, int $id, InfomaniakDavService $dav): RedirectResponse
     {
         $modelClass = $this->resolveType($type);
 
@@ -117,7 +117,7 @@ class TrashController extends Controller implements HasMiddleware
 
         try {
             if ($type === 'member' && $model->dav_uid) {
-                $davRes = (new InfomaniakDavService)->deleteMember($model);
+                $davRes = $dav->deleteMember($model);
 
                 if (! $davRes) {
                     abort(422, 'Impossible de supprimer définitivement le membre car la suppression dans Infomaniak a échoué.');

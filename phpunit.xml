@@ -29,6 +29,10 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="DAV_BASE_URL" value="http://localhost"/>
+        <env name="DAV_USERNAME" value="test"/>
+        <env name="DAV_PASSWORD" value="test"/>
+        <env name="DAV_ADDRESSBOOK_URL" value="http://localhost/"/>
     </php>
 
     <coverage>
