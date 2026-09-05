@@ -66,12 +66,11 @@ class MemberRegistrationTest extends TestCase
         $response->assertRedirect(route('bo.member-registrations.show', $registration));
     }
 
-    public function test_store_sets_flash_form_url(): void
+    public function test_store_sets_flash_success_message(): void
     {
         $response = $this->post(route('bo.member-registrations.store'));
 
-        $registration = MemberRegistration::latest()->first();
-        $response->assertSessionHas('form_url', $registration->formUrl());
+        $response->assertSessionHas('success', 'Formulaire créé avec succès.');
     }
 
     public function test_index_filters_by_status(): void

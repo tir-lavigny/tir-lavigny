@@ -23,6 +23,7 @@ import {
     ShoppingCart,
     Tag,
     Ticket,
+    ClipboardList,
     Trash2,
     Users,
 } from '@lucide/vue';
@@ -94,6 +95,8 @@ const modelIcon = (model: string) => {
             return Tag;
         case 'operatingday':
             return CalendarDays;
+        case 'memberregistration':
+            return ClipboardList;
         default:
             return FileText;
     }
@@ -137,6 +140,8 @@ const translateModel = (model: string) => {
             return 'bon';
         case 'operatingday':
             return "jour d'ouverture";
+        case 'memberregistration':
+            return "inscription d'un membre";
         default:
             return cleanModelName(model);
     }

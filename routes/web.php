@@ -4,7 +4,7 @@ use App\Http\Controllers\BackOffice\DashboardController;
 use App\Http\Controllers\BackOffice\DavController;
 use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
-use App\Http\Controllers\BackOffice\MemberRegistrationController;
+use App\Http\Controllers\BackOffice\MemberRegistrationController as BackOfficeMemberRegistrationController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
 use App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\BackOffice\UserController as BackOfficeUserController;
@@ -12,6 +12,7 @@ use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ShootingController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,12 @@ Route::redirect('/shootings', '/shootings/ods', 308);
 Route::get('/shootings/ods', [ShootingController::class, 'indexODS'])->name('shootings');
 
 Route::get('/shootings/field', [ShootingController::class, 'indexField'])->name('shootings.field');
+
+Route::get('/member-registration/{form_uuid}', [MemberRegistrationController::class, 'show'])->name('member-registration.show');
+Route::post('/member-registration', [MemberRegistrationController::class, 'store'])->name('member-registration.store');
+Route::get('/member-registration', function () {
+    abort(404);
+});
 
 Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/', function () {
@@ -88,11 +95,11 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
 
     Route::middleware('permission:manage members')->get('dav', [DavController::class, 'index'])->name('bo.dav.index');
 
-    Route::get('member-registrations', [MemberRegistrationController::class, 'index'])
+    Route::get('member-registrations', [BackOfficeMemberRegistrationController::class, 'index'])
         ->name('bo.member-registrations.index');
-    Route::get('member-registrations/{memberRegistration}', [MemberRegistrationController::class, 'show'])
+    Route::get('member-registrations/{memberRegistration}', [BackOfficeMemberRegistrationController::class, 'show'])
         ->name('bo.member-registrations.show');
-    Route::post('member-registrations', [MemberRegistrationController::class, 'store'])
+    Route::post('member-registrations', [BackOfficeMemberRegistrationController::class, 'store'])
         ->name('bo.member-registrations.store');
 
     require __DIR__.'/settings.php';

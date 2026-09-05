@@ -16,12 +16,14 @@ class MemberRegistration extends Model
         'dav_uid',
         'member_id',
         'form_data',
+        'form_submitted_at',
         'error_message',
     ];
 
     protected $casts = [
         'status' => MemberRegistrationStatus::class,
         'form_data' => 'array',
+        'form_submitted_at' => 'datetime',
     ];
 
     public function member()
