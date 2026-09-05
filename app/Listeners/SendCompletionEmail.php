@@ -20,8 +20,8 @@ class SendCompletionEmail
             $registration->status = MemberRegistrationStatus::COMPLETED;
             $registration->save();
         } catch (\Throwable $e) {
-            $registration->status = MemberRegistrationStatus::ERROR;
             $registration->error_message = 'Erreur email : '.$e->getMessage();
+            $registration->failed_at = now();
             $registration->save();
 
             Mail::to(env('APP_USER_EMAIL'))->send(new MemberRegistrationError($registration));
