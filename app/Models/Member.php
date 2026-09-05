@@ -6,6 +6,7 @@ use App\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Member extends Model
@@ -21,6 +22,11 @@ class Member extends Model
     public function vouchers(): HasMany
     {
         return $this->hasMany(Voucher::class);
+    }
+
+    public function registration(): HasOne
+    {
+        return $this->hasOne(MemberRegistration::class);
     }
 
     protected static function booted(): void

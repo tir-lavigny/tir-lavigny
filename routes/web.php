@@ -4,6 +4,7 @@ use App\Http\Controllers\BackOffice\DashboardController;
 use App\Http\Controllers\BackOffice\DavController;
 use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
+use App\Http\Controllers\BackOffice\MemberRegistrationController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
 use App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\BackOffice\UserController as BackOfficeUserController;
@@ -86,6 +87,13 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     ]);
 
     Route::middleware('permission:manage members')->get('dav', [DavController::class, 'index'])->name('bo.dav.index');
+
+    Route::get('member-registrations', [MemberRegistrationController::class, 'index'])
+        ->name('bo.member-registrations.index');
+    Route::get('member-registrations/{memberRegistration}', [MemberRegistrationController::class, 'show'])
+        ->name('bo.member-registrations.show');
+    Route::post('member-registrations', [MemberRegistrationController::class, 'store'])
+        ->name('bo.member-registrations.store');
 
     require __DIR__.'/settings.php';
 

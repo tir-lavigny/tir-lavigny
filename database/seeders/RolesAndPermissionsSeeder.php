@@ -41,6 +41,9 @@ class RolesAndPermissionsSeeder extends Seeder
         $editUserPermission = Permission::firstOrCreate(['name' => 'edit user']);
         $deleteUserPermission = Permission::firstOrCreate(['name' => 'delete user']);
 
+        $createMemberRegistrationPermission = Permission::firstOrCreate(['name' => 'create member registration']);
+        $manageMemberRegistrationPermission = Permission::firstOrCreate(['name' => 'manage member registration']);
+
         // Register permissions
         $viewRegisterPermission = Permission::firstOrCreate(['name' => 'view register']);
         $openDayPermission = Permission::firstOrCreate(['name' => 'open day']);
@@ -104,6 +107,8 @@ class RolesAndPermissionsSeeder extends Seeder
             $viewReportsPermission,
             $manageRegisterSettingsPermission,
             $restoreRegisterPermission,
+            $createMemberRegistrationPermission,
+            $manageMemberRegistrationPermission,
         ]);
 
         $editorRole->syncPermissions([
