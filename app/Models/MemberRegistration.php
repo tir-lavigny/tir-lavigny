@@ -16,6 +16,7 @@ class MemberRegistration extends Model
         'dav_uid',
         'member_id',
         'form_data',
+        'error_message',
     ];
 
     protected $casts = [
@@ -26,6 +27,11 @@ class MemberRegistration extends Model
     public function member()
     {
         return $this->belongsTo(Member::class);
+    }
+
+    public function formUrl(): string
+    {
+        return config('app.url').'/member-registration/'.$this->form_uuid;
     }
 
     protected static function booted(): void

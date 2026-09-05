@@ -7,20 +7,54 @@ use App\Models\MemberRegistration;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Inertia\Inertia;
 
 class MemberRegistrationController extends Controller implements HasMiddleware
 {
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:create member registration', only: ['create', 'store']),
-            new Middleware('permission:manage member registration', only: []),
+            new Middleware('permission:create member registration', only: ['store']),
+            new Middleware('permission:manage member registration', only: ['index', 'show']),
         ];
     }
 
-    public function index() {}
+    public function index(Request $request)
+    {
+        $query = MemberRegistration::with('member');
 
-    public function show(MemberRegistration $memberRegistration) {}
+        $status = $request->input('status');
+        if ($status) {
+            $query->where('status', $status);
+        }
 
-    public function store(Request $request) {}
+        $query->orderBy('created_at', 'desc');
+
+        $registrations = $query->paginate(15)->withQueryString();
+
+        return Inertia::render('backOffice/MemberRegistrations/Index', [
+            'registrations' => $registrations,
+            'filters' => [
+                'status' => $status,
+            ],
+        ]);
+    }
+
+    public function show(MemberRegistration $memberRegistration)
+    {
+        $memberRegistration->load('member');
+
+        return Inertia::render('backOffice/MemberRegistrations/Show', [
+            'registration' => $memberRegistration,
+            'formUrl' => $memberRegistration->formUrl(),
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $registration = MemberRegistration::create();
+
+        return redirect()->route('bo.member-registrations.show', $registration)
+            ->with('success', 'Formulaire créé avec succès.');
+    }
 }

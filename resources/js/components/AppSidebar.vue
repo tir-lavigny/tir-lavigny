@@ -11,6 +11,7 @@ import {
     BarChart3,
     Calendar,
     CalendarDays,
+    ClipboardList,
     FileText,
     LayoutGrid,
     MapPin,
@@ -125,6 +126,15 @@ const managementNavItems: NavItem[] = [
         href: route('bo.dav.index'),
         icon: BookUser,
     },
+    ...(hasPermissionTo(user, 'manage member registration')
+        ? [
+              {
+                  title: 'Inscriptions',
+                  href: route('bo.member-registrations.index'),
+                  icon: ClipboardList,
+              },
+          ]
+        : []),
 ];
 
 const footerNavItems: NavItem[] = [
