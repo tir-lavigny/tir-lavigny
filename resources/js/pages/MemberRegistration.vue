@@ -13,6 +13,7 @@ import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { formatDate } from '@/lib/utils';
 import { LoaderCircle } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import type { AcceptableValue } from 'reka-ui';
 
 const props = defineProps<{
     registration: MemberRegistration;
@@ -78,12 +79,12 @@ const onSwissChange = (value: boolean | 'indeterminate') => {
 
 const isOtherCountry = computed(() => form.country !== 'Suisse');
 
-const handleCountryChange = (value: string | null) => {
-    form.country = value ?? '';
+const handleCountryChange = (value: AcceptableValue) => {
+    form.country = String(value ?? '');
 };
 
-const handleCantonChange = (value: string | null) => {
-    form.canton = value ?? '';
+const handleCantonChange = (value: AcceptableValue) => {
+    form.canton = String(value ?? '');
 };
 
 const submit = () => {
