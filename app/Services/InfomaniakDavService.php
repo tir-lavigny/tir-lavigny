@@ -10,6 +10,12 @@ use Sabre\DAV\Client;
 use Sabre\VObject\Reader;
 use Sabre\Xml\Reader as XmlReader;
 
+enum GroupLabels: string
+{
+    case ACTIVE_MEMBERS = 'Actifs';
+    case SOFT_DELETED_MEMBERS = 'Archives';
+}
+
 class InfomaniakDavService
 {
     private Client $client;
@@ -315,7 +321,7 @@ class InfomaniakDavService
             'n_last' => $registration->form_data['last_name'],
             'email' => $registration->form_data['email'],
             'tel' => $registration->form_data['tel'] ?? '',
-            'category' => 'Actifs',
+            'category' => GroupLabels::ACTIVE_MEMBERS->value,
         ]);
     }
 
@@ -338,7 +344,7 @@ class InfomaniakDavService
                 'fn' => $member->first_name.' '.$member->last_name,
                 'n_first' => $member->first_name,
                 'n_last' => $member->last_name,
-                'category' => 'Archives',
+                'category' => GroupLabels::SOFT_DELETED_MEMBERS->value,
             ]);
         } catch (\Exception $e) {
             Log::warning('Failed to soft delete contact in Infomaniak DAV', [
@@ -366,7 +372,7 @@ class InfomaniakDavService
                 'fn' => $member->first_name.' '.$member->last_name,
                 'n_first' => $member->first_name,
                 'n_last' => $member->last_name,
-                'category' => 'Actifs',
+                'category' => GroupLabels::ACTIVE_MEMBERS->value,
             ]);
         } catch (\Exception $e) {
             Log::warning('Failed to restore contact in Infomaniak DAV', [
