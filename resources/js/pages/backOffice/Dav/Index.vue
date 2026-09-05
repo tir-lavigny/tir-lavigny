@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { ChevronDown, ChevronUp, UserPlus } from '@lucide/vue';
+import { ChevronDown, ChevronUp, RefreshCw, UserPlus } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -32,6 +32,15 @@ interface Contact {
     vcard_raw: string;
 }
 
+interface SyncPair {
+    member_id: number;
+    member_first_name: string;
+    member_last_name: string;
+    dav_first_name: string;
+    dav_last_name: string;
+    dav_uid: string;
+}
+
 const props = defineProps<{
     contacts: Contact[];
     existingDavUids: string[];
@@ -43,9 +52,17 @@ const expandedContact = ref<string | null>(null);
 const showPreviewDialog = ref(false);
 const generating = ref(false);
 
+const showSyncDialog = ref(false);
+const syncPairs = ref<SyncPair[]>([]);
+const syncChoices = ref<Record<number, 'member' | 'dav'>>({});
+const loadingSync = ref(false);
+const syncing = ref(false);
+
 const existingDavUidSet = computed(() => new Set(props.existingDavUids));
 
-const contactsToImport = computed(() => props.contacts.filter((c) => c.category.includes('Actifs') && !existingDavUidSet.value.has(c.uid)));
+const contactsToImport = computed(() =>
+    props.contacts.filter((c) => c.category.includes('Actifs') && !existingDavUidSet.value.has(c.uid)),
+);
 
 const toggleExpand = (url: string) => {
     expandedContact.value = expandedContact.value === url ? null : url;
@@ -65,6 +82,61 @@ function confirmImport() {
         },
         onFinish: () => {
             generating.value = false;
+        },
+    });
+}
+
+// ── Sync ──
+
+async function fetchSyncPreview() {
+    loadingSync.value = true;
+    try {
+        const response = await fetch(route('bo.dav.sync.preview'), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
+            },
+        });
+        const data = await response.json();
+        syncPairs.value = data.pairs;
+        syncChoices.value = {};
+        for (const pair of data.pairs) {
+            syncChoices.value[pair.member_id] = 'member';
+        }
+        showSyncDialog.value = true;
+    } catch {
+        toast.error('Erreur lors du chargement de l\'aperçu de synchronisation.');
+    } finally {
+        loadingSync.value = false;
+    }
+}
+
+function setAllChoices(source: 'member' | 'dav') {
+    for (const pair of syncPairs.value) {
+        syncChoices.value[pair.member_id] = source;
+    }
+}
+
+const syncForm = useForm<{ choices: { member_id: number; source: string }[] }>({ choices: [] });
+
+function confirmSync() {
+    syncing.value = true;
+    syncForm.choices = syncPairs.value.map((p) => ({
+        member_id: p.member_id,
+        source: syncChoices.value[p.member_id] ?? 'member',
+    }));
+    syncForm.post(route('bo.dav.sync'), {
+        onSuccess: () => {
+            toast.success('Synchronisation effectuée avec succès.');
+            showSyncDialog.value = false;
+            syncPairs.value = [];
+            syncChoices.value = {};
+        },
+        onError: () => {
+            toast.error('Erreur lors de la synchronisation.');
+        },
+        onFinish: () => {
+            syncing.value = false;
         },
     });
 }
@@ -100,6 +172,16 @@ onMounted(() => {
                             >
                                 <UserPlus class="mr-1 h-4 w-4" />
                                 Générer les membres ({{ contactsToImport.length }})
+                            </Button>
+                            <Button
+                                v-if="hasPermissionTo(user, 'manage members')"
+                                :loading="loadingSync"
+                                variant="outline"
+                                size="sm"
+                                @click="fetchSyncPreview"
+                            >
+                                <RefreshCw class="mr-1 h-4 w-4" />
+                                Synchroniser
                             </Button>
                         </div>
                     </div>
@@ -141,6 +223,7 @@ onMounted(() => {
             </div>
         </div>
 
+        <!-- Import dialog -->
         <Dialog v-model:open="showPreviewDialog">
             <DialogContent class="max-w-2xl">
                 <DialogHeader>
@@ -174,6 +257,94 @@ onMounted(() => {
                     <Button variant="outline" @click="showPreviewDialog = false">Annuler</Button>
                     <Button :disabled="contactsToImport.length === 0 || generating" :loading="generating" @click="confirmImport">
                         <UserPlus class="mr-1 h-4 w-4" /> Confirmer la création
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Sync dialog -->
+        <Dialog v-model:open="showSyncDialog">
+            <DialogContent class="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Synchroniser les noms</DialogTitle>
+                    <DialogDescription>
+                        <template v-if="syncPairs.length > 0">
+                            {{ syncPairs.length }} modification(s) détectée(s). Choisissez la source de vérité pour chaque paire.
+                        </template>
+                        <template v-else> Aucune différence détectée. </template>
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div v-if="syncPairs.length > 0">
+                    <div class="mb-3 flex gap-2">
+                        <Button size="sm" variant="outline" @click="setAllChoices('member')">
+                            Tout Membre
+                        </Button>
+                        <Button size="sm" variant="outline" @click="setAllChoices('dav')">
+                            Tout DAV
+                        </Button>
+                    </div>
+
+                    <div class="max-h-96 overflow-y-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Membre</TableHead>
+                                    <TableHead>DAV</TableHead>
+                                    <TableHead>Choix</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="pair in syncPairs" :key="pair.member_id">
+                                    <TableCell>
+                                        <span :class="syncChoices[pair.member_id] === 'member' ? 'font-semibold' : 'text-muted-foreground'">
+                                            {{ pair.member_last_name }} {{ pair.member_first_name }}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span :class="syncChoices[pair.member_id] === 'dav' ? 'font-semibold' : 'text-muted-foreground'">
+                                            {{ pair.dav_last_name }} {{ pair.dav_first_name }}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-4">
+                                            <label class="flex items-center gap-1 text-sm">
+                                                <input
+                                                    type="radio"
+                                                    :name="'sync-' + pair.member_id"
+                                                    value="member"
+                                                    :checked="syncChoices[pair.member_id] === 'member'"
+                                                    @change="syncChoices[pair.member_id] = 'member'"
+                                                />
+                                                Membre
+                                            </label>
+                                            <label class="flex items-center gap-1 text-sm">
+                                                <input
+                                                    type="radio"
+                                                    :name="'sync-' + pair.member_id"
+                                                    value="dav"
+                                                    :checked="syncChoices[pair.member_id] === 'dav'"
+                                                    @change="syncChoices[pair.member_id] = 'dav'"
+                                                />
+                                                DAV
+                                            </label>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button variant="outline" @click="showSyncDialog = false">Annuler</Button>
+                    <Button
+                        :disabled="syncPairs.length === 0 || syncing"
+                        :loading="syncing"
+                        @click="confirmSync"
+                    >
+                        <RefreshCw class="mr-1 h-4 w-4" />
+                        Synchroniser {{ syncPairs.length }} modification(s)
                     </Button>
                 </DialogFooter>
             </DialogContent>

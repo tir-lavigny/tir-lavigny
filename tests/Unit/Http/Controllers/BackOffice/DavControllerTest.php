@@ -42,6 +42,24 @@ class DavControllerTest extends TestCase
         $this->app->instance(InfomaniakDavService::class, $davMock);
     }
 
+    private function makeContact(string $uid, string $n, string $category = 'Actifs'): array
+    {
+        $parts = explode(';', $n);
+
+        return [
+            'url' => "http://example.com/{$uid}.vcf",
+            'etag' => '"1"',
+            'uid' => $uid,
+            'fn' => ($parts[0] ?? '').' '.($parts[1] ?? ''),
+            'n' => $n,
+            'email' => '',
+            'tel' => '',
+            'org' => '',
+            'category' => $category,
+            'vcard_raw' => 'BEGIN:VCARD',
+        ];
+    }
+
     // ── Index method ──
 
     public function test_index_returns_inertia_response(): void
@@ -56,18 +74,7 @@ class DavControllerTest extends TestCase
     public function test_index_passes_contacts_and_dav_uids(): void
     {
         $contacts = [
-            [
-                'url' => 'http://example.com/john.vcf',
-                'etag' => '"1"',
-                'uid' => 'uid-001',
-                'fn' => 'Doe John',
-                'n' => 'Doe;John;;;',
-                'email' => 'john@example.com',
-                'tel' => '+41791234567',
-                'org' => '',
-                'category' => 'Actifs',
-                'vcard_raw' => 'BEGIN:VCARD',
-            ],
+            $this->makeContact('uid-001', 'Doe;John;;;'),
         ];
         $this->mockDavService($contacts);
         Member::factory()->create(['dav_uid' => 'uid-001']);
@@ -103,20 +110,7 @@ class DavControllerTest extends TestCase
 
     public function test_import_creates_members_from_actifs_contacts(): void
     {
-        $this->mockDavService([
-            [
-                'url' => 'http://example.com/john.vcf',
-                'etag' => '"1"',
-                'uid' => 'uid-001',
-                'fn' => 'Doe John',
-                'n' => 'Doe;John;;;',
-                'email' => 'john@example.com',
-                'tel' => '',
-                'org' => '',
-                'category' => 'Actifs',
-                'vcard_raw' => 'BEGIN:VCARD',
-            ],
-        ]);
+        $this->mockDavService([$this->makeContact('uid-001', 'Doe;John;;;')]);
 
         $this->controller->importFromDav(app(InfomaniakDavService::class));
 
@@ -129,20 +123,7 @@ class DavControllerTest extends TestCase
 
     public function test_import_skips_non_actifs_contacts(): void
     {
-        $this->mockDavService([
-            [
-                'url' => 'http://example.com/archived.vcf',
-                'etag' => '"1"',
-                'uid' => 'uid-001',
-                'fn' => 'Old Person',
-                'n' => 'Old;Person;;;',
-                'email' => '',
-                'tel' => '',
-                'org' => '',
-                'category' => 'Archives',
-                'vcard_raw' => 'BEGIN:VCARD',
-            ],
-        ]);
+        $this->mockDavService([$this->makeContact('uid-001', 'Old;Person;;;', 'Archives')]);
 
         $this->controller->importFromDav(app(InfomaniakDavService::class));
 
@@ -154,30 +135,8 @@ class DavControllerTest extends TestCase
         Member::factory()->create(['dav_uid' => 'uid-001']);
 
         $this->mockDavService([
-            [
-                'url' => 'http://example.com/john.vcf',
-                'etag' => '"1"',
-                'uid' => 'uid-001',
-                'fn' => 'Doe John',
-                'n' => 'Doe;John;;;',
-                'email' => '',
-                'tel' => '',
-                'org' => '',
-                'category' => 'Actifs',
-                'vcard_raw' => 'BEGIN:VCARD',
-            ],
-            [
-                'url' => 'http://example.com/jane.vcf',
-                'etag' => '"2"',
-                'uid' => 'uid-002',
-                'fn' => 'Smith Jane',
-                'n' => 'Smith;Jane;;;',
-                'email' => '',
-                'tel' => '',
-                'org' => '',
-                'category' => 'Actifs',
-                'vcard_raw' => 'BEGIN:VCARD',
-            ],
+            $this->makeContact('uid-001', 'Doe;John;;;'),
+            $this->makeContact('uid-002', 'Smith;Jane;;;'),
         ]);
 
         $this->controller->importFromDav(app(InfomaniakDavService::class));
@@ -208,42 +167,9 @@ class DavControllerTest extends TestCase
     public function test_import_creates_multiple_members(): void
     {
         $this->mockDavService([
-            [
-                'url' => 'http://example.com/john.vcf',
-                'etag' => '"1"',
-                'uid' => 'uid-001',
-                'fn' => 'Doe John',
-                'n' => 'Doe;John;;;',
-                'email' => '',
-                'tel' => '',
-                'org' => '',
-                'category' => 'Actifs',
-                'vcard_raw' => 'BEGIN:VCARD',
-            ],
-            [
-                'url' => 'http://example.com/jane.vcf',
-                'etag' => '"2"',
-                'uid' => 'uid-002',
-                'fn' => 'Smith Jane',
-                'n' => 'Smith;Jane;;;',
-                'email' => '',
-                'tel' => '',
-                'org' => '',
-                'category' => 'Actifs',
-                'vcard_raw' => 'BEGIN:VCARD',
-            ],
-            [
-                'url' => 'http://example.com/bob.vcf',
-                'etag' => '"3"',
-                'uid' => 'uid-003',
-                'fn' => 'Brown Bob',
-                'n' => 'Brown;Bob;;;',
-                'email' => '',
-                'tel' => '',
-                'org' => '',
-                'category' => 'Actifs',
-                'vcard_raw' => 'BEGIN:VCARD',
-            ],
+            $this->makeContact('uid-001', 'Doe;John;;;'),
+            $this->makeContact('uid-002', 'Smith;Jane;;;'),
+            $this->makeContact('uid-003', 'Brown;Bob;;;'),
         ]);
 
         $this->controller->importFromDav(app(InfomaniakDavService::class));
@@ -252,5 +178,134 @@ class DavControllerTest extends TestCase
         $this->assertDatabaseHas('members', ['first_name' => 'John', 'last_name' => 'Doe']);
         $this->assertDatabaseHas('members', ['first_name' => 'Jane', 'last_name' => 'Smith']);
         $this->assertDatabaseHas('members', ['first_name' => 'Bob', 'last_name' => 'Brown']);
+    }
+
+    // ── Sync preview method ──
+
+    public function test_sync_preview_returns_diff_pairs(): void
+    {
+        $member = Member::factory()->create([
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $this->mockDavService([$this->makeContact('uid-001', 'Doe;John;;;')]);
+
+        $request = \Illuminate\Http\Request::create('/sync/preview', 'GET');
+        $response = $this->controller->syncPreview(app(InfomaniakDavService::class));
+
+        $data = $response->getData(true);
+        $this->assertCount(1, $data['pairs']);
+        $this->assertEquals($member->id, $data['pairs'][0]['member_id']);
+        $this->assertEquals('Pierre', $data['pairs'][0]['member_first_name']);
+        $this->assertEquals('Dupont', $data['pairs'][0]['member_last_name']);
+        $this->assertEquals('John', $data['pairs'][0]['dav_first_name']);
+        $this->assertEquals('Doe', $data['pairs'][0]['dav_last_name']);
+    }
+
+    public function test_sync_preview_skips_matching_pairs(): void
+    {
+        Member::factory()->create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $this->mockDavService([$this->makeContact('uid-001', 'Doe;John;;;')]);
+
+        $response = $this->controller->syncPreview(app(InfomaniakDavService::class));
+
+        $data = $response->getData(true);
+        $this->assertCount(0, $data['pairs']);
+    }
+
+    public function test_sync_preview_skips_non_actifs(): void
+    {
+        Member::factory()->create([
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $this->mockDavService([$this->makeContact('uid-001', 'Doe;John;;;', 'Archives')]);
+
+        $response = $this->controller->syncPreview(app(InfomaniakDavService::class));
+
+        $data = $response->getData(true);
+        $this->assertCount(0, $data['pairs']);
+    }
+
+    public function test_sync_preview_handles_exception(): void
+    {
+        $this->mockDavServiceThrows();
+
+        $response = $this->controller->syncPreview(app(InfomaniakDavService::class));
+
+        $this->assertEquals(500, $response->getStatusCode());
+    }
+
+    // ── Sync method ──
+
+    public function test_sync_updates_member_from_dav(): void
+    {
+        $member = Member::factory()->create([
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock->shouldReceive('getAddressbookUrl')->andReturn('http://localhost/');
+        $davMock->shouldReceive('getContact')
+            ->with('http://localhost/uid-001.vcf')
+            ->andReturn([
+                'url' => 'http://localhost/uid-001.vcf',
+                'uid' => 'uid-001',
+                'fn' => 'Doe John',
+                'n' => 'Doe;John;;;',
+                'email' => '',
+                'tel' => '',
+                'org' => '',
+                'vcard_raw' => 'BEGIN:VCARD',
+            ]);
+        $this->app->instance(InfomaniakDavService::class, $davMock);
+
+        $request = new \Illuminate\Http\Request();
+        $request->merge(['choices' => [['member_id' => $member->id, 'source' => 'dav']]]);
+
+        $this->controller->sync(app(InfomaniakDavService::class), $request);
+
+        $this->assertDatabaseHas('members', [
+            'id' => $member->id,
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+        ]);
+    }
+
+    public function test_sync_updates_dav_from_member(): void
+    {
+        $member = Member::factory()->create([
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock->shouldReceive('updateMember')
+            ->with(Mockery::on(fn ($m) => $m->id === $member->id))
+            ->andReturn(true);
+        $this->app->instance(InfomaniakDavService::class, $davMock);
+
+        $request = new \Illuminate\Http\Request();
+        $request->merge(['choices' => [['member_id' => $member->id, 'source' => 'member']]]);
+
+        $this->controller->sync(app(InfomaniakDavService::class), $request);
+
+        $this->assertDatabaseHas('members', [
+            'id' => $member->id,
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+        ]);
     }
 }

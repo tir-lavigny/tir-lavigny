@@ -36,10 +36,13 @@ class DavControllerTest extends TestCase
         parent::tearDown();
     }
 
-    private function mockDavService(array $contacts): void
+    private function mockDavService(array $contacts, array $extraMethods = []): void
     {
         $davMock = Mockery::mock(InfomaniakDavService::class);
         $davMock->shouldReceive('getContacts')->andReturn($contacts);
+        foreach ($extraMethods as $method => $return) {
+            $davMock->shouldReceive($method)->andReturn($return);
+        }
         $this->app->instance(InfomaniakDavService::class, $davMock);
     }
 
@@ -312,5 +315,231 @@ class DavControllerTest extends TestCase
         $this->post(route('bo.dav.import'))
             ->assertRedirect()
             ->assertSessionHas('success', '1 membre(s) créé(s) avec succès.');
+    }
+
+    // ── Sync preview tests ──
+
+    public function test_sync_preview_requires_authentication(): void
+    {
+        $this->get(route('bo.dav.sync.preview'))->assertRedirect();
+    }
+
+    public function test_sync_preview_requires_manage_members_permission(): void
+    {
+        $this->actingAs($this->user);
+        $this->get(route('bo.dav.sync.preview'))->assertForbidden();
+    }
+
+    public function test_sync_preview_returns_paired_diffs(): void
+    {
+        $this->actingAs($this->admin);
+
+        $member = Member::factory()->create([
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $this->mockDavService([
+            [
+                'url' => 'http://example.com/john.vcf',
+                'etag' => '"1"',
+                'uid' => 'uid-001',
+                'fn' => 'Doe John',
+                'n' => 'Doe;John;;;',
+                'email' => '',
+                'tel' => '',
+                'org' => '',
+                'category' => 'Actifs',
+                'vcard_raw' => "BEGIN:VCARD\r\nCATEGORIES:Actifs\r\nEND:VCARD",
+            ],
+        ]);
+
+        $response = $this->getJson(route('bo.dav.sync.preview'));
+
+        $response->assertOk();
+        $response->assertJsonPath('pairs.0.member_id', $member->id);
+        $response->assertJsonPath('pairs.0.member_first_name', 'Pierre');
+        $response->assertJsonPath('pairs.0.member_last_name', 'Dupont');
+        $response->assertJsonPath('pairs.0.dav_first_name', 'John');
+        $response->assertJsonPath('pairs.0.dav_last_name', 'Doe');
+    }
+
+    public function test_sync_preview_skips_matching_pairs(): void
+    {
+        $this->actingAs($this->admin);
+
+        Member::factory()->create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $this->mockDavService([
+            [
+                'url' => 'http://example.com/john.vcf',
+                'etag' => '"1"',
+                'uid' => 'uid-001',
+                'fn' => 'Doe John',
+                'n' => 'Doe;John;;;',
+                'email' => '',
+                'tel' => '',
+                'org' => '',
+                'category' => 'Actifs',
+                'vcard_raw' => "BEGIN:VCARD\r\nCATEGORIES:Actifs\r\nEND:VCARD",
+            ],
+        ]);
+
+        $response = $this->getJson(route('bo.dav.sync.preview'));
+
+        $response->assertOk();
+        $response->assertJsonPath('pairs', []);
+    }
+
+    public function test_sync_preview_skips_non_actifs(): void
+    {
+        $this->actingAs($this->admin);
+
+        Member::factory()->create([
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $this->mockDavService([
+            [
+                'url' => 'http://example.com/john.vcf',
+                'etag' => '"1"',
+                'uid' => 'uid-001',
+                'fn' => 'Doe John',
+                'n' => 'Doe;John;;;',
+                'email' => '',
+                'tel' => '',
+                'org' => '',
+                'category' => 'Archives',
+                'vcard_raw' => "BEGIN:VCARD\r\nCATEGORIES:Archives\r\nEND:VCARD",
+            ],
+        ]);
+
+        $response = $this->getJson(route('bo.dav.sync.preview'));
+
+        $response->assertOk();
+        $response->assertJsonPath('pairs', []);
+    }
+
+    public function test_sync_preview_handles_dav_exception(): void
+    {
+        $this->actingAs($this->admin);
+        $this->mockDavServiceThrows();
+
+        $response = $this->getJson(route('bo.dav.sync.preview'));
+
+        $response->assertStatus(500);
+    }
+
+    // ── Sync tests ──
+
+    public function test_sync_requires_authentication(): void
+    {
+        $this->post(route('bo.dav.sync'), ['choices' => [['member_id' => 1, 'source' => 'member']]])->assertRedirect();
+    }
+
+    public function test_sync_requires_manage_members_permission(): void
+    {
+        $this->actingAs($this->user);
+        $this->post(route('bo.dav.sync'), ['choices' => [['member_id' => 1, 'source' => 'member']]])->assertForbidden();
+    }
+
+    public function test_sync_updates_member_from_dav_source(): void
+    {
+        $this->actingAs($this->admin);
+
+        $member = Member::factory()->create([
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock->shouldReceive('getContacts')->andReturn([]);
+        $davMock->shouldReceive('getAddressbookUrl')->andReturn('http://localhost/');
+        $davMock->shouldReceive('getContact')
+            ->with('http://localhost/uid-001.vcf')
+            ->andReturn([
+                'url' => 'http://localhost/uid-001.vcf',
+                'uid' => 'uid-001',
+                'fn' => 'Doe John',
+                'n' => 'Doe;John;;;',
+                'email' => '',
+                'tel' => '',
+                'org' => '',
+                'vcard_raw' => 'BEGIN:VCARD',
+            ]);
+        $this->app->instance(InfomaniakDavService::class, $davMock);
+
+        $this->post(route('bo.dav.sync'), [
+            'choices' => [['member_id' => $member->id, 'source' => 'dav']],
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('members', [
+            'id' => $member->id,
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+        ]);
+    }
+
+    public function test_sync_updates_dav_from_member_source(): void
+    {
+        $this->actingAs($this->admin);
+
+        $member = Member::factory()->create([
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock->shouldReceive('getContacts')->andReturn([]);
+        $davMock->shouldReceive('updateMember')
+            ->with(Mockery::on(fn ($m) => $m->id === $member->id))
+            ->andReturn(true);
+        $this->app->instance(InfomaniakDavService::class, $davMock);
+
+        $this->post(route('bo.dav.sync'), [
+            'choices' => [['member_id' => $member->id, 'source' => 'member']],
+        ])->assertRedirect();
+    }
+
+    public function test_sync_redirects_with_success_flash(): void
+    {
+        $this->actingAs($this->admin);
+
+        $member = Member::factory()->create([
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-001',
+        ]);
+
+        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock->shouldReceive('getContacts')->andReturn([]);
+        $davMock->shouldReceive('getAddressbookUrl')->andReturn('http://localhost/');
+        $davMock->shouldReceive('getContact')
+            ->with('http://localhost/uid-001.vcf')
+            ->andReturn([
+                'url' => 'http://localhost/uid-001.vcf',
+                'uid' => 'uid-001',
+                'fn' => 'Doe John',
+                'n' => 'Doe;John;;;',
+                'email' => '',
+                'tel' => '',
+                'org' => '',
+                'vcard_raw' => 'BEGIN:VCARD',
+            ]);
+        $this->app->instance(InfomaniakDavService::class, $davMock);
+
+        $this->post(route('bo.dav.sync'), [
+            'choices' => [['member_id' => $member->id, 'source' => 'dav']],
+        ])->assertRedirect()
+            ->assertSessionHas('success', '1 membre(s) synchronisé(s) avec succès.');
     }
 }

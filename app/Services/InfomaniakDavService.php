@@ -274,25 +274,41 @@ class InfomaniakDavService
             throw new \RuntimeException('Contact not found for update: '.$contactUrl);
         }
 
-        $vcard = "BEGIN:VCARD\r\n";
-        $vcard .= "VERSION:3.0\r\n";
-        $vcard .= 'UID:'.$existingContact['uid']."\r\n";
-        $vcard .= 'FN:'.$this->escapeVcardValue($data['fn'])."\r\n";
-        $vcard .= 'N:'.$this->escapeVcardValue($data['n_last']).';'.$this->escapeVcardValue($data['n_first']).";;;\r\n";
+        $lines = preg_split('/\r?\n/', $existingContact['vcard_raw']);
 
-        if (! empty($data['email'])) {
-            $vcard .= 'EMAIL;TYPE=INTERNET:'.$this->escapeVcardValue($data['email'])."\r\n";
+        $replacements = [];
+
+        if (isset($data['fn'])) {
+            $replacements['FN'] = 'FN:'.$this->escapeVcardValue($data['fn']);
         }
 
-        if (! empty($data['tel'])) {
-            $vcard .= 'TEL;TYPE=CELL:'.$this->escapeVcardValue($data['tel'])."\r\n";
+        if (isset($data['n_first']) && isset($data['n_last'])) {
+            $replacements['N'] = 'N:'.$this->escapeVcardValue($data['n_last']).';'.$this->escapeVcardValue($data['n_first']).';;;';
         }
 
-        if (! empty($data['category'])) {
-            $vcard .= 'CATEGORIES:'.$this->escapeVcardValue($data['category'])."\r\n";
+        if (isset($data['email'])) {
+            $replacements['EMAIL'] = 'EMAIL;TYPE=INTERNET:'.$this->escapeVcardValue($data['email']);
         }
 
-        $vcard .= "END:VCARD\r\n";
+        if (isset($data['tel'])) {
+            $replacements['TEL'] = 'TEL;TYPE=CELL:'.$this->escapeVcardValue($data['tel']);
+        }
+
+        if (isset($data['category'])) {
+            $replacements['CATEGORIES'] = 'CATEGORIES:'.$this->escapeVcardValue($data['category']);
+        }
+
+        foreach ($lines as &$line) {
+            foreach ($replacements as $propName => $replacement) {
+                if (preg_match('/^'.$propName.'/i', $line)) {
+                    $line = $replacement;
+                    break;
+                }
+            }
+        }
+        unset($line);
+
+        $vcard = implode("\r\n", $lines);
 
         $response = $this->client->request('PUT', $contactUrl, $vcard, [
             'Content-Type' => 'text/vcard; charset=utf-8',

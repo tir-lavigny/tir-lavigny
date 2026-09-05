@@ -96,6 +96,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     Route::middleware('permission:manage members')->prefix('dav')->group(function () {
         Route::get('/', [DavController::class, 'index'])->name('bo.dav.index');
         Route::post('/import', [DavController::class, 'importFromDav'])->name('bo.dav.import');
+        Route::get('/sync/preview', [DavController::class, 'syncPreview'])->name('bo.dav.sync.preview');
+        Route::post('/sync', [DavController::class, 'sync'])->name('bo.dav.sync');
     });
 
     Route::get('member-registrations', [BackOfficeMemberRegistrationController::class, 'index'])
