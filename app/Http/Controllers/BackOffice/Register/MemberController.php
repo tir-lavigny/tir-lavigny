@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Register\UpdateMemberRequest;
 use App\Models\Member;
+use App\Services\InfomaniakDavService;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
@@ -49,6 +50,12 @@ class MemberController extends Controller implements HasMiddleware
 
     public function destroy(Member $member)
     {
+        $davRes = (new InfomaniakDavService)->deleteMember($member);
+
+        if (! $davRes) {
+            return redirect()->route('bo.register.members.index')->with('error', 'Failed to delete member from Infomaniak DAV.');
+        }
+
         $member->delete();
 
         return redirect()->route('bo.register.members.index')->with('success', 'Member deleted successfully.');

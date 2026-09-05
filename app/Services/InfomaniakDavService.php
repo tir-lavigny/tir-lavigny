@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Member;
 use App\Models\MemberRegistration;
 use Illuminate\Support\Str;
 use Sabre\DAV\Client;
@@ -191,6 +192,21 @@ class InfomaniakDavService
         ];
     }
 
+    private function deleteContact(string $contactUrl): bool
+    {
+        $response = $this->client->request('DELETE', $contactUrl);
+
+        if ($response['statusCode'] >= 400) {
+            throw new \RuntimeException(sprintf(
+                'DAV DELETE failed with status %d: %s',
+                $response['statusCode'],
+                $response['body'],
+            ));
+        }
+
+        return true;
+    }
+
     public function createContactFromMemberRegistration(MemberRegistration $registration): array
     {
         return $this->createContact([
@@ -201,6 +217,30 @@ class InfomaniakDavService
             'tel' => $registration->form_data['tel'] ?? '',
             'category' => 'Actifs',
         ]);
+    }
+
+    public function deleteMember(Member $member): bool
+    {
+
+        if (! $member->dav_uid) {
+            return true; // No DAV UID, nothing to delete
+        }
+
+        $contactUrl = rtrim($this->getAddressbookUrl(), '/').'/'.$member->dav_uid.'.vcf';
+
+        try {
+            $this->deleteContact($contactUrl);
+        } catch (\Exception $e) {
+            logger()->warning('Failed to delete contact from Infomaniak DAV', [
+                'member_id' => $member->id,
+                'dav_uid' => $member->dav_uid,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        return true;
     }
 
     private function escapeVcardValue(string $value): string
