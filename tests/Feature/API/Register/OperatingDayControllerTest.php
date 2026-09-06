@@ -29,6 +29,9 @@ class OperatingDayControllerTest extends TestCase
         $this->user = User::factory()->create();
         $this->user->assignRole('cashier');
         $this->tokens = AuthTestHelper::generateTokens($this->user);
+
+        $remarkRecipient = User::factory()->create();
+        $remarkRecipient->assignRole('get register close operating day remark');
     }
 
     protected function tearDown(): void

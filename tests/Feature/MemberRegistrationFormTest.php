@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Events\MemberRegistrationFormSubmitted;
 use App\Models\MemberRegistration;
+use App\Models\User;
 use Carbon\Carbon;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
@@ -12,6 +14,14 @@ use Tests\TestCase;
 class MemberRegistrationFormTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $user = User::factory()->create();
+        $user->assignRole('get member registration mails');
+    }
 
     public function test_can_view_empty_form_with_valid_uuid(): void
     {

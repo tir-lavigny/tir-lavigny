@@ -28,13 +28,16 @@ class MemberRegistrationPipelineTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $admin;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(RolesAndPermissionsSeeder::class);
-        $admin = User::factory()->create();
-        $admin->assignRole('admin');
-        $this->actingAs($admin);
+        $this->admin = User::factory()->create();
+        $this->admin->assignRole('admin');
+        $this->admin->assignRole('get member registration mails');
+        $this->actingAs($this->admin);
     }
 
     protected function tearDown(): void
@@ -193,7 +196,7 @@ class MemberRegistrationPipelineTest extends TestCase
         $this->assertEquals(MemberRegistrationStatus::COMPLETED, $registration->status);
 
         Mail::assertSent(\App\Mail\MemberRegistrationCompleted::class, function ($mail) use ($registration) {
-            return $mail->hasTo(env('APP_USER_EMAIL'))
+            return $mail->hasTo($this->admin->email)
                 && $mail->registration->id === $registration->id;
         });
     }
@@ -245,7 +248,7 @@ class MemberRegistrationPipelineTest extends TestCase
         $this->assertCount(5, $vouchers);
 
         Mail::assertSent(\App\Mail\MemberRegistrationCompleted::class, function ($mail) use ($registration) {
-            return $mail->hasTo(env('APP_USER_EMAIL'))
+            return $mail->hasTo($this->admin->email)
                 && $mail->registration->id === $registration->id;
         });
     }
