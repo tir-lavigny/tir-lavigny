@@ -62,7 +62,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $candidates = self::getMembersByRole('get member registration mails');
         if ($candidates->isEmpty()) {
-            $candidates = self::where('email', '=', config('app.user.email'), true)->get();
+            $candidates = self::where('email', config('app.user.email'))->get();
         }
 
         return $candidates->pluck('email')->toArray();
@@ -72,7 +72,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $candidates = self::getMembersByRole('get register close operating day remark');
         if ($candidates->isEmpty()) {
-            $candidates = self::where('email', '=', config('app.user.email'), true)->get();
+            $candidates = self::where('email', config('app.user.email'))->get();
         }
 
         return $candidates->pluck('email')->toArray();
