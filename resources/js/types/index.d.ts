@@ -232,6 +232,7 @@ export interface Member {
     id: number;
     first_name: string;
     last_name: string;
+    dav_uid?: string | null;
     created_at: string;
     updated_at: string;
     deleted_at?: string;
@@ -324,4 +325,24 @@ export interface PaginatedVouchers extends PaginatedData<Voucher> {
 
 export interface PaginatedOperatingDays extends PaginatedData<OperatingDay> {
     data?: OperatingDay[];
+}
+
+export interface MemberRegistration {
+    id: number;
+    form_uuid: string;
+    status: string;
+    dav_uid: string | null;
+    member_id: number | null;
+    form_data: Record<string, any> | null;
+    form_submitted_at: string | null;
+    error_message: string | null;
+    failed_at: string | null;
+    member?: Member;
+    form_url?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedMemberRegistrations extends PaginatedData<MemberRegistration> {
+    data?: MemberRegistration[];
 }

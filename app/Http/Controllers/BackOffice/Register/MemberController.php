@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\BackOffice\Register;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\BackOffice\Register\StoreMemberRequest;
 use App\Http\Requests\BackOffice\Register\UpdateMemberRequest;
 use App\Models\Member;
+use App\Services\InfomaniakDavService;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
@@ -16,7 +16,7 @@ class MemberController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:manage members', only: ['create', 'store', 'edit', 'update', 'destroy']),
+            new Middleware('permission:manage members', only: ['create', 'edit', 'update', 'destroy']),
         ];
     }
 
@@ -34,13 +34,6 @@ class MemberController extends Controller implements HasMiddleware
         return Inertia::render('backOffice/Register/Members/Create');
     }
 
-    public function store(StoreMemberRequest $request)
-    {
-        Member::create($request->validated());
-
-        return redirect()->route('bo.register.members.index')->with('success', 'Member created successfully.');
-    }
-
     public function edit(Member $member): Response
     {
         return Inertia::render('backOffice/Register/Members/Edit', [
@@ -48,17 +41,29 @@ class MemberController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(UpdateMemberRequest $request, Member $member)
+    public function update(UpdateMemberRequest $request, Member $member, InfomaniakDavService $dav)
     {
         $member->update($request->validated());
 
-        return redirect()->route('bo.register.members.index')->with('success', 'Member updated successfully.');
+        $davRes = $dav->updateMember($member);
+
+        if (! $davRes) {
+            return redirect()->route('bo.register.members.index')->with('error', 'Impossible de mettre à jour le membre dans les contacts.');
+        }
+
+        return redirect()->route('bo.register.members.index')->with('success', 'Membre mis à jour avec succès.');
     }
 
-    public function destroy(Member $member)
+    public function destroy(Member $member, InfomaniakDavService $dav)
     {
+        $davRes = $dav->softDeleteMember($member);
+
+        if (! $davRes) {
+            return back()->withErrors(['error' => 'Impossible de supprimer le membre dans les contacts.']);
+        }
+
         $member->delete();
 
-        return redirect()->route('bo.register.members.index')->with('success', 'Member deleted successfully.');
+        return back();
     }
 }

@@ -10,7 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedMembers, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, TicketX, Trash2 } from '@lucide/vue';
+import { Pencil, Search, TicketX, Trash2 } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -44,7 +44,7 @@ watch(
 const handleDelete = (id: number) => {
     useForm({}).delete(route('bo.register.members.destroy', id), {
         onSuccess: () => toast.success('Membre supprimé.'),
-        onError: () => toast.error('Erreur lors de la suppression.'),
+        onError: (errors) => toast.error(errors.error || 'Une erreur est survenue.'),
     });
 };
 </script>
@@ -65,14 +65,6 @@ const handleDelete = (id: number) => {
                 <div class="mb-4 flex w-full flex-row">
                     <div class="flex flex-1 items-center justify-between">
                         <H3>Membres</H3>
-                        <Tooltip v-if="hasPermissionTo(user, 'manage members')">
-                            <TooltipTrigger>
-                                <Link :href="route('bo.register.members.create')">
-                                    <Button size="icon"><Plus /></Button>
-                                </Link>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Créer un membre</p></TooltipContent>
-                        </Tooltip>
                     </div>
                 </div>
                 <div v-for="member in members.data" :key="member.id" class="mb-4 flex items-center justify-between rounded-lg border p-4">

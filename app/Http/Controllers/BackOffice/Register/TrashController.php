@@ -11,6 +11,7 @@ use App\Models\Season;
 use App\Models\Ticket;
 use App\Models\TicketItem;
 use App\Models\Voucher;
+use App\Services\InfomaniakDavService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -62,14 +63,14 @@ class TrashController extends Controller implements HasMiddleware
             'tickets' => $tickets,
             'vouchers' => $vouchers,
             'memberFilter' => (int) $memberId,
-            'allMembers' => Member::orderBy('last_name')->get(['id', 'first_name', 'last_name']),
+            'allMembers' => Member::withTrashed()->orderBy('last_name')->get(['id', 'first_name', 'last_name']),
         ]);
     }
 
-    public function restore(Request $request, string $type, int $id): JsonResponse|RedirectResponse
+    public function restore(Request $request, string $type, int $id, InfomaniakDavService $dav): JsonResponse|RedirectResponse
     {
         if ($type === 'ticket') {
-            return response()->json(['message' => 'Les tickets ne peuvent pas être restaurés.'], 422);
+            return back()->with('error', 'Les tickets ne peuvent pas être restaurés.');
         }
 
         $modelClass = $this->resolveType($type);
@@ -90,10 +91,18 @@ class TrashController extends Controller implements HasMiddleware
 
         $model->restore();
 
-        return redirect()->back()->with('success', 'Élément restauré avec succès.');
+        if ($type === 'member' && $model->dav_uid) {
+            $davRes = $dav->restoreMember($model);
+
+            if (! $davRes) {
+                return back()->with('error', 'Membre restauré, mais impossible de récupérer le contact dans Infomaniak.');
+            }
+        }
+
+        return back();
     }
 
-    public function forceDelete(Request $request, string $type, int $id): JsonResponse
+    public function forceDelete(Request $request, string $type, int $id, InfomaniakDavService $dav): RedirectResponse
     {
         $modelClass = $this->resolveType($type);
 
@@ -103,20 +112,23 @@ class TrashController extends Controller implements HasMiddleware
         if (count($children) > 0) {
             $labels = array_map(fn ($c) => $c['label'], $children);
 
-            return response()->json([
-                'message' => 'Impossible de supprimer définitivement car cet élément contient : '.implode(', ', $labels).'. Supprimez-les d\'abord.',
-            ], 422);
+            return back()->with('error', 'Impossible de supprimer définitivement car cet élément contient : '.implode(', ', $labels).'. Supprimez-les d\'abord.');
         }
 
         try {
+            if ($type === 'member' && $model->dav_uid) {
+                $davRes = $dav->deleteMember($model);
+
+                if (! $davRes) {
+                    return back()->with('error', 'Impossible de supprimer définitivement le membre car la suppression dans Infomaniak a échoué.');
+                }
+            }
             $model->forceDelete();
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Impossible de supprimer définitivement cet élément. Une contrainte de base de données empêche la suppression.',
-            ], 422);
+            return back()->with('error', 'Impossible de supprimer définitivement cet élément. Une contrainte de base de données empêche la suppression.');
         }
 
-        return response()->json(['success' => true, 'message' => 'Élément supprimé définitivement.']);
+        return back()->with('success', 'Élément supprimé définitivement.');
     }
 
     protected function resolveType(string $type): string

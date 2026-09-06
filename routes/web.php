@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\BackOffice\DashboardController;
+use App\Http\Controllers\BackOffice\DavController;
 use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
+use App\Http\Controllers\BackOffice\MemberRegistrationController as BackOfficeMemberRegistrationController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
 use App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\BackOffice\UserController as BackOfficeUserController;
@@ -10,6 +12,7 @@ use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ShootingController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +30,12 @@ Route::redirect('/shootings', '/shootings/ods', 308);
 Route::get('/shootings/ods', [ShootingController::class, 'indexODS'])->name('shootings');
 
 Route::get('/shootings/field', [ShootingController::class, 'indexField'])->name('shootings.field');
+
+Route::get('/member-registration/{form_uuid}', [MemberRegistrationController::class, 'show'])->name('member-registration.show');
+Route::post('/member-registration', [MemberRegistrationController::class, 'store'])->name('member-registration.store');
+Route::get('/member-registration', function () {
+    abort(404);
+});
 
 Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/', function () {
@@ -83,6 +92,23 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         'update' => 'bo.users.update',
         'destroy' => 'bo.users.destroy',
     ]);
+
+    Route::middleware('permission:manage members')->prefix('dav')->group(function () {
+        Route::get('/', [DavController::class, 'index'])->name('bo.dav.index');
+        Route::post('/import', [DavController::class, 'importFromDav'])->name('bo.dav.import');
+        Route::get('/sync/preview', [DavController::class, 'syncPreview'])->name('bo.dav.sync.preview');
+        Route::post('/sync', [DavController::class, 'sync'])->name('bo.dav.sync');
+    });
+
+    Route::get('member-registrations', [BackOfficeMemberRegistrationController::class, 'index'])
+        ->name('bo.member-registrations.index');
+    Route::get('member-registrations/{memberRegistration}', [BackOfficeMemberRegistrationController::class, 'show'])
+        ->name('bo.member-registrations.show');
+    Route::post('member-registrations', [BackOfficeMemberRegistrationController::class, 'store'])
+        ->name('bo.member-registrations.store');
+    Route::post('member-registrations/{memberRegistration}/retry', [BackOfficeMemberRegistrationController::class, 'retry'])
+        ->name('bo.member-registrations.retry')
+        ->middleware('permission:manage member registration');
 
     require __DIR__.'/settings.php';
 
@@ -143,10 +169,11 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     });
 
     Route::middleware('permission:manage members')->prefix('register')->group(function () {
-        Route::resource('members', Register\MemberController::class)->names([
+        Route::resource('members', Register\MemberController::class)->only([
+            'index', 'create', 'edit', 'update', 'destroy',
+        ])->names([
             'index' => 'bo.register.members.index',
             'create' => 'bo.register.members.create',
-            'store' => 'bo.register.members.store',
             'edit' => 'bo.register.members.edit',
             'update' => 'bo.register.members.update',
             'destroy' => 'bo.register.members.destroy',

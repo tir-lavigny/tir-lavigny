@@ -125,7 +125,7 @@ class PostController extends Controller implements HasMiddleware
         try {
             $post->save();
         } catch (Exception $e) {
-            return redirect()->back()->withErrors('Unable to update post. Please try again later.');
+            return back()->with('error', 'Unable to update post. Please try again later.');
         }
 
         return redirect()->route('bo.posts.show', $post->public_id)->with('success', 'Post updated successfully.');
@@ -141,7 +141,7 @@ class PostController extends Controller implements HasMiddleware
         try {
             $post->delete();
         } catch (Exception $e) {
-            return redirect()->back()->withErrors('Unable to delete post. Please try again later.');
+            return back()->with('error', 'Unable to delete post. Please try again later.');
         }
 
         return redirect()->route('bo.posts.index')->with('success', 'Post deleted successfully.');

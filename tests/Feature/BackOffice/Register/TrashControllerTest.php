@@ -10,9 +10,11 @@ use App\Models\Ticket;
 use App\Models\TicketItem;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Services\InfomaniakDavService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Mockery;
 use Tests\TestCase;
 
 class TrashControllerTest extends TestCase
@@ -28,6 +30,11 @@ class TrashControllerTest extends TestCase
         $this->admin = User::factory()->create();
         $this->admin->assignRole('admin');
         $this->actingAs($this->admin);
+
+        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock->shouldReceive('restoreMember')->andReturn(true);
+        $davMock->shouldReceive('deleteMember')->andReturn(true);
+        $this->app->instance(InfomaniakDavService::class, $davMock);
     }
 
     public function test_index_returns_trash_page(): void
@@ -170,7 +177,8 @@ class TrashControllerTest extends TestCase
 
         $response = $this->postJson(route('bo.register.trash.restore', ['type' => 'ticket', 'id' => $ticket->id, 'confirm' => true]));
 
-        $response->assertStatus(422);
+        $response->assertStatus(302);
+        $response->assertSessionHas('error');
         $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
         $this->assertSoftDeleted('ticket_items', ['id' => $ticketItem->id]);
     }
@@ -229,7 +237,7 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'product', 'id' => $product->id]));
 
-        $response->assertOk();
+        $response->assertRedirect();
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
     }
 
@@ -240,7 +248,7 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'product', 'id' => $product->id]));
 
-        $response->assertOk();
+        $response->assertRedirect();
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
     }
 
@@ -252,7 +260,8 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'category', 'id' => $category->id]));
 
-        $response->assertStatus(422);
+        $response->assertStatus(302);
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('categories', ['id' => $category->id]);
     }
 
@@ -264,7 +273,8 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'ticket', 'id' => $ticket->id]));
 
-        $response->assertStatus(422);
+        $response->assertStatus(302);
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('tickets', ['id' => $ticket->id]);
     }
 
@@ -276,7 +286,8 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'member', 'id' => $member->id]));
 
-        $response->assertStatus(422);
+        $response->assertStatus(302);
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('members', ['id' => $member->id]);
     }
 
@@ -292,7 +303,8 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'season', 'id' => $season->id]));
 
-        $response->assertStatus(422);
+        $response->assertStatus(302);
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('seasons', ['id' => $season->id]);
     }
 
@@ -310,7 +322,8 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'season', 'id' => $season->id]));
 
-        $response->assertStatus(422);
+        $response->assertStatus(302);
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('seasons', ['id' => $season->id]);
     }
 
@@ -323,7 +336,8 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'product', 'id' => $product->id]));
 
-        $response->assertStatus(422);
+        $response->assertStatus(302);
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('products', ['id' => $product->id]);
     }
 
@@ -334,7 +348,7 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'voucher', 'id' => $voucher->id]));
 
-        $response->assertOk();
+        $response->assertRedirect();
         $this->assertDatabaseMissing('vouchers', ['id' => $voucher->id]);
     }
 
@@ -347,7 +361,8 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'product', 'id' => $product->id]));
 
-        $response->assertStatus(422);
+        $response->assertStatus(302);
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('products', ['id' => $product->id]);
     }
 
@@ -360,7 +375,8 @@ class TrashControllerTest extends TestCase
 
         $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'voucher', 'id' => $voucher->id]));
 
-        $response->assertStatus(422);
+        $response->assertStatus(302);
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('vouchers', ['id' => $voucher->id]);
     }
 
