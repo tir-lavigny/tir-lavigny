@@ -70,36 +70,60 @@ const mainNavItems: NavItem[] = [
 ];
 
 const registerNavItems: NavItem[] = [
-    {
-        title: 'Saisons',
-        href: route('bo.register.seasons.index'),
-        icon: Calendar,
-    },
-    {
-        title: 'Journées',
-        href: route('bo.register.operating-days.index'),
-        icon: CalendarDays,
-    },
-    {
-        title: 'Produits',
-        href: route('bo.register.products.index'),
-        icon: ShoppingCart,
-    },
-    {
-        title: 'Catégories',
-        href: route('bo.register.categories.index'),
-        icon: Tag,
-    },
-    {
-        title: 'Bons',
-        href: route('bo.register.vouchers.index'),
-        icon: Ticket,
-    },
-    {
-        title: 'Membres',
-        href: route('bo.register.members.index'),
-        icon: Users,
-    },
+    ...(hasPermissionTo(user, 'manage seasons')
+        ? [
+              {
+                  title: 'Saisons',
+                  href: route('bo.register.seasons.index'),
+                  icon: Calendar,
+              },
+          ]
+        : []),
+    ...(hasPermissionTo(user, 'manage operating days')
+        ? [
+              {
+                  title: 'Journées',
+                  href: route('bo.register.operating-days.index'),
+                  icon: CalendarDays,
+              },
+          ]
+        : []),
+    ...(hasPermissionTo(user, 'manage products')
+        ? [
+              {
+                  title: 'Produits',
+                  href: route('bo.register.products.index'),
+                  icon: ShoppingCart,
+              },
+          ]
+        : []),
+    ...(hasPermissionTo(user, 'manage categories')
+        ? [
+              {
+                  title: 'Catégories',
+                  href: route('bo.register.categories.index'),
+                  icon: Tag,
+              },
+          ]
+        : []),
+    ...(hasPermissionTo(user, 'manage vouchers')
+        ? [
+              {
+                  title: 'Bons',
+                  href: route('bo.register.vouchers.index'),
+                  icon: Ticket,
+              },
+          ]
+        : []),
+    ...(hasPermissionTo(user, 'manage members')
+        ? [
+              {
+                  title: 'Membres',
+                  href: route('bo.register.members.index'),
+                  icon: Users,
+              },
+          ]
+        : []),
     ...(hasPermissionTo(user, 'view reports')
         ? [
               {
@@ -121,11 +145,15 @@ const registerNavItems: NavItem[] = [
 ];
 
 const managementNavItems: NavItem[] = [
-    {
-        title: 'Contacts',
-        href: route('bo.dav.index'),
-        icon: BookUser,
-    },
+    ...(hasPermissionTo(user, 'manage members')
+        ? [
+              {
+                  title: 'Contacts',
+                  href: route('bo.dav.index'),
+                  icon: BookUser,
+              },
+          ]
+        : []),
     ...(hasPermissionTo(user, 'manage member registration')
         ? [
               {
@@ -176,8 +204,8 @@ const footerNavItems: NavItem[] = [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
-            <NavMain :items="registerNavItems" label="Caisse" />
-            <NavMain :items="managementNavItems" label="Gestion" />
+            <NavMain v-if="registerNavItems.length" :items="registerNavItems" label="Caisse" />
+            <NavMain v-if="managementNavItems.length" :items="managementNavItems" label="Gestion" />
         </SidebarContent>
 
         <SidebarFooter>
