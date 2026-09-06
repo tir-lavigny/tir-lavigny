@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -47,5 +48,33 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Statc method to get members matching a role name.
+     */
+    private static function getMembersByRole(string $roleName): Collection
+    {
+        return self::role($roleName)->get();
+    }
+
+    public static function getMemberRegistrationEmails(): array
+    {
+        $candidates = self::getMembersByRole('get member registration mails');
+        if ($candidates->isEmpty()) {
+            $candidates = self::where('email', '=', env('APP_USER_EMAIL'), true)->get();
+        }
+
+        return $candidates->pluck('email')->toArray();
+    }
+
+    public static function getRegisterCloseOperatingDayRemarkEmails(): array
+    {
+        $candidates = self::getMembersByRole('get register close operating day remark');
+        if ($candidates->isEmpty()) {
+            $candidates = self::where('email', '=', env('APP_USER_EMAIL'), true)->get();
+        }
+
+        return $candidates->pluck('email')->toArray();
     }
 }
