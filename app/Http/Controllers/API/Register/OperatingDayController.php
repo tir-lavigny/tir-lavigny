@@ -8,6 +8,7 @@ use App\Http\Requests\API\Register\UpdateDayRequest;
 use App\Http\Resources\OperatingDayResource;
 use App\Mail\OperatingDayClosed;
 use App\Models\OperatingDay;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
@@ -46,7 +47,7 @@ class OperatingDayController extends Controller
 
             if (! empty($cash_remark)) {
                 try {
-                    Mail::to(env('APP_USER_EMAIL'))->send(new OperatingDayClosed($operatingDay));
+                    Mail::to(User::getRegisterCloseOperatingDayRemarkEmails())->send(new OperatingDayClosed($operatingDay));
                 } catch (\Throwable $e) {
                     // Don't fail the close if email fails
                     log('error', ['exception' => $e->getMessage()]);

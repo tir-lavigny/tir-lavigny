@@ -6,6 +6,7 @@ use App\Events\MemberRegistrationCompleted;
 use App\Mail\MemberRegistrationCompleted as MemberRegistrationCompletedMail;
 use App\Mail\MemberRegistrationError;
 use App\MemberRegistrationStatus;
+use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 
 class SendCompletionEmail
@@ -15,7 +16,7 @@ class SendCompletionEmail
         $registration = $event->registration;
 
         try {
-            Mail::to(env('APP_USER_EMAIL'))->send(new MemberRegistrationCompletedMail($registration));
+            Mail::to(User::getMemberRegistrationEmails())->send(new MemberRegistrationCompletedMail($registration));
 
             $registration->status = MemberRegistrationStatus::COMPLETED;
             $registration->save();
@@ -24,7 +25,7 @@ class SendCompletionEmail
             $registration->failed_at = now();
             $registration->save();
 
-            Mail::to(env('APP_USER_EMAIL'))->send(new MemberRegistrationError($registration));
+            Mail::to(User::getMemberRegistrationEmails())->send(new MemberRegistrationError($registration));
         }
     }
 }

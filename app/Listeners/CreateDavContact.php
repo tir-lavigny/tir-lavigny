@@ -6,6 +6,7 @@ use App\Events\MemberRegistrationDavCreated;
 use App\Events\MemberRegistrationFormSubmitted;
 use App\Mail\MemberRegistrationError;
 use App\MemberRegistrationStatus;
+use App\Models\User;
 use App\Services\InfomaniakDavService;
 use Illuminate\Support\Facades\Mail;
 
@@ -30,7 +31,7 @@ class CreateDavContact
             $registration->failed_at = now();
             $registration->save();
 
-            Mail::to(env('APP_USER_EMAIL'))->send(new MemberRegistrationError($registration));
+            Mail::to(User::getMemberRegistrationEmails())->send(new MemberRegistrationError($registration));
         }
     }
 }

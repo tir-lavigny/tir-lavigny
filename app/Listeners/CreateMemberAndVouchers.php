@@ -9,6 +9,7 @@ use App\MemberRegistrationStatus;
 use App\Models\Member;
 use App\Models\Product;
 use App\Models\Season;
+use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Support\Facades\Mail;
 
@@ -44,7 +45,7 @@ class CreateMemberAndVouchers
             $registration->failed_at = now();
             $registration->save();
 
-            Mail::to(env('APP_USER_EMAIL'))->send(new MemberRegistrationError($registration));
+            Mail::to(User::getMemberRegistrationEmails())->send(new MemberRegistrationError($registration));
         }
     }
 
