@@ -60,9 +60,7 @@ const syncing = ref(false);
 
 const existingDavUidSet = computed(() => new Set(props.existingDavUids));
 
-const contactsToImport = computed(() =>
-    props.contacts.filter((c) => c.category.includes('Actifs') && !existingDavUidSet.value.has(c.uid)),
-);
+const contactsToImport = computed(() => props.contacts.filter((c) => c.category.includes('Actifs') && !existingDavUidSet.value.has(c.uid)));
 
 const toggleExpand = (url: string) => {
     expandedContact.value = expandedContact.value === url ? null : url;
@@ -105,7 +103,7 @@ async function fetchSyncPreview() {
         }
         showSyncDialog.value = true;
     } catch {
-        toast.error('Erreur lors du chargement de l\'aperçu de synchronisation.');
+        toast.error("Erreur lors du chargement de l'aperçu de synchronisation.");
     } finally {
         loadingSync.value = false;
     }
@@ -277,12 +275,8 @@ onMounted(() => {
 
                 <div v-if="syncPairs.length > 0">
                     <div class="mb-3 flex gap-2">
-                        <Button size="sm" variant="outline" @click="setAllChoices('member')">
-                            Tout Membre
-                        </Button>
-                        <Button size="sm" variant="outline" @click="setAllChoices('dav')">
-                            Tout DAV
-                        </Button>
+                        <Button size="sm" variant="outline" @click="setAllChoices('member')"> Tout Membre </Button>
+                        <Button size="sm" variant="outline" @click="setAllChoices('dav')"> Tout DAV </Button>
                     </div>
 
                     <div class="max-h-96 overflow-y-auto">
@@ -338,11 +332,7 @@ onMounted(() => {
 
                 <DialogFooter>
                     <Button variant="outline" @click="showSyncDialog = false">Annuler</Button>
-                    <Button
-                        :disabled="syncPairs.length === 0 || syncing"
-                        :loading="syncing"
-                        @click="confirmSync"
-                    >
+                    <Button :disabled="syncPairs.length === 0 || syncing" :loading="syncing" @click="confirmSync">
                         <RefreshCw class="mr-1 h-4 w-4" />
                         Synchroniser {{ syncPairs.length }} modification(s)
                     </Button>

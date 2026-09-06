@@ -6,6 +6,7 @@ use App\Http\Controllers\BackOffice\DavController;
 use App\Models\Member;
 use App\Services\InfomaniakDavService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Inertia\Response;
 use Mockery;
 use Tests\TestCase;
@@ -192,7 +193,7 @@ class DavControllerTest extends TestCase
 
         $this->mockDavService([$this->makeContact('uid-001', 'Doe;John;;;')]);
 
-        $request = \Illuminate\Http\Request::create('/sync/preview', 'GET');
+        $request = Request::create('/sync/preview', 'GET');
         $response = $this->controller->syncPreview(app(InfomaniakDavService::class));
 
         $data = $response->getData(true);
@@ -271,7 +272,7 @@ class DavControllerTest extends TestCase
             ]);
         $this->app->instance(InfomaniakDavService::class, $davMock);
 
-        $request = new \Illuminate\Http\Request();
+        $request = new Request;
         $request->merge(['choices' => [['member_id' => $member->id, 'source' => 'dav']]]);
 
         $this->controller->sync(app(InfomaniakDavService::class), $request);
@@ -297,7 +298,7 @@ class DavControllerTest extends TestCase
             ->andReturn(true);
         $this->app->instance(InfomaniakDavService::class, $davMock);
 
-        $request = new \Illuminate\Http\Request();
+        $request = new Request;
         $request->merge(['choices' => [['member_id' => $member->id, 'source' => 'member']]]);
 
         $this->controller->sync(app(InfomaniakDavService::class), $request);
