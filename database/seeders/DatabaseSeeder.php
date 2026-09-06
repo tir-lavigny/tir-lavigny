@@ -27,5 +27,9 @@ class DatabaseSeeder extends Seeder
         );
 
         $user->assignRole('admin');
+
+        // Mailing lists
+        $user->assignRole('get member registration mails');
+        $user->assignRole('get register close operating day remark');
     }
 }

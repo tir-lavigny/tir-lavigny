@@ -145,5 +145,9 @@ class RolesAndPermissionsSeeder extends Seeder
             $viewTicketsPermission,
             $viewReportsPermission,
         ]);
+
+        // Role used as mailing list for members
+        $getMemberRegistrationMailsRole = Role::firstOrCreate(['name' => 'get member registration mails']);
+        $getRegisterCloseOperatingDayRemarkRole = Role::firstOrCreate(['name' => 'get register close operating day remark']);
     }
 }
