@@ -118,7 +118,13 @@ const statusLabel = (registration: any) => {
                     >
                         <div>
                             <p class="font-medium">
-                                {{ registration.member ? registration.member.first_name + ' ' + registration.member.last_name : '-' }}
+                                {{
+                                    registration.member
+                                        ? registration.member.first_name + ' ' + registration.member.last_name
+                                        : registration.form_data?.first_name && registration.form_data?.last_name
+                                          ? registration.form_data.first_name + ' ' + registration.form_data.last_name
+                                          : '-'
+                                }}
                             </p>
                             <p class="text-muted-foreground text-sm">
                                 {{ formatDate(registration.created_at, 'DD.MM.YYYY HH:mm') }}
