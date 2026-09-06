@@ -18,11 +18,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $user = User::updateOrCreate(
-            ['email' => env('APP_USER_EMAIL')],
+            ['email' => config('app.user.email')],
             [
-                'name' => env('APP_USER_NAME'),
+                'name' => config('app.user.name'),
                 'email_verified_at' => now(),
-                'password' => env('APP_USER_PASSWORD'),
+                'password' => config('app.user.password'),
             ]
         );
 

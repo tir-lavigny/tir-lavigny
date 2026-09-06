@@ -55,7 +55,7 @@ class UserController extends Controller implements HasMiddleware
             'filters' => [
                 'search' => $search,
             ],
-            'protectedEmail' => env('APP_USER_EMAIL'),
+            'protectedEmail' => config('app.user.email'),
         ]);
     }
 
@@ -116,7 +116,7 @@ class UserController extends Controller implements HasMiddleware
 
         return Inertia::render('backOffice/Users/Show', [
             'user' => $user,
-            'protectedEmail' => env('APP_USER_EMAIL'),
+            'protectedEmail' => config('app.user.email'),
         ]);
     }
 
@@ -131,7 +131,7 @@ class UserController extends Controller implements HasMiddleware
         return Inertia::render('backOffice/Users/Edit', [
             'user' => $user,
             'roles' => $roles,
-            'protectedEmail' => env('APP_USER_EMAIL'),
+            'protectedEmail' => config('app.user.email'),
         ]);
     }
 
@@ -142,7 +142,7 @@ class UserController extends Controller implements HasMiddleware
     {
         $user = User::findOrFail($id);
 
-        $protectedEmail = env('APP_USER_EMAIL');
+        $protectedEmail = config('app.user.email');
         $isProtectedUser = $user->email === $protectedEmail;
 
         $request->validate([
@@ -185,7 +185,7 @@ class UserController extends Controller implements HasMiddleware
         $user = User::findOrFail($id);
 
         // Prevent deletion of the protected user
-        $protectedEmail = env('APP_USER_EMAIL');
+        $protectedEmail = config('app.user.email');
         if ($user->email === $protectedEmail) {
             return redirect()->route('bo.users.index')->with('error', 'Cannot delete the protected user account.');
         }
