@@ -166,8 +166,7 @@ class InertiaRenderTest extends TestCase
                 ->has('paginatedEvents')
                 ->has('filters')
                 ->has('filters.search')
-                ->has('filters.start_before')
-                ->has('filters.end_before')
+                ->has('filters.past')
             );
     }
 
@@ -176,10 +175,10 @@ class InertiaRenderTest extends TestCase
         $user = $this->adminUser();
 
         $this->actingAs($user)
-            ->get('/back-office/events?search=concert&start_before=2030-01-01')
+            ->get('/back-office/events?search=concert&past=1')
             ->assertInertia(fn ($page) => $page
                 ->where('filters.search', 'concert')
-                ->where('filters.start_before', '2030-01-01')
+                ->where('filters.past', true)
             );
     }
 

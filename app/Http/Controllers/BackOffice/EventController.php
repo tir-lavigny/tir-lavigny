@@ -31,8 +31,7 @@ class EventController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
         $search = $request->input('search', null);
-        $startBefore = $request->input('start_before', null);
-        $endBefore = $request->input('end_before', null);
+        $past = $request->boolean('past', false);
         $query = Event::query();
         $query->with('location');
 
@@ -46,16 +45,13 @@ class EventController extends Controller implements HasMiddleware
             });
         }
 
-        if ($startBefore) {
-            $query->where('start_datetime', '<=', $startBefore);
+        if ($past) {
+            $query->where('start_datetime', '<', now()->startOfDay());
+        } else {
+            $query->where('start_datetime', '>=', now()->startOfDay());
         }
 
-        if ($endBefore) {
-            $query->where('end_datetime', '<=', $endBefore);
-        }
-
-        $query->where('start_datetime', '>=', now()->startOfYear())
-            ->orderBy('start_datetime');
+        $query->orderBy('start_datetime');
 
         $data = $query->paginate(5)->withQueryString();
 
@@ -63,8 +59,7 @@ class EventController extends Controller implements HasMiddleware
             'paginatedEvents' => $data,
             'filters' => [
                 'search' => $search,
-                'start_before' => $startBefore,
-                'end_before' => $endBefore,
+                'past' => $past,
             ],
         ]);
     }

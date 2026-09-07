@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AppDatePicker from '@/components/AppDatePicker.vue';
 import AppPagination from '@/components/AppPagination.vue';
 import AppEventCardAdmin from '@/components/back-office/AppEventCardAdmin.vue';
 import { H3 } from '@/components/typography/headings';
@@ -11,8 +10,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import { PaginatedEvents, type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Plus, Search, Undo2 } from '@lucide/vue';
-import { ref, useTemplateRef, watch } from 'vue';
+import { Plus, Search } from '@lucide/vue';
+import { ref, watch } from 'vue';
 
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
@@ -28,23 +27,14 @@ const props = defineProps<{
     paginatedEvents: PaginatedEvents;
     filters: {
         search?: string;
-        start_before?: string;
-        end_before?: string;
+        past?: boolean;
     };
 }>();
 
-const datePicker = useTemplateRef('datePicker');
-
 const filters = ref({
     search: props.filters.search || '',
-    startBefore: props.filters.start_before || '',
-    endBefore: props.filters.end_before || '',
+    past: props.filters.past || false,
 });
-
-const handleDateReset = () => {
-    filters.value.startBefore = '';
-    datePicker.value?.reset();
-};
 
 const handlePageChange = (page: number = 1) => {
     router.get(
@@ -52,8 +42,7 @@ const handlePageChange = (page: number = 1) => {
         {
             page: page,
             search: filters.value.search,
-            start_before: filters.value.startBefore,
-            end_before: filters.value.endBefore,
+            past: filters.value.past || undefined,
         },
         {
             preserveState: true,
@@ -70,8 +59,7 @@ watch(
             {
                 page: 1,
                 search: newFilters.search,
-                start_before: newFilters.startBefore,
-                end_before: newFilters.endBefore,
+                past: newFilters.past || undefined,
             },
             {
                 preserveState: true,
@@ -95,17 +83,14 @@ watch(
                         <Search class="text-muted-foreground size-6" />
                     </span>
                 </div>
-                <div class="flex w-full items-center gap-2 lg:w-auto">
-                    <span class="text-muted-foreground">Avant le</span>
-                    <AppDatePicker
-                        ref="datePicker"
-                        placeholder="Sélectionner une date"
-                        @update:value="(newDate) => (filters.startBefore = newDate)"
-                    />
-                    <Button v-if="filters.startBefore" size="icon" variant="outline" @click="handleDateReset">
-                        <Undo2 />
-                    </Button>
-                </div>
+            </div>
+            <div class="flex w-full items-center gap-2">
+                <Button :variant="filters.past ? 'outline' : 'default'" size="sm" @click="filters.past = false">
+                    À venir
+                </Button>
+                <Button :variant="filters.past ? 'default' : 'outline'" size="sm" @click="filters.past = true">
+                    Passés
+                </Button>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
                 <div class="mb-4 flex w-full flex-row">

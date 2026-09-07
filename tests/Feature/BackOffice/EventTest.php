@@ -369,16 +369,28 @@ class EventTest extends TestCase
         $response->assertDontSee('Non-Matching Event');
     }
 
-    public function test_index_filters_events_by_start_and_end_before(): void
+    public function test_index_filters_events_by_past(): void
     {
-        Event::factory()->create(['start_datetime' => now()->addDays(5), 'end_datetime' => now()->addDays(6)]);
-        Event::factory()->create(['start_datetime' => now()->addDays(10), 'end_datetime' => now()->addDays(11)]);
+        Event::factory()->create(['start_datetime' => now()->subDays(5)]);
+        Event::factory()->create(['start_datetime' => now()->addDays(5)]);
 
-        $response = $this->get(route('bo.events.index', ['start_before' => now()->addDays(7)->format('Y-m-d'), 'end_before' => now()->addDays(7)->format('Y-m-d')]));
+        $response = $this->get(route('bo.events.index', ['past' => true]));
+
+        $response->assertStatus(200);
+        $response->assertSee(now()->subDays(5)->format('Y-m-d'));
+        $response->assertDontSee(now()->addDays(5)->format('Y-m-d'));
+    }
+
+    public function test_index_filters_events_by_upcoming_by_default(): void
+    {
+        Event::factory()->create(['start_datetime' => now()->subDays(5)]);
+        Event::factory()->create(['start_datetime' => now()->addDays(5)]);
+
+        $response = $this->get(route('bo.events.index'));
 
         $response->assertStatus(200);
         $response->assertSee(now()->addDays(5)->format('Y-m-d'));
-        $response->assertDontSee(now()->addDays(10)->format('Y-m-d'));
+        $response->assertDontSee(now()->subDays(5)->format('Y-m-d'));
     }
 
     public function test_index_pagination_works(): void
