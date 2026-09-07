@@ -19,7 +19,7 @@ echo "Deploying application ..."
     php-8.4 artisan optimize:clear
 
     # Run RBAC seeder class
-    php-8.4 artisan db:seed --class=RolesAndPermissionsSeeder
+    php-8.4 artisan db:seed --class=RolesAndPermissionsSeeder --force
 
 
 # Exit maintenance mode
