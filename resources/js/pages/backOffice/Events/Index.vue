@@ -85,12 +85,8 @@ watch(
                 </div>
             </div>
             <div class="flex w-full items-center gap-2">
-                <Button :variant="filters.past ? 'outline' : 'default'" size="sm" @click="filters.past = false">
-                    À venir
-                </Button>
-                <Button :variant="filters.past ? 'default' : 'outline'" size="sm" @click="filters.past = true">
-                    Passés
-                </Button>
+                <Button :variant="filters.past ? 'outline' : 'default'" size="sm" @click="filters.past = false"> À venir </Button>
+                <Button :variant="filters.past ? 'default' : 'outline'" size="sm" @click="filters.past = true"> Passés </Button>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
                 <div class="mb-4 flex w-full flex-row">
