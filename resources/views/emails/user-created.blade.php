@@ -18,9 +18,9 @@
 
         .container {
             background-color: #ffffff;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             overflow: hidden;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         }
 
         .header {
@@ -33,7 +33,7 @@
             color: #ffffff;
             margin: 0;
             font-size: 28px;
-            font-weight: 600;
+            font-weight: 800;
         }
 
         .content {
@@ -65,14 +65,14 @@
 
         .button {
             display: inline-block;
-            padding: 12px 24px;
+            padding: 10px 16px;
             margin: 24px 0;
             background-color: hsl(221.2 83.2% 53.3%);
             color: #ffffff;
             text-decoration: none;
-            border-radius: 0.5rem;
+            border-radius: 0.375rem;
             font-weight: 500;
-            transition: background-color 0.2s;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         }
 
         .button:hover {
@@ -112,6 +112,7 @@
     <div class="container">
         <div class="header">
             <h1>Bienvenue !</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px; font-weight: 500;">Société de tir de Lavigny</p>
         </div>
         <div class="content">
             <p>Bonjour {{ $user->name }},</p>

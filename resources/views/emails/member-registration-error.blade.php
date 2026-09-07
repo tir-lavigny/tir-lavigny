@@ -18,13 +18,13 @@
 
         .container {
             background-color: #ffffff;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             overflow: hidden;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         }
 
         .header {
-            background-color: hsl(0 84.2% 60.2%);
+            background: linear-gradient(135deg, hsl(0 84.2% 60.2%) 0%, hsl(0 84.2% 70%) 100%);
             padding: 32px 20px;
             text-align: center;
         }
@@ -33,7 +33,7 @@
             color: #ffffff;
             margin: 0;
             font-size: 28px;
-            font-weight: 600;
+            font-weight: 800;
         }
 
         .content {
@@ -81,10 +81,11 @@
             background-color: hsl(221.2 83.2% 53.3%);
             color: #ffffff;
             text-decoration: none;
-            padding: 12px 24px;
+            padding: 10px 16px;
             border-radius: 0.375rem;
-            font-weight: 600;
+            font-weight: 500;
             margin: 16px 0;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         }
 
         .footer {
@@ -107,6 +108,7 @@
     <div class="container">
         <div class="header">
             <h1>Erreur d'inscription</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px; font-weight: 500;">Société de tir de Lavigny</p>
         </div>
         <div class="content">
             <p>Une erreur est survenue lors du traitement de l'inscription de <strong>{{ $registration->form_data['first_name'] ?? 'Inconnu' }} {{ $registration->form_data['last_name'] ?? 'Inconnu' }}</strong>.</p>

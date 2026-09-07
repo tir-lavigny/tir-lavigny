@@ -18,9 +18,9 @@
 
         .container {
             background-color: #ffffff;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             overflow: hidden;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         }
 
         .header {
@@ -33,7 +33,7 @@
             color: #ffffff;
             margin: 0;
             font-size: 28px;
-            font-weight: 600;
+            font-weight: 800;
         }
 
         .content {
@@ -64,8 +64,8 @@
         }
 
         .remark {
-            background-color: hsl(38 92% 95%);
-            border: 1px solid hsl(32 95% 84%);
+            background-color: hsl(33 100% 97%);
+            border: 1px solid hsl(27 96% 61%);
             border-radius: 0.5rem;
             padding: 16px;
             margin: 20px 0;
@@ -76,7 +76,7 @@
         }
 
         .remark strong {
-            color: hsl(32 95% 40%);
+            color: hsl(21 90% 48%);
             font-weight: 600;
         }
 
@@ -100,6 +100,7 @@
     <div class="container">
         <div class="header">
             <h1>Clôture de journée</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px; font-weight: 500;">Société de tir de Lavigny</p>
         </div>
         <div class="content">
             <p>La journée du <strong>{{ $operatingDay->date->format('d.m.Y') }}</strong> (saison
