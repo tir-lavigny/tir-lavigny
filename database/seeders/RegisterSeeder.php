@@ -41,8 +41,10 @@ class RegisterSeeder extends Seeder
             ['name' => 'Tir du jeudi', 'unit_price' => 10.00, 'quantity' => 10],
             ['name' => 'Tirs militaires', 'unit_price' => 0.00, 'quantity' => 20],
             ['name' => 'Tir Fédéral en Campagne', 'unit_price' => 0.00, 'quantity' => 18],
+            ['name' => 'Gouille', 'unit_price' => 10.00, 'quantity' => 10],
             ['name' => 'Ouverture', 'unit_price' => 10.00, 'quantity' => 12],
-            ['name' => 'Clôture', 'unit_price' => 5.00, 'quantity' => 5],
+            ['name' => 'Clôture', 'unit_price' => 10.00, 'quantity' => 5],
+            ['name' => 'Tir des moyens', 'unit_price' => 15.00, 'quantity' => 5],
         ];
 
         foreach ($bundles as $bundle) {
@@ -60,13 +62,13 @@ class RegisterSeeder extends Seeder
     private function createBarProducts(Category $category): void
     {
         $products = [
-            ['name' => 'Vin rouge 0.75l', 'unit_price' => 10.00],
-            ['name' => 'Vin rouge 0.5l', 'unit_price' => 7.00],
-            ['name' => 'Vin blanc 0.75l', 'unit_price' => 10.00],
-            ['name' => 'Vin blanc 0.5l', 'unit_price' => 7.00],
-            ['name' => 'Vin rosé 0.75l', 'unit_price' => 10.00],
-            ['name' => 'Vin rosé 0.5l', 'unit_price' => 7.00],
-            ['name' => 'Café/Thé', 'unit_price' => 1.50],
+            ['name' => 'Vin rouge 0.75l', 'unit_price' => 12.00],
+            ['name' => 'Vin rouge 0.5l', 'unit_price' => 10.00],
+            ['name' => 'Vin blanc 0.75l', 'unit_price' => 12.00],
+            ['name' => 'Vin blanc 0.5l', 'unit_price' => 10.00],
+            ['name' => 'Vin rosé 0.75l', 'unit_price' => 12.00],
+            ['name' => 'Vin rosé 0.5l', 'unit_price' => 10.00],
+            ['name' => 'Café/Thé', 'unit_price' => 2.00],
             ['name' => 'Minérale', 'unit_price' => 3.00],
             ['name' => 'Bière', 'unit_price' => 3.00],
             ['name' => 'Bière s. alcool', 'unit_price' => 3.00],

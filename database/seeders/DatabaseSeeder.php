@@ -10,6 +10,12 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
+     *
+     * ATTENTION: This will run on each deployment.
+     * Only add seeders that are needed for the application.
+     * Make sure seeders are idempotent.
+     *
+     * Seeders that add data for a new year MUST NOT be here.
      */
     public function run(): void
     {
