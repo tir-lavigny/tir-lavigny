@@ -7,15 +7,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { valueUpdater } from '@/lib/utils';
 import { Content } from '@/types';
 import { ArrowUpDown, ChevronDown, Edit, Eye, Trash2 } from '@lucide/vue';
-import type { ColumnDef, ColumnFiltersState, ExpandedState, SortingState, VisibilityState } from '@tanstack/vue-table';
+import type { ColumnDef, ColumnFiltersState, ColumnVisibilityState, ExpandedState, SortingState } from '@tanstack/vue-table';
 import {
     FlexRender,
-    getCoreRowModel,
-    getExpandedRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useVueTable,
+    createExpandedRowModel,
+    createFilteredRowModel,
+    createPaginatedRowModel,
+    createSortedRowModel,
+    columnFilteringFeature,
+    columnVisibilityFeature,
+    filterFn_includesString,
+    rowExpandingFeature,
+    rowPaginationFeature,
+    rowSelectionFeature,
+    rowSortingFeature,
+    sortFn_alphanumeric,
+    tableFeatures,
+    useTable,
 } from '@tanstack/vue-table';
 import { h, ref } from 'vue';
 
@@ -34,7 +42,22 @@ const emit = defineEmits(['update:rowSelection', 'delete:rowSelection']);
 
 const data = props.contents || [];
 
-const columns: ColumnDef<Content>[] = [
+const features = tableFeatures({
+    rowSortingFeature,
+    rowPaginationFeature,
+    columnFilteringFeature,
+    columnVisibilityFeature,
+    rowSelectionFeature,
+    rowExpandingFeature,
+    sortedRowModel: createSortedRowModel(),
+    paginatedRowModel: createPaginatedRowModel(),
+    filteredRowModel: createFilteredRowModel(),
+    expandedRowModel: createExpandedRowModel(),
+    sortFns: { alphanumeric: sortFn_alphanumeric },
+    filterFns: { includesString: filterFn_includesString },
+});
+
+const columns: ColumnDef<typeof features, Content>[] = [
     {
         id: 'select',
         header: ({ table }) =>
@@ -131,18 +154,14 @@ const columns: ColumnDef<Content>[] = [
 
 const sorting = ref<SortingState>([]);
 const columnFilters = ref<ColumnFiltersState>([]);
-const columnVisibility = ref<VisibilityState>({});
+const columnVisibility = ref<ColumnVisibilityState>({});
 const rowSelection = ref({});
 const expanded = ref<ExpandedState>({});
 
-const table = useVueTable({
+const table = useTable({
+    features,
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
     onSortingChange: (updaterOrValue) => valueUpdater(updaterOrValue, sorting),
     onColumnFiltersChange: (updaterOrValue) => valueUpdater(updaterOrValue, columnFilters),
     onColumnVisibilityChange: (updaterOrValue) => valueUpdater(updaterOrValue, columnVisibility),
@@ -208,7 +227,7 @@ table.setPagination({
                 <TableHeader>
                     <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
                         <TableHead v-for="header in headerGroup.headers" :key="header.id">
-                            <FlexRender v-if="!header.isPlaceholder" :render="header.column.columnDef.header" :props="header.getContext()" />
+                            <FlexRender v-if="!header.isPlaceholder" :header="header" />
                         </TableHead>
                     </TableRow>
                 </TableHeader>
@@ -217,7 +236,7 @@ table.setPagination({
                         <template v-for="row in table.getRowModel().rows" :key="row.id">
                             <TableRow :data-state="row.getIsSelected() && 'selected'">
                                 <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
-                                    <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+                                    <FlexRender :cell="cell" />
                                 </TableCell>
                             </TableRow>
                             <TableRow v-if="row.getIsExpanded()">
