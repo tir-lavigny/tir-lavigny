@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { formatDate } from '@/lib/utils';
+import { formatDate, parseDateOnly } from '@/lib/utils';
 import { Event } from '@/types';
 import { type DateValue, getLocalTimeZone, today } from '@internationalized/date';
 import { CalendarSync, Copy } from '@lucide/vue';
@@ -26,7 +26,12 @@ watchEffect(() => {
 
     if (!element) {
         const dates = Object.keys(props.groupedEvents).sort();
-        const closestDate = dates.find((date) => new Date(date) >= new Date(selectedDate)) || dates[dates.length - 1];
+        const closestDate =
+            dates.find((date) => {
+                const d = parseDateOnly(date);
+                const s = parseDateOnly(selectedDate);
+                return d >= s;
+            }) || dates[dates.length - 1];
         element = document.getElementById(`date-${closestDate}`);
     }
 
@@ -61,7 +66,7 @@ const copyToClipboard = async (text: string) => {
                 <div v-for="(events, date) in groupedEvents" :key="date" class="mx-auto w-full max-w-4xl pr-4">
                     <H3
                         :id="`date-${date}`"
-                        :class="{ 'text-primary': new Date(date).toDateString() === new Date().toDateString() }"
+                        :class="{ 'text-primary': parseDateOnly(date).toDateString() === new Date().toDateString() }"
                         class="bg-background sticky top-0 z-10 py-4"
                     >
                         {{ formatDate(date, 'ddd DD MMMM YYYY') }}

@@ -45,7 +45,9 @@ class EventChainServiceTest extends TestCase
         app(EventChainGeneratorService::class)->generate($chain);
 
         $event = $chain->events()->first();
-        $this->assertEquals('2099-07-01 14:30:00', $event->start_datetime->format('Y-m-d H:i:s'));
+        // Generator interprets '14:30' as Zurich time, converts to UTC.
+        // July = CEST (UTC+2), so 14:30 CEST = 12:30 UTC.
+        $this->assertEquals('2099-07-01 12:30:00', $event->start_datetime->format('Y-m-d H:i:s'));
     }
 
     public function test_generator_creates_custom_content_when_custom_body_is_set(): void

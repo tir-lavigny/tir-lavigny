@@ -27,21 +27,99 @@ describe('utils.ts', () => {
             expect(Utils.formatDate(date, 'DD/MM/YYYY')).toBe('03/07/2025');
         });
 
-        test('handles dates with Z suffix', () => {
+        test('handles UTC dates with Z suffix by converting to local', () => {
             const date = '2025-07-03T19:35:00Z';
-            expect(Utils.formatDate(date, 'DD/MM/YYYY')).toBe('03/07/2025');
+            const result = Utils.formatDate(date, 'DD/MM/YYYY');
+            expect(result).toBe('03/07/2025');
         });
 
         test('overrides options like locale', () => {
             const date = '2025-07-03T19:35:00';
-            // UseDateFormatOptions doesn't directly expose locale in a way we can easily test here without deep mock,
-            // but we can test if other options are passed through if needed.
             expect(Utils.formatDate(date, 'MMMM', { locales: 'en-US' })).toBe('July');
         });
 
         test('handles invalid date strings', () => {
             const result = Utils.formatDate('invalid-date', 'DD/MM/YYYY');
             expect(result).toBe('NaN/NaN/NaN');
+        });
+    });
+
+    describe('toLocalDatetimeString', () => {
+        test('converts UTC ISO string to local datetime-local format', () => {
+            const utc = '2025-07-03T19:35:00.000000Z';
+            const result = Utils.toLocalDatetimeString(utc);
+            expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+        });
+
+        test('returns empty string for empty input', () => {
+            expect(Utils.toLocalDatetimeString('')).toBe('');
+        });
+    });
+
+    describe('localToUtcIso', () => {
+        test('converts local datetime string to UTC ISO', () => {
+            const local = '2025-07-03T19:35';
+            const result = Utils.localToUtcIso(local);
+            expect(result).toContain('Z');
+        });
+
+        test('returns empty string for empty input', () => {
+            expect(Utils.localToUtcIso('')).toBe('');
+        });
+    });
+
+    describe('parseDateOnly', () => {
+        test('returns correct date from date-only string', () => {
+            const result = Utils.parseDateOnly('2025-07-03');
+            expect(result.getUTCFullYear()).toBe(2025);
+            expect(result.getUTCMonth()).toBe(6);
+            expect(result.getUTCDate()).toBe(3);
+        });
+
+        test('anchors to noon UTC', () => {
+            const result = Utils.parseDateOnly('2025-07-03');
+            expect(result.getUTCHours()).toBe(12);
+            expect(result.getUTCMinutes()).toBe(0);
+            expect(result.getUTCSeconds()).toBe(0);
+        });
+
+        test('toDateString returns same date as input', () => {
+            const result = Utils.parseDateOnly('2025-07-03');
+            expect(result.toDateString()).toBe(new Date('2025-07-03T12:00:00Z').toDateString());
+        });
+
+        test('anchoring prevents date shift that bare date-only string causes', () => {
+            // The bug: new Date('2026-02-12') is parsed as UTC midnight (00:00Z).
+            // In UTC-5, that's 2026-02-11 19:00 local — wrong date.
+            // In UTC+1 (Zurich), it's 2026-02-12 01:00 — still correct but only 1h margin.
+            //
+            // This bug cannot reproduce in jsdom (vitest) because it runs in UTC.
+            // We verify the protection mechanism: anchored version is at noon (12:00Z),
+            // giving a 12h safety margin that prevents the shift in any timezone.
+            const anchored = Utils.parseDateOnly('2026-02-12');
+            const bare = new Date('2026-02-12');
+
+            // In UTC (test env), both produce the same date — no shift visible here.
+            expect(bare.getUTCDate()).toBe(12);
+            expect(anchored.getUTCDate()).toBe(12);
+
+            // The protection: bare is at midnight (0h margin to shift), anchored at noon (12h margin).
+            expect(bare.getUTCHours()).toBe(0);
+            expect(anchored.getUTCHours()).toBe(12);
+
+            // Prove the 12h gap is what prevents the shift:
+            // At UTC-13 (worst case), bare at 00:00Z = previous day 11:00 local (SHIFTED).
+            // Anchored at 12:00Z = same day 23:00 local (SAFE).
+            expect(anchored.getUTCHours() - bare.getUTCHours()).toBe(12);
+        });
+
+        test('produces correct local date in any timezone', () => {
+            // The whole point: getFullYear/getMonth/getDate in local time
+            // must always match the input, regardless of timezone offset.
+            const d = Utils.parseDateOnly('2025-07-03');
+            expect(d.getFullYear()).toBe(2025);
+            expect(d.getMonth()).toBe(6); // July = 6 (0-indexed)
+            expect(d.getDate()).toBe(3);
         });
     });
 

@@ -92,7 +92,8 @@ class ReportExportControllerTest extends TestCase
 
         $this->assertCount(1, $rows);
         $this->assertEquals('10.04.2026', $rows[0]['Date']);
-        $this->assertEquals('14:30', $rows[0]['Vendu à']);
+        // sold_at is stored as UTC (14:30 UTC), export displays as Zurich time (16:30 CEST)
+        $this->assertEquals('16:30', $rows[0]['Vendu à']);
         $this->assertEquals('Espèces', $rows[0]['Paiement']);
         $this->assertEquals('25,00', $rows[0]['Total']);
     }

@@ -24,9 +24,9 @@ class EventChainGeneratorService
      */
     public function createEventForDate(EventChain $chain, Carbon $date): Event
     {
-        $startDatetime = $date->copy()->setTimeFromTimeString($chain->start_time);
+        $startDatetime = Carbon::parse($date->toDateString().' '.$chain->start_time, 'Europe/Zurich')->utc();
         $endDatetime = $chain->end_time
-            ? $date->copy()->setTimeFromTimeString($chain->end_time)
+            ? Carbon::parse($date->toDateString().' '.$chain->end_time, 'Europe/Zurich')->utc()
             : null;
 
         /** @var Event $event */

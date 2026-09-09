@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Content;
 use App\Models\Event;
 use App\Models\Location;
+use App\Traits\ConvertsLocalDatetimes;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -16,6 +17,8 @@ use Inertia\Inertia;
 
 class EventController extends Controller implements HasMiddleware
 {
+    use ConvertsLocalDatetimes;
+
     public static function middleware(): array
     {
         return [
@@ -94,8 +97,8 @@ class EventController extends Controller implements HasMiddleware
 
         $event = new Event;
         $event->title = $request->input('title');
-        $event->start_datetime = $request->input('start_datetime');
-        $event->end_datetime = $request->input('end_datetime');
+        $event->start_datetime = $this->localToUtc($request->input('start_datetime'));
+        $event->end_datetime = $this->localToUtc($request->input('end_datetime'));
         $event->location_id = $request->input('location_id');
 
         // Update content_id or set it to null
@@ -174,8 +177,8 @@ class EventController extends Controller implements HasMiddleware
 
         $event = Event::with('eventChain')->findOrFail($id);
         $event->title = $request->input('title');
-        $event->start_datetime = $request->input('start_datetime');
-        $event->end_datetime = $request->input('end_datetime');
+        $event->start_datetime = $this->localToUtc($request->input('start_datetime'));
+        $event->end_datetime = $this->localToUtc($request->input('end_datetime'));
         $event->location_id = $request->input('location_id');
 
         // Update content_id or set it to null
@@ -201,11 +204,11 @@ class EventController extends Controller implements HasMiddleware
                 'location_id' => [$event->location_id, $chain->location_id],
                 'content_id' => [$event->content_id,  $chain->content_id],
                 'start_time' => [
-                    Carbon::parse($event->start_datetime)->format('H:i:s'),
+                    Carbon::parse($event->start_datetime)->setTimezone('Europe/Zurich')->format('H:i:s'),
                     Carbon::parse($chain->start_time)->format('H:i:s'),
                 ],
                 'end_time' => [
-                    $event->end_datetime ? Carbon::parse($event->end_datetime)->format('H:i:s') : null,
+                    $event->end_datetime ? Carbon::parse($event->end_datetime)->setTimezone('Europe/Zurich')->format('H:i:s') : null,
                     $chain->end_time ? Carbon::parse($chain->end_time)->format('H:i:s') : null,
                 ],
                 'custom_body' => [$request->input('body'), $chain->custom_body],

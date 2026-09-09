@@ -14,7 +14,7 @@ class DateNotDuplicate implements ValidationRule
         $request = request();
         $seasonId = $request->input('season_id');
 
-        $dt = Carbon::now()->setTime(0, 0);
+        $dt = Carbon::now('Europe/Zurich')->setTime(0, 0);
 
         if (! $seasonId) {
             return;

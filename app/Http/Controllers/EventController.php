@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Spatie\IcalendarGenerator\Components\Calendar as IcalCalendar;
@@ -73,10 +72,10 @@ class EventController extends Controller
             ->get();
 
         foreach ($events as $item) {
-            $start = Carbon::parse($item->start_datetime->format('Y-m-d H:i:s'), 'Europe/Zurich')->utc();
+            $start = $item->start_datetime;
 
             $end = $item->end_datetime
-                   ? Carbon::parse($item->end_datetime->format('Y-m-d H:i:s'), 'Europe/Zurich')->utc()
+                   ? $item->end_datetime
                    : $start->copy()->addHour();
 
             $icalEvent = IcalEvent::create($item->title)

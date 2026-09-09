@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { handleTabKey } from '@/lib/utils';
+import { handleTabKey, toLocalDatetimeString } from '@/lib/utils';
 import { Content, Event, Location, type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
 import { Save, Undo2 } from '@lucide/vue';
@@ -48,7 +48,7 @@ const isContentTemplate = ref(isInitialContentTemplate.value);
 
 const formatDateTimeLocal = (dateString?: string) => {
     if (!dateString) return undefined;
-    return new Date(dateString).toISOString().slice(0, 16);
+    return toLocalDatetimeString(dateString);
 };
 
 const updateForm = useForm({

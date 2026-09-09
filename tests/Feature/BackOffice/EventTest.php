@@ -40,8 +40,8 @@ class EventTest extends TestCase
         $response->assertStatus(302);
         $this->assertDatabaseHas('events', [
             'title' => $data['title'],
-            'start_datetime' => $data['start_datetime'],
-            'end_datetime' => $data['end_datetime'],
+            'start_datetime' => $this->toUtc($data['start_datetime']),
+            'end_datetime' => $this->toUtc($data['end_datetime']),
         ]);
         $this->assertDatabaseHas('event_contents', [
             'event_id' => 1,
@@ -165,8 +165,8 @@ class EventTest extends TestCase
         $this->assertDatabaseHas('events', [
             'id' => $event->id,
             'title' => $data['title'],
-            'start_datetime' => $data['start_datetime'],
-            'end_datetime' => $data['end_datetime'],
+            'start_datetime' => $this->toUtc($data['start_datetime']),
+            'end_datetime' => $this->toUtc($data['end_datetime']),
         ]);
         $this->assertDatabaseHas('event_contents', [
             'event_id' => $event->id,

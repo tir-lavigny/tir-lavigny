@@ -8,6 +8,7 @@ use App\Mail\MemberRegistrationError;
 use App\MemberRegistrationStatus;
 use App\Models\User;
 use App\Services\InfomaniakDavService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 
 class CreateDavContact
@@ -28,7 +29,7 @@ class CreateDavContact
             MemberRegistrationDavCreated::dispatch($registration);
         } catch (\Throwable $e) {
             $registration->error_message = 'Erreur DAV : '.$e->getMessage();
-            $registration->failed_at = now();
+            $registration->failed_at = Carbon::now('Europe/Zurich')->utc();
             $registration->save();
 
             Mail::to(User::getMemberRegistrationEmails())->send(new MemberRegistrationError($registration));

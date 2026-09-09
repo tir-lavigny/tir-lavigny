@@ -20,7 +20,7 @@ class MemberController extends Controller
 
     public function vouchers(Member $member): JsonResponse
     {
-        $day = OperatingDay::whereDate('date', Carbon::today())
+        $day = OperatingDay::whereDate('date', Carbon::today('Europe/Zurich'))
             ->whereNull('closed_at')
             ->first();
 

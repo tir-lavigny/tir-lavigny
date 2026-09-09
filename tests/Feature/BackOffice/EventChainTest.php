@@ -5,6 +5,7 @@ namespace Tests\Feature\BackOffice;
 use App\Models\Event;
 use App\Models\EventChain;
 use App\Models\User;
+use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -121,7 +122,9 @@ class EventChainTest extends TestCase
 
         $chain = EventChain::first();
         $chain->events()->each(function (Event $event) {
-            $this->assertEquals('18:00:00', $event->start_datetime->format('H:i:s'));
+            // Chain time '18:00' is Zurich local, stored as UTC.
+            $expected = Carbon::parse($event->start_datetime->toDateString().' 18:00', 'Europe/Zurich')->utc()->format('H:i:s');
+            $this->assertEquals($expected, $event->start_datetime->format('H:i:s'));
         });
     }
 

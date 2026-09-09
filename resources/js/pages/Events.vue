@@ -12,6 +12,7 @@ import { Head } from '@inertiajs/vue3';
 import { ListFilter } from '@lucide/vue';
 import { createReusableTemplate, formatDate, useMediaQuery } from '@vueuse/core';
 import { computed, ref } from 'vue';
+import { parseDateOnly } from '@/lib/utils';
 
 const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -25,20 +26,20 @@ const filter = ref<'all' | 'passed' | 'future'>(DEFAULT_FILTER);
 const filteredEvents = computed(() => {
     if (!props.events.length) return [];
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to the start of the day
+    today.setHours(0, 0, 0, 0);
 
     switch (filter.value) {
         case 'passed':
             return props.events.filter((event) => {
                 const eventDate = new Date(event.start_datetime);
-                eventDate.setHours(0, 0, 0, 0);
-                return eventDate < today;
+                const localDate = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+                return localDate < today;
             });
         case 'future':
             return props.events.filter((event) => {
                 const eventDate = new Date(event.start_datetime);
-                eventDate.setHours(0, 0, 0, 0);
-                return eventDate >= today;
+                const localDate = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+                return localDate >= today;
             });
         default:
             return props.events;
@@ -48,7 +49,8 @@ const filteredEvents = computed(() => {
 const groupedEvents = computed(() => {
     return filteredEvents.value.reduce(
         (groups, event) => {
-            const date = event.start_datetime.split('T')[0];
+            const d = new Date(event.start_datetime);
+            const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             if (!groups[date]) groups[date] = [];
             groups[date].push(event);
             return groups;
@@ -93,8 +95,8 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
             <P v-if="!events.length" class="text-center">Aucun événement pour l'instant.</P>
             <template v-else>
                 <div v-for="(events, date) in groupedEvents" :key="date" class="mx-auto w-full max-w-4xl">
-                    <H3 :class="{ 'text-primary': new Date(date).toDateString() === new Date().toDateString() }">
-                        {{ formatDate(new Date(date), 'ddd DD MMMM YYYY') }}
+                    <H3 :class="{ 'text-primary': parseDateOnly(date).toDateString() === new Date().toDateString() }">
+                        {{ formatDate(parseDateOnly(date), 'ddd DD MMMM YYYY') }}
                     </H3>
                     <AppEventCalendarCard v-for="event in events" :key="event.id" :event="event" class="mt-4" />
                 </div>

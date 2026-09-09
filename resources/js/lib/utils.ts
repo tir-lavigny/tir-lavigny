@@ -11,13 +11,29 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(date: string, format: string, options?: UseDateFormatOptions) {
     if (!date) return '—';
-    date = date.replace('Z', '');
     const dateObj = new Date(date);
 
     return FD(dateObj, format, {
         locales: 'fr-CH',
         ...options,
     });
+}
+
+export function toLocalDatetimeString(utcIso: string): string {
+    if (!utcIso) return '';
+    const d = new Date(utcIso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export function localToUtcIso(localDatetime: string): string {
+    if (!localDatetime) return '';
+    const d = new Date(localDatetime);
+    return d.toISOString();
+}
+
+export function parseDateOnly(dateStr: string): Date {
+    return new Date(dateStr + 'T12:00:00Z');
 }
 export function valueUpdater<T extends Updater<any>>(updaterOrValue: T, ref: Ref) {
     ref.value = typeof updaterOrValue === 'function' ? updaterOrValue(ref.value) : updaterOrValue;

@@ -7,6 +7,7 @@ use App\Mail\MemberRegistrationCompleted as MemberRegistrationCompletedMail;
 use App\Mail\MemberRegistrationError;
 use App\MemberRegistrationStatus;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 
 class SendCompletionEmail
@@ -22,7 +23,7 @@ class SendCompletionEmail
             $registration->save();
         } catch (\Throwable $e) {
             $registration->error_message = 'Erreur email : '.$e->getMessage();
-            $registration->failed_at = now();
+            $registration->failed_at = Carbon::now('Europe/Zurich')->utc();
             $registration->save();
 
             Mail::to(User::getMemberRegistrationEmails())->send(new MemberRegistrationError($registration));

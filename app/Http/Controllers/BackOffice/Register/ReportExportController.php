@@ -83,7 +83,7 @@ class ReportExportController extends Controller implements HasMiddleware
                 yield [
                     'Date' => $day->date->format('d.m.Y'),
                     '# Ticket' => $ticket->id,
-                    'Vendu à' => $ticket->sold_at->format('H:i'),
+                    'Vendu à' => $ticket->sold_at->setTimezone('Europe/Zurich')->format('H:i'),
                     'Paiement' => $ticket->payment_method === 'cash' ? 'Espèces' : 'TWINT',
                     'Total' => number_format($ticket->total, 2, ',', '.'),
                 ];

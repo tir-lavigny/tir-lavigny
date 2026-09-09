@@ -145,8 +145,8 @@ class RbacTest extends TestCase
         $response = $this->actingAs($createUser)->post(route('bo.events.store'), $data);
         $this->assertDatabaseHas('events', [
             'title' => $data['title'],
-            'start_datetime' => $data['start_datetime'],
-            'end_datetime' => $data['end_datetime'],
+            'start_datetime' => $this->toUtc($data['start_datetime']),
+            'end_datetime' => $this->toUtc($data['end_datetime']),
             'location_id' => $data['location_id'],
             'content_id' => $data['template_id'],
         ]);
@@ -167,8 +167,8 @@ class RbacTest extends TestCase
         ]);
         $this->assertDatabaseHas('events', [
             'title' => 'Updated Event',
-            'start_datetime' => now()->addDays(20)->format('Y-m-d H:i:s'),
-            'end_datetime' => now()->addDays(20)->addHours(2)->format('Y-m-d H:i:s'),
+            'start_datetime' => $this->toUtc(now()->addDays(20)->format('Y-m-d H:i:s')),
+            'end_datetime' => $this->toUtc(now()->addDays(20)->addHours(2)->format('Y-m-d H:i:s')),
             'location_id' => null,
             'content_id' => null,
         ]);

@@ -36,8 +36,8 @@ class PostTest extends TestCase
         $this->assertDatabaseHas('posts', [
             'title' => $data['title'],
             'content' => $data['content'],
-            'publish_at' => $data['publish_at'],
-            'expire_at' => $data['expire_at'],
+            'publish_at' => $this->toUtc($data['publish_at']),
+            'expire_at' => $this->toUtc($data['expire_at']),
         ]);
     }
 
@@ -110,7 +110,7 @@ class PostTest extends TestCase
         $this->assertDatabaseHas('posts', [
             'title' => $data['title'],
             'content' => $data['content'],
-            'publish_at' => $data['publish_at'],
+            'publish_at' => $this->toUtc($data['publish_at']),
             'expire_at' => null,
         ]);
     }
@@ -270,8 +270,8 @@ class PostTest extends TestCase
             'id' => $post->id,
             'title' => 'Updated Title',
             'content' => 'Updated content.',
-            'publish_at' => $data['publish_at'],
-            'expire_at' => $data['expire_at'],
+            'publish_at' => $this->toUtc($data['publish_at']),
+            'expire_at' => $this->toUtc($data['expire_at']),
         ]);
     }
 
@@ -344,7 +344,7 @@ class PostTest extends TestCase
         $this->assertDatabaseHas('posts', [
             'title' => $data['title'],
             'content' => $data['content'],
-            'publish_at' => $data['publish_at'],
+            'publish_at' => $this->toUtc($data['publish_at']),
             'expire_at' => null,
         ]);
     }
@@ -377,8 +377,8 @@ class PostTest extends TestCase
             'id' => $post->id,
             'title' => 'Modified Title',
             'content' => 'Modified content.',
-            'publish_at' => $data['publish_at'],
-            'expire_at' => $data['expire_at'],
+            'publish_at' => $this->toUtc($data['publish_at']),
+            'expire_at' => $this->toUtc($data['expire_at']),
         ]);
     }
 

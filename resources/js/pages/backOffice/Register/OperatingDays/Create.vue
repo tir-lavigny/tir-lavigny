@@ -21,9 +21,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Ouvrir', href: route('bo.register.operating-days.create') },
 ];
 
+const now = new Date();
+const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
 const form = useForm({
     season_id: '',
-    date: new Date().toISOString().split('T')[0],
+    date: localDate,
 });
 
 const handleSubmit = () => {
@@ -76,7 +79,7 @@ const handleSubmit = () => {
                     </div>
                     <div class="grid gap-2">
                         <Label for="date">Date</Label>
-                        <Input id="date" v-model="form.date" type="date" :max="new Date().toISOString().split('T')[0]" required />
+                        <Input id="date" v-model="form.date" type="date" :max="localDate" required />
                         <InputError :message="form.errors.date" />
                     </div>
                 </div>

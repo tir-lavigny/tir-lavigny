@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BackOffice;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Traits\ConvertsLocalDatetimes;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -12,6 +13,8 @@ use Inertia\Inertia;
 
 class PostController extends Controller implements HasMiddleware
 {
+    use ConvertsLocalDatetimes;
+
     public static function middleware(): array
     {
         return [
@@ -72,8 +75,8 @@ class PostController extends Controller implements HasMiddleware
         $post = new Post;
         $post->title = $request->input('title');
         $post->content = $request->input('content');
-        $post->publish_at = $request->input('publish_at');
-        $post->expire_at = $request->input('expire_at');
+        $post->publish_at = $this->localToUtc($request->input('publish_at'));
+        $post->expire_at = $this->localToUtc($request->input('expire_at'));
         $post->save();
 
         return redirect()->route('bo.posts.show', $post->public_id)->with('success', 'Post created successfully.');
@@ -119,8 +122,8 @@ class PostController extends Controller implements HasMiddleware
 
         $post->title = $request->input('title');
         $post->content = $request->input('content');
-        $post->publish_at = $request->input('publish_at');
-        $post->expire_at = $request->input('expire_at');
+        $post->publish_at = $this->localToUtc($request->input('publish_at'));
+        $post->expire_at = $this->localToUtc($request->input('expire_at'));
 
         try {
             $post->save();

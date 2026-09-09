@@ -129,13 +129,15 @@ class EventChainUpdaterService
             'title' => $event->title = $value,
             'location_id' => $event->location_id = $value,
             'content_id' => $event->content_id = $value,
-            'start_time' => $event->start_datetime = $event->start_datetime
-                ->copy()
-                ->setTimeFromTimeString($value),
+            'start_time' => $event->start_datetime = Carbon::parse(
+                $event->start_datetime->toDateString().' '.$value,
+                'Europe/Zurich'
+            )->utc(),
             'end_time' => $event->end_datetime = $value
-                ? ($event->end_datetime ?? $event->start_datetime)
-                    ->copy()
-                    ->setTimeFromTimeString($value)
+                ? Carbon::parse(
+                    ($event->end_datetime ?? $event->start_datetime)->toDateString().' '.$value,
+                    'Europe/Zurich'
+                )->utc()
                 : null,
             'custom_body' => $this->applyCustomBody($event, $value),
             default => null,
@@ -167,8 +169,8 @@ class EventChainUpdaterService
     private function getEventFieldValue(string $field, Event $event): mixed
     {
         return match ($field) {
-            'start_time' => $event->start_datetime?->format('H:i:s'),
-            'end_time' => $event->end_datetime?->format('H:i:s'),
+            'start_time' => $event->start_datetime?->setTimezone('Europe/Zurich')->format('H:i:s'),
+            'end_time' => $event->end_datetime?->setTimezone('Europe/Zurich')->format('H:i:s'),
             'custom_body' => $event->customContent?->body,
             default => $event->{$field},
         };

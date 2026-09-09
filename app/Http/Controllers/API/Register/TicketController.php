@@ -8,6 +8,7 @@ use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\OperatingDay;
 use App\Models\Ticket;
 use App\Services\TicketCalculator;
+use App\Traits\ConvertsLocalDatetimes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\DB;
 
 class TicketController extends Controller implements HasMiddleware
 {
+    use ConvertsLocalDatetimes;
+
     public static function middleware(): array
     {
         return [
@@ -30,7 +33,7 @@ class TicketController extends Controller implements HasMiddleware
             return response()->json(['message' => 'The operating day is closed.'], 422);
         }
 
-        if ($day->date < now()->toDateString()) {
+        if ($day->date < now('Europe/Zurich')->toDateString()) {
             return response()->json(['message' => 'The operating day is in the past. Can\'t create tickets for it.'], 422);
         }
 
@@ -42,7 +45,7 @@ class TicketController extends Controller implements HasMiddleware
                 'payment_method' => $request->input('payment_method'),
                 'operating_day_id' => $day->id,
                 'member_id' => $request->input('member_id'),
-                'sold_at' => $request->input('sold_at'),
+                'sold_at' => $this->localToUtc($request->input('sold_at')),
             ]);
 
             foreach ($result['items'] as $itemData) {

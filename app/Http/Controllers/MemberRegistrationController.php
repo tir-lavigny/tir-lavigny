@@ -6,6 +6,7 @@ use App\Events\MemberRegistrationFormSubmitted;
 use App\Http\Requests\StoreMemberRegistrationRequest;
 use App\MemberRegistrationStatus;
 use App\Models\MemberRegistration;
+use Carbon\Carbon;
 use Inertia\Inertia;
 
 class MemberRegistrationController extends Controller
@@ -44,7 +45,7 @@ class MemberRegistrationController extends Controller
         $formData = collect($request->validated())->except('form_uuid')->toArray();
 
         $registration->form_data = $formData;
-        $registration->form_submitted_at = now();
+        $registration->form_submitted_at = Carbon::now('Europe/Zurich')->utc();
         $registration->status = MemberRegistrationStatus::FORM_FILLED;
         $registration->save();
 

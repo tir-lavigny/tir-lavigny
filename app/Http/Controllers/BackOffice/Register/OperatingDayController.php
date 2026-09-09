@@ -51,7 +51,7 @@ class OperatingDayController extends Controller implements HasMiddleware
     {
         $day = OperatingDay::create([
             'date' => $request->input('date'),
-            'started_at' => Carbon::now(),
+            'started_at' => Carbon::now('Europe/Zurich')->utc(),
             'season_id' => $request->input('season_id'),
         ]);
 
@@ -87,7 +87,7 @@ class OperatingDayController extends Controller implements HasMiddleware
 
             $operatingDay->recalculateTotals();
             $operatingDay->update([
-                'closed_at' => Carbon::now(),
+                'closed_at' => Carbon::now('Europe/Zurich')->utc(),
                 'closing_balance' => $operatingDay->closing_balance,
             ]);
 

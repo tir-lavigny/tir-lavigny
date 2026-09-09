@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Season;
 use App\Models\User;
 use App\Models\Voucher;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 
 class CreateMemberAndVouchers
@@ -42,7 +43,7 @@ class CreateMemberAndVouchers
             MemberRegistrationCompleted::dispatch($registration);
         } catch (\Throwable $e) {
             $registration->error_message = 'Erreur membre : '.$e->getMessage();
-            $registration->failed_at = now();
+            $registration->failed_at = Carbon::now('Europe/Zurich')->utc();
             $registration->save();
 
             Mail::to(User::getMemberRegistrationEmails())->send(new MemberRegistrationError($registration));

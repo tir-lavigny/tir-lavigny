@@ -20,8 +20,8 @@ class OperatingDayController extends Controller
     public function store(StoreDayRequest $request): JsonResponse
     {
         $day = OperatingDay::create([
-            'date' => Carbon::today()->toDateString(),
-            'started_at' => Carbon::now(),
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
+            'started_at' => Carbon::now('Europe/Zurich')->utc(),
             'season_id' => $request->input('season_id'),
         ]);
 
@@ -40,7 +40,7 @@ class OperatingDayController extends Controller
 
             $operatingDay->recalculateTotals();
             $operatingDay->update([
-                'closed_at' => Carbon::now(),
+                'closed_at' => Carbon::now('Europe/Zurich')->utc(),
                 'closing_balance' => $operatingDay->closing_balance,
                 'cash_remark' => $cash_remark,
             ]);
@@ -64,7 +64,7 @@ class OperatingDayController extends Controller
 
     public function current(): JsonResponse
     {
-        $day = OperatingDay::whereDate('date', Carbon::today())
+        $day = OperatingDay::whereDate('date', Carbon::today('Europe/Zurich'))
             ->with(['tickets' => fn ($q) => $q->withTrashed()], 'tickets.ticketItems.product', 'tickets.ticketItems.voucher')
             ->first();
 
@@ -77,7 +77,7 @@ class OperatingDayController extends Controller
 
     public function previousUnclosed(): JsonResponse
     {
-        $day = OperatingDay::whereDate('date', '<', Carbon::today())
+        $day = OperatingDay::whereDate('date', '<', Carbon::today('Europe/Zurich'))
             ->whereNull('closed_at')
             ->with(['tickets' => fn ($q) => $q->withTrashed()], 'tickets.ticketItems.product', 'tickets.ticketItems.voucher')
             ->orderBy('date', 'desc')
