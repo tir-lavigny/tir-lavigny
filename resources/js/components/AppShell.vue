@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { SidebarProvider } from '@/components/ui/sidebar';
+import StagingBanner from '@/components/StagingBanner.vue';
 import { SharedData } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 
@@ -13,6 +14,7 @@ const isOpen = usePage<SharedData>().props.sidebarOpen;
 </script>
 
 <template>
+    <StagingBanner />
     <div v-if="variant === 'header'" class="flex min-h-screen w-full flex-col">
         <slot />
     </div>
