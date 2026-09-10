@@ -21,7 +21,7 @@ php-8.4 artisan down --secret="bypass" || true
 sync() {
     set -e
     mysql -h"$DB_HOST" -u"$DB_SYNC_USER" -p"$DB_SYNC_PASSWORD" -e "DROP DATABASE $DB_DATABASE; CREATE DATABASE $DB_DATABASE;"
-    mysqldump -h"$DB_HOST" -u"$DB_SYNC_USER" -p"$DB_SYNC_PASSWORD" "$DB_SYNC_DATABASE" | mysql -h"$DB_HOST" -u"$DB_SYNC_USER" -p"$DB_SYNC_PASSWORD" "$DB_DATABASE"
+    mysqldump -h"$DB_HOST" -u"$DB_SYNC_USER" -p"$DB_SYNC_PASSWORD" --single-transaction "$DB_SYNC_DATABASE" | mysql -h"$DB_HOST" -u"$DB_SYNC_USER" -p"$DB_SYNC_PASSWORD" "$DB_DATABASE"
     rm -f database/pulse.sqlite database/telescope.sqlite
     touch database/pulse.sqlite database/telescope.sqlite
     php-8.4 artisan migrate --force
