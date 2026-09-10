@@ -1,3 +1,5 @@
+[![Deploy to Main](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/main.yml/badge.svg)](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/main.yml) [![Deploy to Staging](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/staging.yml/badge.svg?branch=dev)](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/staging.yml)
+
 # Setup dev environment
 
 ## Makefile
