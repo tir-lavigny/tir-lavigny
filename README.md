@@ -1,5 +1,105 @@
 [![Deploy to Main](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/main.yml/badge.svg)](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/main.yml) [![Deploy to Staging](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/staging.yml/badge.svg?branch=dev)](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/staging.yml)
 
+# CI/CD Pipeline
+
+## Branch model
+
+```
+feature branches → PR → dev → auto-deploy to staging
+                                    ↓
+                              PR → main → auto-deploy to production
+```
+
+| Branch | Environment | URL |
+|--------|------------|-----|
+| `dev` | Staging | https://dev.tir-lavigny.ch |
+| `main` | Production | https://tir-lavigny.ch |
+
+## Workflows
+
+### CI (tests + lint)
+
+| Workflow | Trigger | What it does |
+|----------|---------|-------------|
+| `tests.yml` | PR to `dev`, `workflow_call` | PHP + JS tests, type check |
+| `lint.yml` | PR to `dev`, `workflow_call` | Pint, Prettier, ESLint (auto-commits fixes) |
+| `docker-build.yml` | Push to `dev`, PR to `main`/`dev` | Smoke test: builds Docker prod image (no push) |
+
+### Staging deploy
+
+**Trigger:** Push to `dev` or manual dispatch.
+
+**Flow:**
+
+```
+staging.yml triggers
+  ├─ tests (reusable workflow)
+  ├─ lint (reusable workflow) → auto-commits formatting fixes
+  └─ build + deploy (needs: [tests, lint])
+       → checks out latest dev HEAD (includes lint fixes)
+       → builds Vite assets → pushes to staging-deploy branch
+       → SSH into VPS → runs deploy-staging.sh
+       → cleans up staging-deploy branch
+```
+
+**Concurrency:** Only one staging deploy at a time (`staging-deploy` group).
+
+**Deploy script** (`deploy-staging.sh`):
+1. Enters maintenance mode
+2. Fetches `staging-deploy` branch, resets to it
+3. Installs Composer dependencies
+4. Runs `artisan migrate --force`
+5. Clears cache
+6. Exits maintenance mode
+
+On failure: rolls back code to previous commit, reinstalls deps, app comes back up on old version.
+
+### Production deploy
+
+**Trigger:** Push to `main` or manual dispatch.
+
+**Flow:** Same as staging but deploys to production directory and uses `deploy.sh`.
+
+### Staging DB sync
+
+**Trigger:** Manual dispatch only (`staging-sync.yml`).
+
+**Flow:** SSHs to VPS, runs `sync-staging-db.sh`:
+1. Drops staging DB, recreates empty
+2. Dumps prod DB → restores to staging DB (with `--single-transaction`)
+3. Recreates Pulse + Telescope SQLite files
+4. Runs `artisan migrate --force` (catches up dev-only migrations)
+
+## Required secrets
+
+| Secret | Purpose |
+|--------|---------|
+| `MASTER_SSH_USERNAME` | VPS SSH user |
+| `MASTER_SSH_HOST` | VPS hostname/IP |
+| `MASTER_SSH_KEY` | VPS SSH private key |
+| `MASTER_SSH_PORT` | VPS SSH port |
+| `MASTER_SSH_PATH` | Prod directory on VPS |
+| `STAGING_SSH_PATH` | Staging directory on VPS |
+
+## VPS prerequisites
+
+### Staging
+
+- Directory at `STAGING_SSH_PATH` with correct permissions
+- `.env` file with `APP_ENV=staging`, `APP_URL=https://dev.tir-lavigny.ch`
+- `deploy-staging.sh` and `sync-staging-db.sh` present and executable
+- MySQL user with read access to prod DB + full access to staging DB
+- Apache vhost for `dev.tir-lavigny.ch`
+
+### Production
+
+- Directory at `MASTER_SSH_PATH` with correct permissions
+- `.env` file with `APP_ENV=production`
+- `deploy.sh` present and executable
+- MySQL database for production
+
+---
+
 # Setup dev environment
 
 ## Makefile
