@@ -6,11 +6,24 @@ on:
     branches:
       - dev
 
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  lint:
+    uses: ./.github/workflows/lint.yml
+
   build:
     runs-on: ubuntu-latest
+    needs: [tests, lint]
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: dev
       - name: Copy .env
         run: php -r "file_exists('.env') || copy('.env.example', '.env');"
       - name: Directory Permissions
