@@ -1,0 +1,20 @@
+name: Sync Staging DB
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync staging database
+        uses: appleboy/ssh-action@master
+        with:
+          username: ${{ secrets.MASTER_SSH_USERNAME }}
+          host: ${{ secrets.MASTER_SSH_HOST }}
+          key: ${{ secrets.MASTER_SSH_KEY }}
+          port: ${{ secrets.MASTER_SSH_PORT }}
+          script: |
+            cd ${{ secrets.STAGING_SSH_PATH }}
+            chmod +x ./sync-staging-db.sh
+            ./sync-staging-db.sh
