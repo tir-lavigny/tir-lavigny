@@ -49,7 +49,11 @@ class MemberRegistrationController extends Controller
         $registration->status = MemberRegistrationStatus::FORM_FILLED;
         $registration->save();
 
-        MemberRegistrationFormSubmitted::dispatch($registration);
+        try {
+            MemberRegistrationFormSubmitted::dispatch($registration);
+        } catch (\Throwable) {
+            // Pipeline failure is non-blocking — admin can retry from back office
+        }
 
         return redirect()->route('member-registration.show', $registration->form_uuid)
             ->with('success', 'Votre formulaire a été soumis avec succès.');
