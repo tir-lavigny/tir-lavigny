@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers\BackOffice;
 
-use App\Events\MemberRegistrationCompleted;
-use App\Events\MemberRegistrationDavCreated;
-use App\Events\MemberRegistrationFormSubmitted;
 use App\Http\Controllers\Controller;
-use App\MemberRegistrationStatus;
 use App\Models\MemberRegistration;
+use App\Services\MemberRegistrationPipelineService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -62,18 +59,13 @@ class MemberRegistrationController extends Controller implements HasMiddleware
             ->with('success', 'Formulaire créé avec succès.');
     }
 
-    public function retry(MemberRegistration $registration)
+    public function retry(MemberRegistration $registration, MemberRegistrationPipelineService $pipeline)
     {
         $registration->error_message = null;
         $registration->failed_at = null;
         $registration->save();
 
-        match ($registration->status) {
-            MemberRegistrationStatus::FORM_FILLED => MemberRegistrationFormSubmitted::dispatch($registration),
-            MemberRegistrationStatus::DAV_CREATED => MemberRegistrationDavCreated::dispatch($registration),
-            MemberRegistrationStatus::MEMBER_CREATED => MemberRegistrationCompleted::dispatch($registration),
-            default => abort(422, 'Aucune étape à réessayer.'),
-        };
+        $pipeline->retryFromStep($registration);
 
         return redirect()->route('bo.member-registrations.show', $registration)
             ->with('success', 'Traitement relancé avec succès.');

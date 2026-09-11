@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\SwissCanton;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreMemberRegistrationRequest extends FormRequest
@@ -13,12 +14,6 @@ class StoreMemberRegistrationRequest extends FormRequest
 
     public function rules(): array
     {
-        $swissCantons = [
-            'AG', 'BL', 'BS', 'BE', 'FR', 'GE', 'GL', 'GR', 'JU',
-            'LU', 'NE', 'NW', 'OW', 'SG', 'SH', 'SO', 'TI', 'TG',
-            'UR', 'VD', 'VS', 'ZG', 'ZH',
-        ];
-
         return [
             'form_uuid' => ['required', 'string', 'exists:member_registrations,form_uuid'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -30,7 +25,7 @@ class StoreMemberRegistrationRequest extends FormRequest
             'street' => ['required', 'string', 'max:255'],
             'npa' => ['required', 'numeric', 'digits:4'],
             'city' => ['required', 'string', 'max:255'],
-            'canton' => ['required', 'string', 'in:'.implode(',', $swissCantons)],
+            'canton' => ['required', 'string', 'in:'.SwissCanton::validationRule()],
             'country' => ['required', 'string', 'max:100'],
         ];
     }

@@ -3,30 +3,14 @@
 namespace App\Listeners;
 
 use App\Events\MemberRegistrationCompleted;
-use App\Mail\MemberRegistrationCompleted as MemberRegistrationCompletedMail;
-use App\Mail\MemberRegistrationError;
-use App\MemberRegistrationStatus;
-use App\Models\User;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Mail;
+use App\Services\MemberRegistrationPipelineService;
 
 class SendCompletionEmail
 {
+    public function __construct(private readonly MemberRegistrationPipelineService $pipeline) {}
+
     public function handle(MemberRegistrationCompleted $event): void
     {
-        $registration = $event->registration;
-
-        try {
-            Mail::to(User::getMemberRegistrationEmails())->send(new MemberRegistrationCompletedMail($registration));
-
-            $registration->status = MemberRegistrationStatus::COMPLETED;
-            $registration->save();
-        } catch (\Throwable $e) {
-            $registration->error_message = 'Erreur email : '.$e->getMessage();
-            $registration->failed_at = Carbon::now('Europe/Zurich')->utc();
-            $registration->save();
-
-            Mail::to(User::getMemberRegistrationEmails())->send(new MemberRegistrationError($registration));
-        }
+        $this->pipeline->retryFromStep($event->registration);
     }
 }

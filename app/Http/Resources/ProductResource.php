@@ -22,8 +22,11 @@ class ProductResource extends JsonResource
             'unit_price' => $this->unit_price,
             'allows_custom_price' => $this->allows_custom_price,
             'category_id' => $this->category_id,
+            'deleted_at' => $this->deleted_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'category' => new CategoryResource($this->whenLoaded('category')),
+            'child_products' => ProductResource::collection($this->whenLoaded('childProducts')),
         ];
     }
 }

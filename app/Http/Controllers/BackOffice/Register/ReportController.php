@@ -33,8 +33,6 @@ class ReportController extends Controller implements HasMiddleware
 
     public function dayDetail(OperatingDay $operatingDay): Response
     {
-        $operatingDay->load(['tickets.ticketItems.product', 'tickets.ticketItems.voucher']);
-
         $operatingDay->tickets = $operatingDay->tickets()->withTrashed()
             ->with(['ticketItems.product', 'ticketItems.voucher'])
             ->get();
