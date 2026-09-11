@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\Register;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 
@@ -21,13 +22,13 @@ class ProductController extends Controller
 
         $products = $query->orderBy('name')->get();
 
-        return response()->json(['data' => $products]);
+        return response()->json(['data' => ProductResource::collection($products)]);
     }
 
     public function show(Product $product): JsonResponse
     {
         $product->load(['childProducts', 'category']);
 
-        return response()->json(['data' => $product]);
+        return response()->json(['data' => new ProductResource($product)]);
     }
 }

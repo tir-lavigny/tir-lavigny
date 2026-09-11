@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\Register;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,6 @@ class CategoryController extends Controller
             ->orderBy('id')
             ->get();
 
-        return response()->json(['data' => $categories]);
+        return response()->json(['data' => CategoryResource::collection($categories)]);
     }
 }
