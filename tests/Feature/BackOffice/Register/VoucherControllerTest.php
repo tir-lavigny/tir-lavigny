@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Member;
 use App\Models\Product;
 use App\Models\Season;
+use App\Models\TicketItem;
 use App\Models\User;
 use App\Models\Voucher;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -125,5 +126,78 @@ class VoucherControllerTest extends TestCase
         ]);
 
         $response->assertForbidden();
+    }
+
+    // ── Regression: used vouchers cannot be updated or deleted ──────────
+
+    public function test_update_fails_when_voucher_is_used(): void
+    {
+        $voucher = Voucher::factory()->percent()->create([
+            'discount_percent' => 10.00,
+        ]);
+
+        TicketItem::factory()->create([
+            'voucher_id' => $voucher->id,
+        ]);
+
+        $response = $this->put(route('bo.register.vouchers.update', $voucher), [
+            'discount_percent' => 25.00,
+            'product_id' => $voucher->product_id,
+            'season_id' => $voucher->season_id,
+            'member_id' => $voucher->member_id,
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('vouchers', [
+            'id' => $voucher->id,
+            'discount_percent' => 10.00,
+        ]);
+    }
+
+    public function test_destroy_fails_when_voucher_is_used(): void
+    {
+        $voucher = Voucher::factory()->percent()->create();
+
+        TicketItem::factory()->create([
+            'voucher_id' => $voucher->id,
+        ]);
+
+        $response = $this->delete(route('bo.register.vouchers.destroy', $voucher));
+
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('vouchers', [
+            'id' => $voucher->id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_update_succeeds_when_voucher_is_unused(): void
+    {
+        $voucher = Voucher::factory()->percent()->create([
+            'discount_percent' => 10.00,
+        ]);
+
+        $response = $this->put(route('bo.register.vouchers.update', $voucher), [
+            'discount_percent' => 25.00,
+            'product_id' => $voucher->product_id,
+            'season_id' => $voucher->season_id,
+            'member_id' => $voucher->member_id,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('vouchers', [
+            'id' => $voucher->id,
+            'discount_percent' => 25.00,
+        ]);
+    }
+
+    public function test_destroy_succeeds_when_voucher_is_unused(): void
+    {
+        $voucher = Voucher::factory()->percent()->create();
+
+        $response = $this->delete(route('bo.register.vouchers.destroy', $voucher));
+
+        $response->assertRedirect();
+        $this->assertSoftDeleted('vouchers', ['id' => $voucher->id]);
     }
 }
