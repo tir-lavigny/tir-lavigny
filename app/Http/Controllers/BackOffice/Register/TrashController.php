@@ -11,7 +11,7 @@ use App\Models\Season;
 use App\Models\Ticket;
 use App\Models\TicketItem;
 use App\Models\Voucher;
-use App\Services\InfomaniakDavService;
+use App\Services\DavServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -67,7 +67,7 @@ class TrashController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function restore(Request $request, string $type, int $id, InfomaniakDavService $dav): JsonResponse|RedirectResponse
+    public function restore(Request $request, string $type, int $id, DavServiceInterface $dav): JsonResponse|RedirectResponse
     {
         if ($type === 'ticket') {
             return back()->with('error', 'Les tickets ne peuvent pas être restaurés.');
@@ -102,7 +102,7 @@ class TrashController extends Controller implements HasMiddleware
         return back();
     }
 
-    public function forceDelete(Request $request, string $type, int $id, InfomaniakDavService $dav): RedirectResponse
+    public function forceDelete(Request $request, string $type, int $id, DavServiceInterface $dav): RedirectResponse
     {
         $modelClass = $this->resolveType($type);
 

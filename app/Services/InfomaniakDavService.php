@@ -11,7 +11,7 @@ use Sabre\DAV\Client;
 use Sabre\VObject\Reader;
 use Sabre\Xml\Reader as XmlReader;
 
-class InfomaniakDavService
+class InfomaniakDavService implements DavServiceInterface
 {
     private Client $client;
 

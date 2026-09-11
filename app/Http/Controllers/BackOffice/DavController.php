@@ -4,15 +4,15 @@ namespace App\Http\Controllers\BackOffice;
 
 use App\Http\Controllers\Controller;
 use App\Models\Member;
+use App\Services\DavServiceInterface;
 use App\Services\DavSyncService;
-use App\Services\InfomaniakDavService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DavController extends Controller
 {
-    public function index(InfomaniakDavService $service)
+    public function index(DavServiceInterface $service)
     {
         try {
             $contacts = $service->getContacts();

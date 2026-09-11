@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 class DavSyncService
 {
     public function __construct(
-        private readonly InfomaniakDavService $dav
+        private readonly DavServiceInterface $dav
     ) {}
 
     /**

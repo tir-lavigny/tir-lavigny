@@ -7,13 +7,13 @@ use App\Events\MemberRegistrationFormSubmitted;
 use App\Mail\MemberRegistrationError;
 use App\MemberRegistrationStatus;
 use App\Models\User;
-use App\Services\InfomaniakDavService;
+use App\Services\DavServiceInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 
 class CreateDavContact
 {
-    public function __construct(private readonly InfomaniakDavService $dav) {}
+    public function __construct(private readonly DavServiceInterface $dav) {}
 
     public function handle(MemberRegistrationFormSubmitted $event): void
     {

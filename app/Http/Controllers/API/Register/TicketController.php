@@ -64,8 +64,6 @@ class TicketController extends Controller implements HasMiddleware
 
     public function show(Ticket $ticket): JsonResponse
     {
-        $ticket->load(['ticketItems.product', 'ticketItems.voucher']);
-
         $allItems = $ticket->ticketItems()->withTrashed()
             ->with(['product', 'voucher'])
             ->get();

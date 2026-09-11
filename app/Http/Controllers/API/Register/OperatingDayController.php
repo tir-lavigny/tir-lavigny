@@ -92,12 +92,6 @@ class OperatingDayController extends Controller
 
     public function show(OperatingDay $operatingDay): JsonResponse
     {
-        $operatingDay->load([
-            'tickets' => fn ($q) => $q->withTrashed(),
-            'tickets.ticketItems.product',
-            'tickets.ticketItems.voucher',
-        ]);
-
         $operatingDay->setRelation('tickets', $operatingDay->tickets()->withTrashed()
             ->with(['ticketItems.product', 'ticketItems.voucher'])
             ->get());
