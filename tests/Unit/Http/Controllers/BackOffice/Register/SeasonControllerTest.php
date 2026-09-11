@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Member;
 use App\Models\Product;
 use App\Models\Season;
+use App\Services\SeasonVoucherService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
@@ -88,7 +89,7 @@ class SeasonControllerTest extends TestCase
         $season = Season::factory()->create();
         Member::factory()->count(2)->create();
 
-        $response = $this->controller->previewBaseVouchers($season);
+        $response = $this->controller->previewBaseVouchers($season, app(SeasonVoucherService::class));
 
         $this->assertInstanceOf(JsonResponse::class, $response);
     }
@@ -99,7 +100,7 @@ class SeasonControllerTest extends TestCase
         $season = Season::factory()->create();
         Member::factory()->count(2)->create();
 
-        $response = $this->controller->generateBaseVouchers($season);
+        $response = $this->controller->generateBaseVouchers($season, app(SeasonVoucherService::class));
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
     }
@@ -109,7 +110,7 @@ class SeasonControllerTest extends TestCase
         $season = Season::factory()->create();
 
         $this->expectException(HttpException::class);
-        $this->controller->previewBaseVouchers($season);
+        $this->controller->previewBaseVouchers($season, app(SeasonVoucherService::class));
     }
 
     public function test_generate_base_vouchers_throws_when_product_missing(): void
@@ -117,7 +118,7 @@ class SeasonControllerTest extends TestCase
         $season = Season::factory()->create();
 
         $this->expectException(HttpException::class);
-        $this->controller->generateBaseVouchers($season);
+        $this->controller->generateBaseVouchers($season, app(SeasonVoucherService::class));
     }
 
     private function createBasePackageProducts(): void

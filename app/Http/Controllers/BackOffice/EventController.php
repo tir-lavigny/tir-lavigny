@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\BackOffice;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BackOffice\StoreEventRequest;
+use App\Http\Requests\BackOffice\UpdateEventRequest;
 use App\Models\Content;
 use App\Models\Event;
 use App\Models\Location;
+use App\Services\EventService;
 use App\Traits\ConvertsLocalDatetimes;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -84,28 +86,16 @@ class EventController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreEventRequest $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'start_datetime' => 'required|date',
-            'end_datetime' => 'nullable|date|after_or_equal:start_datetime',
-            'location_id' => 'nullable|exists:locations,id',
-            'template_id' => 'nullable|exists:contents,id',
-            'body' => 'nullable|string',
-        ]);
-
         $event = new Event;
         $event->title = $request->input('title');
         $event->start_datetime = $this->localToUtc($request->input('start_datetime'));
         $event->end_datetime = $this->localToUtc($request->input('end_datetime'));
         $event->location_id = $request->input('location_id');
-
-        // Update content_id or set it to null
         $event->content_id = $request->input('template_id');
         $event->save();
 
-        // Handle custom content
         if ($request->input('body')) {
             $event->customContent()->create([
                 'event_id' => $event->id,
@@ -164,27 +154,15 @@ class EventController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateEventRequest $request, string $id)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'start_datetime' => 'required|date',
-            'end_datetime' => 'nullable|date|after_or_equal:start_datetime',
-            'location_id' => 'nullable|exists:locations,id',
-            'template_id' => 'nullable|exists:contents,id',
-            'body' => 'nullable|string',
-        ]);
-
         $event = Event::with('eventChain')->findOrFail($id);
         $event->title = $request->input('title');
         $event->start_datetime = $this->localToUtc($request->input('start_datetime'));
         $event->end_datetime = $this->localToUtc($request->input('end_datetime'));
         $event->location_id = $request->input('location_id');
-
-        // Update content_id or set it to null
         $event->content_id = $request->input('template_id');
 
-        // Handle custom content
         if ($request->input('body')) {
             $event->customContent()->updateOrCreate(
                 ['event_id' => $event->id],
@@ -194,33 +172,10 @@ class EventController extends Controller implements HasMiddleware
             $event->customContent()->delete();
         }
 
-        // If this event belongs to a chain, track which propagatable fields differ
-        // from the chain so the chain updater can detect and respect the override.
         if ($event->eventChain) {
-            $chain = $event->eventChain;
-
-            $comparisons = [
-                'title' => [$event->title,       $chain->title],
-                'location_id' => [$event->location_id, $chain->location_id],
-                'content_id' => [$event->content_id,  $chain->content_id],
-                'start_time' => [
-                    Carbon::parse($event->start_datetime)->setTimezone('Europe/Zurich')->format('H:i:s'),
-                    Carbon::parse($chain->start_time)->format('H:i:s'),
-                ],
-                'end_time' => [
-                    $event->end_datetime ? Carbon::parse($event->end_datetime)->setTimezone('Europe/Zurich')->format('H:i:s') : null,
-                    $chain->end_time ? Carbon::parse($chain->end_time)->format('H:i:s') : null,
-                ],
-                'custom_body' => [$request->input('body'), $chain->custom_body],
-            ];
-
-            foreach ($comparisons as $field => [$eventValue, $chainValue]) {
-                if ($eventValue != $chainValue) {
-                    $event->markFieldOverridden($field);
-                } else {
-                    $event->unmarkFieldOverridden($field);
-                }
-            }
+            $eventService = app(EventService::class);
+            $changedFields = $eventService->compareEventToChain($event, $request->all());
+            $eventService->applyChainOverrides($event, $changedFields);
         }
 
         $event->save();
