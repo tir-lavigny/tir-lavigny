@@ -5,6 +5,8 @@ namespace App\Enums;
 enum SwissCanton: string
 {
     case AG = 'AG';
+    case AI = 'AI';
+    case AR = 'AR';
     case BL = 'BL';
     case BS = 'BS';
     case BE = 'BE';
@@ -20,8 +22,9 @@ enum SwissCanton: string
     case SG = 'SG';
     case SH = 'SH';
     case SO = 'SO';
-    case TI = 'TI';
+    case SZ = 'SZ';
     case TG = 'TG';
+    case TI = 'TI';
     case UR = 'UR';
     case VD = 'VD';
     case VS = 'VS';
