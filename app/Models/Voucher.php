@@ -53,6 +53,12 @@ class Voucher extends Model
 
     protected static function booted(): void
     {
+        static::updating(function (Voucher $voucher) {
+            if ($voucher->ticketItems()->exists()) {
+                abort(422, 'Impossible de modifier ce bon car il a été utilisé.');
+            }
+        });
+
         static::deleting(function (Voucher $voucher) {
             if ($voucher->ticketItems()->exists()) {
                 abort(422, 'Impossible de supprimer ce bon car il a été utilisé.');
