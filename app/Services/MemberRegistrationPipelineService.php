@@ -52,7 +52,8 @@ class MemberRegistrationPipelineService
     public function retryFromStep(MemberRegistration $registration): void
     {
         match ($registration->status) {
-            MemberRegistrationStatus::FORM_FILLED => $this->processFormSubmission($registration),
+            MemberRegistrationStatus::FORM_FILLED,
+            MemberRegistrationStatus::ERROR => $this->processFormSubmission($registration),
             MemberRegistrationStatus::DAV_CREATED => $this->processFromDavCreated($registration),
             MemberRegistrationStatus::MEMBER_CREATED => $this->processFromMemberCreated($registration),
             default => throw new \InvalidArgumentException('Aucune étape à réessayer.'),

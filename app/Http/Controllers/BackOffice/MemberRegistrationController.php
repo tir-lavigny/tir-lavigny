@@ -59,15 +59,15 @@ class MemberRegistrationController extends Controller implements HasMiddleware
             ->with('success', 'Formulaire créé avec succès.');
     }
 
-    public function retry(MemberRegistration $registration, MemberRegistrationPipelineService $pipeline)
+    public function retry(MemberRegistration $memberRegistration, MemberRegistrationPipelineService $pipeline)
     {
-        $registration->error_message = null;
-        $registration->failed_at = null;
-        $registration->save();
+        $memberRegistration->error_message = null;
+        $memberRegistration->failed_at = null;
+        $memberRegistration->save();
 
-        $pipeline->retryFromStep($registration);
+        $pipeline->retryFromStep($memberRegistration);
 
-        return redirect()->route('bo.member-registrations.show', $registration)
+        return redirect()->route('bo.member-registrations.show', $memberRegistration)
             ->with('success', 'Traitement relancé avec succès.');
     }
 }
