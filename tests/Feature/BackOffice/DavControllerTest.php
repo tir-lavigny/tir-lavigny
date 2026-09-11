@@ -4,7 +4,7 @@ namespace Tests\Feature\BackOffice;
 
 use App\Models\Member;
 use App\Models\User;
-use App\Services\InfomaniakDavService;
+use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -38,19 +38,19 @@ class DavControllerTest extends TestCase
 
     private function mockDavService(array $contacts, array $extraMethods = []): void
     {
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andReturn($contacts);
         foreach ($extraMethods as $method => $return) {
             $davMock->shouldReceive($method)->andReturn($return);
         }
-        $this->app->instance(InfomaniakDavService::class, $davMock);
+        $this->app->instance(DavServiceInterface::class, $davMock);
     }
 
     private function mockDavServiceThrows(string $message = 'Connection failed'): void
     {
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andThrow(new \RuntimeException($message));
-        $this->app->instance(InfomaniakDavService::class, $davMock);
+        $this->app->instance(DavServiceInterface::class, $davMock);
     }
 
     // ── Index tests ──
@@ -460,7 +460,7 @@ class DavControllerTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andReturn([]);
         $davMock->shouldReceive('getAddressbookUrl')->andReturn('http://localhost/');
         $davMock->shouldReceive('getContact')
@@ -475,7 +475,7 @@ class DavControllerTest extends TestCase
                 'org' => '',
                 'vcard_raw' => 'BEGIN:VCARD',
             ]);
-        $this->app->instance(InfomaniakDavService::class, $davMock);
+        $this->app->instance(DavServiceInterface::class, $davMock);
 
         $this->post(route('bo.dav.sync'), [
             'choices' => [['member_id' => $member->id, 'source' => 'dav']],
@@ -498,12 +498,12 @@ class DavControllerTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andReturn([]);
         $davMock->shouldReceive('updateMember')
             ->with(Mockery::on(fn ($m) => $m->id === $member->id))
             ->andReturn(true);
-        $this->app->instance(InfomaniakDavService::class, $davMock);
+        $this->app->instance(DavServiceInterface::class, $davMock);
 
         $this->post(route('bo.dav.sync'), [
             'choices' => [['member_id' => $member->id, 'source' => 'member']],
@@ -520,7 +520,7 @@ class DavControllerTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andReturn([]);
         $davMock->shouldReceive('getAddressbookUrl')->andReturn('http://localhost/');
         $davMock->shouldReceive('getContact')
@@ -535,7 +535,7 @@ class DavControllerTest extends TestCase
                 'org' => '',
                 'vcard_raw' => 'BEGIN:VCARD',
             ]);
-        $this->app->instance(InfomaniakDavService::class, $davMock);
+        $this->app->instance(DavServiceInterface::class, $davMock);
 
         $this->post(route('bo.dav.sync'), [
             'choices' => [['member_id' => $member->id, 'source' => 'dav']],

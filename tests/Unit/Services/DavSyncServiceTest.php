@@ -3,8 +3,8 @@
 namespace Tests\Unit\Services;
 
 use App\Models\Member;
+use App\Services\DavServiceInterface;
 use App\Services\DavSyncService;
-use App\Services\InfomaniakDavService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -37,7 +37,7 @@ class DavSyncServiceTest extends TestCase
 
     private function mockDav(array $contacts = [], array $extraMethods = []): DavSyncService
     {
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andReturn($contacts);
         foreach ($extraMethods as $method => $return) {
             $davMock->shouldReceive($method)->andReturn($return);
@@ -48,7 +48,7 @@ class DavSyncServiceTest extends TestCase
 
     private function mockDavThrows(string $message = 'Connection failed'): DavSyncService
     {
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andThrow(new \RuntimeException($message));
 
         return new DavSyncService($davMock);
@@ -228,7 +228,7 @@ class DavSyncServiceTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getAddressbookUrl')->andReturn('http://localhost/');
         $davMock->shouldReceive('getContact')
             ->with('http://localhost/uid-001.vcf')
@@ -262,7 +262,7 @@ class DavSyncServiceTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('updateMember')
             ->with(Mockery::on(fn ($m) => $m->id === $member->id))
             ->andReturn(true);
@@ -275,7 +275,7 @@ class DavSyncServiceTest extends TestCase
 
     public function test_sync_returns_zero_for_empty_choices(): void
     {
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $service = new DavSyncService($davMock);
 
         $result = $service->sync([]);
@@ -291,7 +291,7 @@ class DavSyncServiceTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getAddressbookUrl')->andReturn('http://localhost/');
         $davMock->shouldReceive('getContact')
             ->andThrow(new \RuntimeException('DAV error'));

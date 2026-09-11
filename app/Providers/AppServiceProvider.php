@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\User;
 use App\Services\DavServiceInterface;
 use App\Services\InfomaniakDavService;
+use App\Services\StubDavService;
 use App\TokenAbility;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -17,7 +18,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(DavServiceInterface::class, InfomaniakDavService::class);
+        $this->app->singleton(DavServiceInterface::class, function () {
+            if (config('dav.username') && config('dav.password')) {
+                return new InfomaniakDavService;
+            }
+
+            return new StubDavService;
+        });
     }
 
     /**

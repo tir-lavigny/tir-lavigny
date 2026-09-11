@@ -4,7 +4,7 @@ namespace Tests\Feature\BackOffice\Register;
 
 use App\Models\Member;
 use App\Models\User;
-use App\Services\InfomaniakDavService;
+use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -24,10 +24,10 @@ class MemberControllerTest extends TestCase
         $this->admin->assignRole('admin');
         $this->actingAs($this->admin);
 
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('updateMember')->andReturn(true);
         $davMock->shouldReceive('softDeleteMember')->andReturn(true);
-        $this->app->instance(InfomaniakDavService::class, $davMock);
+        $this->app->instance(DavServiceInterface::class, $davMock);
     }
 
     public function test_index_returns_members(): void

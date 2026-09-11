@@ -4,8 +4,8 @@ namespace Tests\Unit\Http\Controllers\BackOffice;
 
 use App\Http\Controllers\BackOffice\DavController;
 use App\Models\Member;
+use App\Services\DavServiceInterface;
 use App\Services\DavSyncService;
-use App\Services\InfomaniakDavService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Inertia\Response;
@@ -32,16 +32,16 @@ class DavControllerTest extends TestCase
 
     private function mockDavService(array $contacts): void
     {
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andReturn($contacts);
-        $this->app->instance(InfomaniakDavService::class, $davMock);
+        $this->app->instance(DavServiceInterface::class, $davMock);
     }
 
     private function mockDavServiceThrows(): void
     {
-        $davMock = Mockery::mock(InfomaniakDavService::class);
+        $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andThrow(new \RuntimeException('Connection failed'));
-        $this->app->instance(InfomaniakDavService::class, $davMock);
+        $this->app->instance(DavServiceInterface::class, $davMock);
     }
 
     private function mockDavSyncService(array $methods = []): Mockery\MockInterface
@@ -86,7 +86,7 @@ class DavControllerTest extends TestCase
     {
         $this->mockDavService([]);
 
-        $response = $this->controller->index(app(InfomaniakDavService::class));
+        $response = $this->controller->index(app(DavServiceInterface::class));
 
         $this->assertInstanceOf(Response::class, $response);
     }
@@ -99,7 +99,7 @@ class DavControllerTest extends TestCase
         $this->mockDavService($contacts);
         Member::factory()->create(['dav_uid' => 'uid-001']);
 
-        $response = $this->controller->index(app(InfomaniakDavService::class));
+        $response = $this->controller->index(app(DavServiceInterface::class));
 
         $props = $this->getInertiaProps($response);
         $this->assertEquals($contacts, $props['contacts']);
@@ -110,7 +110,7 @@ class DavControllerTest extends TestCase
     {
         $this->mockDavServiceThrows();
 
-        $response = $this->controller->index(app(InfomaniakDavService::class));
+        $response = $this->controller->index(app(DavServiceInterface::class));
 
         $props = $this->getInertiaProps($response);
         $this->assertEquals([], $props['contacts']);
