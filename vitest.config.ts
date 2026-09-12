@@ -10,7 +10,7 @@ export default defineConfig({
         setupFiles: ['./resources/js/tests/setup.ts'],
         include: ['resources/js/**/*.test.ts'],
         alias: {
-            '@': path.resolve(__dirname, './resources/js'),
+            '@': path.resolve(import.meta.dirname, './resources/js'),
         },
         coverage: {
             include: ['resources/js/**'],
