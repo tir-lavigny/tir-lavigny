@@ -90,6 +90,7 @@ class ProductControllerTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('data.0.category.name', 'Bar');
         $response->assertJsonCount(1, 'data.0.child_products');
+        $response->assertJsonPath('data.0.child_products.0.quantity', 6);
     }
 
     public function test_show_returns_single_product_with_relationships(): void
@@ -105,6 +106,7 @@ class ProductControllerTest extends TestCase
         $response->assertJsonPath('data.name', 'Bière');
         $response->assertJsonPath('data.category.name', 'Bar');
         $response->assertJsonCount(1, 'data.child_products');
+        $response->assertJsonPath('data.child_products.0.quantity', 6);
     }
 
     public function test_show_returns_404_for_nonexistent_product(): void
