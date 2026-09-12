@@ -16,6 +16,14 @@ class TicketController extends Controller implements HasMiddleware
         ];
     }
 
+    public function show(Ticket $ticket)
+    {
+        return redirect()->route('bo.register.operating-days.show', [
+            'operating_day' => $ticket->operating_day_id,
+            'ticket' => $ticket->id,
+        ]);
+    }
+
     public function refund(Ticket $ticket)
     {
         $day = $ticket->operatingDay;

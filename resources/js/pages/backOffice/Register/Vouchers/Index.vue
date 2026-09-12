@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedVouchers, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Pencil, Plus, Trash2 } from '@lucide/vue';
+import { Pencil, Plus, Trash2, ReceiptText } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'vue-sonner';
 
@@ -94,6 +94,16 @@ const formatDiscount = (voucher: any) => {
                                 <Button variant="destructive" @click="handleDelete(voucher.id)">Supprimer</Button>
                             </template>
                         </AppAlertDialog>
+                    </div>
+                    <div v-else-if="voucher.ticket_items?.at(0)?.ticket_id">
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Link :href="route('bo.register.tickets.show', voucher.ticket_items.at(0)?.ticket_id)">
+                                    <Button size="icon" variant="outline"><ReceiptText /></Button>
+                                </Link>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Voir le ticket</p></TooltipContent>
+                        </Tooltip>
                     </div>
                 </div>
                 <Muted v-if="vouchers.data?.length" class="my-4 flex items-center justify-center"> {{ vouchers.total }} bon(s) trouvé(s) </Muted>

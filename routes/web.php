@@ -188,6 +188,9 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             'show' => 'bo.register.operating-days.show',
             'update' => 'bo.register.operating-days.update',
         ]);
+
+        Route::get('tickets/{ticket}', [Register\TicketController::class, 'show'])
+            ->name('bo.register.tickets.show');
     });
 
     Route::middleware('permission:refund ticket')->prefix('register')->group(function () {

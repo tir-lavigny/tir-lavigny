@@ -15,7 +15,7 @@ import type { BreadcrumbItem, OperatingDay, Product, SharedData, Ticket } from '
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core';
 import { Lock, Unlock } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 const page = usePage<SharedData>();
@@ -65,6 +65,22 @@ function handleRefunded() {
     isSheetOpen.value = false;
     router.reload({ only: ['operatingDay'] });
 }
+
+onMounted(() => {
+    try {
+        const url = new URL(page.props.ziggy.url + page.url);
+        const ticketId = url.searchParams.get('ticket');
+        if (!ticketId) return;
+        const ticket = props.operatingDay.tickets?.find((t) => t.id === Number(ticketId));
+        if (!ticket) return;
+        openTicket(ticket);
+        url.searchParams.delete('ticket');
+        window.history.replaceState({}, '', url.toString());
+    } catch {
+        console.error('Failed to parse ticket from URL');
+        toast.error('Erreur lors de la lecture du ticket.');
+    }
+});
 </script>
 
 <template>
