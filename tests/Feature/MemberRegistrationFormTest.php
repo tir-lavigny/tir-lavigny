@@ -80,7 +80,7 @@ class MemberRegistrationFormTest extends TestCase
             'email' => 'jean.dupont@example.com',
             'is_swiss_citizen' => true,
             'avs' => '756.1234.5678.90',
-            'tel' => null,
+            'tel' => '0800800800',
             'street' => 'Rue du Marché 1',
             'npa' => '1003',
             'city' => 'Lausanne',
@@ -112,6 +112,7 @@ class MemberRegistrationFormTest extends TestCase
             'email' => 'jean.dupont@example.com',
             'is_swiss_citizen' => false,
             'avs' => null,
+            'tel' => '0800800800',
             'street' => 'Rue du Marché 1',
             'npa' => '1003',
             'city' => 'Lausanne',
@@ -134,6 +135,7 @@ class MemberRegistrationFormTest extends TestCase
             'last_name' => '',
             'first_name' => 'Jean',
             'email' => 'jean@example.com',
+            'tel' => '0800800800',
             'is_swiss_citizen' => false,
             'street' => 'Rue 1',
             'npa' => '1003',
@@ -156,6 +158,7 @@ class MemberRegistrationFormTest extends TestCase
             'last_name' => 'Dupont',
             'first_name' => '',
             'email' => 'jean@example.com',
+            'tel' => '0800800800',
             'is_swiss_citizen' => false,
             'street' => 'Rue 1',
             'npa' => '1003',
@@ -178,6 +181,7 @@ class MemberRegistrationFormTest extends TestCase
             'last_name' => 'Dupont',
             'first_name' => 'Jean',
             'email' => '',
+            'tel' => '0800800800',
             'is_swiss_citizen' => false,
             'street' => 'Rue 1',
             'npa' => '1003',
@@ -211,6 +215,29 @@ class MemberRegistrationFormTest extends TestCase
         $response = $this->post(route('member-registration.store'), $data);
 
         $response->assertSessionHasErrors(['email']);
+    }
+
+    public function test_tel_is_required(): void
+    {
+        $registration = MemberRegistration::create();
+
+        $data = [
+            'form_uuid' => (string) $registration->form_uuid,
+            'last_name' => 'Dupont',
+            'first_name' => 'Jean',
+            'email' => 'jean@example.com',
+            'tel' => '',
+            'is_swiss_citizen' => false,
+            'street' => 'Rue 1',
+            'npa' => '1003',
+            'city' => 'Lausanne',
+            'canton' => 'VD',
+            'country' => 'Suisse',
+        ];
+
+        $response = $this->post(route('member-registration.store'), $data);
+
+        $response->assertSessionHasErrors(['tel']);
     }
 
     public function test_avs_required_when_swiss_citizen(): void
@@ -500,6 +527,7 @@ class MemberRegistrationFormTest extends TestCase
             'last_name' => 'Dupont',
             'first_name' => 'Jean',
             'email' => 'jean@example.com',
+            'tel' => '0800800800',
             'is_swiss_citizen' => false,
             'street' => 'Rue 1',
             'npa' => '1003',
@@ -566,6 +594,7 @@ class MemberRegistrationFormTest extends TestCase
             'last_name' => 'Dupont',
             'first_name' => 'Jean',
             'email' => 'jean@example.com',
+            'tel' => '0800800800',
             'is_swiss_citizen' => false,
             'street' => 'Rue 1',
             'npa' => '1003',
