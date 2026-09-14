@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { MemberRegistration } from '@/types';
 import { useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from '@lucide/vue';
-import { computed, ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import type { AcceptableValue } from 'reka-ui';
 import { H1 } from '@/components/typography/headings';
