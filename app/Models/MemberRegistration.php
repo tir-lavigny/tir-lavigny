@@ -36,7 +36,7 @@ class MemberRegistration extends Model
 
     public function formUrl(): string
     {
-        return config('app.url').'/member-registration/'.$this->form_uuid;
+        return rtrim(config('app.url'), '/').'/member-registration/'.$this->form_uuid;
     }
 
     protected static function booted(): void
