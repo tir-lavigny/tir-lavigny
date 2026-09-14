@@ -21,7 +21,7 @@ class StoreMemberRegistrationRequest extends FormRequest
             'email' => ['required', 'email', 'max:255'],
             'is_swiss_citizen' => ['required', 'boolean'],
             'avs' => ['required_if:is_swiss_citizen,true', 'nullable', 'string', 'max:20', 'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/'],
-            'tel' => ['nullable', 'string', 'max:20'],
+            'tel' => ['required', 'string', 'max:20'],
             'street' => ['required', 'string', 'max:255'],
             'npa' => ['required', 'numeric', 'digits:4'],
             'city' => ['required', 'string', 'max:255'],

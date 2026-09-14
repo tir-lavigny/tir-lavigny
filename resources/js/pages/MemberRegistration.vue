@@ -181,19 +181,6 @@ const submit = () => {
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="email">Email *</Label>
-                            <Input
-                                id="email"
-                                v-model="form.email"
-                                type="email"
-                                required
-                                placeholder="jean.dupont@example.com"
-                                :disabled="submitted"
-                            />
-                            <InputError :message="form.errors.email" />
-                        </div>
-
-                        <div class="space-y-2">
                             <div class="flex items-center gap-3">
                                 <Checkbox
                                     id="is_swiss_citizen"
@@ -209,13 +196,26 @@ const submit = () => {
 
                         <div v-if="isSwiss" class="space-y-2">
                             <Label for="avs">N° AVS *</Label>
-                            <Input id="avs" v-model="form.avs" type="text" placeholder="756.XXXX.XXXX.XX" :disabled="submitted" />
+                            <Input id="avs" v-model="form.avs" type="text" :required="isSwiss" placeholder="756.XXXX.XXXX.XX" :disabled="submitted" />
                             <InputError :message="form.errors.avs" />
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="tel">Téléphone</Label>
-                            <Input id="tel" v-model="form.tel" type="tel" placeholder="+41 XX XXX XX XX" :disabled="submitted" />
+                            <Label for="email">Email *</Label>
+                            <Input
+                                id="email"
+                                v-model="form.email"
+                                type="email"
+                                required
+                                placeholder="jean.dupont@example.com"
+                                :disabled="submitted"
+                            />
+                            <InputError :message="form.errors.email" />
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label for="tel">Téléphone *</Label>
+                            <Input id="tel" v-model="form.tel" type="tel" required placeholder="+41 XX XXX XX XX" :disabled="submitted" />
                             <InputError :message="form.errors.tel" />
                         </div>
                     </div>
