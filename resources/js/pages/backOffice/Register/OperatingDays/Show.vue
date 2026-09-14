@@ -40,6 +40,10 @@ const isDesktop = useMediaQuery('(min-width: 768px)');
 const selectedTicket = ref<Ticket | null>(null);
 const isSheetOpen = ref(false);
 
+const ordredTickets = computed(() => {
+    return props.operatingDay.tickets?.slice().sort((a, b) => new Date(b.sold_at).getTime() - new Date(a.sold_at).getTime()) || [];
+});
+
 const [DefineTicketContent, ReuseTicketContent] = createReusableTemplate<{ ticket: Ticket }>();
 
 function openTicket(ticket: Ticket) {
@@ -157,7 +161,7 @@ onMounted(() => {
                 </TableHeader>
                 <TableBody>
                     <TableRow
-                        v-for="ticket in operatingDay.tickets"
+                        v-for="ticket in ordredTickets"
                         :key="ticket.id"
                         class="hover:bg-muted/50 cursor-pointer transition-colors"
                         :class="{ 'opacity-50': ticket.deleted_at }"
