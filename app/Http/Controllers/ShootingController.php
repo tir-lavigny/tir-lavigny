@@ -9,7 +9,7 @@ use Inertia\Response;
 
 class ShootingController extends Controller
 {
-    /** @return Collection<Event> */
+    /** @return Collection<int, Event> */
     private function getShootingEvents(string $title): Collection
     {
         return Event::whereLike('title', '%'.$title.'%', false)

@@ -5,6 +5,7 @@ namespace App\Http\Requests\API\Register;
 use App\Services\TicketValidationService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreTicketRequest extends FormRequest
 {
@@ -29,7 +30,7 @@ class StoreTicketRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
             app(TicketValidationService::class)->validateItems(

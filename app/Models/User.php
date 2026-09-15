@@ -52,6 +52,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Statc method to get members matching a role name.
+     *
+     * @return Collection<int, User>
      */
     private static function getMembersByRole(string $roleName): Collection
     {
