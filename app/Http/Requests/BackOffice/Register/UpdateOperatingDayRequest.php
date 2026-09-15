@@ -22,6 +22,7 @@ class UpdateOperatingDayRequest extends FormRequest
         return $this->user()->can('manage operating days');
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

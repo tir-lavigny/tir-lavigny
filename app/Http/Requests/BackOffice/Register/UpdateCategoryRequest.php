@@ -12,6 +12,7 @@ class UpdateCategoryRequest extends FormRequest
         return $this->user()->can('manage categories');
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

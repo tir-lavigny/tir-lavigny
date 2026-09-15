@@ -13,6 +13,7 @@ class StoreDayRequest extends FormRequest
         return $this->user()->can('open day');
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
