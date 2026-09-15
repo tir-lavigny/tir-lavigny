@@ -13,6 +13,7 @@ class StoreTicketPreviewRequest extends FormRequest
         return $this->user()->can('create ticket');
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
