@@ -15,6 +15,7 @@ class DavSyncService
     /**
      * Import members from DAV contacts that don't already exist.
      */
+    /** @return array{created: int} */
     public function importFromDav(): array
     {
         $contacts = $this->dav->getContacts();
@@ -30,8 +31,8 @@ class DavSyncService
 
         foreach ($toImport as $contact) {
             $parts = explode(';', $contact['n'] ?? '');
-            $lastName = $parts[0] ?? '';
-            $firstName = $parts[1] ?? '';
+            $lastName = $parts[0];
+            $firstName = $parts[1];
 
             Member::create([
                 'first_name' => $firstName,
@@ -74,8 +75,8 @@ class DavSyncService
             }
 
             $parts = explode(';', $contact['n'] ?? '');
-            $davLastName = $parts[0] ?? '';
-            $davFirstName = $parts[1] ?? '';
+            $davLastName = $parts[0];
+            $davFirstName = $parts[1];
 
             if ($davFirstName === $member->first_name && $davLastName === $member->last_name) {
                 continue;
@@ -97,6 +98,8 @@ class DavSyncService
     /**
      * Apply sync choices: update members from DAV or DAV from members.
      */
+    /** @param array<string, mixed> $choices
+     * @return array{updated: int} */
     public function sync(array $choices): array
     {
         $memberIds = array_column($choices, 'member_id');
@@ -120,8 +123,8 @@ class DavSyncService
                     if ($contact) {
                         $parts = explode(';', $contact['n'] ?? '');
                         $member->update([
-                            'first_name' => $parts[1] ?? '',
-                            'last_name' => $parts[0] ?? '',
+                            'first_name' => $parts[1],
+                            'last_name' => $parts[0],
                         ]);
                         $updated++;
                     }

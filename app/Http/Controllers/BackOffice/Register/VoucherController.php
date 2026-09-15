@@ -9,6 +9,7 @@ use App\Models\Member;
 use App\Models\Product;
 use App\Models\Season;
 use App\Models\Voucher;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
@@ -43,7 +44,7 @@ class VoucherController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function store(StoreVoucherRequest $request)
+    public function store(StoreVoucherRequest $request): RedirectResponse
     {
         Voucher::create($request->validated());
 
@@ -62,14 +63,14 @@ class VoucherController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(UpdateVoucherRequest $request, Voucher $voucher)
+    public function update(UpdateVoucherRequest $request, Voucher $voucher): RedirectResponse
     {
         $voucher->update($request->validated());
 
         return redirect()->route('bo.register.vouchers.index')->with('success', 'Voucher updated successfully.');
     }
 
-    public function destroy(Voucher $voucher)
+    public function destroy(Voucher $voucher): RedirectResponse
     {
         $voucher->delete();
 

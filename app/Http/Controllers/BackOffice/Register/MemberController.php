@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Register\UpdateMemberRequest;
 use App\Models\Member;
 use App\Services\DavServiceInterface;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
@@ -41,7 +42,7 @@ class MemberController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(UpdateMemberRequest $request, Member $member, DavServiceInterface $dav)
+    public function update(UpdateMemberRequest $request, Member $member, DavServiceInterface $dav): RedirectResponse
     {
         $member->update($request->validated());
 
@@ -54,7 +55,7 @@ class MemberController extends Controller implements HasMiddleware
         return redirect()->route('bo.register.members.index')->with('success', 'Membre mis à jour avec succès.');
     }
 
-    public function destroy(Member $member, DavServiceInterface $dav)
+    public function destroy(Member $member, DavServiceInterface $dav): RedirectResponse
     {
         $davRes = $dav->softDeleteMember($member);
 

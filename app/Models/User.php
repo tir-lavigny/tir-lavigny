@@ -52,12 +52,15 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Statc method to get members matching a role name.
+     *
+     * @return Collection<int, User>
      */
     private static function getMembersByRole(string $roleName): Collection
     {
         return self::role($roleName)->get();
     }
 
+    /** @return array<string> */
     public static function getMemberRegistrationEmails(): array
     {
         $candidates = self::getMembersByRole('get member registration mails');
@@ -68,6 +71,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $candidates->pluck('email')->toArray();
     }
 
+    /** @return array<string> */
     public static function getRegisterCloseOperatingDayRemarkEmails(): array
     {
         $candidates = self::getMembersByRole('get register close operating day remark');

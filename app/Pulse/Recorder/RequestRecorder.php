@@ -11,6 +11,7 @@ use Laravel\Pulse\Pulse;
 
 class RequestRecorder
 {
+    /** @var array<class-string> */
     public array $listen = [
         RequestHandled::class,
     ];
@@ -22,7 +23,7 @@ class RequestRecorder
         //
     }
 
-    public function record(RequestHandled $event)
+    public function record(RequestHandled $event): void
     {
         // Ignore requests from the back-office/pulse dashboard
         if (str_starts_with($event->request->path(), 'back-office/pulse')) {

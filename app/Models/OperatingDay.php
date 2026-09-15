@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use Database\Factories\OperatingDayFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OperatingDay extends Model
 {
+    /** @use HasFactory<OperatingDayFactory> */
     use HasFactory, LogsActivity;
 
     protected $fillable = [
@@ -32,11 +34,17 @@ class OperatingDay extends Model
         'total_twint' => 'decimal:2',
     ];
 
+    /**
+     * @return BelongsTo<Season, $this>
+     */
     public function season(): BelongsTo
     {
         return $this->belongsTo(Season::class);
     }
 
+    /**
+     * @return HasMany<Ticket, $this>
+     */
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);

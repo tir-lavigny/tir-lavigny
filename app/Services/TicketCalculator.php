@@ -43,13 +43,13 @@ class TicketCalculator
                 'product_id' => $product->id,
                 'voucher_id' => $voucherId,
                 'quantity' => $quantity,
-                'unit_price' => $unitPrice,
-                'subtotal' => $subtotal,
+                'unit_price' => (float) $unitPrice,
+                'subtotal' => (float) $subtotal,
             ];
         }
 
         return [
-            'total' => $total,
+            'total' => (float) $total,
             'items' => $computedItems,
         ];
     }

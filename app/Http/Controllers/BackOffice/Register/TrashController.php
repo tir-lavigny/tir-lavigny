@@ -140,31 +140,32 @@ class TrashController extends Controller implements HasMiddleware
         return self::TYPE_MAP[$type];
     }
 
-    protected function getItemLabel($model, string $type): string
+    protected function getItemLabel(Category|Product|Season|Member|Ticket|Voucher $model, string $type): string
     {
-        return match ($type) {
-            'category' => $model->name,
-            'product' => $model->name,
-            'season' => $model->name,
-            'member' => $model->first_name.' '.$model->last_name,
-            'ticket' => 'Ticket #'.$model->id,
-            'voucher' => 'Bon #'.$model->id,
-            default => '#'.$model->id,
+        return match (true) {
+            $model instanceof Category => $model->name,
+            $model instanceof Product => $model->name,
+            $model instanceof Season => $model->name,
+            $model instanceof Member => $model->first_name.' '.$model->last_name,
+            $model instanceof Ticket => 'Ticket #'.$model->id,
+            default => 'Bon #'.$model->id,
         };
     }
 
-    protected function getChildrenCounts($model, string $type): array
+    /** @return array<array<string, int|string>> */
+    protected function getChildrenCounts(Category|Product|Season|Member|Ticket|Voucher $model, string $type): array
     {
-        return match ($type) {
-            'category' => $this->getChildrenForCategory($model),
-            'product' => $this->getChildrenForProduct($model),
-            'ticket' => $this->getChildrenForTicket($model),
-            'member' => $this->getChildrenForMember($model),
-            'season' => $this->getChildrenForSeason($model),
-            'voucher' => $this->getChildrenForVoucher($model),
+        return match (true) {
+            $model instanceof Category => $this->getChildrenForCategory($model),
+            $model instanceof Product => $this->getChildrenForProduct($model),
+            $model instanceof Ticket => $this->getChildrenForTicket($model),
+            $model instanceof Member => $this->getChildrenForMember($model),
+            $model instanceof Season => $this->getChildrenForSeason($model),
+            default => $this->getChildrenForVoucher($model),
         };
     }
 
+    /** @return array<array<string, int|string>> */
     protected function getChildrenForSeason(Season $season): array
     {
         $totalDays = OperatingDay::where('season_id', $season->id)->count();
@@ -184,6 +185,7 @@ class TrashController extends Controller implements HasMiddleware
         return $children;
     }
 
+    /** @return array<array<string, int|string>> */
     protected function getChildrenForCategory(Category $category): array
     {
         $trashedProducts = Product::where('category_id', $category->id)->onlyTrashed()->count();
@@ -200,6 +202,7 @@ class TrashController extends Controller implements HasMiddleware
         return $children;
     }
 
+    /** @return array<array<string, int|string>> */
     protected function getChildrenForTicket(Ticket $ticket): array
     {
         $trashedItems = TicketItem::where('ticket_id', $ticket->id)->onlyTrashed()->count();
@@ -216,6 +219,7 @@ class TrashController extends Controller implements HasMiddleware
         return $children;
     }
 
+    /** @return array<array<string, int|string>> */
     protected function getChildrenForMember(Member $member): array
     {
         $trashedVouchers = Voucher::where('member_id', $member->id)->onlyTrashed()->count();
@@ -232,6 +236,7 @@ class TrashController extends Controller implements HasMiddleware
         return $children;
     }
 
+    /** @return array<array<string, int|string>> */
     protected function getChildrenForProduct(Product $product): array
     {
         $trashedTicketItems = TicketItem::where('product_id', $product->id)->onlyTrashed()->count();
@@ -256,6 +261,7 @@ class TrashController extends Controller implements HasMiddleware
         return $children;
     }
 
+    /** @return array<array<string, int|string>> */
     protected function getChildrenForVoucher(Voucher $voucher): array
     {
         $trashedTicketItems = TicketItem::where('voucher_id', $voucher->id)->onlyTrashed()->count();

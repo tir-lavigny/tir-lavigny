@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use Database\Factories\SeasonFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Season extends Model
 {
+    /** @use HasFactory<SeasonFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
@@ -27,11 +29,17 @@ class Season extends Model
         'end_balance' => 'decimal:2',
     ];
 
+    /**
+     * @return HasMany<OperatingDay, $this>
+     */
     public function operatingDays(): HasMany
     {
         return $this->hasMany(OperatingDay::class);
     }
 
+    /**
+     * @return HasMany<Voucher, $this>
+     */
     public function vouchers(): HasMany
     {
         return $this->hasMany(Voucher::class);

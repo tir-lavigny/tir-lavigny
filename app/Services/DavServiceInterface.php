@@ -9,10 +9,13 @@ interface DavServiceInterface
 {
     public function getAddressbookUrl(): string;
 
+    /** @return array<int, array<string, string>> */
     public function getContacts(?string $addressbookUrl = null): array;
 
+    /** @return array<string, mixed>|null */
     public function getContact(string $contactUrl): ?array;
 
+    /** @return array<string, mixed> */
     public function createContactFromMemberRegistration(MemberRegistration $registration): array;
 
     public function softDeleteMember(Member $member): bool;

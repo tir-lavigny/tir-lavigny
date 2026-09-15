@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use Database\Factories\TicketItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TicketItem extends Model
 {
+    /** @use HasFactory<TicketItemFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
@@ -27,16 +29,25 @@ class TicketItem extends Model
         'subtotal' => 'decimal:2',
     ];
 
+    /**
+     * @return BelongsTo<Product, $this>
+     */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class)->withTrashed();
     }
 
+    /**
+     * @return BelongsTo<Ticket, $this>
+     */
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
     }
 
+    /**
+     * @return BelongsTo<Voucher, $this>
+     */
     public function voucher(): BelongsTo
     {
         return $this->belongsTo(Voucher::class)->withTrashed();

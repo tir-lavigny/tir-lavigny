@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Events\EventChainCreated;
 use App\LogsActivity;
 use Carbon\Carbon;
+use Database\Factories\EventChainFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EventChain extends Model
 {
+    /** @use HasFactory<EventChainFactory> */
     use HasFactory, LogsActivity;
 
     /**
@@ -68,16 +70,25 @@ class EventChain extends Model
 
     // ─── Relationships ────────────────────────────────────────────────────────
 
+    /**
+     * @return HasMany<Event, $this>
+     */
     public function events(): HasMany
     {
         return $this->hasMany(Event::class);
     }
 
+    /**
+     * @return BelongsTo<Location, $this>
+     */
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
     }
 
+    /**
+     * @return BelongsTo<Content, $this>
+     */
     public function content(): BelongsTo
     {
         return $this->belongsTo(Content::class);

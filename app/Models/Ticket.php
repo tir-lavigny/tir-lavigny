@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use Database\Factories\TicketFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Ticket extends Model
 {
+    /** @use HasFactory<TicketFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
@@ -37,16 +39,25 @@ class Ticket extends Model
         });
     }
 
+    /**
+     * @return BelongsTo<OperatingDay, $this>
+     */
     public function operatingDay(): BelongsTo
     {
         return $this->belongsTo(OperatingDay::class);
     }
 
+    /**
+     * @return BelongsTo<Member, $this>
+     */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
     }
 
+    /**
+     * @return HasMany<TicketItem, $this>
+     */
     public function ticketItems(): HasMany
     {
         return $this->hasMany(TicketItem::class);

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\LogsActivity;
 use App\MemberRegistrationStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class MemberRegistration extends Model
@@ -29,7 +30,10 @@ class MemberRegistration extends Model
         'failed_at' => 'datetime',
     ];
 
-    public function member()
+    /**
+     * @return BelongsTo<Member, $this>
+     */
+    public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
     }

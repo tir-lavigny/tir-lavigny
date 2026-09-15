@@ -4,6 +4,7 @@ namespace App\Http\Requests\BackOffice\Register;
 
 use App\Rules\Register\OnlyOneDiscountType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreVoucherRequest extends FormRequest
 {
@@ -12,6 +13,7 @@ class StoreVoucherRequest extends FormRequest
         return $this->user()->can('manage vouchers');
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
@@ -23,12 +25,12 @@ class StoreVoucherRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
             $rule = new OnlyOneDiscountType;
-            $rule->validate('discount_percent', $this->input('discount_percent'), function ($message) use ($validator) {
-                $validator->errors()->add('discount_percent', $message);
+            $rule->validate('discount_percent', $this->input('discount_percent'), function (string $message) use ($validator) {
+                return $validator->errors()->add('discount_percent', $message);
             });
         });
     }

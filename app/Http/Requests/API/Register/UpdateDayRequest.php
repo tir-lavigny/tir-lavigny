@@ -22,6 +22,7 @@ class UpdateDayRequest extends FormRequest
         return $this->user()->can('add cash remark');
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

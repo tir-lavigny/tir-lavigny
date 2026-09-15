@@ -30,6 +30,9 @@ jobs:
       - name: Run Pint
         run: vendor/bin/pint
 
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=2G
+
       - name: Format Frontend
         run: npm run format
 

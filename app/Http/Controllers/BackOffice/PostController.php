@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Traits\ConvertsLocalDatetimes;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class PostController extends Controller implements HasMiddleware
 {
@@ -27,7 +29,7 @@ class PostController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $search = $request->input('search', null);
 
@@ -55,7 +57,7 @@ class PostController extends Controller implements HasMiddleware
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): Response
     {
         return Inertia::render('backOffice/Posts/Create');
     }
@@ -63,7 +65,7 @@ class PostController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'title' => 'required|string|max:255',
@@ -85,7 +87,7 @@ class PostController extends Controller implements HasMiddleware
     /**
      * Display the specified resource.
      */
-    public function show(string $public_id)
+    public function show(string $public_id): Response
     {
         $post = Post::where('public_id', $public_id)->firstOrFail();
 
@@ -97,7 +99,7 @@ class PostController extends Controller implements HasMiddleware
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $public_id)
+    public function edit(string $public_id): Response
     {
         $post = Post::where('public_id', $public_id)->firstOrFail();
 
@@ -109,7 +111,7 @@ class PostController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $public_id)
+    public function update(Request $request, string $public_id): RedirectResponse
     {
         $post = Post::where('public_id', $public_id)->firstOrFail();
 
@@ -137,7 +139,7 @@ class PostController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $public_id)
+    public function destroy(string $public_id): RedirectResponse
     {
         $post = Post::where('public_id', $public_id)->firstOrFail();
 

@@ -11,6 +11,7 @@ class TicketValidationService
     /**
      * Validate ticket items against business rules.
      */
+    /** @param array<int, array<string, mixed>> $items */
     public function validateItems(array $items, int $operatingDayId, ?int $memberId, Validator $validator): void
     {
         $usedVoucherIds = [];
@@ -33,6 +34,7 @@ class TicketValidationService
         }
     }
 
+    /** @param int|string|null $customPrice */
     private function validateCustomPrice(int $productId, $customPrice, int $index, Validator $validator): void
     {
         $allowsCustom = DB::table('products')
@@ -48,6 +50,7 @@ class TicketValidationService
         }
     }
 
+    /** @param array<int, int> $usedVoucherIds */
     private function validateVoucherUniqueness(int $voucherId, array $usedVoucherIds, int $index, Validator $validator): void
     {
         if (in_array($voucherId, $usedVoucherIds)) {

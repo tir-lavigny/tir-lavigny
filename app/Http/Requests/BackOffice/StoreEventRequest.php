@@ -11,6 +11,7 @@ class StoreEventRequest extends FormRequest
         return $this->user()->can('create event');
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

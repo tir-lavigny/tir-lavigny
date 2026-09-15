@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use Illuminate\Database\Eloquent\Collection;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class ShootingController extends Controller
 {
-    private function getShootingEvents(string $title)
+    /** @return Collection<int, Event> */
+    private function getShootingEvents(string $title): Collection
     {
         return Event::whereLike('title', '%'.$title.'%', false)
             ->where('start_datetime', '>=', now())
@@ -16,7 +19,7 @@ class ShootingController extends Controller
             ->get();
     }
 
-    public function indexODS()
+    public function indexODS(): Response
     {
         $events = $this->getShootingEvents('Tir militaire');
 
@@ -31,7 +34,7 @@ class ShootingController extends Controller
         ]);
     }
 
-    public function indexField()
+    public function indexField(): Response
     {
         $events = $this->getShootingEvents('Tir fédéral en campagne');
 

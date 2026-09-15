@@ -11,6 +11,7 @@ class UpdateMemberRequest extends FormRequest
         return $this->user()->can('manage members');
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

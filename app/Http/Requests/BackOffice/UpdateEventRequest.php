@@ -11,6 +11,7 @@ class UpdateEventRequest extends FormRequest
         return $this->user()->can('edit event');
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

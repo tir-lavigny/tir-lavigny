@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Inertia\Response;
 use Spatie\IcalendarGenerator\Components\Calendar as IcalCalendar;
 use Spatie\IcalendarGenerator\Components\Event as IcalEvent;
 
 class EventController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $events = Event::with('location')->where('start_datetime', '>=', now()->startOfYear())
             ->orderBy('start_datetime')
@@ -27,9 +28,9 @@ class EventController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(Event $event): Response
     {
-        $event = Event::with('location')->findOrFail($id);
+        $event->load('location');
         $content = $event->getEffectiveContent();
 
         return Inertia::render('Event', [
@@ -58,12 +59,12 @@ class EventController extends Controller
         return Str::limit(trim($text), 160, '...');
     }
 
-    public function feed_calendar()
+    public function feed_calendar(): \Illuminate\Http\Response
     {
         $startDate = now()->subMonths(3); // 3 months ago
         $endDate = now()->addMonths(12);  // 1 year from now
 
-        $calendar = IcalCalendar::create(env('APP_NAME', 'Tir Lavigny').' événements')
+        $calendar = IcalCalendar::create(config('app.name', 'Tir Lavigny').' événements')
             ->refreshInterval(60); // Suggests to Google/Apple to check for updates every 60 mins
 
         $events = Event::whereBetween('start_datetime', [$startDate, $endDate])

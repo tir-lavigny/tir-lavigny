@@ -25,6 +25,7 @@ trait LogsActivity
         return $this->getKey();
     }
 
+    /** @param array<string, mixed> $changes */
     protected function writeActivity(string $action, array $changes = []): void
     {
         ActivityLog::create([

@@ -28,6 +28,7 @@ class TicketController extends Controller implements HasMiddleware
     public function store(StoreTicketRequest $request, TicketCalculator $calculator): JsonResponse
     {
         $day = OperatingDay::findOrFail($request->input('operating_day_id'));
+        assert($day instanceof OperatingDay);
 
         if (! $day->isOpen()) {
             return response()->json(['message' => 'The operating day is closed.'], 422);
@@ -76,6 +77,7 @@ class TicketController extends Controller implements HasMiddleware
     public function preview(StoreTicketPreviewRequest $request, TicketCalculator $calculator): JsonResponse
     {
         $day = OperatingDay::findOrFail($request->input('operating_day_id'));
+        assert($day instanceof OperatingDay);
 
         if (! $day->isOpen()) {
             return response()->json(['message' => 'The operating day is closed.'], 422);
@@ -92,6 +94,7 @@ class TicketController extends Controller implements HasMiddleware
     public function refund(Ticket $ticket): JsonResponse
     {
         $day = $ticket->operatingDay;
+        assert($day instanceof OperatingDay);
 
         if (! $day->isOpen()) {
             return response()->json(['message' => 'The operating day is closed.'], 422);

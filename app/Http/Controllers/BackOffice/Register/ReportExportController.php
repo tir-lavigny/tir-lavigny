@@ -9,6 +9,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Str;
 use Spatie\SimpleExcel\SimpleExcelWriter;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportExportController extends Controller implements HasMiddleware
 {
@@ -19,7 +20,7 @@ class ReportExportController extends Controller implements HasMiddleware
         ];
     }
 
-    public function export(Request $request, Season $season)
+    public function export(Request $request, Season $season): StreamedResponse
     {
         $detail = $request->input('detail', 'balance');
 
@@ -32,7 +33,7 @@ class ReportExportController extends Controller implements HasMiddleware
         };
     }
 
-    private function streamExcel(Season $season, string $fileName, string $detail)
+    private function streamExcel(Season $season, string $fileName, string $detail): StreamedResponse
     {
         $writer = SimpleExcelWriter::streamDownload($fileName);
 
@@ -44,7 +45,7 @@ class ReportExportController extends Controller implements HasMiddleware
     }
 
     /**
-     * @return iterable<array<string, string>>
+     * @return iterable<array<string, int|string>>
      */
     public function getRows(Season $season, string $detail): iterable
     {
@@ -55,6 +56,7 @@ class ReportExportController extends Controller implements HasMiddleware
         };
     }
 
+    /** @return iterable<array<string, int|string>> */
     private function balanceRows(Season $season): iterable
     {
         $days = $season->operatingDays()->orderBy('date')->get();
@@ -62,15 +64,16 @@ class ReportExportController extends Controller implements HasMiddleware
         foreach ($days as $day) {
             yield [
                 'Date' => $day->date->format('d.m.Y'),
-                'Total Espèces' => number_format($day->total_cash, 2, ',', '.'),
-                'Total Twint' => number_format($day->total_twint, 2, ',', '.'),
+                'Total Espèces' => number_format((float) $day->total_cash, 2, ',', '.'),
+                'Total Twint' => number_format((float) $day->total_twint, 2, ',', '.'),
                 'Solde Clôture' => $day->closing_balance !== null
-                    ? number_format($day->closing_balance, 2, ',', '.')
+                    ? number_format((float) $day->closing_balance, 2, ',', '.')
                     : '',
             ];
         }
     }
 
+    /** @return iterable<array<string, int|string>> */
     private function ticketRows(Season $season): iterable
     {
         $days = $season->operatingDays()
@@ -85,12 +88,13 @@ class ReportExportController extends Controller implements HasMiddleware
                     '# Ticket' => $ticket->id,
                     'Vendu à' => $ticket->sold_at->setTimezone('Europe/Zurich')->format('H:i'),
                     'Paiement' => $ticket->payment_method === 'cash' ? 'Espèces' : 'TWINT',
-                    'Total' => number_format($ticket->total, 2, ',', '.'),
+                    'Total' => number_format((float) $ticket->total, 2, ',', '.'),
                 ];
             }
         }
     }
 
+    /** @return iterable<array<string, int|string>> */
     private function itemRows(Season $season): iterable
     {
         $days = $season->operatingDays()
@@ -115,9 +119,9 @@ class ReportExportController extends Controller implements HasMiddleware
                         '# Ticket' => $ticket->id,
                         'Produit' => $item->product->name,
                         'Quantité' => $item->quantity,
-                        'Prix Unitaire' => number_format($item->unit_price, 2, ',', '.'),
-                        'Sous-total' => number_format($item->subtotal, 2, ',', '.'),
-                        'Réduction' => $discount > 0 ? number_format($discount, 2, ',', '.') : '',
+                        'Prix Unitaire' => number_format((float) $item->unit_price, 2, ',', '.'),
+                        'Sous-total' => number_format((float) $item->subtotal, 2, ',', '.'),
+                        'Réduction' => $discount > 0 ? number_format((float) $discount, 2, ',', '.') : '',
                     ];
                 }
             }

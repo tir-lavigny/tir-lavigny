@@ -7,11 +7,13 @@ use App\Http\Requests\StoreMemberRegistrationRequest;
 use App\MemberRegistrationStatus;
 use App\Models\MemberRegistration;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class MemberRegistrationController extends Controller
 {
-    public function show(string $form_uuid)
+    public function show(string $form_uuid): Response
     {
         $registration = MemberRegistration::where('form_uuid', $form_uuid)->firstOrFail();
 
@@ -34,7 +36,7 @@ class MemberRegistrationController extends Controller
         ]);
     }
 
-    public function store(StoreMemberRegistrationRequest $request)
+    public function store(StoreMemberRegistrationRequest $request): RedirectResponse
     {
         $registration = MemberRegistration::where('form_uuid', $request->validated('form_uuid'))->firstOrFail();
 

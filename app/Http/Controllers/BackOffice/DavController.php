@@ -7,12 +7,14 @@ use App\Models\Member;
 use App\Services\DavServiceInterface;
 use App\Services\DavSyncService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DavController extends Controller
 {
-    public function index(DavServiceInterface $service)
+    public function index(DavServiceInterface $service): Response
     {
         try {
             $contacts = $service->getContacts();
@@ -32,7 +34,7 @@ class DavController extends Controller
         ]);
     }
 
-    public function importFromDav(DavSyncService $service)
+    public function importFromDav(DavSyncService $service): RedirectResponse
     {
         try {
             $result = $service->importFromDav();
@@ -54,7 +56,7 @@ class DavController extends Controller
         return response()->json($result);
     }
 
-    public function sync(DavSyncService $service, Request $request)
+    public function sync(DavSyncService $service, Request $request): RedirectResponse
     {
         $choices = $request->validate([
             'choices' => 'required|array|min:1',

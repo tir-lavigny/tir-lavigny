@@ -11,6 +11,7 @@ class StoreSeasonRequest extends FormRequest
         return $this->user()->can('manage seasons');
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

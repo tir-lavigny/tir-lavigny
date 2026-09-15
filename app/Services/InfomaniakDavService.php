@@ -8,6 +8,7 @@ use App\Models\MemberRegistration;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Sabre\DAV\Client;
+use Sabre\VObject\Component;
 use Sabre\VObject\Reader;
 use Sabre\Xml\Reader as XmlReader;
 
@@ -29,6 +30,7 @@ class InfomaniakDavService implements DavServiceInterface
         return config('dav.addressbook_url');
     }
 
+    /** @return array<int, array<string, string>> */
     public function getContacts(?string $addressbookUrl = null): array
     {
         $url = $addressbookUrl ?? $this->getAddressbookUrl();
@@ -146,6 +148,7 @@ class InfomaniakDavService implements DavServiceInterface
         return $contacts;
     }
 
+    /** @return array<string, string>|null */
     public function getContact(string $contactUrl): ?array
     {
         $response = $this->client->request('GET', $contactUrl);
@@ -192,6 +195,8 @@ class InfomaniakDavService implements DavServiceInterface
         }
     }
 
+    /** @param array<string, string> $data
+     * @return array<string, string> */
     private function createContact(array $data, ?string $addressbookUrl = null): array
     {
         $url = $addressbookUrl ?? $this->getAddressbookUrl();
@@ -266,6 +271,7 @@ class InfomaniakDavService implements DavServiceInterface
         return true;
     }
 
+    /** @param array<string, string> $data */
     private function updateContact(string $contactUrl, array $data): bool
     {
         $existingContact = $this->getContact($contactUrl);
@@ -275,6 +281,7 @@ class InfomaniakDavService implements DavServiceInterface
         }
 
         $lines = preg_split('/\r?\n/', $existingContact['vcard_raw']);
+        assert(is_array($lines));
 
         $replacements = [];
 
@@ -325,6 +332,7 @@ class InfomaniakDavService implements DavServiceInterface
         return true;
     }
 
+    /** @return array<string, string> */
     public function createContactFromMemberRegistration(MemberRegistration $registration): array
     {
         return $this->createContact([
@@ -459,6 +467,7 @@ class InfomaniakDavService implements DavServiceInterface
         );
     }
 
+    /** @param Component $vcard */
     private function extractProperty($vcard, string $propertyName): string
     {
         $values = [];
