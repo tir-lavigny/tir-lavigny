@@ -10,19 +10,19 @@ feature branches → PR → dev → auto-deploy to staging
                               PR → main → auto-deploy to production
 ```
 
-| Branch | Environment | URL |
-|--------|------------|-----|
-| `dev` | Staging | https://dev.tir-lavigny.ch |
-| `main` | Production | https://tir-lavigny.ch |
+| Branch | Environment | URL                        |
+| ------ | ----------- | -------------------------- |
+| `dev`  | Staging     | https://dev.tir-lavigny.ch |
+| `main` | Production  | https://tir-lavigny.ch     |
 
 ## Workflows
 
 ### CI (tests + lint)
 
-| Workflow | Trigger | What it does |
-|----------|---------|-------------|
-| `tests.yml` | PR to `dev`, `workflow_call` | PHP + JS tests, type check |
-| `lint.yml` | PR to `dev`, `workflow_call` | Pint, Prettier, ESLint (auto-commits fixes) |
+| Workflow           | Trigger                           | What it does                                   |
+| ------------------ | --------------------------------- | ---------------------------------------------- |
+| `tests.yml`        | PR to `dev`, `workflow_call`      | PHP + JS tests, type check                     |
+| `lint.yml`         | PR to `dev`, `workflow_call`      | Pint, Prettier, ESLint (auto-commits fixes)    |
 | `docker-build.yml` | Push to `dev`, PR to `main`/`dev` | Smoke test: builds Docker prod image (no push) |
 
 ### Staging deploy
@@ -45,6 +45,7 @@ staging.yml triggers
 **Concurrency:** Only one staging deploy at a time (`staging-deploy` group).
 
 **Deploy script** (`deploy-staging.sh`):
+
 1. Enters maintenance mode
 2. Fetches `staging-deploy` branch, resets to it
 3. Installs Composer dependencies
@@ -65,6 +66,7 @@ On failure: rolls back code to previous commit, reinstalls deps, app comes back 
 **Trigger:** Manual dispatch only (`staging-sync.yml`).
 
 **Flow:** SSHs to VPS, runs `sync-staging-db.sh`:
+
 1. Drops staging DB, recreates empty
 2. Dumps prod DB → restores to staging DB (with `--single-transaction`)
 3. Recreates Pulse + Telescope SQLite files
@@ -72,14 +74,14 @@ On failure: rolls back code to previous commit, reinstalls deps, app comes back 
 
 ## Required secrets
 
-| Secret | Purpose |
-|--------|---------|
-| `MASTER_SSH_USERNAME` | VPS SSH user |
-| `MASTER_SSH_HOST` | VPS hostname/IP |
-| `MASTER_SSH_KEY` | VPS SSH private key |
-| `MASTER_SSH_PORT` | VPS SSH port |
-| `MASTER_SSH_PATH` | Prod directory on VPS |
-| `STAGING_SSH_PATH` | Staging directory on VPS |
+| Secret                | Purpose                  |
+| --------------------- | ------------------------ |
+| `MASTER_SSH_USERNAME` | VPS SSH user             |
+| `MASTER_SSH_HOST`     | VPS hostname/IP          |
+| `MASTER_SSH_KEY`      | VPS SSH private key      |
+| `MASTER_SSH_PORT`     | VPS SSH port             |
+| `MASTER_SSH_PATH`     | Prod directory on VPS    |
+| `STAGING_SSH_PATH`    | Staging directory on VPS |
 
 ## VPS prerequisites
 
@@ -97,6 +99,91 @@ On failure: rolls back code to previous commit, reinstalls deps, app comes back 
 - `.env` file with `APP_ENV=production`
 - `deploy.sh` present and executable
 - MySQL database for production
+
+---
+
+# Tests
+
+## Frontend
+
+Vue 3 + TypeScript component tests via **Vitest** + **Vue Test Utils**.
+
+**Run:**
+
+```bash
+npm test
+```
+
+**Config:** `vitest.config.ts`
+
+- Environment: `jsdom`
+- Test pattern: `resources/js/**/*.test.ts`
+- Setup: `resources/js/tests/setup.ts` (mocks Ziggy routes, Leaflet maps, Inertia)
+
+**Tests cover:** Vue components, composables, and any frontend logic. Unit-level, no HTTP calls, no real browser.
+
+**Add a test:** create `resources/js/something.test.ts` alongside the code. Vitest picks it up automatically.
+
+## Backend
+
+PHP tests via **PHPUnit**, split into Unit and Feature suites.
+
+**Run:**
+
+```bash
+./vendor/bin/phpunit
+```
+
+**Config:** `phpunit.xml`
+
+- Test env: `APP_ENV=testing`, `DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`
+- `RefreshDatabase`: isolated state per test
+- Mail, cache, queue, session all faked/array-backed
+
+| Suite   | Directory        | Scope                                      |
+| ------- | ---------------- | ------------------------------------------ |
+| Unit    | `tests/Unit/`    | Isolated logic (services, traits, helpers) |
+| Feature | `tests/Feature/` | HTTP routes, controllers, auth flows       |
+
+**Examples:**
+
+- `ConvertsLocalDatetimesTest.php`: UTC conversion logic
+- `DashboardTest.php`: authenticated route access
+- `MemberRegistrationFormTest.php`: form validation & submission
+
+**Add a test:** create a file in `tests/Unit/` or `tests/Feature/` extending `Tests\TestCase`. Database state resets automatically.
+
+---
+
+# E2E
+
+End-to-end tests use Playwright against the Laravel + Vue app.
+
+**Run:**
+
+```bash
+npm run test:e2e
+```
+
+**How it works:**
+
+1. `playwright.config.ts` starts `run-e2e-server.sh` via `webServer` before tests
+2. The script creates a fresh SQLite DB (`database/e2e.sqlite`), runs migrations, and seeds with `E2eSeeder`
+3. `E2eSeeder` creates events using **relative times** (e.g. `now()->subDays(5)`, `now()->addDays(14)`) converted from Europe/Zurich local to UTC, tests never expire
+4. Frontend builds if `public/build` is missing
+5. Laravel server starts on `http://localhost:9000`
+6. Playwright runs all specs in `e2e/` and kills the server
+
+**Files:**
+
+| File                             | Role                                         |
+| -------------------------------- | -------------------------------------------- |
+| `playwright.config.ts`           | Browser config, webServer command, port 9000 |
+| `run-e2e-server.sh`              | DB setup, build, server startup              |
+| `database/seeders/E2eSeeder.php` | Relative-time test data                      |
+| `e2e/`                           | Test specs                                   |
+
+**Add a test:** create `e2e/my-test.spec.ts` with `import { test, expect } from '@playwright/test'`. It runs automatically with `npm run test:e2e`.
 
 ---
 
