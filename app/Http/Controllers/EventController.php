@@ -63,7 +63,7 @@ class EventController extends Controller
         $startDate = now()->subMonths(3); // 3 months ago
         $endDate = now()->addMonths(12);  // 1 year from now
 
-        $calendar = IcalCalendar::create(env('APP_NAME', 'Tir Lavigny').' événements')
+        $calendar = IcalCalendar::create(config('app.name', 'Tir Lavigny').' événements')
             ->refreshInterval(60); // Suggests to Google/Apple to check for updates every 60 mins
 
         $events = Event::whereBetween('start_datetime', [$startDate, $endDate])

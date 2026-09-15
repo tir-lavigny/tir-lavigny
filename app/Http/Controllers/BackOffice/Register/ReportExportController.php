@@ -62,10 +62,10 @@ class ReportExportController extends Controller implements HasMiddleware
         foreach ($days as $day) {
             yield [
                 'Date' => $day->date->format('d.m.Y'),
-                'Total Espèces' => number_format($day->total_cash, 2, ',', '.'),
-                'Total Twint' => number_format($day->total_twint, 2, ',', '.'),
+                'Total Espèces' => number_format((float) $day->total_cash, 2, ',', '.'),
+                'Total Twint' => number_format((float) $day->total_twint, 2, ',', '.'),
                 'Solde Clôture' => $day->closing_balance !== null
-                    ? number_format($day->closing_balance, 2, ',', '.')
+                    ? number_format((float) $day->closing_balance, 2, ',', '.')
                     : '',
             ];
         }
@@ -85,7 +85,7 @@ class ReportExportController extends Controller implements HasMiddleware
                     '# Ticket' => $ticket->id,
                     'Vendu à' => $ticket->sold_at->setTimezone('Europe/Zurich')->format('H:i'),
                     'Paiement' => $ticket->payment_method === 'cash' ? 'Espèces' : 'TWINT',
-                    'Total' => number_format($ticket->total, 2, ',', '.'),
+                    'Total' => number_format((float) $ticket->total, 2, ',', '.'),
                 ];
             }
         }
@@ -115,8 +115,8 @@ class ReportExportController extends Controller implements HasMiddleware
                         '# Ticket' => $ticket->id,
                         'Produit' => $item->product->name,
                         'Quantité' => $item->quantity,
-                        'Prix Unitaire' => number_format($item->unit_price, 2, ',', '.'),
-                        'Sous-total' => number_format($item->subtotal, 2, ',', '.'),
+                        'Prix Unitaire' => number_format((float) $item->unit_price, 2, ',', '.'),
+                        'Sous-total' => number_format((float) $item->subtotal, 2, ',', '.'),
                         'Réduction' => $discount > 0 ? number_format($discount, 2, ',', '.') : '',
                     ];
                 }

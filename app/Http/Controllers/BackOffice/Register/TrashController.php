@@ -162,6 +162,7 @@ class TrashController extends Controller implements HasMiddleware
             'member' => $this->getChildrenForMember($model),
             'season' => $this->getChildrenForSeason($model),
             'voucher' => $this->getChildrenForVoucher($model),
+            default => [],
         };
     }
 

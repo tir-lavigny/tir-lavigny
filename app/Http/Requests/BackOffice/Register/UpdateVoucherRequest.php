@@ -27,7 +27,7 @@ class UpdateVoucherRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $rule = new OnlyOneDiscountType;
-            $rule->validate('discount_percent', $this->input('discount_percent'), function ($message) use ($validator) {
+            $rule->validate('discount_percent', $this->input('discount_percent'), function (string $message) use ($validator): void {
                 $validator->errors()->add('discount_percent', $message);
             });
         });

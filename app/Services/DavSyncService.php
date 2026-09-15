@@ -30,8 +30,8 @@ class DavSyncService
 
         foreach ($toImport as $contact) {
             $parts = explode(';', $contact['n'] ?? '');
-            $lastName = $parts[0] ?? '';
-            $firstName = $parts[1] ?? '';
+            $lastName = $parts[0];
+            $firstName = $parts[1];
 
             Member::create([
                 'first_name' => $firstName,
@@ -74,8 +74,8 @@ class DavSyncService
             }
 
             $parts = explode(';', $contact['n'] ?? '');
-            $davLastName = $parts[0] ?? '';
-            $davFirstName = $parts[1] ?? '';
+            $davLastName = $parts[0];
+            $davFirstName = $parts[1];
 
             if ($davFirstName === $member->first_name && $davLastName === $member->last_name) {
                 continue;
@@ -120,8 +120,8 @@ class DavSyncService
                     if ($contact) {
                         $parts = explode(';', $contact['n'] ?? '');
                         $member->update([
-                            'first_name' => $parts[1] ?? '',
-                            'last_name' => $parts[0] ?? '',
+                            'first_name' => $parts[1],
+                            'last_name' => $parts[0],
                         ]);
                         $updated++;
                     }

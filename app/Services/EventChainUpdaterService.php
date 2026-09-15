@@ -165,14 +165,4 @@ class EventChainUpdaterService
             default => $chain->{$field},
         };
     }
-
-    private function getEventFieldValue(string $field, Event $event): mixed
-    {
-        return match ($field) {
-            'start_time' => $event->start_datetime?->setTimezone('Europe/Zurich')->format('H:i:s'),
-            'end_time' => $event->end_datetime?->setTimezone('Europe/Zurich')->format('H:i:s'),
-            'custom_body' => $event->customContent?->body,
-            default => $event->{$field},
-        };
-    }
 }
