@@ -8,6 +8,10 @@ use Illuminate\Http\Response;
 
 trait ApiResponse
 {
+    /**
+     * @param  JsonResource|array<string, mixed>  $data
+     * @param  array<string>  $headers
+     */
     protected function success(JsonResource|array $data, int $status = 200, array $headers = []): JsonResponse
     {
         $body = $data instanceof JsonResource ? $data->response()->getData(true) : $data;
@@ -15,6 +19,9 @@ trait ApiResponse
         return response()->json($body, $status, $headers);
     }
 
+    /**
+     * @param  array<string, mixed>|null  $errors
+     */
     protected function error(string $message, int $status = 400, ?array $errors = null): JsonResponse
     {
         $payload = ['message' => $message];
@@ -26,6 +33,7 @@ trait ApiResponse
         return response()->json($payload, $status);
     }
 
+    /** @param JsonResource|array<string, mixed> $data */
     protected function created(JsonResource|array $data): JsonResponse
     {
         return $this->success($data, Response::HTTP_CREATED);

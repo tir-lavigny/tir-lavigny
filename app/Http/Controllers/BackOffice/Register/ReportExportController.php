@@ -56,6 +56,7 @@ class ReportExportController extends Controller implements HasMiddleware
         };
     }
 
+    /** @return iterable<array<string, string>> */
     private function balanceRows(Season $season): iterable
     {
         $days = $season->operatingDays()->orderBy('date')->get();
@@ -72,6 +73,7 @@ class ReportExportController extends Controller implements HasMiddleware
         }
     }
 
+    /** @return iterable<array<string, string>> */
     private function ticketRows(Season $season): iterable
     {
         $days = $season->operatingDays()
@@ -92,6 +94,7 @@ class ReportExportController extends Controller implements HasMiddleware
         }
     }
 
+    /** @return iterable<array<string, string>> */
     private function itemRows(Season $season): iterable
     {
         $days = $season->operatingDays()

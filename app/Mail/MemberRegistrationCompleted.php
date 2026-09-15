@@ -31,6 +31,7 @@ class MemberRegistrationCompleted extends Mailable
         );
     }
 
+    /** @return array<string> */
     public function attachments(): array
     {
         return [];
