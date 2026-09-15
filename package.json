@@ -10,10 +10,12 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "test": "vitest",
+        "test:e2e": "playwright test",
         "tsc": "vue-tsc --noEmit"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@playwright/test": "^1.63.0",
         "@tailwindcss/typography": "^0.5.16",
         "@types/leaflet": "^1.9.17",
         "@types/node": "^24.0.0",
