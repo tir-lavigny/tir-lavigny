@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use Database\Factories\TicketFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Ticket extends Model
 {
+    /** @use HasFactory<TicketFactory> */
     use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [

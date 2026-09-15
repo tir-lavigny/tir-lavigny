@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Events\EventChainCreated;
 use App\LogsActivity;
 use Carbon\Carbon;
+use Database\Factories\EventChainFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EventChain extends Model
 {
+    /** @use HasFactory<EventChainFactory> */
     use HasFactory, LogsActivity;
 
     /**

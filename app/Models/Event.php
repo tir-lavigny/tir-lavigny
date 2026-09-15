@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Event extends Model
 {
+    /** @use HasFactory<EventFactory> */
     use HasFactory, LogsActivity;
 
     protected $fillable = [
