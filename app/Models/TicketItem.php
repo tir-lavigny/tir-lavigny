@@ -27,16 +27,25 @@ class TicketItem extends Model
         'subtotal' => 'decimal:2',
     ];
 
+    /**
+     * @return BelongsTo<Product, $this>
+     */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class)->withTrashed();
     }
 
+    /**
+     * @return BelongsTo<Ticket, $this>
+     */
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
     }
 
+    /**
+     * @return BelongsTo<Voucher, $this>
+     */
     public function voucher(): BelongsTo
     {
         return $this->belongsTo(Voucher::class)->withTrashed();

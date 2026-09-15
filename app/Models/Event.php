@@ -32,21 +32,33 @@ class Event extends Model
         'pending_conflict_fields' => 'array',
     ];
 
+    /**
+     * @return BelongsTo<Location, $this>
+     */
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
     }
 
+    /**
+     * @return BelongsTo<EventChain, $this>
+     */
     public function eventChain(): BelongsTo
     {
         return $this->belongsTo(EventChain::class);
     }
 
+    /**
+     * @return BelongsTo<Content, $this>
+     */
     public function content(): BelongsTo
     {
         return $this->belongsTo(Content::class);
     }
 
+    /**
+     * @return HasOne<EventContent, $this>
+     */
     public function customContent(): HasOne
     {
         return $this->hasOne(EventContent::class);

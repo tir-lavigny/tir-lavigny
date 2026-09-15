@@ -19,11 +19,17 @@ class Member extends Model
         'dav_uid',
     ];
 
+    /**
+     * @return HasMany<Voucher, $this>
+     */
     public function vouchers(): HasMany
     {
         return $this->hasMany(Voucher::class);
     }
 
+    /**
+     * @return HasOne<MemberRegistration, $this>
+     */
     public function registration(): HasOne
     {
         return $this->hasOne(MemberRegistration::class);

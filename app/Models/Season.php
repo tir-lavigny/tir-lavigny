@@ -27,11 +27,17 @@ class Season extends Model
         'end_balance' => 'decimal:2',
     ];
 
+    /**
+     * @return HasMany<OperatingDay, $this>
+     */
     public function operatingDays(): HasMany
     {
         return $this->hasMany(OperatingDay::class);
     }
 
+    /**
+     * @return HasMany<Voucher, $this>
+     */
     public function vouchers(): HasMany
     {
         return $this->hasMany(Voucher::class);

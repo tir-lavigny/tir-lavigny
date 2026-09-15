@@ -32,11 +32,17 @@ class OperatingDay extends Model
         'total_twint' => 'decimal:2',
     ];
 
+    /**
+     * @return BelongsTo<Season, $this>
+     */
     public function season(): BelongsTo
     {
         return $this->belongsTo(Season::class);
     }
 
+    /**
+     * @return HasMany<Ticket, $this>
+     */
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);

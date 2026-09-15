@@ -16,6 +16,9 @@ class Content extends Model
         'body',
     ];
 
+    /**
+     * @return HasMany<Event, $this>
+     */
     public function events(): HasMany
     {
         return $this->hasMany(Event::class);

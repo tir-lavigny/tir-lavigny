@@ -26,21 +26,33 @@ class Voucher extends Model
         'discount_fixed' => 'decimal:2',
     ];
 
+    /**
+     * @return BelongsTo<Product, $this>
+     */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class)->withTrashed();
     }
 
+    /**
+     * @return BelongsTo<Season, $this>
+     */
     public function season(): BelongsTo
     {
         return $this->belongsTo(Season::class);
     }
 
+    /**
+     * @return BelongsTo<Member, $this>
+     */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class)->withTrashed();
     }
 
+    /**
+     * @return HasMany<TicketItem, $this>
+     */
     public function ticketItems(): HasMany
     {
         return $this->hasMany(TicketItem::class);

@@ -21,6 +21,9 @@ class Category extends Model
         'is_restricted' => 'boolean',
     ];
 
+    /**
+     * @return HasMany<Product, $this>
+     */
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);

@@ -37,16 +37,25 @@ class Ticket extends Model
         });
     }
 
+    /**
+     * @return BelongsTo<OperatingDay, $this>
+     */
     public function operatingDay(): BelongsTo
     {
         return $this->belongsTo(OperatingDay::class);
     }
 
+    /**
+     * @return BelongsTo<Member, $this>
+     */
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
     }
 
+    /**
+     * @return HasMany<TicketItem, $this>
+     */
     public function ticketItems(): HasMany
     {
         return $this->hasMany(TicketItem::class);
