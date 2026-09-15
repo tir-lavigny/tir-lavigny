@@ -64,7 +64,8 @@ class AuthController extends Controller
 
     private function refreshCookie(string $refreshToken): Cookie
     {
-        $host = parse_url(config('app.url'))['host'];
+        $parsedHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+        $host = is_string($parsedHost) ? $parsedHost : '';
         $parts = explode('.', $host);
         $rootDomain = implode('.', array_slice($parts, -2));
 

@@ -142,28 +142,26 @@ class TrashController extends Controller implements HasMiddleware
 
     protected function getItemLabel(Category|Product|Season|Member|Ticket|Voucher $model, string $type): string
     {
-        return match ($type) {
-            'category' => $model->name,
-            'product' => $model->name,
-            'season' => $model->name,
-            'member' => $model->first_name.' '.$model->last_name,
-            'ticket' => 'Ticket #'.$model->id,
-            'voucher' => 'Bon #'.$model->id,
-            default => '#'.$model->id,
+        return match (true) {
+            $model instanceof Category => $model->name,
+            $model instanceof Product => $model->name,
+            $model instanceof Season => $model->name,
+            $model instanceof Member => $model->first_name.' '.$model->last_name,
+            $model instanceof Ticket => 'Ticket #'.$model->id,
+            default => 'Bon #'.$model->id,
         };
     }
 
     /** @return array<array<string, int|string>> */
     protected function getChildrenCounts(Category|Product|Season|Member|Ticket|Voucher $model, string $type): array
     {
-        return match ($type) {
-            'category' => $this->getChildrenForCategory($model),
-            'product' => $this->getChildrenForProduct($model),
-            'ticket' => $this->getChildrenForTicket($model),
-            'member' => $this->getChildrenForMember($model),
-            'season' => $this->getChildrenForSeason($model),
-            'voucher' => $this->getChildrenForVoucher($model),
-            default => [],
+        return match (true) {
+            $model instanceof Category => $this->getChildrenForCategory($model),
+            $model instanceof Product => $this->getChildrenForProduct($model),
+            $model instanceof Ticket => $this->getChildrenForTicket($model),
+            $model instanceof Member => $this->getChildrenForMember($model),
+            $model instanceof Season => $this->getChildrenForSeason($model),
+            default => $this->getChildrenForVoucher($model),
         };
     }
 

@@ -121,7 +121,7 @@ class ReportExportController extends Controller implements HasMiddleware
                         'Quantité' => $item->quantity,
                         'Prix Unitaire' => number_format((float) $item->unit_price, 2, ',', '.'),
                         'Sous-total' => number_format((float) $item->subtotal, 2, ',', '.'),
-                        'Réduction' => $discount > 0 ? number_format($discount, 2, ',', '.') : '',
+                        'Réduction' => $discount > 0 ? number_format((float) $discount, 2, ',', '.') : '',
                     ];
                 }
             }

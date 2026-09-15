@@ -281,6 +281,7 @@ class InfomaniakDavService implements DavServiceInterface
         }
 
         $lines = preg_split('/\r?\n/', $existingContact['vcard_raw']);
+        assert(is_array($lines));
 
         $replacements = [];
 
