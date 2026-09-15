@@ -11,11 +11,13 @@ use App\Models\Location;
 use App\Services\EventService;
 use App\Traits\ConvertsLocalDatetimes;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class EventController extends Controller implements HasMiddleware
 {
@@ -33,7 +35,7 @@ class EventController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $search = $request->input('search', null);
         $past = $request->boolean('past', false);
@@ -72,7 +74,7 @@ class EventController extends Controller implements HasMiddleware
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): Response
     {
         $templates = Content::all();
         $locations = Location::all();
@@ -86,7 +88,7 @@ class EventController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreEventRequest $request)
+    public function store(StoreEventRequest $request): RedirectResponse
     {
         $event = new Event;
         $event->title = $request->input('title');
@@ -109,7 +111,7 @@ class EventController extends Controller implements HasMiddleware
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): Response
     {
         $event = Event::with('location')
             ->where('id', $id)
@@ -125,7 +127,7 @@ class EventController extends Controller implements HasMiddleware
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(string $id): Response
     {
         $event = Event::with('location')
             ->where('id', $id)
@@ -154,7 +156,7 @@ class EventController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateEventRequest $request, string $id)
+    public function update(UpdateEventRequest $request, string $id): RedirectResponse
     {
         $event = Event::with('eventChain')->findOrFail($id);
         $event->title = $request->input('title');
@@ -186,7 +188,7 @@ class EventController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): RedirectResponse
     {
         $event = Event::findOrFail($id);
 

@@ -6,10 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $activities = ActivityLog::where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')

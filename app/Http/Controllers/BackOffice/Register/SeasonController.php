@@ -38,7 +38,7 @@ class SeasonController extends Controller implements HasMiddleware
         return Inertia::render('backOffice/Register/Seasons/Create');
     }
 
-    public function store(StoreSeasonRequest $request)
+    public function store(StoreSeasonRequest $request): RedirectResponse
     {
         Season::create($request->validated());
 
@@ -63,14 +63,14 @@ class SeasonController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(UpdateSeasonRequest $request, Season $season)
+    public function update(UpdateSeasonRequest $request, Season $season): RedirectResponse
     {
         $season->update($request->validated());
 
         return redirect()->route('bo.register.seasons.index')->with('success', 'Season updated successfully.');
     }
 
-    public function destroy(Season $season)
+    public function destroy(Season $season): RedirectResponse
     {
         try {
             $season->delete();

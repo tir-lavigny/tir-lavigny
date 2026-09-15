@@ -9,6 +9,7 @@ use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -47,7 +48,7 @@ class OperatingDayController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function store(StoreOperatingDayRequest $request)
+    public function store(StoreOperatingDayRequest $request): RedirectResponse
     {
         $day = OperatingDay::create([
             'date' => $request->input('date'),
@@ -76,7 +77,7 @@ class OperatingDayController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(UpdateOperatingDayRequest $request, OperatingDay $operatingDay)
+    public function update(UpdateOperatingDayRequest $request, OperatingDay $operatingDay): RedirectResponse
     {
         $status = $request->input('status');
 

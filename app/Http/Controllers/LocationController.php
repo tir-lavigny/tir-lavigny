@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class LocationController extends Controller implements HasMiddleware
 {
@@ -22,7 +24,7 @@ class LocationController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): Response
     {
         $locations = Location::orderBy('name')->get();
 
@@ -34,7 +36,7 @@ class LocationController extends Controller implements HasMiddleware
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): void
     {
         //
     }
@@ -42,7 +44,7 @@ class LocationController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -64,7 +66,7 @@ class LocationController extends Controller implements HasMiddleware
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): void
     {
         //
     }
@@ -72,7 +74,7 @@ class LocationController extends Controller implements HasMiddleware
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(string $id): void
     {
         //
     }
@@ -80,7 +82,7 @@ class LocationController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id): RedirectResponse
     {
         $request->validate([
             'name' => 'required|string|max:255,|unique:locations,name,'.$id,
@@ -98,7 +100,7 @@ class LocationController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): RedirectResponse
     {
         $location = Location::findOrFail($id);
         if ($location->events()->exists()) {

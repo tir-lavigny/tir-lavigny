@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Content;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Inertia\Response;
 
 class ContentController extends Controller implements HasMiddleware
 {
@@ -22,7 +24,7 @@ class ContentController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): Response
     {
         $contents = Content::withCount('events')->get();
 
@@ -34,7 +36,7 @@ class ContentController extends Controller implements HasMiddleware
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): void
     {
         //
     }
@@ -42,7 +44,7 @@ class ContentController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'title' => 'required|string|max:255|unique:contents,title',
@@ -57,7 +59,7 @@ class ContentController extends Controller implements HasMiddleware
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id): void
     {
         //
     }
@@ -65,7 +67,7 @@ class ContentController extends Controller implements HasMiddleware
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(string $id): void
     {
         //
     }
@@ -73,7 +75,7 @@ class ContentController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id): RedirectResponse
     {
         $request->validate([
             'title' => 'required|string|max:255|unique:contents,title,'.$id,
@@ -97,7 +99,7 @@ class ContentController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $id): RedirectResponse
     {
         $content = Content::findOrFail($id);
         if ($content->events()->exists()) {

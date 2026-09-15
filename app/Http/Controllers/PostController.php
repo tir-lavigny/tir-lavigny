@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class PostController extends Controller
 {
-    public function show(string $public_id)
+    public function show(string $public_id): Response
     {
         $post = Post::where('public_id', $public_id)
             ->where('publish_at', '<=', now())

@@ -5,10 +5,12 @@ namespace App\Http\Controllers\BackOffice;
 use App\Http\Controllers\Controller;
 use App\Models\MemberRegistration;
 use App\Services\MemberRegistrationPipelineService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class MemberRegistrationController extends Controller implements HasMiddleware
 {
@@ -20,7 +22,7 @@ class MemberRegistrationController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $query = MemberRegistration::with('member');
 
@@ -41,7 +43,7 @@ class MemberRegistrationController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function show(MemberRegistration $memberRegistration)
+    public function show(MemberRegistration $memberRegistration): Response
     {
         $memberRegistration->load('member');
 
@@ -51,7 +53,7 @@ class MemberRegistrationController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $registration = MemberRegistration::create();
 
@@ -59,7 +61,7 @@ class MemberRegistrationController extends Controller implements HasMiddleware
             ->with('success', 'Formulaire créé avec succès.');
     }
 
-    public function retry(MemberRegistration $memberRegistration, MemberRegistrationPipelineService $pipeline)
+    public function retry(MemberRegistration $memberRegistration, MemberRegistrationPipelineService $pipeline): RedirectResponse
     {
         $memberRegistration->error_message = null;
         $memberRegistration->failed_at = null;

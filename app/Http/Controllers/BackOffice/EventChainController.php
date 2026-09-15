@@ -10,10 +10,12 @@ use App\Models\Location;
 use App\Services\EventChainGeneratorService;
 use App\Services\EventChainUpdaterService;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class EventChainController extends Controller implements HasMiddleware
 {
@@ -28,7 +30,7 @@ class EventChainController extends Controller implements HasMiddleware
 
     // ─── CRUD ─────────────────────────────────────────────────────────────────
 
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $search = $request->input('search');
 
@@ -45,7 +47,7 @@ class EventChainController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function create()
+    public function create(): Response
     {
         return Inertia::render('backOffice/EventChains/Create', [
             'templates' => Content::all(),
@@ -53,7 +55,7 @@ class EventChainController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function store(Request $request, EventChainGeneratorService $generator)
+    public function store(Request $request, EventChainGeneratorService $generator): RedirectResponse
     {
         $data = $request->validate($this->chainRules());
 
@@ -65,7 +67,7 @@ class EventChainController extends Controller implements HasMiddleware
             ->with('success', 'Recurring event chain created and events generated successfully.');
     }
 
-    public function show(EventChain $eventChain)
+    public function show(EventChain $eventChain): Response
     {
         $eventChain->load('location', 'content');
 
@@ -81,7 +83,7 @@ class EventChainController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function edit(EventChain $eventChain)
+    public function edit(EventChain $eventChain): Response
     {
         return Inertia::render('backOffice/EventChains/Edit', [
             'chain' => $eventChain,
@@ -90,7 +92,7 @@ class EventChainController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(Request $request, EventChain $eventChain, EventChainUpdaterService $updater)
+    public function update(Request $request, EventChain $eventChain, EventChainUpdaterService $updater): RedirectResponse
     {
         $data = $request->validate(array_merge($this->chainRules(), [
             'update_scope' => ['required', 'in:all,from_date'],
@@ -126,7 +128,7 @@ class EventChainController extends Controller implements HasMiddleware
             ->with('success', $message);
     }
 
-    public function destroy(EventChain $eventChain)
+    public function destroy(EventChain $eventChain): RedirectResponse
     {
         // Events will be detached (event_chain_id set to null) via nullOnDelete FK constraint.
         // Delete the now-orphaned chain events explicitly first, or keep them standalone.
@@ -150,7 +152,7 @@ class EventChainController extends Controller implements HasMiddleware
         EventChain $eventChain,
         Event $event,
         EventChainUpdaterService $updater
-    ) {
+    ): RedirectResponse {
         $data = $request->validate([
             'field' => ['required', 'string', 'in:'.implode(',', EventChain::PROPAGATABLE_FIELDS)],
             'resolution' => ['required', 'in:accept_chain,keep_override'],
@@ -174,7 +176,7 @@ class EventChainController extends Controller implements HasMiddleware
         EventChain $eventChain,
         Event $event,
         EventChainUpdaterService $updater
-    ) {
+    ): RedirectResponse {
         abort_unless($event->event_chain_id === $eventChain->id, 404);
 
         $updater->resetToChain($event, $eventChain);
@@ -188,7 +190,7 @@ class EventChainController extends Controller implements HasMiddleware
      * Detach a single event from its chain (makes it standalone).
      * POST /back-office/events/{event}/detach
      */
-    public function detachEvent(Event $event)
+    public function detachEvent(Event $event): RedirectResponse
     {
         $event->detachFromChain();
 
@@ -199,6 +201,7 @@ class EventChainController extends Controller implements HasMiddleware
 
     // ─── Validation rules ─────────────────────────────────────────────────────
 
+    /** @return array<string, mixed> */
     private function chainRules(): array
     {
         return [

@@ -7,6 +7,7 @@ use App\Http\Requests\BackOffice\Register\StoreProductRequest;
 use App\Http\Requests\BackOffice\Register\UpdateProductRequest;
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -45,7 +46,7 @@ class ProductController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function store(StoreProductRequest $request)
+    public function store(StoreProductRequest $request): RedirectResponse
     {
         Product::create($request->validated());
 
@@ -74,21 +75,21 @@ class ProductController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(UpdateProductRequest $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
         $product->update($request->validated());
 
         return redirect()->route('bo.register.products.index')->with('success', 'Product updated successfully.');
     }
 
-    public function destroy(Product $product)
+    public function destroy(Product $product): RedirectResponse
     {
         $product->delete();
 
         return redirect()->route('bo.register.products.index')->with('success', 'Product deleted successfully.');
     }
 
-    public function attachChild(Request $request, Product $product)
+    public function attachChild(Request $request, Product $product): RedirectResponse
     {
         $request->validate([
             'child_product_id' => ['required', 'exists:products,id,deleted_at,NULL'],
@@ -102,7 +103,7 @@ class ProductController extends Controller implements HasMiddleware
         return redirect()->route('bo.register.products.show', $product)->with('success', 'Child product attached.');
     }
 
-    public function detachChild(Product $product, Product $child)
+    public function detachChild(Product $product, Product $child): RedirectResponse
     {
         $product->childProducts()->detach($child->id);
 

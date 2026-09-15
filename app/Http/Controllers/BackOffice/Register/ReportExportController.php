@@ -9,6 +9,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Str;
 use Spatie\SimpleExcel\SimpleExcelWriter;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportExportController extends Controller implements HasMiddleware
 {
@@ -19,7 +20,7 @@ class ReportExportController extends Controller implements HasMiddleware
         ];
     }
 
-    public function export(Request $request, Season $season)
+    public function export(Request $request, Season $season): StreamedResponse
     {
         $detail = $request->input('detail', 'balance');
 
@@ -32,7 +33,7 @@ class ReportExportController extends Controller implements HasMiddleware
         };
     }
 
-    private function streamExcel(Season $season, string $fileName, string $detail)
+    private function streamExcel(Season $season, string $fileName, string $detail): StreamedResponse
     {
         $writer = SimpleExcelWriter::streamDownload($fileName);
 
