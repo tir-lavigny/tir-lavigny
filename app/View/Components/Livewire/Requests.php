@@ -10,7 +10,7 @@ use Livewire\Livewire;
 
 class Requests extends Card
 {
-    public function render(): \Illuminate\View\View
+    public function render(): \Illuminate\Contracts\View\View
     {
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
         [$requests, $time, $runAt] = $this->remember(fn () => $this->graph(

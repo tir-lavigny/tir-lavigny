@@ -14,6 +14,7 @@ class SeasonVoucherService
     /**
      * Get the base voucher package: product name => required count.
      */
+    /** @return array<string, int> */
     public function getBasePackage(): array
     {
         return [
@@ -26,6 +27,8 @@ class SeasonVoucherService
     /**
      * Resolve product names to Product models. Aborts 422 if any product not found.
      */
+    /** @param array<string, int> $basePackage
+     * @return array<string, Product> */
     public function resolveProducts(array $basePackage): array
     {
         $products = [];
@@ -48,6 +51,9 @@ class SeasonVoucherService
      *
      * @return array<int, array{member_id: int, member_name: string, vouchers: array<int, array{product_name: string, count: int}>}>
      */
+    /** @param array<string, int> $basePackage
+     * @param array<string, Product> $products
+     * @return array<int, array{member_id: int, member_name: string, vouchers: array<int, array{product_name: string, count: int}>}> */
     public function computePlan(Season $season, array $basePackage, array $products): array
     {
         $members = Member::all();
@@ -58,6 +64,7 @@ class SeasonVoucherService
     /**
      * Generate base vouchers for all members based on the computed plan.
      */
+    /** @param array<string, int> $basePackage */
     public function generateBaseVouchers(Season $season, array $basePackage): void
     {
         $products = $this->resolveProducts($basePackage);
@@ -86,6 +93,10 @@ class SeasonVoucherService
         });
     }
 
+    /** @param Collection<int, Member> $members
+     * @param array<string, int> $basePackage
+     * @param array<string, Product> $products
+     * @return array<int, array{member_id: int, member_name: string, vouchers: array<int, array{product_name: string, count: int}>}> */
     private function computePlanForMembers(Season $season, Collection $members, array $basePackage, array $products): array
     {
         $plan = [];

@@ -12,6 +12,7 @@ class EventService
      * Compare an event's current field values against its chain values.
      * Returns an array of field names that differ.
      *
+     * @param  array<string, mixed>  $data
      * @return array<string, array{event_value: mixed, chain_value: mixed}>
      */
     public function compareEventToChain(Event $event, array $data, ?EventChain $chain = null): array
@@ -53,6 +54,7 @@ class EventService
     /**
      * Mark or unmark fields as overridden on an event based on chain comparison.
      */
+    /** @param array<string, mixed> $changedFields */
     public function applyChainOverrides(Event $event, array $changedFields): void
     {
         foreach ($changedFields as $field => $values) {

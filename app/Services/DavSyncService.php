@@ -15,6 +15,7 @@ class DavSyncService
     /**
      * Import members from DAV contacts that don't already exist.
      */
+    /** @return array{created: int} */
     public function importFromDav(): array
     {
         $contacts = $this->dav->getContacts();
@@ -97,6 +98,8 @@ class DavSyncService
     /**
      * Apply sync choices: update members from DAV or DAV from members.
      */
+    /** @param array<string, mixed> $choices
+     * @return array{updated: int} */
     public function sync(array $choices): array
     {
         $memberIds = array_column($choices, 'member_id');

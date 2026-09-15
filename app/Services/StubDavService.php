@@ -14,6 +14,7 @@ class StubDavService implements DavServiceInterface
         return 'https://stub.dav.example.com/addressbook/';
     }
 
+    /** @return array<int, array<string, string>> */
     public function getContacts(?string $addressbookUrl = null): array
     {
         Log::info('StubDavService: getContacts called');
@@ -21,6 +22,7 @@ class StubDavService implements DavServiceInterface
         return [];
     }
 
+    /** @return array<string, string>|null */
     public function getContact(string $contactUrl): ?array
     {
         Log::info('StubDavService: getContact called', ['url' => $contactUrl]);
@@ -28,6 +30,7 @@ class StubDavService implements DavServiceInterface
         return null;
     }
 
+    /** @return array<string, string> */
     public function createContactFromMemberRegistration(MemberRegistration $registration): array
     {
         $uid = Str::uuid7();
