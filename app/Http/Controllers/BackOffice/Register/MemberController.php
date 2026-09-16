@@ -17,7 +17,7 @@ class MemberController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:manage members', only: ['create', 'edit', 'update', 'destroy']),
+            new Middleware('permission:manage members', only: ['edit', 'update', 'destroy']),
         ];
     }
 
@@ -28,11 +28,6 @@ class MemberController extends Controller implements HasMiddleware
         return Inertia::render('backOffice/Register/Members/Index', [
             'members' => $members,
         ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('backOffice/Register/Members/Create');
     }
 
     public function edit(Member $member): Response
