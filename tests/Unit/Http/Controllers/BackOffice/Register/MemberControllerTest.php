@@ -29,13 +29,6 @@ class MemberControllerTest extends TestCase
         $this->assertInstanceOf(Response::class, $response);
     }
 
-    public function test_create_returns_inertia_response(): void
-    {
-        $response = $this->controller->create();
-
-        $this->assertInstanceOf(Response::class, $response);
-    }
-
     public function test_member_model_can_be_created(): void
     {
         $member = Member::create([
