@@ -89,7 +89,9 @@ defineProps<{
                             <AppEventCard v-for="event in events" :key="event.id" :event="event" :short="true" />
                         </div>
                         <template v-else>
-                            <P v-if="new Date().getTime() < new Date('2025-08-31').getTime()" data-testid="no-dates-message"> Aucune date disponible pour le moment. </P>
+                            <P v-if="new Date().getTime() < new Date('2025-08-31').getTime()" data-testid="no-dates-message">
+                                Aucune date disponible pour le moment.
+                            </P>
                             <P v-else data-testid="no-dates-season-message"> Plus aucune date pour la saison {{ new Date().getFullYear() }}. </P>
                         </template>
                     </div>

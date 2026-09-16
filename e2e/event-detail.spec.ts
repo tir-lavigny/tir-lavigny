@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Event detail page', () => {
     test('navigates from home page to event detail with location', async ({ page }) => {
