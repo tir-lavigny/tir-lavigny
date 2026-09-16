@@ -13,7 +13,7 @@ defineProps<{
 </script>
 
 <template>
-    <Card class="justify-between">
+    <Card data-testid="event-card" class="justify-between">
         <CardHeader>
             <CardTitle>
                 {{ event.title }}

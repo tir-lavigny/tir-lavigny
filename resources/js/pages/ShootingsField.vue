@@ -54,7 +54,7 @@ defineProps<{
                             cibles B.
                         </P>
                         <div class="flex flex-col gap-2 lg:flex-row lg:gap-4">
-                            <OrderedList class="mt-4">
+                            <OrderedList data-testid="programme-list" class="mt-4">
                                 <li>Six coups sont tirés en 6 minutes et affiché un par un.</li>
                                 <li>
                                     Deux séries de trois coups chacune sont tirées en 60 secondes chacune. L'affichage a lieu après chaque série de
@@ -84,13 +84,13 @@ defineProps<{
                 </div>
                 <div class="md:col-span-1">
                     <H2 id="next-dates">Prochaines dates</H2>
-                    <div class="mt-6 flex w-full flex-col gap-2">
+                    <div data-testid="next-dates-list" class="mt-6 flex w-full flex-col gap-2">
                         <div v-if="events.length" class="flex w-full flex-col gap-2">
                             <AppEventCard v-for="event in events" :key="event.id" :event="event" :short="true" />
                         </div>
                         <template v-else>
-                            <P v-if="new Date().getTime() < new Date('2025-08-31').getTime()"> Aucune date disponible pour le moment. </P>
-                            <P v-else> Plus aucune date pour la saison {{ new Date().getFullYear() }}. </P>
+                            <P v-if="new Date().getTime() < new Date('2025-08-31').getTime()" data-testid="no-dates-message"> Aucune date disponible pour le moment. </P>
+                            <P v-else data-testid="no-dates-season-message"> Plus aucune date pour la saison {{ new Date().getFullYear() }}. </P>
                         </template>
                     </div>
                 </div>

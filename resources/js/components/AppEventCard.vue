@@ -19,7 +19,7 @@ withDefaults(
 </script>
 
 <template>
-    <Card class="justify-between" v-if="!short">
+    <Card data-testid="event-card" class="justify-between" v-if="!short">
         <CardHeader>
             <CardTitle>
                 {{ event.title }}
@@ -63,7 +63,7 @@ withDefaults(
             </Button>
         </CardFooter>
     </Card>
-    <Card class="justify-between" v-else>
+    <Card data-testid="event-card" class="justify-between" v-else>
         <CardHeader class="flex flex-row items-center justify-between">
             <CardTitle>
                 {{ event.title }}

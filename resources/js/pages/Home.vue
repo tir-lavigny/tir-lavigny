@@ -33,13 +33,13 @@ const hasEvents = computed(() => props.events.length > 0);
                 <AppPostCard v-for="post in posts" class="w-full" :key="post.public_id" :post="post" />
             </div>
         </section>
-        <section class="mt-12 flex flex-col gap-8" v-if="hasEvents" :class="{ 'mt-96 pt-12': !hasPosts }">
+        <section data-testid="home-events-section" class="mt-12 flex flex-col gap-8" v-if="hasEvents" :class="{ 'mt-96 pt-12': !hasPosts }">
             <H2>Prochain{{ events.length > 1 ? 's' : '' }} événement{{ events.length > 1 ? 's' : '' }}</H2>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <AppEventCard v-for="event in events" class="w-full" :key="event.id" :event="event" />
             </div>
         </section>
-        <section class="mt-12 flex flex-col gap-8" :class="{ 'mt-96 pt-12': !hasEvents && !hasPosts }">
+        <section data-testid="home-range-section" class="mt-12 flex flex-col gap-8" :class="{ 'mt-96 pt-12': !hasEvents && !hasPosts }">
             <H2>Stand de tir</H2>
             <div class="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
                 <div class="flex items-center justify-center p-4">
@@ -69,7 +69,7 @@ const hasEvents = computed(() => props.events.length > 0);
                     </Button>
                     <div class="ml-6">
                         <P> Caractéristiques du stand : </P>
-                        <List class="mt-0">
+                        <List data-testid="range-characteristics-list" class="mt-0">
                             <li>Distance : 300m et 10m</li>
                             <li>Nombre de cibles : 6</li>
                             <li>Type de cibles : Sius Ascor</li>

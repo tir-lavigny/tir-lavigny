@@ -121,7 +121,7 @@ const rightNavItems: NavItem[] = [
                     </Sheet>
                 </div>
 
-                <Link :href="route('home')" class="flex items-center gap-x-2">
+                <Link data-testid="site-logo" :href="route('home')" class="flex items-center gap-x-2">
                     <AppLogo />
                 </Link>
 

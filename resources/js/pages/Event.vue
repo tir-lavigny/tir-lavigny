@@ -61,9 +61,9 @@ defineProps<{
             </template>
         </AppHeroSection>
         <section class="mt-96 flex flex-col gap-8 py-12">
-            <div v-if="content" v-html="marked(content)" class="prose dark:prose-invert xl:prose-xl max-w-full"></div>
+            <div data-testid="event-content" v-if="content" v-html="marked(content)" class="prose dark:prose-invert xl:prose-xl max-w-full"></div>
             <div v-else>
-                <P>Pas de contenu à afficher</P>
+                <P data-testid="event-no-content">Pas de contenu à afficher</P>
             </div>
         </section>
         <section class="flex flex-col gap-8 py-12">
