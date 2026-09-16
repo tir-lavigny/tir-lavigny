@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Register\UpdateMemberRequest;
 use App\Models\Member;
+use App\Models\Season;
 use App\Services\DavServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -27,6 +28,21 @@ class MemberController extends Controller implements HasMiddleware
 
         return Inertia::render('backOffice/Register/Members/Index', [
             'members' => $members,
+        ]);
+    }
+
+    public function show(Member $member): Response
+    {
+        $member->load('vouchers.ticketItems');
+        $seasons = Season::orderBy('id', 'desc')->get();
+        $vouchers = $member->vouchers;
+        $usedVouchers = $vouchers->filter(fn ($v) => $v->isUsed());
+
+        return Inertia::render('backOffice/Register/Members/Show', [
+            'member' => $member,
+            'seasons' => $seasons,
+            'vouchers' => $vouchers,
+            'usedVouchers' => $usedVouchers,
         ]);
     }
 

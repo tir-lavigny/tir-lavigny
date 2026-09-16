@@ -10,7 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedMembers, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Pencil, Search, TicketX, Trash2 } from '@lucide/vue';
+import { Pencil, Search, TicketX, Trash2, Eye } from '@lucide/vue';
 import { ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -72,6 +72,14 @@ const handleDelete = (id: number) => {
                         <p class="font-medium">{{ member.first_name }} {{ member.last_name }}</p>
                     </div>
                     <div class="flex gap-2">
+                        <Tooltip v-if="hasPermissionTo(user, 'manage members')">
+                            <TooltipTrigger>
+                                <Link :href="route('bo.register.members.show', member.id)">
+                                    <Button size="icon" variant="outline"><Eye /></Button>
+                                </Link>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Voir</p></TooltipContent>
+                        </Tooltip>
                         <Tooltip v-if="hasPermissionTo(user, 'restore register')">
                             <TooltipTrigger>
                                 <Link :href="route('bo.register.trash.index') + '?member_id=' + member.id">

@@ -170,9 +170,10 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
 
     Route::middleware('permission:manage members')->prefix('register')->group(function () {
         Route::resource('members', Register\MemberController::class)->only([
-            'index', 'edit', 'update', 'destroy',
+            'index', 'show', 'edit', 'update', 'destroy',
         ])->names([
             'index' => 'bo.register.members.index',
+            'show' => 'bo.register.members.show',
             'edit' => 'bo.register.members.edit',
             'update' => 'bo.register.members.update',
             'destroy' => 'bo.register.members.destroy',
