@@ -3,9 +3,13 @@ import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { resolve } from 'node:path';
 import path from 'path';
+import removeAttr from 'remove-attr';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+    build: {
+        sourcemap: (process.env.APP_ENV || 'local') === 'local',
+    },
     server: {
         // Requis pour le HMR depuis un navigateur hôte quand Vite tourne dans Docker
         host: '0.0.0.0',
@@ -29,11 +33,19 @@ export default defineConfig({
                 },
             },
         }),
+        ...[
+            (process.env.APP_ENV || 'local') === 'production'
+                ? removeAttr({
+                      extensions: ['vue'],
+                      attributes: ['data-testid'],
+                  })
+                : [],
+        ],
     ],
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, './resources/js'),
-            'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
+            '@': path.resolve(import.meta.dirname, './resources/js'),
+            'ziggy-js': resolve(import.meta.dirname, 'vendor/tightenco/ziggy'),
         },
     },
 });

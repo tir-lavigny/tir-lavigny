@@ -69,7 +69,7 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
         <H2 class="!pb-0">Saison {{ new Date().getFullYear() }}</H2>
         <DropdownMenu>
             <DropdownMenuTrigger>
-                <Button>
+                <Button data-testid="events-filter-trigger">
                     <ListFilter class="h-4 w-4" /> Filtrer
                     <span v-if="filter !== DEFAULT_FILTER">(1)</span>
                 </Button>
@@ -92,7 +92,7 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
                 <ReuseTemplate />
             </div>
 
-            <P v-if="!events.length" class="text-center">Aucun événement pour l'instant.</P>
+            <P v-if="!events.length" data-testid="no-events-message" class="text-center">Aucun événement pour l'instant.</P>
             <template v-else>
                 <div v-for="(events, date) in groupedEvents" :key="date" class="mx-auto w-full max-w-4xl">
                     <H3 :class="{ 'text-primary': parseDateOnly(date).toDateString() === new Date().toDateString() }">

@@ -18,6 +18,9 @@ RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --pr
 # Stage 2 - Node: compile Vite assets (used only by the prod stage)
 FROM node:${NODE_VERSION}-alpine AS node-builder
 
+ARG APP_ENV=production
+ENV APP_ENV=$APP_ENV
+
 WORKDIR /app
 
 COPY package.json package-lock.json ./
