@@ -51,6 +51,8 @@ jobs:
 
       - name: Build Assets
         run: npm run build
+        env:
+          APP_ENV: testing
 
       - name: Type Check
         run: npm run tsc
