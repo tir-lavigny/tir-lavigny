@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\BackOffice\Register;
 
+use App\Actions\Ticket\RefundTicketAction;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
-use App\Services\TicketService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -26,9 +26,9 @@ class TicketController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function refund(Ticket $ticket, TicketService $ticketService): RedirectResponse
+    public function refund(Ticket $ticket, RefundTicketAction $action): RedirectResponse
     {
-        $ticketService->refund($ticket);
+        $action->execute($ticket);
 
         return redirect()->back()->with('success', 'Ticket refunded successfully.');
     }

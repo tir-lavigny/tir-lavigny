@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\Http\Controllers\API\Register;
 
+use App\Actions\Ticket\CreateTicketAction;
+use App\Actions\Ticket\RefundTicketAction;
 use App\Http\Controllers\API\Register\TicketController;
 use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\Category;
@@ -24,6 +26,10 @@ class TicketControllerTest extends TestCase
 
     private TicketController $controller;
 
+    private CreateTicketAction $createTicketAction;
+
+    private RefundTicketAction $refundTicketAction;
+
     private TicketCalculator $calculator;
 
     protected function setUp(): void
@@ -31,6 +37,8 @@ class TicketControllerTest extends TestCase
         parent::setUp();
         $this->seed(RolesAndPermissionsSeeder::class);
         $this->controller = $this->app->make(TicketController::class);
+        $this->createTicketAction = $this->app->make(CreateTicketAction::class);
+        $this->refundTicketAction = $this->app->make(RefundTicketAction::class);
         $this->calculator = $this->app->make(TicketCalculator::class);
     }
 
@@ -64,7 +72,7 @@ class TicketControllerTest extends TestCase
             'unit_price' => 5.00,
         ]);
 
-        $response = $this->controller->store($this->storeRequest([
+        $response = $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -98,7 +106,7 @@ class TicketControllerTest extends TestCase
             'unit_price' => 3.50,
         ]);
 
-        $this->controller->store($this->storeRequest([
+        $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'twint',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -140,7 +148,7 @@ class TicketControllerTest extends TestCase
             'unit_price' => 3.00,
         ]);
 
-        $this->controller->store($this->storeRequest([
+        $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -179,7 +187,7 @@ class TicketControllerTest extends TestCase
             'season_id' => $season->id,
         ]);
 
-        $this->controller->store($this->storeRequest([
+        $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -232,7 +240,7 @@ class TicketControllerTest extends TestCase
 
         $ticket->delete();
 
-        $response = $this->controller->store($this->storeRequest([
+        $response = $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -265,7 +273,7 @@ class TicketControllerTest extends TestCase
             'unit_price' => 10.00,
         ]);
 
-        $this->controller->store($this->storeRequest([
+        $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -298,7 +306,7 @@ class TicketControllerTest extends TestCase
             'unit_price' => 0.00,
         ]);
 
-        $this->controller->store($this->storeRequest([
+        $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -333,7 +341,7 @@ class TicketControllerTest extends TestCase
             'unit_price' => 25.00,
         ]);
 
-        $this->controller->store($this->storeRequest([
+        $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -358,7 +366,7 @@ class TicketControllerTest extends TestCase
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = Product::factory()->create(['category_id' => $category->id]);
 
-        $response = $this->controller->store($this->storeRequest([
+        $response = $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -451,7 +459,7 @@ class TicketControllerTest extends TestCase
             'product_id' => $product->id,
         ]);
 
-        $response = $this->controller->refund($ticket);
+        $response = $this->controller->refund($this->refundTicketAction, $ticket);
 
         $this->assertEquals(200, $response->status());
         $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
@@ -484,7 +492,7 @@ class TicketControllerTest extends TestCase
             'subtotal' => 5.00,
         ]);
 
-        $this->controller->refund($ticket);
+        $this->controller->refund($this->refundTicketAction, $ticket);
 
         $day->refresh();
         $this->assertEquals('0.00', $day->total_cash);
@@ -506,7 +514,7 @@ class TicketControllerTest extends TestCase
             'total' => 5.00,
         ]);
 
-        $response = $this->controller->refund($ticket);
+        $response = $this->controller->refund($this->refundTicketAction, $ticket);
 
         $this->assertEquals(422, $response->status());
         $this->assertDatabaseHas('tickets', ['id' => $ticket->id, 'deleted_at' => null]);
