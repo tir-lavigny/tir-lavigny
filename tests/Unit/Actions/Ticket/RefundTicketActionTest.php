@@ -1,0 +1,81 @@
+<?php
+
+namespace Tests\Unit\Actions\Ticket;
+
+use App\Actions\Ticket\RefundTicketAction;
+use App\Models\OperatingDay;
+use App\Models\Season;
+use App\Models\Ticket;
+use App\Services\TicketService;
+use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
+use Tests\TestCase;
+
+class RefundTicketActionTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
+
+    private function createOpenDay(): OperatingDay
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+
+        return OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today()->toDateString(),
+            'total_cash' => 0,
+            'total_twint' => 0,
+        ]);
+    }
+
+    public function test_execute_soft_deletes_ticket(): void
+    {
+        $day = $this->createOpenDay();
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 25.00,
+        ]);
+
+        $day->update(['total_cash' => 25.00, 'total_twint' => 0]);
+
+        $action = $this->app->make(RefundTicketAction::class);
+        $action->execute($ticket);
+
+        $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
+    }
+
+    public function test_execute_delegates_to_ticket_service(): void
+    {
+        $day = $this->createOpenDay();
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 25.00,
+        ]);
+
+        $service = $this->app->make(TicketService::class);
+        $spy = Mockery::mock(TicketService::class)->makePartial();
+        $spy->shouldReceive('refund')
+            ->andReturnUsing(fn ($t) => $service->refund($t));
+
+        $action = new RefundTicketAction($spy);
+        $action->execute($ticket);
+
+        $spy->shouldHaveReceived('refund')->with($ticket);
+        $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
+}
