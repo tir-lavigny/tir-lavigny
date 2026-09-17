@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BackOffice\Register;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
+use App\Services\TicketService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -25,13 +26,9 @@ class TicketController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function refund(Ticket $ticket): RedirectResponse
+    public function refund(Ticket $ticket, TicketService $ticketService): RedirectResponse
     {
-        $day = $ticket->operatingDay;
-
-        $ticket->delete();
-
-        $day->recalculateTotals();
+        $ticketService->refund($ticket);
 
         return redirect()->back()->with('success', 'Ticket refunded successfully.');
     }

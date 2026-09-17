@@ -8,15 +8,16 @@ use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\OperatingDay;
 use App\Models\Ticket;
 use App\Services\TicketCalculator;
-use App\Traits\ConvertsLocalDatetimes;
+use App\Services\TicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\DB;
 
 class TicketController extends Controller implements HasMiddleware
 {
-    use ConvertsLocalDatetimes;
+    public function __construct(
+        private readonly TicketService $ticketService,
+    ) {}
 
     public static function middleware(): array
     {
@@ -38,25 +39,7 @@ class TicketController extends Controller implements HasMiddleware
             return response()->json(['message' => 'The operating day is in the past. Can\'t create tickets for it.'], 422);
         }
 
-        $result = $calculator->compute($request->input('items'));
-
-        $ticket = DB::transaction(function () use ($request, $day, $result) {
-            $ticket = Ticket::create([
-                'total' => $result['total'],
-                'payment_method' => $request->input('payment_method'),
-                'operating_day_id' => $day->id,
-                'member_id' => $request->input('member_id'),
-                'sold_at' => $this->localToUtc($request->input('sold_at')),
-            ]);
-
-            foreach ($result['items'] as $itemData) {
-                $ticket->ticketItems()->create($itemData);
-            }
-
-            return $ticket;
-        });
-
-        $day->recalculateTotals();
+        $ticket = $this->ticketService->create($request, $day, $calculator);
 
         $ticket->load(['ticketItems.product', 'ticketItems.voucher']);
 
@@ -100,9 +83,7 @@ class TicketController extends Controller implements HasMiddleware
             return response()->json(['message' => 'The operating day is closed.'], 422);
         }
 
-        $ticket->delete();
-
-        $day->recalculateTotals();
+        $this->ticketService->refund($ticket);
 
         return response()->json(['message' => 'Ticket refunded successfully.']);
     }

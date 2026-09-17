@@ -6,6 +6,7 @@ use App\Http\Controllers\BackOffice\Register\TicketController;
 use App\Models\OperatingDay;
 use App\Models\Season;
 use App\Models\Ticket;
+use App\Services\TicketService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,10 +16,13 @@ class TicketControllerTest extends TestCase
 
     private TicketController $controller;
 
+    private TicketService $ticketService;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->controller = new TicketController;
+        $this->ticketService = $this->app->make(TicketService::class);
     }
 
     public function test_refund_soft_deletes_ticket(): void
@@ -30,7 +34,7 @@ class TicketControllerTest extends TestCase
             'total' => 25.00,
         ]);
 
-        $this->controller->refund($ticket);
+        $this->controller->refund($ticket, $this->ticketService);
 
         $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
     }
@@ -52,7 +56,7 @@ class TicketControllerTest extends TestCase
         $this->assertEquals('50.00', $day->fresh()->total_cash);
 
         $ticket = Ticket::where('operating_day_id', $day->id)->first();
-        $this->controller->refund($ticket);
+        $this->controller->refund($ticket, $this->ticketService);
 
         $day->refresh();
         $this->assertEquals('0.00', $day->total_cash);
