@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
+use App\Models\Ticket;
 use App\Services\TicketCalculator;
 use App\Services\TicketService;
 use Carbon\Carbon;
@@ -115,6 +116,39 @@ class CreateTicketActionTest extends TestCase
             'payment_method' => 'cash',
             'total' => 5.00,
         ]);
+    }
+
+    public function test_execute_rolls_back_on_failure(): void
+    {
+        $day = $this->createOpenDay();
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = $this->createProduct($category);
+
+        $spy = Mockery::mock(TicketService::class);
+        $spy->shouldReceive('create')->andReturnUsing(function ($r, $d, $c) use ($day) {
+            Ticket::create([
+                'total' => 5.00,
+                'payment_method' => 'cash',
+                'operating_day_id' => $day->id,
+                'sold_at' => now()->toDateTimeString(),
+            ]);
+            throw new \Exception('failure');
+        });
+
+        $action = new CreateTicketAction($spy);
+
+        try {
+            $action->execute($this->makeRequest([
+                'payment_method' => 'cash',
+                'operating_day_id' => $day->id,
+                'sold_at' => now()->toDateTimeString(),
+                'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            ]), $day, $this->calculator);
+        } catch (\Exception $e) {
+            $this->assertSame('failure', $e->getMessage());
+        }
+
+        $this->assertDatabaseCount('tickets', 0);
     }
 
     protected function tearDown(): void

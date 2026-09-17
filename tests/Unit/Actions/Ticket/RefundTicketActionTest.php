@@ -73,6 +73,34 @@ class RefundTicketActionTest extends TestCase
         $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
     }
 
+    public function test_execute_rolls_back_on_failure(): void
+    {
+        $day = $this->createOpenDay();
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 25.00,
+        ]);
+
+        $spy = Mockery::mock(TicketService::class);
+        $spy->shouldReceive('refund')->andReturnUsing(function ($t) {
+            $t->delete();
+            throw new \Exception('failure');
+        });
+
+        $action = new RefundTicketAction($spy);
+
+        try {
+            $action->execute($ticket);
+        } catch (\Exception $e) {
+            $this->assertSame('failure', $e->getMessage());
+        }
+
+        $this->assertDatabaseHas('tickets', [
+            'id' => $ticket->id,
+            'deleted_at' => null,
+        ]);
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();
