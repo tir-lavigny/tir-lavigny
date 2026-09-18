@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use LogicException;
 
 class StockMovement extends Model
 {
@@ -61,5 +62,12 @@ class StockMovement extends Model
     public function reference(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (StockMovement $movement) {
+            throw new LogicException('Stock movements cannot be deleted.');
+        });
     }
 }

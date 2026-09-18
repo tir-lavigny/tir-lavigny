@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 class StockCount extends Model
 {
@@ -58,5 +59,12 @@ class StockCount extends Model
     public function stockMovements(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany(StockMovement::class, 'reference');
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (StockCount $count) {
+            throw new LogicException('Stock counts cannot be deleted.');
+        });
     }
 }

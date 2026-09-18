@@ -7,6 +7,7 @@ use Database\Factories\StockTransferLineFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LogicException;
 
 class StockTransferLine extends Model
 {
@@ -37,5 +38,12 @@ class StockTransferLine extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (StockTransferLine $line) {
+            throw new LogicException('Stock transfer lines cannot be deleted.');
+        });
     }
 }

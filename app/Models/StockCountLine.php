@@ -7,6 +7,7 @@ use Database\Factories\StockCountLineFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LogicException;
 
 class StockCountLine extends Model
 {
@@ -39,5 +40,12 @@ class StockCountLine extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (StockCountLine $line) {
+            throw new LogicException('Stock count lines cannot be deleted.');
+        });
     }
 }
