@@ -7,12 +7,11 @@ use Database\Factories\StockTransferLineFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StockTransferLine extends Model
 {
     /** @use HasFactory<StockTransferLineFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'stock_transfer_id',
@@ -37,6 +36,6 @@ class StockTransferLine extends Model
      */
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class)->withTrashed();
+        return $this->belongsTo(Product::class);
     }
 }

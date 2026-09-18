@@ -7,12 +7,11 @@ use Database\Factories\StockCountLineFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StockCountLine extends Model
 {
     /** @use HasFactory<StockCountLineFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'stock_count_id',
@@ -39,6 +38,6 @@ class StockCountLine extends Model
      */
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class)->withTrashed();
+        return $this->belongsTo(Product::class);
     }
 }
