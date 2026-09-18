@@ -107,6 +107,16 @@ class StockService
     }
 
     /**
+     * Get the current stock quantity for a product at a location.
+     */
+    public function getStockForProduct(Product $product, StockLocation $location): int
+    {
+        return (int) StockMovement::where('product_id', $product->id)
+            ->where('stock_location_id', $location->id)
+            ->sum('quantity');
+    }
+
+    /**
      * Check if a movement has already been reversed.
      *
      * @throws LogicException if already reversed

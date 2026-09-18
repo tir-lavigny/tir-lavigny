@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('stock_count_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->restrictOnDelete();
             $table->integer('expected_quantity');
-            $table->integer('counted_quantity');
+            $table->integer('counted_quantity')->nullable();
             $table->timestamps();
 
             $table->index('stock_count_id');
