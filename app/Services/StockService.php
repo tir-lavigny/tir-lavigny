@@ -34,7 +34,7 @@ class StockService
             'quantity' => $quantity,
             'type' => $type,
             'reference_type' => $reference ? get_class($reference) : null,
-            'reference_id' => $reference ? $reference->id : null,
+            'reference_id' => $reference ? $reference->getKey() : null,
             'season_id' => $season ? $season->id : null,
             'reason' => $reason,
         ]);
@@ -56,7 +56,7 @@ class StockService
             product: $movement->product,
             location: $movement->stockLocation,
             quantity: -$movement->quantity,
-            type: StockMovementType::Return,
+            type: StockMovementType::Reversal,
             reference: $movement->reference,
             season: $movement->season,
             reason: "Reversal of stock movement #{$movement->id}",
@@ -65,10 +65,10 @@ class StockService
 
     /**
      * Deduct stock for a ticket by creating negative stock movements
-     * for each ticket item.
+     * for each stockable ticket item.
      *
-     * Only deducts if the ticket has a stock location assigned.
      * The ticket must already be persisted (have an id) before calling this.
+     * The ticket's stock location is required (non-nullable).
      */
     public function deductForTicket(Ticket $ticket): void
     {
@@ -93,7 +93,7 @@ class StockService
      * Create compensating stock movements for a refunded ticket.
      *
      * Finds all stock movements that reference this ticket
-     * and creates return movements with opposite quantities.
+     * and creates reversal movements with opposite quantities.
      */
     public function reverseForTicket(Ticket $ticket): void
     {
@@ -117,7 +117,7 @@ class StockService
             ->where('reference_id', $movement->reference_id)
             ->where('product_id', $movement->product_id)
             ->where('stock_location_id', $movement->stock_location_id)
-            ->where('type', StockMovementType::Return)
+            ->where('type', StockMovementType::Reversal)
             ->where('reason', 'LIKE', "Reversal of stock movement #{$movement->id}")
             ->exists();
 

@@ -9,9 +9,9 @@ use Tests\TestCase;
 class StockMovementTypeTest extends TestCase
 {
     #[Test]
-    public function test_has_all_7_types(): void
+    public function test_has_all_8_types(): void
     {
-        $this->assertCount(7, StockMovementType::cases());
+        $this->assertCount(8, StockMovementType::cases());
     }
 
     #[Test]
@@ -70,5 +70,11 @@ class StockMovementTypeTest extends TestCase
     public function test_adjustment_case(): void
     {
         $this->assertEquals('adjustment', StockMovementType::Adjustment->value);
+    }
+
+    #[Test]
+    public function test_reversal_case(): void
+    {
+        $this->assertEquals('reversal', StockMovementType::Reversal->value);
     }
 }

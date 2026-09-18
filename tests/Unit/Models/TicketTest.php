@@ -76,10 +76,14 @@ class TicketTest extends TestCase
         $this->assertInstanceOf(StockLocation::class, $ticket->stockLocation);
     }
 
-    public function test_ticket_can_have_null_stock_location(): void
+    public function test_ticket_has_many_stock_movements(): void
     {
-        $ticket = Ticket::factory()->withoutLocation()->create();
+        $ticket = Ticket::factory()->create();
+        \App\Models\StockMovement::factory()->count(2)->create([
+            'reference_type' => Ticket::class,
+            'reference_id' => $ticket->id,
+        ]);
 
-        $this->assertNull($ticket->stockLocation);
+        $this->assertCount(2, $ticket->stockMovements);
     }
 }

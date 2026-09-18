@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
+use App\Models\StockLocation;
 use App\Models\Ticket;
 use App\Models\TicketItem;
 use App\Models\User;
@@ -75,6 +76,7 @@ class TicketControllerTest extends TestCase
         $response = $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 2],
@@ -109,6 +111,7 @@ class TicketControllerTest extends TestCase
         $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'twint',
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 3],
@@ -151,6 +154,7 @@ class TicketControllerTest extends TestCase
         $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
                 ['product_id' => $product1->id, 'quantity' => 2],
@@ -190,6 +194,7 @@ class TicketControllerTest extends TestCase
         $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
@@ -227,6 +232,7 @@ class TicketControllerTest extends TestCase
 
         $ticket = Ticket::factory()->cash()->create([
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'total' => 9.00,
         ]);
         TicketItem::factory()->create([
@@ -243,6 +249,7 @@ class TicketControllerTest extends TestCase
         $response = $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
@@ -276,6 +283,7 @@ class TicketControllerTest extends TestCase
         $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1, 'custom_unit_price' => 7.50],
@@ -309,6 +317,7 @@ class TicketControllerTest extends TestCase
         $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1, 'custom_unit_price' => -25.00],
@@ -344,6 +353,7 @@ class TicketControllerTest extends TestCase
         $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1],
@@ -369,6 +379,7 @@ class TicketControllerTest extends TestCase
         $response = $this->controller->store($this->createTicketAction, $this->storeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1],
@@ -391,6 +402,7 @@ class TicketControllerTest extends TestCase
         $product = Product::factory()->create(['category_id' => $category->id]);
         $ticket = Ticket::factory()->cash()->create([
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'total' => 5.00,
         ]);
         TicketItem::factory()->create([
@@ -421,6 +433,7 @@ class TicketControllerTest extends TestCase
         $product = Product::factory()->create(['category_id' => $category->id]);
         $ticket = Ticket::factory()->cash()->create([
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
         ]);
         TicketItem::factory()->create([
             'ticket_id' => $ticket->id,
@@ -452,6 +465,7 @@ class TicketControllerTest extends TestCase
         $product = Product::factory()->create(['category_id' => $category->id]);
         $ticket = Ticket::factory()->cash()->create([
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'total' => 5.00,
         ]);
         TicketItem::factory()->create([
@@ -482,6 +496,7 @@ class TicketControllerTest extends TestCase
         $product = Product::factory()->create(['category_id' => $category->id]);
         $ticket = Ticket::factory()->cash()->create([
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'total' => 5.00,
         ]);
         TicketItem::factory()->create([
@@ -511,6 +526,7 @@ class TicketControllerTest extends TestCase
         $product = Product::factory()->create(['category_id' => $category->id]);
         $ticket = Ticket::factory()->cash()->create([
             'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'total' => 5.00,
         ]);
 

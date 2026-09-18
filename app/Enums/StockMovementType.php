@@ -11,4 +11,5 @@ enum StockMovementType: string
     case Transfer = 'transfer';
     case Loss = 'loss';
     case Adjustment = 'adjustment';
+    case Reversal = 'reversal';
 }

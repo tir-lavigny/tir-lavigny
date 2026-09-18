@@ -117,7 +117,7 @@ class StockServiceTest extends TestCase
             'product_id' => $product->id,
             'stock_location_id' => $location->id,
             'quantity' => 3,
-            'type' => StockMovementType::Return,
+            'type' => StockMovementType::Reversal,
             'season_id' => $season->id,
             'reason' => "Reversal of stock movement #{$original->id}",
         ]);
@@ -215,11 +215,12 @@ class StockServiceTest extends TestCase
         ]);
     }
 
-    public function test_deductForTicket_skips_when_no_location(): void
+    public function test_deductForTicket_skips_non_stockable_products(): void
     {
-        $product = Product::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => false]);
+        $location = StockLocation::factory()->create();
         $ticket = Ticket::factory()->create([
-            'stock_location_id' => null,
+            'stock_location_id' => $location->id,
         ]);
 
         $ticket->ticketItems()->create([
@@ -259,7 +260,7 @@ class StockServiceTest extends TestCase
             'product_id' => $product->id,
             'stock_location_id' => $location->id,
             'quantity' => 3,
-            'type' => StockMovementType::Return,
+            'type' => StockMovementType::Reversal,
             'reference_type' => Ticket::class,
             'reference_id' => $ticket->id,
         ]);
@@ -276,8 +277,9 @@ class StockServiceTest extends TestCase
 
     public function test_reverseForTicket_creates_no_movements_when_none_exist(): void
     {
+        $location = StockLocation::factory()->create();
         $ticket = Ticket::factory()->create([
-            'stock_location_id' => null,
+            'stock_location_id' => $location->id,
         ]);
 
         $this->service->reverseForTicket($ticket);

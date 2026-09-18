@@ -33,9 +33,4 @@ class TicketFactory extends Factory
     {
         return $this->state(fn () => ['payment_method' => 'twint']);
     }
-
-    public function withoutLocation(): static
-    {
-        return $this->state(fn () => ['stock_location_id' => null]);
-    }
 }

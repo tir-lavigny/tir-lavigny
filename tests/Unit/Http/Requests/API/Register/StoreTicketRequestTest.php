@@ -88,6 +88,16 @@ class StoreTicketRequestTest extends TestCase
         ]);
     }
 
+    private function createStockLocation(): int
+    {
+        return DB::table('stock_locations')->insertGetId([
+            'name' => 'Test Location',
+            'active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     private function createProduct(bool $allowsCustom = false): int
     {
         return DB::table('products')->insertGetId([
@@ -114,11 +124,13 @@ class StoreTicketRequestTest extends TestCase
     {
         $operatingDayId = $this->createOperatingDay();
         $productId = $this->createProduct();
+        $locationId = $this->createStockLocation();
 
         $this->assertTrue($this->passes([
             'payment_method' => 'cash',
             'operating_day_id' => $operatingDayId,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $locationId,
             'items' => [['product_id' => $productId, 'quantity' => 1]],
         ]));
     }
@@ -127,11 +139,13 @@ class StoreTicketRequestTest extends TestCase
     {
         $operatingDayId = $this->createOperatingDay();
         $productId = $this->createProduct();
+        $locationId = $this->createStockLocation();
 
         $this->assertTrue($this->passes([
             'payment_method' => 'twint',
             'operating_day_id' => $operatingDayId,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $locationId,
             'items' => [['product_id' => $productId, 'quantity' => 1]],
         ]));
     }
@@ -201,10 +215,12 @@ class StoreTicketRequestTest extends TestCase
     {
         $operatingDayId = $this->createOperatingDay();
         $productId = $this->createProduct(allowsCustom: true);
+        $locationId = $this->createStockLocation();
 
         $data = [
             'payment_method' => 'cash',
             'operating_day_id' => $operatingDayId,
+            'stock_location_id' => $locationId,
             'items' => [['product_id' => $productId, 'quantity' => 1]],
         ];
 
@@ -223,11 +239,13 @@ class StoreTicketRequestTest extends TestCase
     {
         $operatingDayId = $this->createOperatingDay();
         $productId = $this->createProduct(allowsCustom: true);
+        $locationId = $this->createStockLocation();
 
         $data = [
             'payment_method' => 'cash',
             'operating_day_id' => $operatingDayId,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $locationId,
             'items' => [['product_id' => $productId, 'quantity' => 1, 'custom_unit_price' => 15.00]],
         ];
 
@@ -245,11 +263,13 @@ class StoreTicketRequestTest extends TestCase
     {
         $operatingDayId = $this->createOperatingDay();
         $productId = $this->createProduct(allowsCustom: false);
+        $locationId = $this->createStockLocation();
 
         $data = [
             'payment_method' => 'cash',
             'operating_day_id' => $operatingDayId,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $locationId,
             'items' => [['product_id' => $productId, 'quantity' => 1]],
         ];
 
@@ -267,10 +287,13 @@ class StoreTicketRequestTest extends TestCase
     {
         $operatingDayId = $this->createOperatingDay();
         $productId = $this->createProduct();
+        $locationId = $this->createStockLocation();
 
         $this->assertTrue($this->fails([
             'payment_method' => 'cash',
             'operating_day_id' => $operatingDayId,
+            'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $locationId,
             'items' => [['product_id' => $productId, 'quantity' => 1, 'voucher_id' => 9999]],
         ]));
     }

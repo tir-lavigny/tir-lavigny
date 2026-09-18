@@ -19,6 +19,7 @@ class ProductFactory extends Factory
             'unit_price' => fake()->randomFloat(2, 1, 50),
             'allows_custom_price' => false,
             'category_id' => Category::factory(),
+            'is_stockable' => true,
         ];
     }
 
