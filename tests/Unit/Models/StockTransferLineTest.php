@@ -35,4 +35,11 @@ class StockTransferLineTest extends TestCase
         $this->assertEquals(15, $line->quantity);
     }
 
+    public function test_stock_transfer_line_cannot_be_deleted(): void
+    {
+        $line = StockTransferLine::factory()->create();
+
+        $this->expectException(\LogicException::class);
+        $line->delete();
+    }
 }

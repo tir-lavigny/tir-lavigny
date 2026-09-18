@@ -114,4 +114,12 @@ class StockMovementTest extends TestCase
         $this->assertEquals(StockMovementType::Loss, $movement->type);
         $this->assertLessThan(0, $movement->quantity);
     }
+
+    public function test_stock_movement_cannot_be_deleted(): void
+    {
+        $movement = StockMovement::factory()->create();
+
+        $this->expectException(\LogicException::class);
+        $movement->delete();
+    }
 }

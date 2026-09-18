@@ -94,4 +94,12 @@ class StockCountTest extends TestCase
         $this->assertEquals('completed', $count->status);
         $this->assertNotNull($count->completed_at);
     }
+
+    public function test_stock_count_cannot_be_deleted(): void
+    {
+        $count = StockCount::factory()->create();
+
+        $this->expectException(\LogicException::class);
+        $count->delete();
+    }
 }

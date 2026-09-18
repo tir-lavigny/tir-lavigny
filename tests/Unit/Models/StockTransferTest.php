@@ -72,4 +72,12 @@ class StockTransferTest extends TestCase
 
         $this->assertNotEquals($transfer->fromLocation->id, $transfer->toLocation->id);
     }
+
+    public function test_stock_transfer_cannot_be_deleted(): void
+    {
+        $transfer = StockTransfer::factory()->create();
+
+        $this->expectException(\LogicException::class);
+        $transfer->delete();
+    }
 }

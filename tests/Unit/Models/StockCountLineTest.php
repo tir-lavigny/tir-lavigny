@@ -59,4 +59,12 @@ class StockCountLineTest extends TestCase
 
         $this->assertNotEquals(10, $line->counted_quantity);
     }
+
+    public function test_stock_count_line_cannot_be_deleted(): void
+    {
+        $line = StockCountLine::factory()->create();
+
+        $this->expectException(\LogicException::class);
+        $line->delete();
+    }
 }
