@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BackOffice\Stock;
 
 use App\Actions\Stock\CompleteStockCountAction;
 use App\Actions\Stock\CreateStockCountAction;
+use App\Enums\StockCountType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Stock\CompleteStockCountRequest;
 use App\Http\Requests\BackOffice\Stock\StoreStockCountRequest;
@@ -58,7 +59,7 @@ class StockCountController extends Controller implements HasMiddleware
         $action->execute(
             season: $season,
             location: $location,
-            type: $request->enum('type', \App\Enums\StockCountType::class),
+            type: $request->enum('type', StockCountType::class),
             products: $products,
         );
 

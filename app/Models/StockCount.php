@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use LogicException;
 
 class StockCount extends Model
@@ -54,9 +55,9 @@ class StockCount extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany<StockMovement, $this>
+     * @return MorphMany<StockMovement, $this>
      */
-    public function stockMovements(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function stockMovements(): MorphMany
     {
         return $this->morphMany(StockMovement::class, 'reference');
     }

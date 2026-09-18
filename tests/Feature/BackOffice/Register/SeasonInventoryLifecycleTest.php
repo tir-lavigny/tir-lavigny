@@ -4,6 +4,7 @@ namespace Tests\Feature\BackOffice\Register;
 
 use App\Enums\StockCountType;
 use App\Enums\StockMovementType;
+use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\Category;
 use App\Models\OperatingDay;
 use App\Models\Product;
@@ -18,6 +19,7 @@ use App\Services\StockService;
 use App\Services\TicketCalculator;
 use App\Services\TicketService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use LogicException;
 use Tests\TestCase;
@@ -103,7 +105,7 @@ class SeasonInventoryLifecycleTest extends TestCase
             ->sum('quantity');
     }
 
-    private function movementsFor(Product $product, StockLocation $location): \Illuminate\Database\Eloquent\Collection
+    private function movementsFor(Product $product, StockLocation $location): Collection
     {
         return StockMovement::where('product_id', $product->id)
             ->where('stock_location_id', $location->id)
@@ -111,9 +113,9 @@ class SeasonInventoryLifecycleTest extends TestCase
             ->get();
     }
 
-    private function makeTicketRequest(array $items, StockLocation $location): \App\Http\Requests\API\Register\StoreTicketRequest
+    private function makeTicketRequest(array $items, StockLocation $location): StoreTicketRequest
     {
-        $request = new \App\Http\Requests\API\Register\StoreTicketRequest;
+        $request = new StoreTicketRequest;
         $request->merge([
             'payment_method' => 'cash',
             'operating_day_id' => $this->day->id,
@@ -338,7 +340,7 @@ class SeasonInventoryLifecycleTest extends TestCase
             $this->ticketService->refund($ticket1);
             $this->fail('Expected LogicException for double reversal');
         } catch (LogicException $e) {
-            $this->assertStringContainsString("already been reversed", $e->getMessage());
+            $this->assertStringContainsString('already been reversed', $e->getMessage());
         }
 
         $this->assertEquals($stockBeforeBeer, $this->currentStock($this->beer, $this->bar));
@@ -546,7 +548,7 @@ class SeasonInventoryLifecycleTest extends TestCase
             $this->ticketService->refund($ticket);
             $this->fail('Expected LogicException for double reversal');
         } catch (LogicException $e) {
-            $this->assertStringContainsString("already been reversed", $e->getMessage());
+            $this->assertStringContainsString('already been reversed', $e->getMessage());
         }
 
         // No new movements, stock unchanged

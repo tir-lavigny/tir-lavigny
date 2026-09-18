@@ -7,7 +7,6 @@ use App\Enums\StockMovementType;
 use App\Models\Product;
 use App\Models\Season;
 use App\Models\StockLocation;
-use App\Models\StockMovement;
 use App\Services\StockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use LogicException;

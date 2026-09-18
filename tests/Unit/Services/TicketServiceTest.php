@@ -9,7 +9,6 @@ use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
 use App\Models\StockLocation;
-use App\Models\StockMovement;
 use App\Models\Ticket;
 use App\Services\StockService;
 use App\Services\TicketCalculator;

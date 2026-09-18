@@ -9,6 +9,7 @@ use App\Models\StockCountLine;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class StockCountTest extends TestCase
@@ -52,7 +53,7 @@ class StockCountTest extends TestCase
         $count = StockCount::factory()->completed()->create();
 
         $this->assertNotNull($count->completed_at);
-        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $count->completed_at);
+        $this->assertInstanceOf(Carbon::class, $count->completed_at);
     }
 
     public function test_stock_count_has_many_stock_movements_through_morph(): void

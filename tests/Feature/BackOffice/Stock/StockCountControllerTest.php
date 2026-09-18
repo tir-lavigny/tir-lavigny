@@ -8,7 +8,6 @@ use App\Models\Season;
 use App\Models\StockCount;
 use App\Models\StockCountLine;
 use App\Models\StockLocation;
-use App\Models\StockMovement;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

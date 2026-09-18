@@ -2,9 +2,10 @@
 
 namespace Tests\Unit\Models;
 
+use App\Models\StockLocation;
+use App\Models\StockMovement;
 use App\Models\Ticket;
 use App\Models\TicketItem;
-use App\Models\StockLocation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -79,7 +80,7 @@ class TicketTest extends TestCase
     public function test_ticket_has_many_stock_movements(): void
     {
         $ticket = Ticket::factory()->create();
-        \App\Models\StockMovement::factory()->count(2)->create([
+        StockMovement::factory()->count(2)->create([
             'reference_type' => Ticket::class,
             'reference_id' => $ticket->id,
         ]);

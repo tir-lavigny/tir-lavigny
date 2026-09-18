@@ -6,7 +6,6 @@ use App\Enums\StockMovementType;
 use App\Models\Product;
 use App\Models\Season;
 use App\Models\StockLocation;
-use App\Models\StockMovement;
 use App\Models\Ticket;
 use App\Services\StockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,7 +26,7 @@ class StockServiceTest extends TestCase
 
     // --- addMovement() ---
 
-    public function test_addMovement_creates_stock_movement(): void
+    public function test_add_movement_creates_stock_movement(): void
     {
         $product = Product::factory()->create();
         $location = StockLocation::factory()->create();
@@ -53,7 +52,7 @@ class StockServiceTest extends TestCase
         ]);
     }
 
-    public function test_addMovement_with_reference(): void
+    public function test_add_movement_with_reference(): void
     {
         $product = Product::factory()->create();
         $location = StockLocation::factory()->create();
@@ -74,7 +73,7 @@ class StockServiceTest extends TestCase
         ]);
     }
 
-    public function test_addMovement_with_null_reference(): void
+    public function test_add_movement_with_null_reference(): void
     {
         $product = Product::factory()->create();
         $location = StockLocation::factory()->create();
@@ -188,7 +187,7 @@ class StockServiceTest extends TestCase
 
     // --- deductForTicket() ---
 
-    public function test_deductForTicket_creates_sale_movements(): void
+    public function test_deduct_for_ticket_creates_sale_movements(): void
     {
         $product = Product::factory()->create();
         $location = StockLocation::factory()->create();
@@ -215,7 +214,7 @@ class StockServiceTest extends TestCase
         ]);
     }
 
-    public function test_deductForTicket_skips_non_stockable_products(): void
+    public function test_deduct_for_ticket_skips_non_stockable_products(): void
     {
         $product = Product::factory()->create(['is_stockable' => false]);
         $location = StockLocation::factory()->create();
@@ -237,7 +236,7 @@ class StockServiceTest extends TestCase
 
     // --- reverseForTicket() ---
 
-    public function test_reverseForTicket_creates_return_movements(): void
+    public function test_reverse_for_ticket_creates_return_movements(): void
     {
         $product = Product::factory()->create();
         $location = StockLocation::factory()->create();
@@ -275,7 +274,7 @@ class StockServiceTest extends TestCase
         ]);
     }
 
-    public function test_reverseForTicket_creates_no_movements_when_none_exist(): void
+    public function test_reverse_for_ticket_creates_no_movements_when_none_exist(): void
     {
         $location = StockLocation::factory()->create();
         $ticket = Ticket::factory()->create([
