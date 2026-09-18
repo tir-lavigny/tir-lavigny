@@ -56,7 +56,7 @@ class StockMovement extends Model
     }
 
     /**
-     * @return MorphTo
+     * @return MorphTo<Model, $this>
      */
     public function reference(): MorphTo
     {
