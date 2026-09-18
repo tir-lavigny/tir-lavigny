@@ -22,11 +22,13 @@ class Product extends Model
         'unit_price',
         'allows_custom_price',
         'category_id',
+        'is_stockable',
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
         'allows_custom_price' => 'boolean',
+        'is_stockable' => 'boolean',
     ];
 
     /**

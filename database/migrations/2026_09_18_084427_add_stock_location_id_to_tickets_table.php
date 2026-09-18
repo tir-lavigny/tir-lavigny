@@ -9,7 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tickets', function (Blueprint $table) {
-            $table->foreignId('stock_location_id')->nullable()->constrained()->nullOnDelete()->after('member_id');
+            $table->foreignId('stock_location_id')
+                ->constrained()
+                ->restrictOnDelete()
+                ->after('member_id');
         });
     }
 

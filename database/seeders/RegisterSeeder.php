@@ -4,12 +4,17 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StockLocation;
 use Illuminate\Database\Seeder;
 
 class RegisterSeeder extends Seeder
 {
     public function run(): void
     {
+        $stand = StockLocation::updateOrCreate(
+            ['name' => 'Stand'],
+        );
+
         $shootingRange = Category::updateOrCreate(
             ['name' => 'Tir'],
             ['is_restricted' => false]
@@ -86,7 +91,7 @@ class RegisterSeeder extends Seeder
     {
         Product::updateOrCreate(
             ['name' => 'Correction'],
-            ['unit_price' => 0, 'allows_custom_price' => true, 'category_id' => $category->id]
+            ['unit_price' => 0, 'allows_custom_price' => true, 'category_id' => $category->id, 'is_stockable' => false]
         );
     }
 }
