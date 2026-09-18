@@ -49,9 +49,11 @@ class StockTransferController extends Controller implements HasMiddleware
             ->where('end_date', '>=', now())
             ->firstOrFail();
 
-        $toLocation = StockLocation::findOrFail($request->validated('to_location_id'));
+        $toLocation = StockLocation::findOrFail((int) $request->validated('to_location_id'));
 
-        $items = collect($request->validated('items'))->map(fn (array $item) => [
+        /** @var array<int, array{product_id: int, quantity: int}> $rawItems */
+        $rawItems = $request->validated('items');
+        $items = collect($rawItems)->map(fn (array $item) => [
             'product_id' => $item['product_id'],
             'quantity' => $item['quantity'],
         ]);

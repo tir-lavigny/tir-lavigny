@@ -52,7 +52,7 @@ class StockCountController extends Controller implements HasMiddleware
             ->where('end_date', '>=', now())
             ->firstOrFail();
 
-        $location = StockLocation::findOrFail($request->validated('stock_location_id'));
+        $location = StockLocation::findOrFail((int) $request->validated('stock_location_id'));
         $products = Product::where('is_stockable', true)->get();
 
         $action->execute(
@@ -76,7 +76,8 @@ class StockCountController extends Controller implements HasMiddleware
 
     public function complete(StockCount $stockCount, CompleteStockCountRequest $request, CompleteStockCountAction $action): RedirectResponse
     {
-        $lines = collect($request->validated('lines'));
+        /** @var array<int, array{product_id: int, counted_quantity: int}> $lines */
+        $lines = $request->validated('lines');
 
         foreach ($lines as $line) {
             $stockCount->stockCountLines()

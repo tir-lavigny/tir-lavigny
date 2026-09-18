@@ -51,7 +51,7 @@ class StockLossController extends Controller implements HasMiddleware
             ->where('end_date', '>=', now())
             ->firstOrFail();
 
-        $product = Product::findOrFail($request->validated('product_id'));
+        $product = Product::findOrFail((int) $request->validated('product_id'));
 
         $action->execute(
             season: $season,
