@@ -4,6 +4,7 @@ namespace Tests\Unit\Models;
 
 use App\Models\Ticket;
 use App\Models\TicketItem;
+use App\Models\StockLocation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -66,5 +67,19 @@ class TicketTest extends TestCase
         $ticket->restore();
 
         $this->assertFalse($ticket->ticketItems()->withTrashed()->first()->trashed());
+    }
+
+    public function test_ticket_belongs_to_stock_location(): void
+    {
+        $ticket = Ticket::factory()->create();
+
+        $this->assertInstanceOf(StockLocation::class, $ticket->stockLocation);
+    }
+
+    public function test_ticket_can_have_null_stock_location(): void
+    {
+        $ticket = Ticket::factory()->withoutLocation()->create();
+
+        $this->assertNull($ticket->stockLocation);
     }
 }
