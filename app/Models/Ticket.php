@@ -21,6 +21,7 @@ class Ticket extends Model
         'operating_day_id',
         'member_id',
         'sold_at',
+        'stock_location_id',
     ];
 
     protected $casts = [
@@ -61,5 +62,13 @@ class Ticket extends Model
     public function ticketItems(): HasMany
     {
         return $this->hasMany(TicketItem::class);
+    }
+
+    /**
+     * @return BelongsTo<StockLocation, $this>
+     */
+    public function stockLocation(): BelongsTo
+    {
+        return $this->belongsTo(StockLocation::class);
     }
 }

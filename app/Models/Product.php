@@ -70,4 +70,28 @@ class Product extends Model
     {
         return $this->hasMany(Voucher::class);
     }
+
+    /**
+     * @return HasMany<StockMovement, $this>
+     */
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    /**
+     * @return HasMany<StockCountLine, $this>
+     */
+    public function stockCountLines(): HasMany
+    {
+        return $this->hasMany(StockCountLine::class);
+    }
+
+    /**
+     * @return HasMany<StockTransferLine, $this>
+     */
+    public function stockTransferLines(): HasMany
+    {
+        return $this->hasMany(StockTransferLine::class);
+    }
 }
