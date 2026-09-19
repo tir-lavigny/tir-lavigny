@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\Register;
+use App\Http\Controllers\API\Stock\StockLocationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -58,4 +59,9 @@ Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->g
         ->name('api.register.members.index');
     Route::get('/members/{member}/vouchers', [Register\MemberController::class, 'vouchers'])
         ->name('api.register.members.vouchers');
+});
+
+Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('stock')->group(function () {
+    Route::get('/locations', [StockLocationController::class, 'index'])
+        ->name('api.stock.locations.index');
 });
