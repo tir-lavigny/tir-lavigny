@@ -7,6 +7,7 @@ use App\Models\StockMovement;
 use App\Models\Ticket;
 use App\Models\TicketItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use LogicException;
 use Tests\TestCase;
 
 class TicketTest extends TestCase
@@ -59,15 +60,32 @@ class TicketTest extends TestCase
         $this->assertTrue($ticket->ticketItems()->withTrashed()->first()->trashed());
     }
 
-    public function test_ticket_items_are_restored_when_ticket_is_restored(): void
+    public function test_ticket_items_remain_soft_deleted_when_ticket_is_not_restored(): void
     {
         $ticket = Ticket::factory()->create();
         TicketItem::factory()->count(2)->create(['ticket_id' => $ticket->id]);
 
         $ticket->delete();
-        $ticket->restore();
 
-        $this->assertFalse($ticket->ticketItems()->withTrashed()->first()->trashed());
+        $this->assertTrue($ticket->ticketItems()->withTrashed()->first()->trashed());
+    }
+
+    public function test_ticket_cannot_be_restored_after_soft_delete(): void
+    {
+        $ticket = Ticket::factory()->create();
+
+        $ticket->delete();
+
+        $this->expectException(LogicException::class);
+        $ticket->restore();
+    }
+
+    public function test_ticket_cannot_be_permanently_deleted(): void
+    {
+        $ticket = Ticket::factory()->create();
+
+        $this->expectException(LogicException::class);
+        $ticket->forceDelete();
     }
 
     public function test_ticket_belongs_to_stock_location(): void

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use LogicException;
 
 class Ticket extends Model
 {
@@ -32,12 +33,24 @@ class Ticket extends Model
 
     protected static function booted(): void
     {
+        static::deleting(function (Ticket $ticket) {
+            if (! $ticket->isForceDeleting()) {
+                return;
+            }
+
+            throw new LogicException(
+                'Tickets cannot be permanently deleted.'
+            );
+        });
+
         static::deleted(function (Ticket $ticket) {
             $ticket->ticketItems()->delete();
         });
 
-        static::restored(function (Ticket $ticket) {
-            $ticket->ticketItems()->restore();
+        static::restoring(function (Ticket $ticket) {
+            throw new LogicException(
+                'Deleted tickets cannot be restored because their stock movements are immutable.'
+            );
         });
     }
 
