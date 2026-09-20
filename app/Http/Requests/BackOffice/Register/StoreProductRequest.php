@@ -19,6 +19,7 @@ class StoreProductRequest extends FormRequest
             'picture' => ['nullable', 'image', 'max:2048'],
             'unit_price' => ['required', 'numeric', 'min:0'],
             'allows_custom_price' => ['boolean'],
+            'is_stockable' => ['boolean'],
             'category_id' => ['required', 'exists:categories,id,deleted_at,NULL'],
         ];
     }

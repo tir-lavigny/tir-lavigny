@@ -83,6 +83,7 @@ const handleDelete = (id: number) => {
                             <span>{{ formatMoney(product.unit_price) }} CHF</span>
                             <span v-if="product.category">· {{ product.category.name }}</span>
                             <Badge v-if="product.allows_custom_price" variant="secondary" class="text-xs">Prix libre</Badge>
+                            <Badge v-if="product.is_stockable" variant="secondary" class="text-xs">Stockable</Badge>
                         </div>
                     </Link>
                     <div class="flex gap-2">

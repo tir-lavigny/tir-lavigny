@@ -24,7 +24,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Créer', href: route('bo.register.products.create') },
 ];
 
-const form = useForm({ name: '', unit_price: 0, category_id: '', allows_custom_price: false });
+const form = useForm({ name: '', unit_price: 0, category_id: '', allows_custom_price: false, is_stockable: true });
 
 const handleSubmit = () => {
     if (!hasPermissionTo(user, 'manage products')) {
@@ -94,6 +94,10 @@ const handleSubmit = () => {
                     <div class="flex items-center gap-3">
                         <Switch id="allows_custom_price" v-model:checked="form.allows_custom_price" />
                         <Label for="allows_custom_price">Prix libre (permet un prix personnalisé)</Label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <Switch id="is_stockable" v-model:checked="form.is_stockable" />
+                        <Label for="is_stockable">Produit stockable (géré en inventaire)</Label>
                     </div>
                 </div>
             </div>
