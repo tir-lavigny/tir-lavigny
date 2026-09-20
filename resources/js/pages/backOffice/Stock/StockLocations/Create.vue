@@ -78,7 +78,7 @@ const handleSubmit = () => {
                         <InputError :message="form.errors.description" />
                     </div>
                     <div class="flex items-center gap-2">
-                        <Switch id="active" v-model:checked="form.active" />
+                        <Switch id="active" v-model="form.active" />
                         <Label for="active">Actif</Label>
                         <InputError :message="form.errors.active" />
                     </div>

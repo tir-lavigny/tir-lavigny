@@ -68,7 +68,7 @@ const handleSubmit = () => {
                         <InputError :message="form.errors.name" />
                     </div>
                     <div class="flex items-center gap-3">
-                        <Switch id="is_restricted" v-model:checked="form.is_restricted" />
+                        <Switch id="is_restricted" v-model="form.is_restricted" />
                         <Label for="is_restricted">Restreinte (admin uniquement)</Label>
                     </div>
                 </div>
