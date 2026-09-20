@@ -9,6 +9,7 @@ use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Models\Ticket;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use LogicException;
 
 class StockService
@@ -114,6 +115,28 @@ class StockService
         return (int) StockMovement::where('product_id', $product->id)
             ->where('stock_location_id', $location->id)
             ->sum('quantity');
+    }
+
+    /**
+     * Get current stock for all stockable products at a location.
+     *
+     * @return Collection<int, array{product_id: int, product: Product, quantity: int}>
+     */
+    public function getStockForLocation(StockLocation $location): Collection
+    {
+        $stocks = StockMovement::where('stock_location_id', $location->id)
+            ->select('product_id', \DB::raw('SUM(quantity) as quantity'))
+            ->groupBy('product_id')
+            ->pluck('quantity', 'product_id');
+
+        return Product::where('is_stockable', true)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Product $product) => [
+                'product_id' => $product->id,
+                'product' => $product,
+                'quantity' => (int) ($stocks[$product->id] ?? 0),
+            ]);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Http\Controllers\BackOffice\MemberRegistrationController as BackOfficeMe
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
 use App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\BackOffice\Stock\StockCountController;
+use App\Http\Controllers\BackOffice\Stock\StockLocationController;
 use App\Http\Controllers\BackOffice\Stock\StockLossController;
 use App\Http\Controllers\BackOffice\Stock\StockTransferController;
 use App\Http\Controllers\BackOffice\UserController as BackOfficeUserController;
@@ -257,6 +258,19 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             ->name('bo.stock.losses.store');
         Route::get('losses/{stockMovement}', [StockLossController::class, 'show'])
             ->name('bo.stock.losses.show');
+
+        Route::get('locations', [StockLocationController::class, 'index'])
+            ->name('bo.stock.locations.index');
+        Route::get('locations/create', [StockLocationController::class, 'create'])
+            ->name('bo.stock.locations.create');
+        Route::post('locations', [StockLocationController::class, 'store'])
+            ->name('bo.stock.locations.store');
+        Route::get('locations/{stockLocation}', [StockLocationController::class, 'show'])
+            ->name('bo.stock.locations.show');
+        Route::get('locations/{stockLocation}/edit', [StockLocationController::class, 'edit'])
+            ->name('bo.stock.locations.edit');
+        Route::put('locations/{stockLocation}', [StockLocationController::class, 'update'])
+            ->name('bo.stock.locations.update');
     });
 });
 

@@ -428,3 +428,33 @@ export interface PaginatedStockTransfers extends PaginatedData<StockTransfer> {
 export interface PaginatedStockLosses extends PaginatedData<StockLoss> {
     data?: StockLoss[];
 }
+
+export interface StockMovement {
+    id: number;
+    stock_location_id: number;
+    product_id: number;
+    season_id: number | null;
+    quantity: number;
+    type: 'initial' | 'purchase' | 'sale' | 'return' | 'transfer' | 'loss' | 'adjustment' | 'reversal';
+    reference_type: string | null;
+    reference_id: number | null;
+    reason: string | null;
+    product?: Product;
+    stock_location?: StockLocation;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StockLocationStock {
+    product_id: number;
+    product: Product;
+    quantity: number;
+}
+
+export interface PaginatedStockLocations extends PaginatedData<StockLocation> {
+    data?: StockLocation[];
+}
+
+export interface PaginatedStockMovements extends PaginatedData<StockMovement> {
+    data?: StockMovement[];
+}

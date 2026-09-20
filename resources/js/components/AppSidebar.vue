@@ -29,6 +29,7 @@ import {
     BookUser,
     WineOff,
     Forklift,
+    Warehouse,
 } from '@lucide/vue';
 import AppLogo from './AppLogo.vue';
 import { reactive, watch } from 'vue';
@@ -153,6 +154,11 @@ const registerNavItems: NavItem[] = [
 const stockNavItems: NavItem[] = [
     ...(hasPermissionTo(user, 'manage stock')
         ? [
+              {
+                  title: 'Emplacements',
+                  href: route('bo.stock.locations.index'),
+                  icon: Warehouse,
+              },
               {
                   title: 'Comptage du stock',
                   href: route('bo.stock.counts.index'),
