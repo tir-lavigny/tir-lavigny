@@ -3,6 +3,7 @@
 namespace App\Actions\Stock;
 
 use App\Enums\StockMovementType;
+use App\Exceptions\StockTransferInsufficientStock;
 use App\Models\Product;
 use App\Models\Season;
 use App\Models\StockLocation;
@@ -68,8 +69,10 @@ class CreateStockTransferAction
             $currentStock = $this->stockService->getStockForProduct($product, $fromLocation);
 
             if ($currentStock - $item['quantity'] < 0) {
-                throw new LogicException(
-                    "Insufficient stock for product \"{$product->name}\": available {$currentStock}, requested {$item['quantity']}."
+                throw new StockTransferInsufficientStock(
+                    product: $product,
+                    available: $currentStock,
+                    requested: $item['quantity'],
                 );
             }
         }

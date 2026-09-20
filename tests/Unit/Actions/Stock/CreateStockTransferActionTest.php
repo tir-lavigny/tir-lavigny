@@ -4,6 +4,7 @@ namespace Tests\Unit\Actions\Stock;
 
 use App\Actions\Stock\CreateStockTransferAction;
 use App\Enums\StockMovementType;
+use App\Exceptions\StockTransferInsufficientStock;
 use App\Models\Product;
 use App\Models\Season;
 use App\Models\StockLocation;
@@ -215,8 +216,7 @@ class CreateStockTransferActionTest extends TestCase
 
     public function test_source_stock_allowed_to_become_negative(): void
     {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Insufficient stock');
+        $this->expectException(StockTransferInsufficientStock::class);
 
         $season = Season::factory()->create();
         $from = StockLocation::factory()->create();
@@ -241,8 +241,7 @@ class CreateStockTransferActionTest extends TestCase
 
     public function test_transfer_rejected_when_source_has_insufficient_recorded_stock(): void
     {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Insufficient stock');
+        $this->expectException(StockTransferInsufficientStock::class);
 
         $season = Season::factory()->create();
         $from = StockLocation::factory()->create();
@@ -311,8 +310,7 @@ class CreateStockTransferActionTest extends TestCase
 
     public function test_insufficient_positive_stock_is_rejected(): void
     {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Insufficient stock');
+        $this->expectException(StockTransferInsufficientStock::class);
 
         $season = Season::factory()->create();
         $from = StockLocation::factory()->create();
@@ -337,8 +335,7 @@ class CreateStockTransferActionTest extends TestCase
 
     public function test_zero_stock_rejects_any_transfer(): void
     {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Insufficient stock');
+        $this->expectException(StockTransferInsufficientStock::class);
 
         $season = Season::factory()->create();
         $from = StockLocation::factory()->create();
@@ -355,8 +352,7 @@ class CreateStockTransferActionTest extends TestCase
 
     public function test_negative_stock_rejects_any_transfer(): void
     {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Insufficient stock');
+        $this->expectException(StockTransferInsufficientStock::class);
 
         $season = Season::factory()->create();
         $from = StockLocation::factory()->create();
@@ -415,9 +411,11 @@ class CreateStockTransferActionTest extends TestCase
                     ['product_id' => $coffee->id, 'quantity' => 10],
                 ]),
             );
-            $this->fail('Expected LogicException for insufficient stock');
-        } catch (LogicException $e) {
-            $this->assertStringContainsString('Insufficient stock', $e->getMessage());
+            $this->fail('Expected StockTransferInsufficientStock for insufficient stock');
+        } catch (StockTransferInsufficientStock $e) {
+            $this->assertEquals($coffee->id, $e->product->id);
+            $this->assertEquals(5, $e->available);
+            $this->assertEquals(10, $e->requested);
         }
 
         $this->assertEquals($movementsBefore, StockMovement::count());
@@ -481,9 +479,11 @@ class CreateStockTransferActionTest extends TestCase
                 toLocation: $to,
                 items: collect([['product_id' => $product->id, 'quantity' => 1]]),
             );
-            $this->fail('Expected LogicException for insufficient stock');
-        } catch (LogicException $e) {
-            $this->assertStringContainsString('Insufficient stock', $e->getMessage());
+            $this->fail('Expected StockTransferInsufficientStock for insufficient stock');
+        } catch (StockTransferInsufficientStock $e) {
+            $this->assertEquals($product->id, $e->product->id);
+            $this->assertEquals(-3, $e->available);
+            $this->assertEquals(1, $e->requested);
         }
 
         $this->stockService->addMovement(

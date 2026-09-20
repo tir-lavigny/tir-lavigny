@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\BackOffice\Stock;
 
 use App\Actions\Stock\CreateStockTransferAction;
+use App\Exceptions\StockTransferInsufficientStock;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Stock\StoreStockTransferRequest;
 use App\Models\Product;
@@ -14,7 +15,6 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
-use LogicException;
 
 class StockTransferController extends Controller implements HasMiddleware
 {
@@ -70,8 +70,10 @@ class StockTransferController extends Controller implements HasMiddleware
                 items: $items,
                 reason: $request->validated('reason'),
             );
-        } catch (LogicException $e) {
-            return back()->withErrors(['items' => $e->getMessage()]);
+        } catch (StockTransferInsufficientStock $e) {
+            $message = "Stock insuffisant pour \"{$e->product->name}\": disponible {$e->available}, demandé {$e->requested}.";
+
+            return back()->withErrors(['items' => $message]);
         }
 
         return redirect()->route('bo.stock.transfers.index')->with('success', 'Stock transfer created.');
