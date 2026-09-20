@@ -19,12 +19,16 @@ class CreateStockSnapshotAction
         return DB::transaction(function () use ($location) {
             $stock = $this->stockService->getStockForLocation($location);
 
-            $snapshotAt = now();
-
             $snapshot = StockSnapshot::create([
                 'stock_location_id' => $location->id,
-                'snapshot_at' => $snapshotAt,
+                'snapshot_at' => now(),
             ]);
+
+            // Use the DB-persisted created_at as the authoritative boundary.
+            // This avoids any gap between the PHP now() call and the actual
+            // INSERT, ensuring the boundary is exactly when the snapshot row
+            // was persisted.
+            $snapshot->update(['snapshot_at' => $snapshot->created_at]);
 
             foreach ($stock as $item) {
                 StockSnapshotLine::create([

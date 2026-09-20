@@ -125,9 +125,12 @@ class StockService
             $line = $snapshot->stockSnapshotLines->firstWhere('product_id', $product->id);
             $baseQuantity = $line ? $line->quantity : 0;
 
+            // Use the snapshot's persisted created_at as the boundary.
+            // Movements at or before this timestamp are captured in the
+            // snapshot. Only movements after it are summed here.
             $postSnapshotQuantity = StockMovement::where('product_id', $product->id)
                 ->where('stock_location_id', $location->id)
-                ->where('created_at', '>', $snapshot->snapshot_at)
+                ->where('created_at', '>', $snapshot->created_at)
                 ->sum('quantity');
 
             return $baseQuantity + (int) $postSnapshotQuantity;
@@ -172,8 +175,9 @@ class StockService
         $snapshotLines = $latestSnapshot->stockSnapshotLines
             ->pluck('quantity', 'product_id');
 
+        // Use the snapshot's persisted created_at as the boundary.
         $postSnapshotStocks = StockMovement::where('stock_location_id', $location->id)
-            ->where('created_at', '>', $latestSnapshot->snapshot_at)
+            ->where('created_at', '>', $latestSnapshot->created_at)
             ->select('product_id', \DB::raw('SUM(quantity) as quantity'))
             ->groupBy('product_id')
             ->pluck('quantity', 'product_id');

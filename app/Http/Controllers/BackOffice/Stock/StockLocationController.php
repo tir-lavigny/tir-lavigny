@@ -4,7 +4,6 @@ namespace App\Http\Controllers\BackOffice\Stock;
 
 use App\Actions\Stock\CompactStockHistoryAction;
 use App\Actions\Stock\CreateStockLocationAction;
-use App\Actions\Stock\CreateStockSnapshotAction;
 use App\Actions\Stock\UpdateStockLocationAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Stock\StoreStockLocationRequest;

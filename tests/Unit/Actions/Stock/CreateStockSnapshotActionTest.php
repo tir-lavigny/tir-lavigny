@@ -18,6 +18,7 @@ class CreateStockSnapshotActionTest extends TestCase
     use RefreshDatabase;
 
     private CreateStockSnapshotAction $action;
+
     private StockService $stockService;
 
     protected function setUp(): void
@@ -261,16 +262,15 @@ class CreateStockSnapshotActionTest extends TestCase
         $this->assertEquals(0, $line->quantity);
     }
 
-    public function test_snapshot_sets_snapshot_at_consistently(): void
+    public function test_snapshot_sets_snapshot_at_to_persisted_created_at(): void
     {
         $location = StockLocation::factory()->create();
-        $before = now()->subSecond();
 
         $snapshot = $this->action->execute($location);
 
-        $after = now()->addSecond();
-        $this->assertTrue($snapshot->snapshot_at->gte($before));
-        $this->assertTrue($snapshot->snapshot_at->lte($after));
+        // snapshot_at must match the DB-persisted created_at exactly,
+        // ensuring the compaction boundary is unambiguous.
+        $this->assertTrue($snapshot->snapshot_at->eq($snapshot->created_at));
     }
 
     public function test_multiple_locations_have_independent_snapshots(): void

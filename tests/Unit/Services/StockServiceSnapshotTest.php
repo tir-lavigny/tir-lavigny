@@ -4,16 +4,12 @@ namespace Tests\Unit\Services;
 
 use App\Enums\StockMovementType;
 use App\Models\Product;
-use App\Models\Season;
 use App\Models\StockLocation;
-use App\Models\StockMovement;
 use App\Models\StockSnapshot;
 use App\Models\StockSnapshotLine;
-use App\Models\Ticket;
 use App\Services\StockService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use LogicException;
 use Tests\TestCase;
 
 class StockServiceSnapshotTest extends TestCase

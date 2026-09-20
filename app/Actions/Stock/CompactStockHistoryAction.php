@@ -29,8 +29,11 @@ class CompactStockHistoryAction
         return DB::transaction(function () use ($location) {
             $snapshot = $this->createSnapshotAction->execute($location);
 
+            // Use the snapshot's persisted created_at as the cutoff.
+            // Movements at or before this timestamp are represented in the
+            // snapshot and must be archived. Movements after remain active.
             $movements = StockMovement::where('stock_location_id', $location->id)
-                ->where('created_at', '<=', $snapshot->snapshot_at)
+                ->where('created_at', '<=', $snapshot->created_at)
                 ->get();
 
             foreach ($movements as $movement) {
