@@ -64,6 +64,14 @@ class CreateStockTransferAction
             if (! $product->is_stockable) {
                 throw new LogicException("Product #{$item['product_id']} is not stockable.");
             }
+
+            $currentStock = $this->stockService->getStockForProduct($product, $fromLocation);
+
+            if ($currentStock - $item['quantity'] < 0) {
+                throw new LogicException(
+                    "Insufficient stock for product \"{$product->name}\": available {$currentStock}, requested {$item['quantity']}."
+                );
+            }
         }
 
         return DB::transaction(function () use ($season, $fromLocation, $toLocation, $items, $reason, $products) {

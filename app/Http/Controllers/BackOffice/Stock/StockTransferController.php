@@ -14,6 +14,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
+use LogicException;
 
 class StockTransferController extends Controller implements HasMiddleware
 {
@@ -61,13 +62,17 @@ class StockTransferController extends Controller implements HasMiddleware
             'quantity' => $item['quantity'],
         ]);
 
-        $action->execute(
-            season: $season,
-            fromLocation: $fromLocation,
-            toLocation: $toLocation,
-            items: $items,
-            reason: $request->validated('reason'),
-        );
+        try {
+            $action->execute(
+                season: $season,
+                fromLocation: $fromLocation,
+                toLocation: $toLocation,
+                items: $items,
+                reason: $request->validated('reason'),
+            );
+        } catch (LogicException $e) {
+            return back()->withErrors(['items' => $e->getMessage()]);
+        }
 
         return redirect()->route('bo.stock.transfers.index')->with('success', 'Stock transfer created.');
     }

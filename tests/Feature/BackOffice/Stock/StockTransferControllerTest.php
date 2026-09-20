@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\BackOffice\Stock;
 
+use App\Enums\StockMovementType;
 use App\Models\Product;
 use App\Models\Season;
 use App\Models\StockLocation;
 use App\Models\StockTransfer;
+use App\Models\StockMovement;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -74,10 +76,18 @@ class StockTransferControllerTest extends TestCase
 
     public function test_store_creates_transfer(): void
     {
-        $this->createCurrentSeason();
+        $season = $this->createCurrentSeason();
         $fromLocation = StockLocation::factory()->create(['active' => true]);
         $toLocation = StockLocation::factory()->create(['active' => true]);
         $product = Product::factory()->create(['is_stockable' => true]);
+
+        StockMovement::factory()->create([
+            'product_id' => $product->id,
+            'stock_location_id' => $fromLocation->id,
+            'quantity' => 20,
+            'type' => StockMovementType::Purchase,
+            'season_id' => $season->id,
+        ]);
 
         $response = $this->post(route('bo.stock.transfers.store', $fromLocation), [
             'to_location_id' => $toLocation->id,
@@ -213,7 +223,7 @@ class StockTransferControllerTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function test_store_allows_transfer_with_insufficient_stock(): void
+    public function test_store_rejects_transfer_with_insufficient_stock(): void
     {
         $this->createCurrentSeason();
         $fromLocation = StockLocation::factory()->create(['active' => true]);
@@ -228,18 +238,24 @@ class StockTransferControllerTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('stock_transfers', [
-            'from_location_id' => $fromLocation->id,
-            'to_location_id' => $toLocation->id,
-        ]);
+        $response->assertSessionHasErrors(['items']);
+        $this->assertDatabaseCount('stock_transfers', 0);
     }
 
     public function test_store_reason_is_optional(): void
     {
-        $this->createCurrentSeason();
+        $season = $this->createCurrentSeason();
         $fromLocation = StockLocation::factory()->create(['active' => true]);
         $toLocation = StockLocation::factory()->create(['active' => true]);
         $product = Product::factory()->create(['is_stockable' => true]);
+
+        StockMovement::factory()->create([
+            'product_id' => $product->id,
+            'stock_location_id' => $fromLocation->id,
+            'quantity' => 10,
+            'type' => StockMovementType::Purchase,
+            'season_id' => $season->id,
+        ]);
 
         $response = $this->post(route('bo.stock.transfers.store', $fromLocation), [
             'to_location_id' => $toLocation->id,
@@ -256,6 +272,80 @@ class StockTransferControllerTest extends TestCase
         ]);
     }
 
+    public function test_store_exact_available_stock_succeeds(): void
+    {
+        $season = $this->createCurrentSeason();
+        $fromLocation = StockLocation::factory()->create(['active' => true]);
+        $toLocation = StockLocation::factory()->create(['active' => true]);
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        StockMovement::factory()->create([
+            'product_id' => $product->id,
+            'stock_location_id' => $fromLocation->id,
+            'quantity' => 10,
+            'type' => StockMovementType::Purchase,
+            'season_id' => $season->id,
+        ]);
+
+        $response = $this->post(route('bo.stock.transfers.store', $fromLocation), [
+            'to_location_id' => $toLocation->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 10],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('stock_transfers', [
+            'from_location_id' => $fromLocation->id,
+        ]);
+    }
+
+    public function test_store_zero_stock_rejects_transfer(): void
+    {
+        $this->createCurrentSeason();
+        $fromLocation = StockLocation::factory()->create(['active' => true]);
+        $toLocation = StockLocation::factory()->create(['active' => true]);
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        $response = $this->post(route('bo.stock.transfers.store', $fromLocation), [
+            'to_location_id' => $toLocation->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['items']);
+        $this->assertDatabaseCount('stock_transfers', 0);
+    }
+
+    public function test_store_negative_stock_rejects_transfer(): void
+    {
+        $season = $this->createCurrentSeason();
+        $fromLocation = StockLocation::factory()->create(['active' => true]);
+        $toLocation = StockLocation::factory()->create(['active' => true]);
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        StockMovement::factory()->create([
+            'product_id' => $product->id,
+            'stock_location_id' => $fromLocation->id,
+            'quantity' => -3,
+            'type' => StockMovementType::Sale,
+            'season_id' => $season->id,
+        ]);
+
+        $response = $this->post(route('bo.stock.transfers.store', $fromLocation), [
+            'to_location_id' => $toLocation->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors(['items']);
+        $this->assertDatabaseCount('stock_transfers', 0);
+    }
+
     public function test_show_returns_transfer(): void
     {
         $transfer = StockTransfer::factory()->create();
@@ -267,10 +357,18 @@ class StockTransferControllerTest extends TestCase
 
     public function test_route_model_binding_for_source_location(): void
     {
-        $this->createCurrentSeason();
+        $season = $this->createCurrentSeason();
         $fromLocation = StockLocation::factory()->create(['active' => true]);
         $toLocation = StockLocation::factory()->create(['active' => true]);
         $product = Product::factory()->create(['is_stockable' => true]);
+
+        StockMovement::factory()->create([
+            'product_id' => $product->id,
+            'stock_location_id' => $fromLocation->id,
+            'quantity' => 20,
+            'type' => StockMovementType::Purchase,
+            'season_id' => $season->id,
+        ]);
 
         $response = $this->post(route('bo.stock.transfers.store', $fromLocation), [
             'to_location_id' => $toLocation->id,

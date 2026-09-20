@@ -36,6 +36,14 @@ class CreateStockTransferActionTest extends TestCase
         $to = StockLocation::factory()->create();
         $product = Product::factory()->create(['is_stockable' => true]);
 
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: 20,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
         $transfer = $this->action->execute(
             season: $season,
             fromLocation: $from,
@@ -60,6 +68,14 @@ class CreateStockTransferActionTest extends TestCase
         $to = StockLocation::factory()->create();
         $product = Product::factory()->create(['is_stockable' => true]);
 
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: 20,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
         $transfer = $this->action->execute(
             season: $season,
             fromLocation: $from,
@@ -80,6 +96,14 @@ class CreateStockTransferActionTest extends TestCase
         $from = StockLocation::factory()->create();
         $to = StockLocation::factory()->create();
         $product = Product::factory()->create(['is_stockable' => true]);
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: 20,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
 
         $this->action->execute(
             season: $season,
@@ -103,6 +127,14 @@ class CreateStockTransferActionTest extends TestCase
         $to = StockLocation::factory()->create();
         $product = Product::factory()->create(['is_stockable' => true]);
 
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: 20,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
         $this->action->execute(
             season: $season,
             fromLocation: $from,
@@ -124,6 +156,14 @@ class CreateStockTransferActionTest extends TestCase
         $from = StockLocation::factory()->create();
         $to = StockLocation::factory()->create();
         $product = Product::factory()->create(['is_stockable' => true]);
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: 20,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
 
         $transfer = $this->action->execute(
             season: $season,
@@ -148,6 +188,14 @@ class CreateStockTransferActionTest extends TestCase
         $to = StockLocation::factory()->create();
         $product = Product::factory()->create(['is_stockable' => true]);
 
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: 20,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
         $this->action->execute(
             season: $season,
             fromLocation: $from,
@@ -155,8 +203,11 @@ class CreateStockTransferActionTest extends TestCase
             items: collect([['product_id' => $product->id, 'quantity' => 10]]),
         );
 
-        $movements = StockMovement::where('product_id', $product->id)->get();
+        $movements = StockMovement::where('product_id', $product->id)
+            ->where('type', StockMovementType::Transfer)
+            ->get();
 
+        $this->assertCount(2, $movements);
         $movements->each(function (StockMovement $m) {
             $this->assertEquals(StockMovementType::Transfer, $m->type);
         });
@@ -164,6 +215,9 @@ class CreateStockTransferActionTest extends TestCase
 
     public function test_source_stock_allowed_to_become_negative(): void
     {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Insufficient stock');
+
         $season = Season::factory()->create();
         $from = StockLocation::factory()->create();
         $to = StockLocation::factory()->create();
@@ -183,28 +237,275 @@ class CreateStockTransferActionTest extends TestCase
             toLocation: $to,
             items: collect([['product_id' => $product->id, 'quantity' => 5]]),
         );
-
-        $stock = $this->stockService->getStockForProduct($product, $from);
-        $this->assertEquals(-3, $stock);
     }
 
-    public function test_transfer_succeeds_even_when_source_has_insufficient_recorded_stock(): void
+    public function test_transfer_rejected_when_source_has_insufficient_recorded_stock(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Insufficient stock');
+
+        $season = Season::factory()->create();
+        $from = StockLocation::factory()->create();
+        $to = StockLocation::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        $this->action->execute(
+            season: $season,
+            fromLocation: $from,
+            toLocation: $to,
+            items: collect([['product_id' => $product->id, 'quantity' => 5]]),
+        );
+    }
+
+    public function test_sufficient_stock_allows_transfer(): void
     {
         $season = Season::factory()->create();
         $from = StockLocation::factory()->create();
         $to = StockLocation::factory()->create();
         $product = Product::factory()->create(['is_stockable' => true]);
 
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: 10,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
         $transfer = $this->action->execute(
             season: $season,
             fromLocation: $from,
             toLocation: $to,
-            items: collect([['product_id' => $product->id, 'quantity' => 5]]),
+            items: collect([['product_id' => $product->id, 'quantity' => 10]]),
         );
 
         $this->assertNotNull($transfer->id);
-        $this->assertEquals(-5, $this->stockService->getStockForProduct($product, $from));
-        $this->assertEquals(5, $this->stockService->getStockForProduct($product, $to));
+        $this->assertEquals(0, $this->stockService->getStockForProduct($product, $from));
+        $this->assertEquals(10, $this->stockService->getStockForProduct($product, $to));
+    }
+
+    public function test_exact_available_stock_leaves_source_at_zero(): void
+    {
+        $season = Season::factory()->create();
+        $from = StockLocation::factory()->create();
+        $to = StockLocation::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: 7,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
+        $this->action->execute(
+            season: $season,
+            fromLocation: $from,
+            toLocation: $to,
+            items: collect([['product_id' => $product->id, 'quantity' => 7]]),
+        );
+
+        $this->assertEquals(0, $this->stockService->getStockForProduct($product, $from));
+    }
+
+    public function test_insufficient_positive_stock_is_rejected(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Insufficient stock');
+
+        $season = Season::factory()->create();
+        $from = StockLocation::factory()->create();
+        $to = StockLocation::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: 10,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
+        $this->action->execute(
+            season: $season,
+            fromLocation: $from,
+            toLocation: $to,
+            items: collect([['product_id' => $product->id, 'quantity' => 11]]),
+        );
+    }
+
+    public function test_zero_stock_rejects_any_transfer(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Insufficient stock');
+
+        $season = Season::factory()->create();
+        $from = StockLocation::factory()->create();
+        $to = StockLocation::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        $this->action->execute(
+            season: $season,
+            fromLocation: $from,
+            toLocation: $to,
+            items: collect([['product_id' => $product->id, 'quantity' => 1]]),
+        );
+    }
+
+    public function test_negative_stock_rejects_any_transfer(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Insufficient stock');
+
+        $season = Season::factory()->create();
+        $from = StockLocation::factory()->create();
+        $to = StockLocation::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: -3,
+            type: StockMovementType::Sale,
+            season: $season,
+        );
+
+        $this->action->execute(
+            season: $season,
+            fromLocation: $from,
+            toLocation: $to,
+            items: collect([['product_id' => $product->id, 'quantity' => 1]]),
+        );
+    }
+
+    public function test_multiple_product_transfer_one_insufficient_rejects_entire_transfer(): void
+    {
+        $season = Season::factory()->create();
+        $from = StockLocation::factory()->create();
+        $to = StockLocation::factory()->create();
+        $beer = Product::factory()->create(['is_stockable' => true]);
+        $coffee = Product::factory()->create(['is_stockable' => true]);
+
+        $this->stockService->addMovement(
+            product: $beer,
+            location: $from,
+            quantity: 20,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
+        $this->stockService->addMovement(
+            product: $coffee,
+            location: $from,
+            quantity: 5,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
+        $movementsBefore = StockMovement::count();
+
+        try {
+            $this->action->execute(
+                season: $season,
+                fromLocation: $from,
+                toLocation: $to,
+                items: collect([
+                    ['product_id' => $beer->id, 'quantity' => 15],
+                    ['product_id' => $coffee->id, 'quantity' => 10],
+                ]),
+            );
+            $this->fail('Expected LogicException for insufficient stock');
+        } catch (LogicException $e) {
+            $this->assertStringContainsString('Insufficient stock', $e->getMessage());
+        }
+
+        $this->assertEquals($movementsBefore, StockMovement::count());
+        $this->assertDatabaseCount('stock_transfers', 0);
+    }
+
+    public function test_sales_and_losses_can_still_create_negative_stock(): void
+    {
+        $season = Season::factory()->create();
+        $location = StockLocation::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $location,
+            quantity: 5,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $location,
+            quantity: -3,
+            type: StockMovementType::Sale,
+            season: $season,
+        );
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $location,
+            quantity: -5,
+            type: StockMovementType::Loss,
+            season: $season,
+        );
+
+        $this->assertEquals(-3, $this->stockService->getStockForProduct($product, $location));
+    }
+
+    public function test_adjustment_resolving_negative_stock_allows_transfers_again(): void
+    {
+        $season = Season::factory()->create();
+        $from = StockLocation::factory()->create();
+        $to = StockLocation::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: -3,
+            type: StockMovementType::Sale,
+            season: $season,
+        );
+
+        $this->assertEquals(-3, $this->stockService->getStockForProduct($product, $from));
+
+        try {
+            $this->action->execute(
+                season: $season,
+                fromLocation: $from,
+                toLocation: $to,
+                items: collect([['product_id' => $product->id, 'quantity' => 1]]),
+            );
+            $this->fail('Expected LogicException for insufficient stock');
+        } catch (LogicException $e) {
+            $this->assertStringContainsString('Insufficient stock', $e->getMessage());
+        }
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $from,
+            quantity: 5,
+            type: StockMovementType::Adjustment,
+            season: $season,
+        );
+
+        $this->assertEquals(2, $this->stockService->getStockForProduct($product, $from));
+
+        $transfer = $this->action->execute(
+            season: $season,
+            fromLocation: $from,
+            toLocation: $to,
+            items: collect([['product_id' => $product->id, 'quantity' => 2]]),
+        );
+
+        $this->assertNotNull($transfer->id);
+        $this->assertEquals(0, $this->stockService->getStockForProduct($product, $from));
+        $this->assertEquals(2, $this->stockService->getStockForProduct($product, $to));
     }
 
     public function test_source_and_destination_cannot_be_the_same(): void
@@ -286,6 +587,14 @@ class CreateStockTransferActionTest extends TestCase
         $validProduct = Product::factory()->create(['is_stockable' => true]);
         $nonStockableProduct = Product::factory()->create(['is_stockable' => false]);
 
+        $this->stockService->addMovement(
+            product: $validProduct,
+            location: $from,
+            quantity: 20,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
         $movementsBefore = StockMovement::count();
 
         try {
@@ -315,6 +624,22 @@ class CreateStockTransferActionTest extends TestCase
         $beer = Product::factory()->create(['is_stockable' => true]);
         $coffee = Product::factory()->create(['is_stockable' => true]);
 
+        $this->stockService->addMovement(
+            product: $beer,
+            location: $from,
+            quantity: 30,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
+        $this->stockService->addMovement(
+            product: $coffee,
+            location: $from,
+            quantity: 15,
+            type: StockMovementType::Purchase,
+            season: $season,
+        );
+
         $transfer = $this->action->execute(
             season: $season,
             fromLocation: $from,
@@ -327,11 +652,11 @@ class CreateStockTransferActionTest extends TestCase
         );
 
         $this->assertDatabaseCount('stock_transfer_lines', 2);
-        $this->assertDatabaseCount('stock_movements', 4);
+        $this->assertDatabaseCount('stock_movements', 6);
 
-        $this->assertEquals(-20, $this->stockService->getStockForProduct($beer, $from));
+        $this->assertEquals(10, $this->stockService->getStockForProduct($beer, $from));
         $this->assertEquals(20, $this->stockService->getStockForProduct($beer, $to));
-        $this->assertEquals(-10, $this->stockService->getStockForProduct($coffee, $from));
+        $this->assertEquals(5, $this->stockService->getStockForProduct($coffee, $from));
         $this->assertEquals(10, $this->stockService->getStockForProduct($coffee, $to));
     }
 
