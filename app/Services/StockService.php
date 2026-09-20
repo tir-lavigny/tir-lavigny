@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Season;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
+use App\Models\StockSnapshot;
 use App\Models\Ticket;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -109,9 +110,29 @@ class StockService
 
     /**
      * Get the current stock quantity for a product at a location.
+     *
+     * Uses the latest snapshot (if any) as the base quantity,
+     * then sums only movements created after that snapshot.
      */
     public function getStockForProduct(Product $product, StockLocation $location): int
     {
+        $snapshot = StockSnapshot::where('stock_location_id', $location->id)
+            ->whereHas('stockSnapshotLines', fn ($q) => $q->where('product_id', $product->id))
+            ->latest('snapshot_at')
+            ->first();
+
+        if ($snapshot) {
+            $line = $snapshot->stockSnapshotLines->firstWhere('product_id', $product->id);
+            $baseQuantity = $line ? $line->quantity : 0;
+
+            $postSnapshotQuantity = StockMovement::where('product_id', $product->id)
+                ->where('stock_location_id', $location->id)
+                ->where('created_at', '>', $snapshot->snapshot_at)
+                ->sum('quantity');
+
+            return $baseQuantity + (int) $postSnapshotQuantity;
+        }
+
         return (int) StockMovement::where('product_id', $product->id)
             ->where('stock_location_id', $location->id)
             ->sum('quantity');
@@ -120,23 +141,53 @@ class StockService
     /**
      * Get current stock for all stockable products at a location.
      *
+     * Uses the latest snapshot (if any) as the base,
+     * then sums only movements created after that snapshot.
+     *
      * @return Collection<int, array{product_id: int, product: Product, quantity: int}>
      */
     public function getStockForLocation(StockLocation $location): Collection
     {
-        $stocks = StockMovement::where('stock_location_id', $location->id)
-            ->select('product_id', \DB::raw('SUM(quantity) as quantity'))
-            ->groupBy('product_id')
-            ->pluck('quantity', 'product_id');
+        $latestSnapshot = StockSnapshot::where('stock_location_id', $location->id)
+            ->latest('snapshot_at')
+            ->first();
 
-        return Product::where('is_stockable', true)
+        $allStockable = Product::where('is_stockable', true)
             ->orderBy('name')
-            ->get()
-            ->map(fn (Product $product) => [
+            ->get();
+
+        if (! $latestSnapshot) {
+            $stocks = StockMovement::where('stock_location_id', $location->id)
+                ->select('product_id', \DB::raw('SUM(quantity) as quantity'))
+                ->groupBy('product_id')
+                ->pluck('quantity', 'product_id');
+
+            return $allStockable->map(fn (Product $product) => [
                 'product_id' => $product->id,
                 'product' => $product,
                 'quantity' => (int) ($stocks[$product->id] ?? 0),
             ]);
+        }
+
+        $snapshotLines = $latestSnapshot->stockSnapshotLines
+            ->pluck('quantity', 'product_id');
+
+        $postSnapshotStocks = StockMovement::where('stock_location_id', $location->id)
+            ->where('created_at', '>', $latestSnapshot->snapshot_at)
+            ->select('product_id', \DB::raw('SUM(quantity) as quantity'))
+            ->groupBy('product_id')
+            ->pluck('quantity', 'product_id');
+
+        return $allStockable->map(function (Product $product) use ($snapshotLines, $postSnapshotStocks) {
+            $base = (int) ($snapshotLines[$product->id] ?? 0);
+            $post = (int) ($postSnapshotStocks[$product->id] ?? 0);
+
+            return [
+                'product_id' => $product->id,
+                'product' => $product,
+                'quantity' => $base + $post,
+            ];
+        });
     }
 
     /**

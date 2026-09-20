@@ -458,3 +458,20 @@ export interface PaginatedStockLocations extends PaginatedData<StockLocation> {
 export interface PaginatedStockMovements extends PaginatedData<StockMovement> {
     data?: StockMovement[];
 }
+
+export interface StockSnapshot {
+    id: number;
+    stock_location_id: number;
+    snapshot_at: string;
+    stock_snapshot_lines?: StockSnapshotLine[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StockSnapshotLine {
+    id: number;
+    stock_snapshot_id: number;
+    product_id: number;
+    quantity: number;
+    product?: Product;
+}

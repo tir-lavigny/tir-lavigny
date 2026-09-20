@@ -62,4 +62,12 @@ class StockLocation extends Model
     {
         return $this->hasMany(Ticket::class);
     }
+
+    /**
+     * @return HasMany<StockSnapshot, $this>
+     */
+    public function stockSnapshots(): HasMany
+    {
+        return $this->hasMany(StockSnapshot::class);
+    }
 }

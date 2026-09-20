@@ -2,15 +2,26 @@
 import AppPagination from '@/components/AppPagination.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, hasPermissionTo } from '@/lib/utils';
-import type { BreadcrumbItem, PaginatedStockMovements, SharedData, StockLocation, StockLocationStock } from '@/types';
+import type { BreadcrumbItem, PaginatedStockMovements, SharedData, StockLocation, StockLocationStock, StockSnapshot } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ClipboardList, Edit, Forklift, WineOff } from '@lucide/vue';
+import { ClipboardList, Edit, Forklift, History, WineOff } from '@lucide/vue';
 import { computed } from 'vue';
 
 const page = usePage<SharedData>();
@@ -20,6 +31,7 @@ const props = defineProps<{
     location: StockLocation;
     stock: StockLocationStock[];
     movements: PaginatedStockMovements;
+    snapshots: StockSnapshot[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -43,6 +55,12 @@ const handlePageChange = (p: number = 1) => {
 };
 
 const stockableItems = computed(() => props.stock.filter((item) => item.quantity !== 0 || true));
+
+const handleCompact = () => {
+    router.post(route('bo.stock.locations.compact', props.location.id), {}, {
+        preserveScroll: true,
+    });
+};
 </script>
 
 <template>
@@ -166,6 +184,52 @@ const stockableItems = computed(() => props.stock.filter((item) => item.quantity
                 :show-first-last="false"
                 @page-changed="handlePageChange"
             />
+
+            <template v-if="hasPermissionTo(user, 'manage stock')">
+                <H3>Snapshots de stock</H3>
+                <div class="flex items-center gap-2">
+                    <AlertDialog>
+                        <AlertDialogTrigger as-child>
+                            <Button variant="outline" size="sm">
+                                <History class="mr-1 size-4" />
+                                Compacter l'historique
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Compacter l'historique des mouvements ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Cette opération va créer un snapshot du stock actuel et archiver les mouvements antérieurs.
+                                    Le stock physique ne changera pas. Les mouvements récents seront conservés.
+                                    Cette action est destinée à réduire la taille de l'historique.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                <AlertDialogAction @click="handleCompact" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                    Compacter
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+
+                <Table v-if="snapshots.length">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date du snapshot</TableHead>
+                            <TableHead>Produits capturés</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow v-for="snapshot in snapshots" :key="snapshot.id">
+                            <TableCell>{{ formatDate(snapshot.snapshot_at, 'DD.MM.YYYY HH:mm') }}</TableCell>
+                            <TableCell>{{ snapshot.stock_snapshot_lines?.length ?? 0 }}</TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+                <p v-else class="text-muted-foreground text-sm">Aucun snapshot.</p>
+            </template>
         </div>
     </AppLayout>
 </template>

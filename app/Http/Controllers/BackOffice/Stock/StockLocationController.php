@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\BackOffice\Stock;
 
+use App\Actions\Stock\CompactStockHistoryAction;
 use App\Actions\Stock\CreateStockLocationAction;
+use App\Actions\Stock\CreateStockSnapshotAction;
 use App\Actions\Stock\UpdateStockLocationAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Stock\StoreStockLocationRequest;
 use App\Http\Requests\BackOffice\Stock\UpdateStockLocationRequest;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
+use App\Models\StockSnapshot;
 use App\Services\StockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -21,7 +24,7 @@ class StockLocationController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:manage stock', only: ['create', 'store', 'edit', 'update']),
+            new Middleware('permission:manage stock', only: ['create', 'store', 'edit', 'update', 'compact']),
         ];
     }
 
@@ -57,10 +60,16 @@ class StockLocationController extends Controller implements HasMiddleware
             ->orderByDesc('created_at')
             ->paginate(15);
 
+        $snapshots = StockSnapshot::where('stock_location_id', $stockLocation->id)
+            ->with('stockSnapshotLines')
+            ->orderByDesc('snapshot_at')
+            ->get();
+
         return Inertia::render('backOffice/Stock/StockLocations/Show', [
             'location' => $stockLocation,
             'stock' => $stock,
             'movements' => $movements,
+            'snapshots' => $snapshots,
         ]);
     }
 
@@ -76,5 +85,12 @@ class StockLocationController extends Controller implements HasMiddleware
         $action->execute($stockLocation, $request->validated());
 
         return redirect()->route('bo.stock.locations.show', $stockLocation)->with('success', 'Location updated.');
+    }
+
+    public function compact(StockLocation $stockLocation, CompactStockHistoryAction $action): RedirectResponse
+    {
+        $action->execute($stockLocation);
+
+        return redirect()->route('bo.stock.locations.show', $stockLocation)->with('success', 'Stock history compacted. Snapshot created and old movements archived.');
     }
 }

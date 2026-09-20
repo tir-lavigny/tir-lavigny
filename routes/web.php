@@ -271,6 +271,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             ->name('bo.stock.locations.edit');
         Route::put('locations/{stockLocation}', [StockLocationController::class, 'update'])
             ->name('bo.stock.locations.update');
+        Route::post('locations/{stockLocation}/compact', [StockLocationController::class, 'compact'])
+            ->name('bo.stock.locations.compact');
     });
 });
 

@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Season;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
+use App\Models\StockSnapshot;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -474,6 +475,61 @@ class StockLocationControllerTest extends TestCase
         StockMovement::factory()->create([
             'stock_location_id' => $location->id,
             'product_id' => $product->id,
+        ]);
+
+        $response = $this->get(route('bo.stock.locations.show', $location));
+
+        $response->assertOk();
+    }
+
+    // ── Compact ──
+
+    public function test_compact_requires_manage_stock_permission(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('view register');
+        $this->actingAs($user);
+        $location = StockLocation::factory()->create();
+
+        $response = $this->post(route('bo.stock.locations.compact', $location));
+
+        $response->assertForbidden();
+    }
+
+    public function test_compact_creates_snapshot_and_archives_movements(): void
+    {
+        $location = StockLocation::factory()->create(['active' => true]);
+        $product = Product::factory()->create(['is_stockable' => true]);
+        $this->createCurrentSeason();
+
+        StockMovement::factory()->create([
+            'stock_location_id' => $location->id,
+            'product_id' => $product->id,
+            'quantity' => 100,
+            'type' => 'initial',
+        ]);
+        StockMovement::factory()->create([
+            'stock_location_id' => $location->id,
+            'product_id' => $product->id,
+            'quantity' => -20,
+            'type' => 'sale',
+        ]);
+
+        $response = $this->post(route('bo.stock.locations.compact', $location));
+
+        $response->assertRedirect();
+        $this->assertDatabaseCount('stock_snapshots', 1);
+        $this->assertEquals(0, StockMovement::where('stock_location_id', $location->id)->count());
+    }
+
+    public function test_show_displays_snapshots(): void
+    {
+        $location = StockLocation::factory()->create(['active' => true]);
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        StockSnapshot::create([
+            'stock_location_id' => $location->id,
+            'snapshot_at' => now(),
         ]);
 
         $response = $this->get(route('bo.stock.locations.show', $location));
