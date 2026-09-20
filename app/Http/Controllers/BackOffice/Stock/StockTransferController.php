@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice\Stock;
 use App\Actions\Stock\CreateStockTransferAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Stock\StoreStockTransferRequest;
+use App\Models\Product;
 use App\Models\Season;
 use App\Models\StockLocation;
 use App\Models\StockTransfer;
@@ -37,9 +38,11 @@ class StockTransferController extends Controller implements HasMiddleware
     public function create(): Response
     {
         $locations = StockLocation::where('active', true)->orderBy('name')->get();
+        $products = Product::where('is_stockable', true)->orderBy('name')->get();
 
         return Inertia::render('backOffice/Stock/StockTransfers/Create', [
             'locations' => $locations,
+            'products' => $products,
         ]);
     }
 

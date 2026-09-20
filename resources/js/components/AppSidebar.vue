@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
+import NavMainCollapsible from '@/components/NavMainCollapsible.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { hasPermissionTo, hasRole } from '@/lib/utils';
@@ -26,8 +27,13 @@ import {
     Trash2,
     Users,
     BookUser,
+    WineOff,
+    Forklift,
 } from '@lucide/vue';
 import AppLogo from './AppLogo.vue';
+import { reactive, watch } from 'vue';
+
+const MENUS_STATE_KEY = 'app_sidebar_menus_state';
 
 const user = usePage<SharedData>().props.auth.user;
 
@@ -144,6 +150,28 @@ const registerNavItems: NavItem[] = [
         : []),
 ];
 
+const stockNavItems: NavItem[] = [
+    ...(hasPermissionTo(user, 'manage stock')
+        ? [
+              {
+                  title: 'Comptage du stock',
+                  href: route('bo.stock.counts.index'),
+                  icon: ClipboardList,
+              },
+              {
+                  title: 'Transferts de stock',
+                  href: route('bo.stock.transfers.index'),
+                  icon: Forklift,
+              },
+              {
+                  title: 'Pertes de stock',
+                  href: route('bo.stock.losses.index'),
+                  icon: WineOff,
+              },
+          ]
+        : []),
+];
+
 const managementNavItems: NavItem[] = [
     ...(hasPermissionTo(user, 'manage members')
         ? [
@@ -186,6 +214,16 @@ const footerNavItems: NavItem[] = [
         icon: PanelTop,
     },
 ];
+
+const persistentMenusState = reactive<Record<string, boolean>>(JSON.parse(localStorage.getItem(MENUS_STATE_KEY) || '{}'));
+
+watch(
+    persistentMenusState,
+    (newState) => {
+        localStorage.setItem(MENUS_STATE_KEY, JSON.stringify(newState));
+    },
+    { deep: true },
+);
 </script>
 
 <template>
@@ -204,8 +242,27 @@ const footerNavItems: NavItem[] = [
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
-            <NavMain v-if="registerNavItems.length" :items="registerNavItems" label="Caisse" />
-            <NavMain v-if="managementNavItems.length" :items="managementNavItems" label="Gestion" />
+            <NavMainCollapsible
+                v-if="registerNavItems.length"
+                @update:open="persistentMenusState.register = $event"
+                :items="registerNavItems"
+                label="Caisse"
+                :default-open="persistentMenusState.register"
+            />
+            <NavMainCollapsible
+                v-if="stockNavItems.length"
+                @update:open="persistentMenusState.stock = $event"
+                :items="stockNavItems"
+                label="Stock"
+                :default-open="persistentMenusState.stock"
+            />
+            <NavMainCollapsible
+                v-if="managementNavItems.length"
+                @update:open="persistentMenusState.management = $event"
+                :items="managementNavItems"
+                label="Gestion"
+                :default-open="persistentMenusState.management"
+            />
         </SidebarContent>
 
         <SidebarFooter>

@@ -39,9 +39,11 @@ class StockLossController extends Controller implements HasMiddleware
     public function create(): Response
     {
         $locations = StockLocation::where('active', true)->orderBy('name')->get();
+        $products = Product::where('is_stockable', true)->orderBy('name')->get();
 
         return Inertia::render('backOffice/Stock/StockLosses/Create', [
             'locations' => $locations,
+            'products' => $products,
         ]);
     }
 

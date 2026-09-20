@@ -43,19 +43,19 @@ class RegisterSeeder extends Seeder
         );
 
         $bundles = [
-            ['name' => 'Tir du jeudi', 'unit_price' => 10.00, 'quantity' => 10],
-            ['name' => 'Tirs militaires', 'unit_price' => 0.00, 'quantity' => 20],
-            ['name' => 'Tir Fédéral en Campagne', 'unit_price' => 0.00, 'quantity' => 18],
-            ['name' => 'Gouille', 'unit_price' => 10.00, 'quantity' => 10],
-            ['name' => 'Ouverture', 'unit_price' => 10.00, 'quantity' => 12],
-            ['name' => 'Clôture', 'unit_price' => 10.00, 'quantity' => 5],
-            ['name' => 'Tir des moyens', 'unit_price' => 15.00, 'quantity' => 5],
+            ['name' => 'Tir du jeudi', 'unit_price' => 10.00, 'quantity' => 10, 'is_stockable' => false],
+            ['name' => 'Tirs militaires', 'unit_price' => 0.00, 'quantity' => 20, 'is_stockable' => false],
+            ['name' => 'Tir Fédéral en Campagne', 'unit_price' => 0.00, 'quantity' => 18, 'is_stockable' => false],
+            ['name' => 'Gouille', 'unit_price' => 10.00, 'quantity' => 10, 'is_stockable' => false],
+            ['name' => 'Ouverture', 'unit_price' => 10.00, 'quantity' => 12, 'is_stockable' => false],
+            ['name' => 'Clôture', 'unit_price' => 10.00, 'quantity' => 5, 'is_stockable' => false],
+            ['name' => 'Tir des moyens', 'unit_price' => 15.00, 'quantity' => 5, 'is_stockable' => false],
         ];
 
         foreach ($bundles as $bundle) {
             $product = Product::updateOrCreate(
                 ['name' => $bundle['name']],
-                ['unit_price' => $bundle['unit_price'], 'category_id' => $category->id]
+                ['unit_price' => $bundle['unit_price'], 'category_id' => $category->id, 'is_stockable' => $bundle['is_stockable'] ?? true]
             );
 
             $product->childProducts()->syncWithoutDetaching([
