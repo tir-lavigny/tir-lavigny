@@ -90,9 +90,7 @@ const handleDetach = (childId: number) => {
                         <div>
                             <dt class="text-muted-foreground text-sm">Stockable</dt>
                             <dd>
-                                <Badge :variant="product.is_stockable ? 'default' : 'secondary'">{{
-                                    product.is_stockable ? 'Oui' : 'Non'
-                                }}</Badge>
+                                <Badge :variant="product.is_stockable ? 'default' : 'secondary'">{{ product.is_stockable ? 'Oui' : 'Non' }}</Badge>
                             </dd>
                         </div>
                     </dl>
