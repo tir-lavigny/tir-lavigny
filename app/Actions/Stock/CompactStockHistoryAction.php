@@ -27,6 +27,16 @@ class CompactStockHistoryAction
     public function execute(StockLocation $location): StockSnapshot
     {
         return DB::transaction(function () use ($location) {
+            // Lock all movements for this location before calculating stock.
+            // This prevents a concurrent movement from being committed with
+            // created_at <= snapshot.created_at but not visible to the stock
+            // calculation (MVCC gap), which would cause silent stock loss.
+            // The gap lock also blocks concurrent inserts for this location
+            // until the transaction commits.
+            StockMovement::where('stock_location_id', $location->id)
+                ->lockForUpdate()
+                ->get();
+
             $snapshot = $this->createSnapshotAction->execute($location);
 
             // Use the snapshot's persisted created_at as the cutoff.
