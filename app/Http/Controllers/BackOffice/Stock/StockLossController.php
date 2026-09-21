@@ -20,7 +20,7 @@ class StockLossController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:manage stock', only: ['create', 'store']),
+            new Middleware('permission:record stock loss', only: ['create', 'store']),
         ];
     }
 

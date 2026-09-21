@@ -33,7 +33,7 @@ const handlePageChange = (p: number = 1) => {
                 <div class="mb-4 flex w-full flex-row">
                     <div class="flex flex-1 items-center justify-between">
                         <H3>Pertes de stock</H3>
-                        <Tooltip v-if="hasPermissionTo(user, 'manage stock')">
+                        <Tooltip v-if="hasPermissionTo(user, 'record stock loss')">
                             <TooltipTrigger>
                                 <Link :href="route('bo.stock.losses.create')">
                                     <Button size="icon"><Plus /></Button>

@@ -67,6 +67,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Stock permissions
         $manageStockPermission = Permission::firstOrCreate(['name' => 'manage stock']);
+        $recordStockLossPermission = Permission::firstOrCreate(['name' => 'record stock loss']);
         $compactStockPermission = Permission::firstOrCreate(['name' => 'compact stock']);
 
         $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
@@ -114,6 +115,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $createMemberRegistrationPermission,
             $manageMemberRegistrationPermission,
             $manageStockPermission,
+            $recordStockLossPermission,
             $compactStockPermission,
         ]);
 
@@ -144,6 +146,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $viewTicketsPermission,
             $addProductToTicketPermission,
             $applyVoucherToTicketPermission,
+            $recordStockLossPermission,
         ]);
 
         $accountantRole->syncPermissions([
