@@ -136,7 +136,7 @@ class StockCountControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_store_requires_current_season(): void
+    public function test_store_does_not_requires_current_season(): void
     {
         $location = StockLocation::factory()->create(['active' => true]);
 
@@ -145,7 +145,7 @@ class StockCountControllerTest extends TestCase
             'type' => StockCountType::Initial->value,
         ]);
 
-        $response->assertNotFound();
+        $response->assertRedirect();
     }
 
     public function test_show_returns_stock_count(): void

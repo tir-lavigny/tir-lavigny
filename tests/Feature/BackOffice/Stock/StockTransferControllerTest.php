@@ -207,7 +207,7 @@ class StockTransferControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_store_requires_current_season(): void
+    public function test_store_does_not_requires_current_season(): void
     {
         $fromLocation = StockLocation::factory()->create(['active' => true]);
         $toLocation = StockLocation::factory()->create(['active' => true]);
@@ -220,7 +220,7 @@ class StockTransferControllerTest extends TestCase
             ],
         ]);
 
-        $response->assertNotFound();
+        $response->assertRedirect();
     }
 
     public function test_store_rejects_transfer_with_insufficient_stock(): void

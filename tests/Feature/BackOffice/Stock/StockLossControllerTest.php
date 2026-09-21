@@ -165,7 +165,7 @@ class StockLossControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_store_requires_current_season(): void
+    public function test_store_does_not_requires_current_season(): void
     {
         $location = StockLocation::factory()->create(['active' => true]);
         $product = Product::factory()->create(['is_stockable' => true]);
@@ -175,7 +175,7 @@ class StockLossControllerTest extends TestCase
             'quantity' => 3,
         ]);
 
-        $response->assertNotFound();
+        $response->assertRedirect();
     }
 
     public function test_store_allows_loss_with_insufficient_stock(): void

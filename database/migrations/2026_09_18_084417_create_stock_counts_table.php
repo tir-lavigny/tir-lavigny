@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('stock_counts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('season_id')->constrained()->restrictOnDelete();
+            $table->foreignId('season_id')->nullable()->constrained()->restrictOnDelete();
             $table->foreignId('stock_location_id')->constrained()->restrictOnDelete();
             $table->string('type');
             $table->string('status');

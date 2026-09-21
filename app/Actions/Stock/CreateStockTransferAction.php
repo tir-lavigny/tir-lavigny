@@ -24,7 +24,7 @@ class CreateStockTransferAction
      * @param  Collection<int, array{product_id: int, quantity: int}>  $items
      */
     public function execute(
-        Season $season,
+        ?Season $season,
         StockLocation $fromLocation,
         StockLocation $toLocation,
         Collection $items,
@@ -81,7 +81,7 @@ class CreateStockTransferAction
             $transfer = StockTransfer::create([
                 'from_location_id' => $fromLocation->id,
                 'to_location_id' => $toLocation->id,
-                'season_id' => $season->id,
+                'season_id' => $season?->id,
                 'reason' => $reason,
             ]);
 

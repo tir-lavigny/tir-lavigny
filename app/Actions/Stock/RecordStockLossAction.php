@@ -18,7 +18,7 @@ class RecordStockLossAction
     ) {}
 
     public function execute(
-        Season $season,
+        ?Season $season,
         StockLocation $location,
         Product $product,
         int $quantity,

@@ -23,7 +23,7 @@ class CreateStockCountAction
      * @param  Collection<int, Product>  $products
      */
     public function execute(
-        Season $season,
+        ?Season $season,
         StockLocation $location,
         StockCountType $type,
         Collection $products,
@@ -36,7 +36,7 @@ class CreateStockCountAction
 
         return DB::transaction(function () use ($season, $location, $type, $stockableProducts) {
             $count = StockCount::create([
-                'season_id' => $season->id,
+                'season_id' => $season?->id,
                 'stock_location_id' => $location->id,
                 'type' => $type,
                 'status' => 'pending',

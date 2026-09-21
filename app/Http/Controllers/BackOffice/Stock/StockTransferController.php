@@ -51,7 +51,7 @@ class StockTransferController extends Controller implements HasMiddleware
     {
         $season = Season::where('start_date', '<=', now())
             ->where('end_date', '>=', now())
-            ->firstOrFail();
+            ->first();
 
         $toLocation = StockLocation::findOrFail((int) $request->validated('to_location_id'));
 

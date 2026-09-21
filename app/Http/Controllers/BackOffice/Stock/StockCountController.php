@@ -51,7 +51,7 @@ class StockCountController extends Controller implements HasMiddleware
     {
         $season = Season::where('start_date', '<=', now())
             ->where('end_date', '>=', now())
-            ->firstOrFail();
+            ->first();
 
         $location = StockLocation::findOrFail((int) $request->validated('stock_location_id'));
         $products = Product::where('is_stockable', true)->get();
