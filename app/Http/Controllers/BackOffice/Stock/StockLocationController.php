@@ -23,7 +23,8 @@ class StockLocationController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:manage stock', only: ['create', 'store', 'edit', 'update', 'compact']),
+            new Middleware('permission:manage stock', only: ['create', 'store', 'edit', 'update']),
+            new Middleware('permission:compact stock', only: ['compact']),
         ];
     }
 

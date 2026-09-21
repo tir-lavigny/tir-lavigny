@@ -57,9 +57,13 @@ const handlePageChange = (p: number = 1) => {
 const stockableItems = computed(() => props.stock.filter((item) => item.quantity !== 0 || true));
 
 const handleCompact = () => {
-    router.post(route('bo.stock.locations.compact', props.location.id), {}, {
-        preserveScroll: true,
-    });
+    router.post(
+        route('bo.stock.locations.compact', props.location.id),
+        {},
+        {
+            preserveScroll: true,
+        },
+    );
 };
 </script>
 
@@ -187,7 +191,7 @@ const handleCompact = () => {
 
             <template v-if="hasPermissionTo(user, 'manage stock')">
                 <H3>Snapshots de stock</H3>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2" v-if="hasPermissionTo(user, 'compact stock')">
                     <AlertDialog>
                         <AlertDialogTrigger as-child>
                             <Button variant="outline" size="sm">
@@ -199,9 +203,9 @@ const handleCompact = () => {
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Compacter l'historique des mouvements ?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Cette opération va créer un snapshot du stock actuel et archiver les mouvements antérieurs.
-                                    Le stock physique ne changera pas. Les mouvements récents seront conservés.
-                                    Cette action est destinée à réduire la taille de l'historique.
+                                    Cette opération va créer un snapshot du stock actuel et archiver les mouvements antérieurs. Le stock physique ne
+                                    changera pas. Les mouvements récents seront conservés. Cette action est destinée à réduire la taille de
+                                    l'historique.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
