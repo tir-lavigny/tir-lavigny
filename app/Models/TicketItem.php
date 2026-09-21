@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\LogsActivity;
 use Database\Factories\TicketItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +12,7 @@ use LogicException;
 class TicketItem extends Model
 {
     /** @use HasFactory<TicketItemFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'product_id',

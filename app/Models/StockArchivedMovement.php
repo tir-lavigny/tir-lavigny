@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\LogsActivity;
 use Database\Factories\StockArchivedMovementFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +11,7 @@ use LogicException;
 class StockArchivedMovement extends Model
 {
     /** @use HasFactory<StockArchivedMovementFactory> */
-    use HasFactory, LogsActivity;
+    use HasFactory;
 
     protected $fillable = [
         'stock_location_id',

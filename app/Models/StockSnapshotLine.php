@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\LogsActivity;
 use Database\Factories\StockSnapshotLineFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +11,7 @@ use LogicException;
 class StockSnapshotLine extends Model
 {
     /** @use HasFactory<StockSnapshotLineFactory> */
-    use HasFactory, LogsActivity;
+    use HasFactory;
 
     protected $fillable = [
         'stock_snapshot_id',

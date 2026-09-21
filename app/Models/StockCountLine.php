@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\LogsActivity;
 use Database\Factories\StockCountLineFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +11,7 @@ use LogicException;
 class StockCountLine extends Model
 {
     /** @use HasFactory<StockCountLineFactory> */
-    use HasFactory, LogsActivity;
+    use HasFactory;
 
     protected $fillable = [
         'stock_count_id',
