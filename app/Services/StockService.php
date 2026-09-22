@@ -87,7 +87,7 @@ class StockService
                     $this->addMovement(
                         product: $child,
                         location: $ticket->stockLocation,
-                        quantity: -$item->quantity * $child->pivot->quantity,
+                        quantity: -$item->quantity * (int) $child->pivot->getAttribute('quantity'),
                         type: StockMovementType::Sale,
                         reference: $ticket,
                         season: $season,
