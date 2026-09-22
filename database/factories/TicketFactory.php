@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\OperatingDay;
+use App\Models\StockLocation;
 use App\Models\Ticket;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,6 +20,7 @@ class TicketFactory extends Factory
             'operating_day_id' => OperatingDay::factory(),
             'member_id' => null,
             'sold_at' => fake()->dateTimeThisYear(),
+            'stock_location_id' => StockLocation::factory(),
         ];
     }
 

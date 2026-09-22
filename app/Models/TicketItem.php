@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
-use App\LogsActivity;
 use Database\Factories\TicketItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use LogicException;
 
 class TicketItem extends Model
 {
     /** @use HasFactory<TicketItemFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'product_id',
@@ -28,6 +28,25 @@ class TicketItem extends Model
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
     ];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (TicketItem $ticketItem) {
+            if (! $ticketItem->isForceDeleting()) {
+                return;
+            }
+
+            throw new LogicException(
+                'Ticket items cannot be permanently deleted.'
+            );
+        });
+
+        static::restoring(function (TicketItem $ticketItem) {
+            throw new LogicException(
+                'Deleted ticket items cannot be restored.'
+            );
+        });
+    }
 
     /**
      * @return BelongsTo<Product, $this>

@@ -34,7 +34,7 @@ class ReportController extends Controller implements HasMiddleware
     public function dayDetail(OperatingDay $operatingDay): Response
     {
         $operatingDay->setRelation('tickets', $operatingDay->tickets()->withTrashed()
-            ->with(['ticketItems.product', 'ticketItems.voucher'])
+            ->with(['ticketItems' => fn ($q) => $q->withTrashed()->with(['product', 'voucher'])])
             ->get());
 
         return Inertia::render('backOffice/Register/Reports/DayDetail', [
@@ -47,13 +47,6 @@ class ReportController extends Controller implements HasMiddleware
         $operatingDay->setRelation('tickets', $operatingDay->tickets()->withTrashed()->get());
 
         return Inertia::render('backOffice/Register/Reports/DaySummary', [
-            'operatingDay' => $operatingDay,
-        ]);
-    }
-
-    public function dayBalance(OperatingDay $operatingDay): Response
-    {
-        return Inertia::render('backOffice/Register/Reports/DayBalance', [
             'operatingDay' => $operatingDay,
         ]);
     }

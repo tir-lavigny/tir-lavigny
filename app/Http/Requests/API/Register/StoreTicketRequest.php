@@ -22,6 +22,7 @@ class StoreTicketRequest extends FormRequest
             'operating_day_id' => ['required', 'exists:operating_days,id'],
             'member_id' => ['nullable', 'exists:members,id,deleted_at,NULL'],
             'sold_at' => ['required', 'date'],
+            'stock_location_id' => ['required', 'exists:stock_locations,id'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'exists:products,id,deleted_at,NULL'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],

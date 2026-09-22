@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
+use App\Models\StockLocation;
 use App\Models\Ticket;
 use App\Models\TicketItem;
 use App\Models\User;
@@ -67,6 +68,7 @@ class TicketControllerTest extends TestCase
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 2],
             ],
@@ -101,6 +103,7 @@ class TicketControllerTest extends TestCase
             'payment_method' => 'twint',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 3],
             ],
@@ -139,6 +142,7 @@ class TicketControllerTest extends TestCase
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [
                 ['product_id' => $product1->id, 'quantity' => 2],
                 ['product_id' => $product2->id, 'quantity' => 1],
@@ -175,6 +179,7 @@ class TicketControllerTest extends TestCase
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
             ],
@@ -208,6 +213,7 @@ class TicketControllerTest extends TestCase
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1, 'custom_unit_price' => 7.50],
             ],
@@ -243,6 +249,7 @@ class TicketControllerTest extends TestCase
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1],
             ],
@@ -267,6 +274,7 @@ class TicketControllerTest extends TestCase
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1],
             ],
@@ -290,6 +298,7 @@ class TicketControllerTest extends TestCase
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [],
         ], $this->authHeaders());
 
@@ -314,6 +323,7 @@ class TicketControllerTest extends TestCase
             'payment_method' => 'credit',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 1],
             ],
@@ -328,6 +338,7 @@ class TicketControllerTest extends TestCase
         $response = $this->postJson(route('api.register.tickets.store'), [
             'payment_method' => 'cash',
             'operating_day_id' => 1,
+            'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [['product_id' => 1, 'quantity' => 1]],
         ]);
 
@@ -502,7 +513,7 @@ class TicketControllerTest extends TestCase
         ];
 
         $previewResponse = $this->postJson(route('api.register.tickets.preview'), $payload, $this->authHeaders());
-        $storeResponse = $this->postJson(route('api.register.tickets.store'), $payload, $this->authHeaders());
+        $storeResponse = $this->postJson(route('api.register.tickets.store'), array_merge($payload, ['stock_location_id' => StockLocation::factory()->create()->id]), $this->authHeaders());
 
         $previewResponse->assertOk();
         $storeResponse->assertCreated();

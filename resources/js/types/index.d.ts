@@ -208,6 +208,7 @@ export interface Product {
     unit_price: number;
     allows_custom_price: boolean;
     category_id: number;
+    is_stockable: boolean;
     category?: Category;
     child_products?: (Product & { pivot?: { quantity: number } })[];
     parent_products?: Product[];
@@ -346,4 +347,131 @@ export interface MemberRegistration {
 
 export interface PaginatedMemberRegistrations extends PaginatedData<MemberRegistration> {
     data?: MemberRegistration[];
+}
+
+// ── Stock ──
+
+export interface StockLocation {
+    id: number;
+    name: string;
+    description: string | null;
+    active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StockCount {
+    id: number;
+    season_id: number;
+    stock_location_id: number;
+    type: 'initial' | 'adjustment' | 'final';
+    status: string;
+    completed_at: string | null;
+    stock_location?: StockLocation;
+    stock_count_lines?: StockCountLine[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StockCountLine {
+    id: number;
+    stock_count_id: number;
+    product_id: number;
+    expected_quantity: number;
+    counted_quantity: number | null;
+    product?: Product;
+}
+
+export interface StockTransfer {
+    id: number;
+    from_location_id: number;
+    to_location_id: number;
+    season_id: number;
+    reason: string | null;
+    from_location?: StockLocation;
+    to_location?: StockLocation;
+    stock_transfer_lines?: StockTransferLine[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StockTransferLine {
+    id: number;
+    stock_transfer_id: number;
+    product_id: number;
+    quantity: number;
+    product?: Product;
+}
+
+export interface StockLoss {
+    id: number;
+    stock_location_id: number;
+    product_id: number;
+    season_id: number;
+    quantity: number;
+    type: 'loss';
+    reason: string | null;
+    stock_location?: StockLocation;
+    product?: Product;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedStockCounts extends PaginatedData<StockCount> {
+    data?: StockCount[];
+}
+
+export interface PaginatedStockTransfers extends PaginatedData<StockTransfer> {
+    data?: StockTransfer[];
+}
+
+export interface PaginatedStockLosses extends PaginatedData<StockLoss> {
+    data?: StockLoss[];
+}
+
+export interface StockMovement {
+    id: number;
+    stock_location_id: number;
+    product_id: number;
+    season_id: number | null;
+    quantity: number;
+    type: 'initial' | 'purchase' | 'sale' | 'return' | 'transfer' | 'loss' | 'adjustment' | 'reversal';
+    reference_type: string | null;
+    reference_id: number | null;
+    reason: string | null;
+    product?: Product;
+    stock_location?: StockLocation;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StockLocationStock {
+    product_id: number;
+    product: Product;
+    quantity: number;
+}
+
+export interface PaginatedStockLocations extends PaginatedData<StockLocation> {
+    data?: StockLocation[];
+}
+
+export interface PaginatedStockMovements extends PaginatedData<StockMovement> {
+    data?: StockMovement[];
+}
+
+export interface StockSnapshot {
+    id: number;
+    stock_location_id: number;
+    snapshot_at: string;
+    stock_snapshot_lines?: StockSnapshotLine[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StockSnapshotLine {
+    id: number;
+    stock_snapshot_id: number;
+    product_id: number;
+    quantity: number;
+    product?: Product;
 }

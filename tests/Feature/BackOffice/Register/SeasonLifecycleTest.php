@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
+use App\Models\StockLocation;
 use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
@@ -56,6 +57,7 @@ class SeasonLifecycleTest extends TestCase
             array_merge([
                 'payment_method' => 'cash',
                 'sold_at' => now()->toDateTimeString(),
+                'stock_location_id' => StockLocation::factory()->create()->id,
                 'items' => [],
             ], $overrides),
             $this->authHeaders()

@@ -7,6 +7,10 @@ use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController
 use App\Http\Controllers\BackOffice\MemberRegistrationController as BackOfficeMemberRegistrationController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
 use App\Http\Controllers\BackOffice\Register;
+use App\Http\Controllers\BackOffice\Stock\StockCountController;
+use App\Http\Controllers\BackOffice\Stock\StockLocationController;
+use App\Http\Controllers\BackOffice\Stock\StockLossController;
+use App\Http\Controllers\BackOffice\Stock\StockTransferController;
 use App\Http\Controllers\BackOffice\UserController as BackOfficeUserController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EventController;
@@ -205,8 +209,6 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             ->name('bo.register.reports.day-detail');
         Route::get('day/{operatingDay}/summary', [Register\ReportController::class, 'daySummary'])
             ->name('bo.register.reports.day-summary');
-        Route::get('day/{operatingDay}/balance', [Register\ReportController::class, 'dayBalance'])
-            ->name('bo.register.reports.day-balance');
         Route::get('period', [Register\ReportController::class, 'period'])
             ->name('bo.register.reports.period');
         Route::get('season/{season}', [Register\ReportController::class, 'season'])
@@ -222,6 +224,53 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             ->name('bo.register.trash.restore');
         Route::delete('trash/{type}/{id}', [Register\TrashController::class, 'forceDelete'])
             ->name('bo.register.trash.force-delete');
+    });
+
+    // ── Stock Management ──
+    Route::middleware('permission:manage stock')->prefix('stock')->group(function () {
+        Route::get('counts', [StockCountController::class, 'index'])
+            ->name('bo.stock.counts.index');
+        Route::get('counts/create', [StockCountController::class, 'create'])
+            ->name('bo.stock.counts.create');
+        Route::post('counts', [StockCountController::class, 'store'])
+            ->name('bo.stock.counts.store');
+        Route::get('counts/{stockCount}', [StockCountController::class, 'show'])
+            ->name('bo.stock.counts.show');
+        Route::post('counts/{stockCount}/complete', [StockCountController::class, 'complete'])
+            ->name('bo.stock.counts.complete');
+
+        Route::get('transfers', [StockTransferController::class, 'index'])
+            ->name('bo.stock.transfers.index');
+        Route::get('transfers/create', [StockTransferController::class, 'create'])
+            ->name('bo.stock.transfers.create');
+        Route::post('locations/{fromLocation}/transfers', [StockTransferController::class, 'store'])
+            ->name('bo.stock.transfers.store');
+        Route::get('transfers/{stockTransfer}', [StockTransferController::class, 'show'])
+            ->name('bo.stock.transfers.show');
+
+        Route::get('losses', [StockLossController::class, 'index'])
+            ->name('bo.stock.losses.index');
+        Route::get('losses/create', [StockLossController::class, 'create'])
+            ->name('bo.stock.losses.create');
+        Route::post('locations/{location}/losses', [StockLossController::class, 'store'])
+            ->name('bo.stock.losses.store');
+        Route::get('losses/{stockMovement}', [StockLossController::class, 'show'])
+            ->name('bo.stock.losses.show');
+
+        Route::get('locations', [StockLocationController::class, 'index'])
+            ->name('bo.stock.locations.index');
+        Route::get('locations/create', [StockLocationController::class, 'create'])
+            ->name('bo.stock.locations.create');
+        Route::post('locations', [StockLocationController::class, 'store'])
+            ->name('bo.stock.locations.store');
+        Route::get('locations/{stockLocation}', [StockLocationController::class, 'show'])
+            ->name('bo.stock.locations.show');
+        Route::get('locations/{stockLocation}/edit', [StockLocationController::class, 'edit'])
+            ->name('bo.stock.locations.edit');
+        Route::put('locations/{stockLocation}', [StockLocationController::class, 'update'])
+            ->name('bo.stock.locations.update');
+        Route::post('locations/{stockLocation}/compact', [StockLocationController::class, 'compact'])
+            ->name('bo.stock.locations.compact');
     });
 });
 

@@ -22,11 +22,13 @@ class Product extends Model
         'unit_price',
         'allows_custom_price',
         'category_id',
+        'is_stockable',
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
         'allows_custom_price' => 'boolean',
+        'is_stockable' => 'boolean',
     ];
 
     /**
@@ -69,5 +71,29 @@ class Product extends Model
     public function vouchers(): HasMany
     {
         return $this->hasMany(Voucher::class);
+    }
+
+    /**
+     * @return HasMany<StockMovement, $this>
+     */
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    /**
+     * @return HasMany<StockCountLine, $this>
+     */
+    public function stockCountLines(): HasMany
+    {
+        return $this->hasMany(StockCountLine::class);
+    }
+
+    /**
+     * @return HasMany<StockTransferLine, $this>
+     */
+    public function stockTransferLines(): HasMany
+    {
+        return $this->hasMany(StockTransferLine::class);
     }
 }

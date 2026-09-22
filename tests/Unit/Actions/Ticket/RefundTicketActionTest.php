@@ -5,6 +5,7 @@ namespace Tests\Unit\Actions\Ticket;
 use App\Actions\Ticket\RefundTicketAction;
 use App\Models\OperatingDay;
 use App\Models\Season;
+use App\Models\StockLocation;
 use App\Models\Ticket;
 use App\Services\TicketService;
 use Carbon\Carbon;
@@ -40,9 +41,11 @@ class RefundTicketActionTest extends TestCase
     public function test_execute_soft_deletes_ticket(): void
     {
         $day = $this->createOpenDay();
+        $location = StockLocation::factory()->create();
         $ticket = Ticket::factory()->cash()->create([
             'operating_day_id' => $day->id,
             'total' => 25.00,
+            'stock_location_id' => $location->id,
         ]);
 
         $day->update(['total_cash' => 25.00, 'total_twint' => 0]);
@@ -56,9 +59,11 @@ class RefundTicketActionTest extends TestCase
     public function test_execute_delegates_to_ticket_service(): void
     {
         $day = $this->createOpenDay();
+        $location = StockLocation::factory()->create();
         $ticket = Ticket::factory()->cash()->create([
             'operating_day_id' => $day->id,
             'total' => 25.00,
+            'stock_location_id' => $location->id,
         ]);
 
         $service = $this->app->make(TicketService::class);
@@ -76,9 +81,11 @@ class RefundTicketActionTest extends TestCase
     public function test_execute_rolls_back_on_failure(): void
     {
         $day = $this->createOpenDay();
+        $location = StockLocation::factory()->create();
         $ticket = Ticket::factory()->cash()->create([
             'operating_day_id' => $day->id,
             'total' => 25.00,
+            'stock_location_id' => $location->id,
         ]);
 
         $spy = Mockery::mock(TicketService::class);

@@ -2,12 +2,15 @@
 
 namespace Tests\Unit\Services;
 
+use App\Enums\StockMovementType;
 use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\Category;
 use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
+use App\Models\StockLocation;
 use App\Models\Ticket;
+use App\Services\StockService;
 use App\Services\TicketCalculator;
 use App\Services\TicketService;
 use Carbon\Carbon;
@@ -22,10 +25,13 @@ class TicketServiceTest extends TestCase
 
     private TicketCalculator $calculator;
 
+    private StockService $stockService;
+
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new TicketService;
+        $this->stockService = new StockService;
+        $this->service = new TicketService($this->stockService);
         $this->calculator = $this->app->make(TicketCalculator::class);
     }
 
@@ -68,11 +74,13 @@ class TicketServiceTest extends TestCase
         $day = $this->createOpenDay();
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = $this->createProduct($category);
+        $location = StockLocation::factory()->create();
 
         $request = $this->makeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $location->id,
             'items' => [['product_id' => $product->id, 'quantity' => 3]],
         ]);
 
@@ -91,11 +99,13 @@ class TicketServiceTest extends TestCase
         $day = $this->createOpenDay();
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = $this->createProduct($category);
+        $location = StockLocation::factory()->create();
 
         $request = $this->makeRequest([
             'payment_method' => 'twint',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $location->id,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 2],
                 ['product_id' => $product->id, 'quantity' => 1],
@@ -112,11 +122,13 @@ class TicketServiceTest extends TestCase
         $day = $this->createOpenDay();
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = $this->createProduct($category);
+        $location = StockLocation::factory()->create();
 
         $request = $this->makeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $location->id,
             'items' => [['product_id' => $product->id, 'quantity' => 2]],
         ]);
 
@@ -124,6 +136,94 @@ class TicketServiceTest extends TestCase
 
         $day->refresh();
         $this->assertEquals('10.00', $day->total_cash);
+    }
+
+    // --- create() with stock ---
+
+    public function test_create_deducts_stock_when_location_provided(): void
+    {
+        $day = $this->createOpenDay();
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = $this->createProduct($category);
+        $location = StockLocation::factory()->create();
+
+        $request = $this->makeRequest([
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $location->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 3]],
+        ]);
+
+        $ticket = $this->service->create($request, $day, $this->calculator);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product->id,
+            'stock_location_id' => $location->id,
+            'quantity' => -3,
+            'type' => StockMovementType::Sale,
+            'reference_type' => Ticket::class,
+            'reference_id' => $ticket->id,
+        ]);
+    }
+
+    public function test_create_deducts_stock_for_multiple_items(): void
+    {
+        $day = $this->createOpenDay();
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product1 = $this->createProduct($category);
+        $product2 = Product::factory()->create([
+            'category_id' => $category->id,
+            'unit_price' => 3.00,
+        ]);
+        $location = StockLocation::factory()->create();
+
+        $request = $this->makeRequest([
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $location->id,
+            'items' => [
+                ['product_id' => $product1->id, 'quantity' => 3],
+                ['product_id' => $product2->id, 'quantity' => 1],
+            ],
+        ]);
+
+        $ticket = $this->service->create($request, $day, $this->calculator);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product1->id,
+            'quantity' => -3,
+            'type' => StockMovementType::Sale,
+            'reference_id' => $ticket->id,
+        ]);
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product2->id,
+            'quantity' => -1,
+            'type' => StockMovementType::Sale,
+            'reference_id' => $ticket->id,
+        ]);
+    }
+
+    public function test_create_does_not_deduct_stock_for_non_stockable_product(): void
+    {
+        $day = $this->createOpenDay();
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = $this->createProduct($category);
+        $product->update(['is_stockable' => false]);
+        $location = StockLocation::factory()->create();
+
+        $request = $this->makeRequest([
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $location->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 3]],
+        ]);
+
+        $this->service->create($request, $day, $this->calculator);
+
+        $this->assertDatabaseCount('stock_movements', 0);
     }
 
     // --- refund() ---
@@ -155,5 +255,58 @@ class TicketServiceTest extends TestCase
 
         $day->refresh();
         $this->assertEquals('0.00', $day->total_cash);
+    }
+
+    public function test_refund_creates_compensating_stock_movements(): void
+    {
+        $day = $this->createOpenDay();
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = $this->createProduct($category);
+        $location = StockLocation::factory()->create();
+
+        $request = $this->makeRequest([
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $location->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 3]],
+        ]);
+
+        $ticket = $this->service->create($request, $day, $this->calculator);
+
+        $this->service->refund($ticket);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product->id,
+            'stock_location_id' => $location->id,
+            'quantity' => 3,
+            'type' => StockMovementType::Reversal,
+            'reference_type' => Ticket::class,
+            'reference_id' => $ticket->id,
+        ]);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product->id,
+            'stock_location_id' => $location->id,
+            'quantity' => -3,
+            'type' => StockMovementType::Sale,
+            'reference_type' => Ticket::class,
+            'reference_id' => $ticket->id,
+        ]);
+    }
+
+    public function test_refund_does_not_create_stock_movements_when_no_movements(): void
+    {
+        $day = $this->createOpenDay();
+        $location = StockLocation::factory()->create();
+        $ticket = Ticket::factory()->cash()->create([
+            'operating_day_id' => $day->id,
+            'total' => 50.00,
+            'stock_location_id' => $location->id,
+        ]);
+
+        $this->service->refund($ticket);
+
+        $this->assertDatabaseCount('stock_movements', 0);
     }
 }

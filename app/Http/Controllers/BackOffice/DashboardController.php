@@ -13,6 +13,9 @@ class DashboardController extends Controller
     public function index(): Response
     {
         $activities = ActivityLog::where('user_id', Auth::id())
+            ->where('model', '!=', 'App\Models\StockCountLine')
+            ->where('model', '!=', 'App\Models\StockMovement')
+            ->where('model', '!=', 'App\Models\TicketItem')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();

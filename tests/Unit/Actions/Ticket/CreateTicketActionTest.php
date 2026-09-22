@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
+use App\Models\StockLocation;
 use App\Models\Ticket;
 use App\Services\TicketCalculator;
 use App\Services\TicketService;
@@ -65,6 +66,7 @@ class CreateTicketActionTest extends TestCase
         $day = $this->createOpenDay();
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = $this->createProduct($category);
+        $location = StockLocation::factory()->create();
 
         $action = $this->app->make(CreateTicketAction::class);
 
@@ -72,6 +74,7 @@ class CreateTicketActionTest extends TestCase
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $location->id,
             'items' => [['product_id' => $product->id, 'quantity' => 2]],
         ]), $day, $this->calculator);
 
@@ -93,11 +96,13 @@ class CreateTicketActionTest extends TestCase
         $day = $this->createOpenDay();
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = $this->createProduct($category);
+        $location = StockLocation::factory()->create();
 
         $request = $this->makeRequest([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => $location->id,
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
         ]);
 
@@ -123,6 +128,7 @@ class CreateTicketActionTest extends TestCase
         $day = $this->createOpenDay();
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = $this->createProduct($category);
+        $location = StockLocation::factory()->create();
 
         $spy = Mockery::mock(TicketService::class);
         $spy->shouldReceive('create')->andReturnUsing(function ($r, $d, $c) use ($day) {
@@ -131,6 +137,7 @@ class CreateTicketActionTest extends TestCase
                 'payment_method' => 'cash',
                 'operating_day_id' => $day->id,
                 'sold_at' => now()->toDateTimeString(),
+                'stock_location_id' => 1,
             ]);
             throw new \Exception('failure');
         });
@@ -142,6 +149,7 @@ class CreateTicketActionTest extends TestCase
                 'payment_method' => 'cash',
                 'operating_day_id' => $day->id,
                 'sold_at' => now()->toDateTimeString(),
+                'stock_location_id' => $location->id,
                 'items' => [['product_id' => $product->id, 'quantity' => 1]],
             ]), $day, $this->calculator);
         } catch (\Exception $e) {

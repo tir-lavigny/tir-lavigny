@@ -26,6 +26,7 @@ import {
     ClipboardList,
     Trash2,
     Users,
+    ArrowRightLeft,
 } from '@lucide/vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -97,6 +98,12 @@ const modelIcon = (model: string) => {
             return CalendarDays;
         case 'memberregistration':
             return ClipboardList;
+        case 'stockmovement':
+            return ArrowRightLeft;
+        case 'stockcount':
+            return ClipboardList;
+        case 'stockcountline':
+            return ClipboardList;
         default:
             return FileText;
     }
@@ -142,6 +149,12 @@ const translateModel = (model: string) => {
             return "jour d'ouverture";
         case 'memberregistration':
             return "inscription d'un membre";
+        case 'stockmovement':
+            return 'mouvement de stock';
+        case 'stockcount':
+            return 'inventaire de stock';
+        case 'stockcountline':
+            return "ligne d'inventaire de stock";
         default:
             return cleanModelName(model);
     }

@@ -2,9 +2,15 @@
 
 namespace Tests\Unit\Models;
 
+use App\Enums\StockMovementType;
+use App\Models\Product;
+use App\Models\StockLocation;
+use App\Models\StockMovement;
 use App\Models\Ticket;
 use App\Models\TicketItem;
+use App\Services\StockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use LogicException;
 use Tests\TestCase;
 
 class TicketTest extends TestCase
@@ -57,14 +63,77 @@ class TicketTest extends TestCase
         $this->assertTrue($ticket->ticketItems()->withTrashed()->first()->trashed());
     }
 
-    public function test_ticket_items_are_restored_when_ticket_is_restored(): void
+    public function test_ticket_items_remain_soft_deleted_when_ticket_is_not_restored(): void
     {
         $ticket = Ticket::factory()->create();
         TicketItem::factory()->count(2)->create(['ticket_id' => $ticket->id]);
 
         $ticket->delete();
-        $ticket->restore();
 
-        $this->assertFalse($ticket->ticketItems()->withTrashed()->first()->trashed());
+        $this->assertTrue($ticket->ticketItems()->withTrashed()->first()->trashed());
+    }
+
+    public function test_ticket_cannot_be_restored_after_soft_delete(): void
+    {
+        $ticket = Ticket::factory()->create();
+
+        $ticket->delete();
+
+        $this->expectException(LogicException::class);
+        $ticket->restore();
+    }
+
+    public function test_ticket_cannot_be_permanently_deleted(): void
+    {
+        $ticket = Ticket::factory()->create();
+
+        $this->expectException(LogicException::class);
+        $ticket->forceDelete();
+    }
+
+    public function test_ticket_belongs_to_stock_location(): void
+    {
+        $ticket = Ticket::factory()->create();
+
+        $this->assertInstanceOf(StockLocation::class, $ticket->stockLocation);
+    }
+
+    public function test_ticket_has_many_stock_movements(): void
+    {
+        $ticket = Ticket::factory()->create();
+        StockMovement::factory()->count(2)->create([
+            'reference_type' => Ticket::class,
+            'reference_id' => $ticket->id,
+        ]);
+
+        $this->assertCount(2, $ticket->stockMovements);
+    }
+
+    public function test_stock_movements_survive_ticket_soft_deletion(): void
+    {
+        $stockService = new StockService;
+        $location = StockLocation::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => true]);
+        $ticket = Ticket::factory()->create([
+            'stock_location_id' => $location->id,
+        ]);
+
+        $stockService->addMovement(
+            product: $product,
+            location: $location,
+            quantity: -3,
+            type: StockMovementType::Sale,
+            reference: $ticket,
+        );
+
+        $this->assertDatabaseCount('stock_movements', 1);
+
+        $ticket->delete();
+
+        $this->assertDatabaseCount('stock_movements', 1);
+        $this->assertDatabaseHas('stock_movements', [
+            'reference_type' => Ticket::class,
+            'reference_id' => $ticket->id,
+        ]);
     }
 }

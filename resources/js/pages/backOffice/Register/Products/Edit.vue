@@ -30,6 +30,7 @@ const form = useForm({
     unit_price: props.product.unit_price,
     category_id: String(props.product.category_id),
     allows_custom_price: props.product.allows_custom_price,
+    is_stockable: props.product.is_stockable,
 });
 
 const handleSubmit = () => {
@@ -95,8 +96,12 @@ const handleSubmit = () => {
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <Switch id="allows_custom_price" v-model:checked="form.allows_custom_price" />
+                        <Switch id="allows_custom_price" v-model="form.allows_custom_price" />
                         <Label for="allows_custom_price">Prix libre (permet un prix personnalisé)</Label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <Switch id="is_stockable" v-model="form.is_stockable" />
+                        <Label for="is_stockable">Produit stockable (géré en inventaire)</Label>
                     </div>
                 </div>
             </div>

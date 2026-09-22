@@ -45,6 +45,30 @@ class Season extends Model
         return $this->hasMany(Voucher::class);
     }
 
+    /**
+     * @return HasMany<StockMovement, $this>
+     */
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    /**
+     * @return HasMany<StockCount, $this>
+     */
+    public function stockCounts(): HasMany
+    {
+        return $this->hasMany(StockCount::class);
+    }
+
+    /**
+     * @return HasMany<StockTransfer, $this>
+     */
+    public function stockTransfers(): HasMany
+    {
+        return $this->hasMany(StockTransfer::class);
+    }
+
     public function getEndBalanceAttribute(): ?float
     {
         return $this->initial_balance + $this->operatingDays()->sum('total_cash');

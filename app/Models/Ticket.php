@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use LogicException;
 
 class Ticket extends Model
 {
@@ -21,6 +23,7 @@ class Ticket extends Model
         'operating_day_id',
         'member_id',
         'sold_at',
+        'stock_location_id',
     ];
 
     protected $casts = [
@@ -30,12 +33,24 @@ class Ticket extends Model
 
     protected static function booted(): void
     {
+        static::deleting(function (Ticket $ticket) {
+            if (! $ticket->isForceDeleting()) {
+                return;
+            }
+
+            throw new LogicException(
+                'Tickets cannot be permanently deleted.'
+            );
+        });
+
         static::deleted(function (Ticket $ticket) {
             $ticket->ticketItems()->delete();
         });
 
-        static::restored(function (Ticket $ticket) {
-            $ticket->ticketItems()->restore();
+        static::restoring(function (Ticket $ticket) {
+            throw new LogicException(
+                'Deleted tickets cannot be restored because their stock movements are immutable.'
+            );
         });
     }
 
@@ -61,5 +76,21 @@ class Ticket extends Model
     public function ticketItems(): HasMany
     {
         return $this->hasMany(TicketItem::class);
+    }
+
+    /**
+     * @return BelongsTo<StockLocation, $this>
+     */
+    public function stockLocation(): BelongsTo
+    {
+        return $this->belongsTo(StockLocation::class);
+    }
+
+    /**
+     * @return MorphMany<StockMovement, $this>
+     */
+    public function stockMovements(): MorphMany
+    {
+        return $this->morphMany(StockMovement::class, 'reference');
     }
 }
