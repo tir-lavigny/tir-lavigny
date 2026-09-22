@@ -8,7 +8,7 @@ class StoreStockLossRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('manage stock');
+        return $this->user()->can('record stock loss');
     }
 
     /** @return array<string, mixed> */

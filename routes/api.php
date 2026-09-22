@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\Register;
 use App\Http\Controllers\API\Stock\StockLocationController;
+use App\Http\Controllers\API\Stock\StockLossController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -64,4 +65,9 @@ Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->g
 Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('stock')->group(function () {
     Route::get('/locations', [StockLocationController::class, 'index'])
         ->name('api.stock.locations.index');
+
+    Route::get('{stockLocation}/{operatingDay}/losses', [StockLossController::class, 'index'])
+        ->name('api.stock.losses.index');
+    Route::post('losses', [StockLossController::class, 'store'])
+        ->name('api.stock.losses.store');
 });
