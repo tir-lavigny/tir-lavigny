@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('reference_id')->nullable();
             $table->text('reason')->nullable();
             $table->timestamp('original_created_at');
-            $table->timestamp('original_updated_at');
+            $table->timestamp('original_updated_at')->nullable();
             $table->timestamps();
 
             $table->index('stock_location_id');
