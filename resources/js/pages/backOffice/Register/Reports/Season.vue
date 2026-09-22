@@ -30,13 +30,17 @@ const handleDetailChange = (value: unknown) => {
     detail.value = value;
     router.get(route('bo.register.reports.season', props.season.id), { detail: value }, { preserveState: true, preserveScroll: true });
 };
+
+const goToDayDetail = (dayId: number) => {
+    router.get(route('bo.register.reports.day-summary', dayId));
+};
 </script>
 
 <template>
     <Head :title="'Rapport ' + season.name" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="m-4 flex flex-row items-center justify-between">
-            <H1>Rapport — {{ season.name }}</H1>
+            <H1>Rapport - {{ season.name }}</H1>
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-2">
                     <Select :model-value="detail" @update:model-value="handleDetailChange">
@@ -45,6 +49,8 @@ const handleDetailChange = (value: unknown) => {
                             <SelectItem value="balance">Balance</SelectItem>
                             <SelectItem value="tickets">Tickets</SelectItem>
                             <SelectItem value="items">Articles</SelectItem>
+                            <SelectItem value="stock">Stock</SelectItem>
+                            <SelectItem value="stock-movements">Mouvements de stock</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -64,7 +70,7 @@ const handleDetailChange = (value: unknown) => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow v-for="day in operatingDays" :key="day.id">
+                    <TableRow v-for="day in operatingDays" :key="day.id" class="cursor-pointer" @click="goToDayDetail(day.id)">
                         <TableCell class="font-medium">{{ formatDate(day.date, 'DD.MM.YYYY') }}</TableCell>
                         <TableCell class="text-right">{{ formatMoney(day.total_cash) }} CHF</TableCell>
                         <TableCell class="text-right">{{ formatMoney(day.total_twint) }} CHF</TableCell>

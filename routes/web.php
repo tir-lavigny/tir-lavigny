@@ -209,8 +209,6 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             ->name('bo.register.reports.day-detail');
         Route::get('day/{operatingDay}/summary', [Register\ReportController::class, 'daySummary'])
             ->name('bo.register.reports.day-summary');
-        Route::get('day/{operatingDay}/balance', [Register\ReportController::class, 'dayBalance'])
-            ->name('bo.register.reports.day-balance');
         Route::get('period', [Register\ReportController::class, 'period'])
             ->name('bo.register.reports.period');
         Route::get('season/{season}', [Register\ReportController::class, 'season'])

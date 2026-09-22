@@ -6,12 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney } from '@/lib/utils';
 import type { BreadcrumbItem, OperatingDay } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 
 const props = defineProps<{ operatingDay: OperatingDay }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Rapports', href: route('bo.register.reports.index') },
+    { title: formatDate(props.operatingDay.date, 'DD.MM.YYYY'), href: route('bo.register.reports.day-detail', props.operatingDay.id) },
     { title: 'Résumé', href: route('bo.register.reports.day-summary', props.operatingDay.id) },
 ];
 </script>
@@ -21,6 +22,20 @@ const breadcrumbs: BreadcrumbItem[] = [
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="m-4 flex flex-row items-center justify-between">
             <H1>Résumé du {{ formatDate(operatingDay.date, 'DD.MM.YYYY') }}</H1>
+        </div>
+        <div class="mx-4 mb-4 flex gap-1 rounded-lg border p-1">
+            <Link
+                :href="route('bo.register.reports.day-summary', operatingDay.id)"
+                class="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-sm font-medium"
+            >
+                Résumé
+            </Link>
+            <Link
+                :href="route('bo.register.reports.day-detail', operatingDay.id)"
+                class="text-muted-foreground hover:text-foreground rounded-md px-3 py-1.5 text-sm font-medium"
+            >
+                Détail
+            </Link>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="grid grid-cols-3 gap-4">
@@ -57,14 +72,15 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow v-for="ticket in operatingDay.tickets" :key="ticket.id">
+                    <TableRow v-for="ticket in operatingDay.tickets" :key="ticket.id" :class="{ 'opacity-50': ticket.deleted_at }">
                         <TableCell class="font-medium">{{ ticket.id }}</TableCell>
                         <TableCell>
                             <Badge :variant="ticket.payment_method === 'cash' ? 'default' : 'secondary'">
                                 {{ ticket.payment_method === 'cash' ? 'Espèces' : 'TWINT' }}
                             </Badge>
+                            <Badge v-if="ticket.deleted_at" variant="destructive" class="ml-1">Remboursé</Badge>
                         </TableCell>
-                        <TableCell class="text-right">{{ formatMoney(ticket.total) }} CHF</TableCell>
+                        <TableCell class="text-right" :class="{ 'line-through': ticket.deleted_at }">{{ formatMoney(ticket.total) }} CHF</TableCell>
                     </TableRow>
                 </TableBody>
             </Table>

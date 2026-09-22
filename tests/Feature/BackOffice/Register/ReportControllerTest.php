@@ -58,20 +58,6 @@ class ReportControllerTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_day_balance_returns_report(): void
-    {
-        $season = Season::factory()->create();
-        $day = OperatingDay::factory()->create([
-            'season_id' => $season->id,
-            'total_cash' => 100.00,
-            'total_twint' => 50.00,
-        ]);
-
-        $response = $this->get(route('bo.register.reports.day-balance', $day));
-
-        $response->assertOk();
-    }
-
     public function test_period_returns_report(): void
     {
         $season = Season::factory()->create();

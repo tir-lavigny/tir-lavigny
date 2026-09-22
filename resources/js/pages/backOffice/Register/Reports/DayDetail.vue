@@ -6,13 +6,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney } from '@/lib/utils';
 import type { BreadcrumbItem, OperatingDay } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 
 const props = defineProps<{ operatingDay: OperatingDay }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Rapports', href: route('bo.register.reports.index') },
-    { title: 'Journée', href: route('bo.register.reports.day-detail', props.operatingDay.id) },
+    { title: formatDate(props.operatingDay.date, 'DD.MM.YYYY'), href: route('bo.register.reports.day-detail', props.operatingDay.id) },
+    { title: 'Détail', href: route('bo.register.reports.day-detail', props.operatingDay.id) },
 ];
 </script>
 
@@ -21,6 +22,20 @@ const breadcrumbs: BreadcrumbItem[] = [
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="m-4 flex flex-row items-center justify-between">
             <H1>Détail du {{ formatDate(operatingDay.date, 'DD.MM.YYYY') }}</H1>
+        </div>
+        <div class="mx-4 mb-4 flex gap-1 rounded-lg border p-1">
+            <Link
+                :href="route('bo.register.reports.day-summary', operatingDay.id)"
+                class="text-muted-foreground hover:text-foreground rounded-md px-3 py-1.5 text-sm font-medium"
+            >
+                Résumé
+            </Link>
+            <Link
+                :href="route('bo.register.reports.day-detail', operatingDay.id)"
+                class="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-sm font-medium"
+            >
+                Détail
+            </Link>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="grid grid-cols-3 gap-4">
@@ -50,6 +65,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                 v-for="ticket in operatingDay.tickets"
                 :key="ticket.id"
                 class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4"
+                :class="{ 'opacity-50': ticket.deleted_at }"
             >
                 <div class="mb-3 flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -57,8 +73,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <Badge :variant="ticket.payment_method === 'cash' ? 'default' : 'secondary'">
                             {{ ticket.payment_method === 'cash' ? 'Espèces' : 'TWINT' }}
                         </Badge>
+                        <Badge v-if="ticket.deleted_at" variant="destructive">Remboursé</Badge>
                     </div>
-                    <span class="font-bold">{{ formatMoney(ticket.total) }} CHF</span>
+                    <span class="font-bold" :class="{ 'line-through': ticket.deleted_at }">{{ formatMoney(ticket.total) }} CHF</span>
                 </div>
                 <Table>
                     <TableHeader>
@@ -71,7 +88,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </TableHeader>
                     <TableBody>
                         <TableRow v-for="item in ticket.ticket_items" :key="item.id">
-                            <TableCell>{{ item.product?.name ?? '—' }}</TableCell>
+                            <TableCell>{{ item.product?.name ?? '-' }}</TableCell>
                             <TableCell class="text-center">{{ item.quantity }}</TableCell>
                             <TableCell class="text-right">{{ formatMoney(item.unit_price) }} CHF</TableCell>
                             <TableCell class="text-right">{{ formatMoney(item.subtotal) }} CHF</TableCell>

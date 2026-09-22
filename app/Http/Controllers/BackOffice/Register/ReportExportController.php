@@ -4,6 +4,7 @@ namespace App\Http\Controllers\BackOffice\Register;
 
 use App\Http\Controllers\Controller;
 use App\Models\Season;
+use App\Services\StockReportService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -13,6 +14,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportExportController extends Controller implements HasMiddleware
 {
+    public function __construct(
+        private readonly StockReportService $stockReportService,
+    ) {}
+
     public static function middleware(): array
     {
         return [
@@ -29,6 +34,8 @@ class ReportExportController extends Controller implements HasMiddleware
         return match ($detail) {
             'tickets' => $this->streamExcel($season, $fileName, 'tickets'),
             'items' => $this->streamExcel($season, $fileName, 'items'),
+            'stock' => $this->streamExcel($season, $fileName, 'stock'),
+            'stock-movements' => $this->streamExcel($season, $fileName, 'stock-movements'),
             default => $this->streamExcel($season, $fileName, 'balance'),
         };
     }
@@ -52,6 +59,8 @@ class ReportExportController extends Controller implements HasMiddleware
         return match ($detail) {
             'tickets' => $this->ticketRows($season),
             'items' => $this->itemRows($season),
+            'stock' => $this->stockReportService->getStockReportRows($season),
+            'stock-movements' => $this->stockReportService->getStockMovementsReportRows($season),
             default => $this->balanceRows($season),
         };
     }

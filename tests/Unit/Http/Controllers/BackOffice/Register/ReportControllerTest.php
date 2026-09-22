@@ -43,16 +43,6 @@ class ReportControllerTest extends TestCase
         $this->assertInstanceOf(Response::class, $response);
     }
 
-    public function test_day_balance_returns_inertia_response(): void
-    {
-        $season = Season::factory()->create();
-        $day = OperatingDay::factory()->create(['season_id' => $season->id]);
-
-        $response = $this->controller->dayBalance($day);
-
-        $this->assertInstanceOf(Response::class, $response);
-    }
-
     public function test_period_returns_inertia_response(): void
     {
         $request = Request::create('/reports/period', 'GET', [
