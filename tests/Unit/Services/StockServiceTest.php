@@ -337,4 +337,193 @@ class StockServiceTest extends TestCase
 
         $this->assertEquals(0, $this->service->getStockForProduct($product, $location));
     }
+
+    // --- deductForTicket() with child products ---
+
+    public function test_deduct_for_ticket_deducts_stockable_children_of_non_stockable_product(): void
+    {
+        $parent = Product::factory()->create(['is_stockable' => false]);
+        $child = Product::factory()->create(['is_stockable' => true]);
+        $parent->childProducts()->attach($child->id, ['quantity' => 12]);
+
+        $location = StockLocation::factory()->create();
+        $ticket = Ticket::factory()->create([
+            'stock_location_id' => $location->id,
+        ]);
+
+        $ticket->ticketItems()->create([
+            'product_id' => $parent->id,
+            'quantity' => 1,
+            'unit_price' => 10.00,
+            'subtotal' => 10.00,
+        ]);
+
+        $this->service->deductForTicket($ticket);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $child->id,
+            'stock_location_id' => $location->id,
+            'quantity' => -12,
+            'type' => StockMovementType::Sale,
+            'reference_type' => Ticket::class,
+            'reference_id' => $ticket->id,
+        ]);
+
+        $this->assertDatabaseCount('stock_movements', 1);
+    }
+
+    public function test_deduct_for_ticket_scales_child_quantity_by_ticket_item_quantity(): void
+    {
+        $parent = Product::factory()->create(['is_stockable' => false]);
+        $child = Product::factory()->create(['is_stockable' => true]);
+        $parent->childProducts()->attach($child->id, ['quantity' => 12]);
+
+        $location = StockLocation::factory()->create();
+        $ticket = Ticket::factory()->create([
+            'stock_location_id' => $location->id,
+        ]);
+
+        $ticket->ticketItems()->create([
+            'product_id' => $parent->id,
+            'quantity' => 3,
+            'unit_price' => 10.00,
+            'subtotal' => 30.00,
+        ]);
+
+        $this->service->deductForTicket($ticket);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $child->id,
+            'quantity' => -36,
+        ]);
+    }
+
+    public function test_deduct_for_ticket_deducts_children_not_parent_when_parent_also_stockable(): void
+    {
+        $parent = Product::factory()->create(['is_stockable' => true]);
+        $child = Product::factory()->create(['is_stockable' => true]);
+        $parent->childProducts()->attach($child->id, ['quantity' => 6]);
+
+        $location = StockLocation::factory()->create();
+        $ticket = Ticket::factory()->create([
+            'stock_location_id' => $location->id,
+        ]);
+
+        $ticket->ticketItems()->create([
+            'product_id' => $parent->id,
+            'quantity' => 1,
+            'unit_price' => 10.00,
+            'subtotal' => 10.00,
+        ]);
+
+        $this->service->deductForTicket($ticket);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $child->id,
+            'quantity' => -6,
+        ]);
+
+        $this->assertDatabaseMissing('stock_movements', [
+            'product_id' => $parent->id,
+        ]);
+    }
+
+    public function test_deduct_for_ticket_deducts_parent_when_children_are_non_stockable(): void
+    {
+        $parent = Product::factory()->create(['is_stockable' => true]);
+        $child = Product::factory()->create(['is_stockable' => false]);
+        $parent->childProducts()->attach($child->id, ['quantity' => 12]);
+
+        $location = StockLocation::factory()->create();
+        $ticket = Ticket::factory()->create([
+            'stock_location_id' => $location->id,
+        ]);
+
+        $ticket->ticketItems()->create([
+            'product_id' => $parent->id,
+            'quantity' => 2,
+            'unit_price' => 10.00,
+            'subtotal' => 20.00,
+        ]);
+
+        $this->service->deductForTicket($ticket);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $parent->id,
+            'quantity' => -2,
+        ]);
+
+        $this->assertDatabaseCount('stock_movements', 1);
+    }
+
+    public function test_deduct_for_ticket_multiple_stockable_children(): void
+    {
+        $parent = Product::factory()->create(['is_stockable' => false]);
+        $child1 = Product::factory()->create(['is_stockable' => true]);
+        $child2 = Product::factory()->create(['is_stockable' => true]);
+        $parent->childProducts()->attach([
+            $child1->id => ['quantity' => 12],
+            $child2->id => ['quantity' => 6],
+        ]);
+
+        $location = StockLocation::factory()->create();
+        $ticket = Ticket::factory()->create([
+            'stock_location_id' => $location->id,
+        ]);
+
+        $ticket->ticketItems()->create([
+            'product_id' => $parent->id,
+            'quantity' => 2,
+            'unit_price' => 10.00,
+            'subtotal' => 20.00,
+        ]);
+
+        $this->service->deductForTicket($ticket);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $child1->id,
+            'quantity' => -24,
+        ]);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $child2->id,
+            'quantity' => -12,
+        ]);
+
+        $this->assertDatabaseCount('stock_movements', 2);
+    }
+
+    public function test_reverse_for_ticket_reverses_child_product_movements(): void
+    {
+        $parent = Product::factory()->create(['is_stockable' => false]);
+        $child = Product::factory()->create(['is_stockable' => true]);
+        $parent->childProducts()->attach($child->id, ['quantity' => 12]);
+
+        $location = StockLocation::factory()->create();
+        $ticket = Ticket::factory()->create([
+            'stock_location_id' => $location->id,
+        ]);
+
+        $ticket->ticketItems()->create([
+            'product_id' => $parent->id,
+            'quantity' => 1,
+            'unit_price' => 10.00,
+            'subtotal' => 10.00,
+        ]);
+
+        $this->service->deductForTicket($ticket);
+        $this->service->reverseForTicket($ticket);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $child->id,
+            'quantity' => 12,
+            'type' => StockMovementType::Reversal,
+        ]);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $child->id,
+            'quantity' => -12,
+            'type' => StockMovementType::Sale,
+        ]);
+    }
 }

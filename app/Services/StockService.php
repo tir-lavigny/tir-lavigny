@@ -77,17 +77,32 @@ class StockService
         $season = $ticket->operatingDay?->season;
 
         foreach ($ticket->ticketItems as $item) {
-            if (! $item->product->is_stockable) {
-                continue;
+            $product = $item->product;
+            $stockableChildren = $product->childProducts()
+                ->where('is_stockable', true)
+                ->get();
+
+            if ($stockableChildren->isNotEmpty()) {
+                foreach ($stockableChildren as $child) {
+                    $this->addMovement(
+                        product: $child,
+                        location: $ticket->stockLocation,
+                        quantity: -$item->quantity * $child->pivot->quantity,
+                        type: StockMovementType::Sale,
+                        reference: $ticket,
+                        season: $season,
+                    );
+                }
+            } elseif ($product->is_stockable) {
+                $this->addMovement(
+                    product: $product,
+                    location: $ticket->stockLocation,
+                    quantity: -$item->quantity,
+                    type: StockMovementType::Sale,
+                    reference: $ticket,
+                    season: $season,
+                );
             }
-            $this->addMovement(
-                product: $item->product,
-                location: $ticket->stockLocation,
-                quantity: -$item->quantity,
-                type: StockMovementType::Sale,
-                reference: $ticket,
-                season: $season,
-            );
         }
     }
 
