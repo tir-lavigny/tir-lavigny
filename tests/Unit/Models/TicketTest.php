@@ -2,10 +2,13 @@
 
 namespace Tests\Unit\Models;
 
+use App\Enums\StockMovementType;
+use App\Models\Product;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Models\Ticket;
 use App\Models\TicketItem;
+use App\Services\StockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use LogicException;
 use Tests\TestCase;
@@ -104,5 +107,33 @@ class TicketTest extends TestCase
         ]);
 
         $this->assertCount(2, $ticket->stockMovements);
+    }
+
+    public function test_stock_movements_survive_ticket_soft_deletion(): void
+    {
+        $stockService = new StockService;
+        $location = StockLocation::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => true]);
+        $ticket = Ticket::factory()->create([
+            'stock_location_id' => $location->id,
+        ]);
+
+        $stockService->addMovement(
+            product: $product,
+            location: $location,
+            quantity: -3,
+            type: StockMovementType::Sale,
+            reference: $ticket,
+        );
+
+        $this->assertDatabaseCount('stock_movements', 1);
+
+        $ticket->delete();
+
+        $this->assertDatabaseCount('stock_movements', 1);
+        $this->assertDatabaseHas('stock_movements', [
+            'reference_type' => Ticket::class,
+            'reference_id' => $ticket->id,
+        ]);
     }
 }

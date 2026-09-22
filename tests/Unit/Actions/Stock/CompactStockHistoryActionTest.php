@@ -369,6 +369,41 @@ class CompactStockHistoryActionTest extends TestCase
         $this->assertEquals(100, $stock);
     }
 
+    public function test_compact_rollback_preserves_movements_on_action_failure(): void
+    {
+        $location = StockLocation::factory()->create();
+        $product = Product::factory()->create(['is_stockable' => true]);
+
+        $this->stockService->addMovement(
+            product: $product,
+            location: $location,
+            quantity: 50,
+            type: StockMovementType::Purchase,
+        );
+
+        $movementsBefore = StockMovement::count();
+
+        // Verify that if the outer transaction fails after a successful compact,
+        // everything rolls back: no snapshot, no archived movements, original
+        // movements intact.
+        try {
+            DB::transaction(function () use ($location) {
+                $this->action->execute($location);
+
+                throw new \RuntimeException('Simulated post-compact failure');
+            });
+        } catch (\RuntimeException $e) {
+            // Expected.
+        }
+
+        $this->assertEquals($movementsBefore, StockMovement::count());
+        $this->assertEquals(0, StockSnapshot::count());
+        $this->assertEquals(0, StockArchivedMovement::count());
+
+        $stock = $this->stockService->getStockForProduct($product, $location);
+        $this->assertEquals(50, $stock);
+    }
+
     public function test_compact_boundary_includes_movements_at_snapshot_time(): void
     {
         $location = StockLocation::factory()->create();

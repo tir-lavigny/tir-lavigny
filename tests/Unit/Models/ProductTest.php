@@ -2,7 +2,11 @@
 
 namespace Tests\Unit\Models;
 
+use App\Enums\StockMovementType;
 use App\Models\Product;
+use App\Models\StockLocation;
+use App\Models\StockMovement;
+use App\Services\StockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -52,5 +56,35 @@ class ProductTest extends TestCase
         $product = Product::factory()->create();
 
         $this->assertNotNull($product->category);
+    }
+
+    public function test_changing_is_stockable_does_not_corrupt_existing_movements(): void
+    {
+        $product = Product::factory()->create(['is_stockable' => true]);
+        $location = StockLocation::factory()->create();
+        $stockService = new StockService;
+
+        $stockService->addMovement(
+            product: $product,
+            location: $location,
+            quantity: 50,
+            type: StockMovementType::Purchase,
+        );
+        $stockService->addMovement(
+            product: $product,
+            location: $location,
+            quantity: -10,
+            type: StockMovementType::Sale,
+        );
+
+        $this->assertEquals(40, $stockService->getStockForProduct($product, $location));
+
+        $movementCount = StockMovement::where('product_id', $product->id)->count();
+        $this->assertEquals(2, $movementCount);
+
+        $product->update(['is_stockable' => false]);
+
+        $this->assertEquals(40, $stockService->getStockForProduct($product, $location));
+        $this->assertEquals($movementCount, StockMovement::where('product_id', $product->id)->count());
     }
 }

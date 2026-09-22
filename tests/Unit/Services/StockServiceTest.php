@@ -285,4 +285,56 @@ class StockServiceTest extends TestCase
 
         $this->assertDatabaseCount('stock_movements', 0);
     }
+
+    public function test_season_independence_stock_calculation_across_seasons(): void
+    {
+        $product = Product::factory()->create();
+        $location = StockLocation::factory()->create();
+        $seasonA = Season::factory()->create([
+            'start_date' => now()->subMonths(6),
+            'end_date' => now()->subMonths(3),
+        ]);
+        $seasonB = Season::factory()->create([
+            'start_date' => now()->subMonths(2),
+            'end_date' => now()->addMonths(1),
+        ]);
+
+        $this->service->addMovement(
+            product: $product,
+            location: $location,
+            quantity: 100,
+            type: StockMovementType::Purchase,
+            season: $seasonA,
+        );
+
+        $this->service->addMovement(
+            product: $product,
+            location: $location,
+            quantity: -20,
+            type: StockMovementType::Sale,
+            season: $seasonB,
+        );
+
+        $this->assertEquals(80, $this->service->getStockForProduct($product, $location));
+    }
+
+    public function test_add_movement_with_zero_quantity(): void
+    {
+        $product = Product::factory()->create();
+        $location = StockLocation::factory()->create();
+
+        $movement = $this->service->addMovement(
+            product: $product,
+            location: $location,
+            quantity: 0,
+            type: StockMovementType::Adjustment,
+        );
+
+        $this->assertDatabaseHas('stock_movements', [
+            'id' => $movement->id,
+            'quantity' => 0,
+        ]);
+
+        $this->assertEquals(0, $this->service->getStockForProduct($product, $location));
+    }
 }
