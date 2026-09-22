@@ -8,6 +8,7 @@ use App\Models\Season;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Models\Ticket;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class StockReportService
@@ -76,10 +77,10 @@ class StockReportService
     }
 
     /**
-     * @param  StockLocation[]  $locations
+     * @param  Collection<int, StockLocation>  $locations
      * @return array<int, array<int, int>>
      */
-    private function getCurrentStock($locations): array
+    private function getCurrentStock(Collection $locations): array
     {
         $result = [];
 
@@ -98,7 +99,8 @@ class StockReportService
      */
     private function getSeasonActivity(Season $season): array
     {
-        $movements = StockMovement::where('created_at', '>=', $season->start_date->startOfDay())
+        $rows = DB::table('stock_movements')
+            ->where('created_at', '>=', $season->start_date->startOfDay())
             ->where('created_at', '<=', $season->end_date->endOfDay())
             ->select(
                 'stock_location_id',
@@ -117,16 +119,16 @@ class StockReportService
 
         $result = [];
 
-        foreach ($movements as $m) {
-            $result[$m->stock_location_id][$m->product_id] = [
-                'sale_qty' => (int) $m->sale_qty,
-                'loss_qty' => (int) $m->loss_qty,
-                'transfer_in_qty' => (int) $m->transfer_in_qty,
-                'transfer_out_qty' => (int) $m->transfer_out_qty,
-                'adjustment_qty' => (int) $m->adjustment_qty,
-                'return_qty' => (int) $m->return_qty,
-                'reversal_qty' => (int) $m->reversal_qty,
-                'variation_qty' => (int) $m->variation_qty,
+        foreach ($rows as $row) {
+            $result[$row->stock_location_id][$row->product_id] = [
+                'sale_qty' => (int) $row->sale_qty,
+                'loss_qty' => (int) $row->loss_qty,
+                'transfer_in_qty' => (int) $row->transfer_in_qty,
+                'transfer_out_qty' => (int) $row->transfer_out_qty,
+                'adjustment_qty' => (int) $row->adjustment_qty,
+                'return_qty' => (int) $row->return_qty,
+                'reversal_qty' => (int) $row->reversal_qty,
+                'variation_qty' => (int) $row->variation_qty,
             ];
         }
 
