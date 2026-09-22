@@ -282,6 +282,7 @@ export interface Ticket {
     ticket_items?: TicketItem[];
     member?: Member;
     operating_day?: OperatingDay;
+    stock_location?: StockLocation;
     created_at: string;
     updated_at: string;
     deleted_at?: string;

@@ -155,6 +155,7 @@ onMounted(() => {
                     <TableRow>
                         <TableHead>#</TableHead>
                         <TableHead>Vendu à</TableHead>
+                        <TableHead>Lieu</TableHead>
                         <TableHead>Paiement</TableHead>
                         <TableHead class="text-right">Total</TableHead>
                     </TableRow>
@@ -172,6 +173,9 @@ onMounted(() => {
                             <Badge v-if="ticket.deleted_at" variant="destructive" class="ml-2">Remboursé</Badge>
                         </TableCell>
                         <TableCell>{{ formatDate(ticket.sold_at, 'HH:mm') }}</TableCell>
+                        <TableCell>
+                            {{ ticket.stock_location?.name ?? 'N/A' }}
+                        </TableCell>
                         <TableCell>
                             <Badge :variant="ticket.payment_method === 'cash' ? 'default' : 'secondary'">
                                 {{ ticket.payment_method === 'cash' ? 'Espèces' : 'TWINT' }}

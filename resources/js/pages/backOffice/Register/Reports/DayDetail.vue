@@ -73,6 +73,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <Badge :variant="ticket.payment_method === 'cash' ? 'default' : 'secondary'">
                             {{ ticket.payment_method === 'cash' ? 'Espèces' : 'TWINT' }}
                         </Badge>
+                        <Badge variant="secondary">
+                            {{ ticket.stock_location?.name ?? 'N/A' }}
+                        </Badge>
                         <Badge v-if="ticket.deleted_at" variant="destructive">Remboursé</Badge>
                     </div>
                     <span class="font-bold" :class="{ 'line-through': ticket.deleted_at }">{{ formatMoney(ticket.total) }} CHF</span>

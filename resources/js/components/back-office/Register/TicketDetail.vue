@@ -63,6 +63,9 @@ function handleRefund() {
                 <Badge :variant="ticket.payment_method === 'cash' ? 'default' : 'secondary'">
                     {{ ticket.payment_method === 'cash' ? 'Espèces' : 'TWINT' }}
                 </Badge>
+                <Badge v-if="ticket.stock_location" variant="outline" class="ml-2">
+                    {{ ticket.stock_location.name }}
+                </Badge>
                 <Badge v-if="isRefunded" variant="destructive">Remboursé</Badge>
             </div>
             <span class="text-muted-foreground text-sm">{{ formatDate(ticket.sold_at, 'HH:mm') }}</span>
