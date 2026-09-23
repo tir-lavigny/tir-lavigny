@@ -465,7 +465,7 @@ return [
     */
 
     'spa' => [
-        'enabled' => env('MATOMO_SPA', false),
+        'enabled' => env('MATOMO_SPA', true),
         'adapters' => ['livewire', 'inertia'],
 
         // Soft (client-side) navigations produce no new browser Navigation Timing, so Matomo
