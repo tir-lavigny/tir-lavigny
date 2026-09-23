@@ -13,6 +13,17 @@ deploy() {
     git reset --hard origin/staging-deploy
     composer_php8.4 install --no-interaction --prefer-dist --optimize-autoloader
     php-8.4 artisan migrate --force
+
+    if [ ! -f database/pulse.sqlite ]; then
+        touch database/pulse.sqlite
+    fi
+    if [ ! -f database/telescope.sqlite ]; then
+        touch database/telescope.sqlite
+    fi
+
+    php-8.4 artisan migrate:refresh --path=/database/migrations/2025_04_21_152214_create_pulse_tables.php
+    php-8.4 artisan migrate:refresh --path=/database/migrations/2025_04_25_153817_create_telescope_entries_table.php
+
     php-8.4 artisan optimize:clear
 }
 
