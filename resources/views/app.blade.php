@@ -8,6 +8,8 @@
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
 
+    @matomo
+
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}
     <script>
         (function() {
@@ -52,8 +54,6 @@
     @routes
     @vite(['resources/js/app.ts'])
     @inertiaHead
-
-    @matomoScript
 </head>
 
 <body class="font-sans antialiased">
