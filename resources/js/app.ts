@@ -35,14 +35,3 @@ router.on('success', (event) => {
     if (flash?.success) toast.success(flash.success);
     if (flash?.error) toast.error(flash.error);
 });
-
-router.on('navigate', (event) => {
-    requestAnimationFrame(() => {
-        if (window._paq) {
-            const url = event.detail.page.url;
-            window._paq.push(['setCustomUrl', url]);
-            window._paq.push(['setDocumentTitle', document.title]);
-            window._paq.push(['trackPageView']);
-        }
-    });
-});

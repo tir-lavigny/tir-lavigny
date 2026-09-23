@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "464b41156430dd2f212974b6bf692313",
+    "content-hash": "cd54795b0daa8ebb484cc7bac79de1d9",
     "packages": [
         {
             "name": "brick/math",
@@ -3964,114 +3964,6 @@
                 "source": "https://github.com/bobthecow/psysh/tree/v0.12.24"
             },
             "time": "2026-06-29T15:41:09+00:00"
-        },
-        {
-            "name": "pushery/matomo-analytics-for-laravel",
-            "version": "v0.30.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/pushery/matomo-analytics-for-laravel.git",
-                "reference": "d99a40fcc017600309e5eb0ee338c080f41b51b2"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/pushery/matomo-analytics-for-laravel/zipball/d99a40fcc017600309e5eb0ee338c080f41b51b2",
-                "reference": "d99a40fcc017600309e5eb0ee338c080f41b51b2",
-                "shasum": ""
-            },
-            "require": {
-                "ext-ctype": "*",
-                "ext-filter": "*",
-                "ext-hash": "*",
-                "ext-json": "*",
-                "ext-mbstring": "*",
-                "guzzlehttp/guzzle": "^7.0 || ^8.0",
-                "illuminate/auth": "^12.0 || ^13.0",
-                "illuminate/bus": "^12.0 || ^13.0",
-                "illuminate/cache": "^12.0 || ^13.0",
-                "illuminate/config": "^12.0 || ^13.0",
-                "illuminate/console": "^12.0 || ^13.0",
-                "illuminate/contracts": "^12.0 || ^13.0",
-                "illuminate/cookie": "^12.0 || ^13.0",
-                "illuminate/database": "^12.0 || ^13.0",
-                "illuminate/events": "^12.0 || ^13.0",
-                "illuminate/http": "^12.0 || ^13.0",
-                "illuminate/log": "^12.0 || ^13.0",
-                "illuminate/queue": "^12.0 || ^13.0",
-                "illuminate/redis": "^12.0 || ^13.0",
-                "illuminate/routing": "^12.0 || ^13.0",
-                "illuminate/support": "^12.0 || ^13.0",
-                "illuminate/translation": "^12.0 || ^13.0",
-                "illuminate/view": "^12.0 || ^13.0",
-                "nesbot/carbon": "^3.0",
-                "php": "^8.4",
-                "symfony/console": "^7.0 || ^8.0",
-                "symfony/http-foundation": "^7.0 || ^8.0",
-                "symfony/http-kernel": "^7.0 || ^8.0"
-            },
-            "require-dev": {
-                "larastan/larastan": "3.11.0",
-                "laravel/ai": "^0.11.2",
-                "laravel/boost": "^2.9",
-                "laravel/mcp": "^1.0",
-                "laravel/pao": "^1.1",
-                "laravel/pint": "^1.0",
-                "matomo/device-detector": "^6.4",
-                "orchestra/testbench": "^10.0 || ^11.0",
-                "pestphp/pest": "^5.0",
-                "pestphp/pest-plugin-agent": "^5.0",
-                "pestphp/pest-plugin-browser": "^5.0",
-                "pestphp/pest-plugin-laravel": "^5.0",
-                "pestphp/pest-plugin-phpstan": "5.2.1",
-                "pestphp/pest-plugin-rector": "5.0.4",
-                "pestphp/pest-plugin-type-coverage": "^5.0",
-                "phpstan/phpstan": "2.2.13",
-                "rector/rector": "2.6.6",
-                "spaze/phpstan-disallowed-calls": "4.14.0"
-            },
-            "suggest": {
-                "laravel/ai": "Required only to score evals with a real judge. Not a dev dependency: it requires aws/aws-sdk-php for a provider this package never calls, which is 67 MB and 3512 files in every checkout and every CI lane of a package that writes no judge-backed eval at all.",
-                "matomo/device-detector": "Exhaustive, upstream-maintained bot detection across every category — wire DeviceDetectorBotDetector through the bots.detector config hook.",
-                "matomo/matomo-php-tracker": "Use the official server-side Matomo tracker instead of the bundled thin HTTP client"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "MatomoAnalytics\\MatomoAnalyticsServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "MatomoAnalytics\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "description": "Privacy-first Matomo analytics for Laravel with cookieless tracking, reports, Web Vitals, batching and bot filtering.",
-            "homepage": "https://github.com/pushery/matomo-analytics-for-laravel",
-            "keywords": [
-                "analytics",
-                "bot-detection",
-                "cookieless",
-                "gdpr",
-                "laravel",
-                "matomo",
-                "piwik",
-                "privacy",
-                "reporting-api",
-                "tracking",
-                "web-analytics",
-                "web-vitals"
-            ],
-            "support": {
-                "issues": "https://github.com/pushery/matomo-analytics-for-laravel/issues",
-                "source": "https://github.com/pushery/matomo-analytics-for-laravel"
-            },
-            "time": "2026-09-19T17:21:28+00:00"
         },
         {
             "name": "ralouphie/getallheaders",
@@ -12365,5 +12257,5 @@
         "php": "^8.4"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

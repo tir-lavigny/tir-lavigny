@@ -8,8 +8,6 @@
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
     <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
 
-    @matomo(['disableCookies' => true])
-
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}
     <script>
         (function() {
@@ -41,7 +39,7 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
-    @if (isset($page['props']['og']))
+    @if(isset($page['props']['og']))
         <meta property="og:title" content="{{ $page['props']['og']['title'] ?? config('app.name') }}" />
         <meta property="og:description" content="{{ $page['props']['og']['description'] ?? '' }}" />
         <meta property="og:image" content="{{ $page['props']['og']['image'] ?? asset('/images/hero.jpg') }}" />
