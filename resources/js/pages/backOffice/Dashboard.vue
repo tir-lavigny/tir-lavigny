@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
+import AppBarChart from '@/components/back-office/AppBarChart.vue';
+import AppBarChartMultiple from '@/components/back-office/AppBarChartMultiple.vue';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { H3 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +11,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate } from '@/lib/utils';
 import { ActivityLog, type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import {
     ArrowRight,
     CalendarRange,
@@ -36,9 +39,28 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-defineProps<{
+type DashboardProps = {
     activities: ActivityLog[];
-}>();
+    eventsPerYear: { year: string; count: number }[];
+    dailySales: { date: string; cash: number; twint: number }[];
+};
+
+defineProps<DashboardProps>();
+
+type DailySale = DashboardProps['dailySales'][number];
+
+const dailySalesConfig = {
+    cash: {
+        label: 'Espèces (CHF)',
+        color: 'var(--chart-1)',
+    },
+    twint: {
+        label: 'TWINT (CHF)',
+        color: 'var(--chart-2)',
+    },
+};
+
+const dailySalesY = computed<((d: DailySale) => number)[]>(() => [(d) => d.cash, (d) => d.twint]);
 
 const actionConfig = (action: string) => {
     switch (action) {
@@ -166,19 +188,35 @@ const translateModel = (model: string) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-                <div class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border">
-                    <!-- Display some register stats -->
-                    <PlaceholderPattern />
-                </div>
-                <div class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border">
-                    <!-- Display some events stats -->
-                    <PlaceholderPattern />
-                </div>
-                <div class="border-sidebar-border/70 dark:border-sidebar-border relative aspect-video overflow-hidden rounded-xl border">
-                    <!-- Display some website visit stats if infomanial has an API -->
-                    <PlaceholderPattern />
-                </div>
+            <div class="grid auto-rows-min gap-4 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Ventes</CardTitle>
+                        <CardDescription>Recettes quotidiennes de la saison en cours</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <AppBarChartMultiple :data="dailySales" :config="dailySalesConfig" :x="(d: DailySale) => d.date" :y="dailySalesY" />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Événements</CardTitle>
+                        <CardDescription>Nombre d'événements par année</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <AppBarChart
+                            :data="eventsPerYear"
+                            :config="{
+                                count: {
+                                    label: 'Événements',
+                                    color: 'var(--chart-1)',
+                                },
+                            }"
+                            :x="(d) => d.year"
+                            :y="(d) => d.count"
+                        />
+                    </CardContent>
+                </Card>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 rounded-xl border p-4 md:min-h-min">
                 <H3 class="mb-4">Activité récente</H3>
