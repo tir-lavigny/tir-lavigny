@@ -220,7 +220,7 @@ const translateModel = (model: string) => {
                             }"
                             :x="(d) => d.year"
                             :y="(d) => d.count"
-                            :tick-format="(d: number) => String(d)"
+                            :tick-format="(d: number) => String(new Date(d).getFullYear())"
                             :y-tick-format="(d: number) => String(d)"
                         />
                     </CardContent>
