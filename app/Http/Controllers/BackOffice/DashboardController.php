@@ -22,10 +22,14 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $eventsPerYear = Event::selectRaw('strftime(\'%Y\', start_datetime) as year, count(*) as count')
-            ->groupBy('year')
-            ->orderBy('year', 'desc')
-            ->get();
+        $eventsPerYear = Event::select('start_datetime')
+            ->get()
+            ->map(fn (Event $event) => $event->start_datetime->format('Y'))
+            ->countBy()
+            ->map(fn (int $count, string $year) => ['year' => $year, 'count' => $count])
+            ->values()
+            ->sortByDesc('year')
+            ->values();
 
         $currentSeason = Season::where('start_date', '<=', now())
             ->where('end_date', '>=', now())
