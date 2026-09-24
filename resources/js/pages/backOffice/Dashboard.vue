@@ -195,7 +195,13 @@ const translateModel = (model: string) => {
                         <CardDescription>Recettes quotidiennes de la saison en cours</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AppBarChartMultiple :data="dailySales" :config="dailySalesConfig" :x="(d: DailySale) => d.date" :y="dailySalesY" />
+                        <AppBarChartMultiple
+                            :data="dailySales"
+                            :config="dailySalesConfig"
+                            :x="(d: DailySale) => d.date"
+                            :y="dailySalesY"
+                            :tick-values="(d: DailySale) => d.date"
+                        />
                     </CardContent>
                 </Card>
                 <Card>
@@ -214,6 +220,8 @@ const translateModel = (model: string) => {
                             }"
                             :x="(d) => d.year"
                             :y="(d) => d.count"
+                            :tick-format="(d: number) => String(d)"
+                            :y-tick-format="(d: number) => String(d)"
                         />
                     </CardContent>
                 </Card>
