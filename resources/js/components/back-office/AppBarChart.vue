@@ -14,10 +14,12 @@ const props = withDefaults(
         tickFormat?: (d: number) => string;
         yTickFormat?: (d: number) => string;
         tickValues?: (d: T) => Date | string | number;
+        parseAsDate?: boolean;
     }>(),
     {
         tickValues: undefined,
         yTickFormat: undefined,
+        parseAsDate: true,
     },
 );
 
@@ -32,16 +34,21 @@ const parseDate = (v: Date | string | number) => {
 
 const isDateLike = (v: Date | string | number) => v instanceof Date || (typeof v === 'string' && !isNaN(new Date(v).getTime()));
 
-const mappedTickValues = computed(() => (props.tickValues != null ? props.data.map((d) => props.tickValues!(d)) : undefined));
+const toX = (v: Date | string | number) => (props.parseAsDate && isDateLike(v) ? parseDate(v) : v);
+
+const mappedTickValues = computed(() => {
+    if (props.tickValues == null) return undefined;
+    return props.data.map((d) => toX(props.tickValues!(d)));
+});
 </script>
 
 <template>
     <ChartContainer :config="config">
         <VisXYContainer :data="data" :margin="{ left: -24 }" :y-domain="[0, undefined]">
-            <VisGroupedBar :x="(d: T) => (isDateLike(x(d)) ? parseDate(x(d)) : x(d))" :y="y" :color="config[colorKey]?.color" :rounded-corners="10" />
+            <VisGroupedBar :x="(d: T) => toX(x(d))" :y="y" :color="config[colorKey]?.color" :rounded-corners="10" />
             <VisAxis
                 type="x"
-                :x="(d: T) => (isDateLike(x(d)) ? parseDate(x(d)) : x(d))"
+                :x="(d: T) => toX(x(d))"
                 :tick-line="false"
                 :domain-line="false"
                 :grid-line="false"
@@ -60,7 +67,7 @@ const mappedTickValues = computed(() => (props.tickValues != null ? props.data.m
             <VisAxis type="y" :num-ticks="3" :tick-line="false" :domain-line="false" :tick-format="yTickFormat" />
             <ChartTooltip />
             <ChartCrosshair
-                :x="(d: T) => (isDateLike(x(d)) ? parseDate(x(d)) : x(d))"
+                :x="(d: T) => toX(x(d))"
                 :y="(d: T) => y(d)"
                 :template="componentToString(config, ChartTooltipContent, { hideLabel: true })"
                 color="#0000"

@@ -10,12 +10,12 @@ const props = withDefaults(defineProps<{
   indicator?: "line" | "dot" | "dashed"
   nameKey?: string
   labelKey?: string
-  labelFormatter?: (d: number | Date) => string
+  labelFormatter?: (d: number | Date | string) => string
   payload?: Record<string, any>
   config?: ChartConfig
   class?: HTMLAttributes["class"]
   color?: string
-  x?: number | Date
+  x?: number | Date | string
 }>(), {
   payload: () => ({}),
   config: () => ({}),
