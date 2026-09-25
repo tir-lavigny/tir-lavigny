@@ -212,7 +212,7 @@ const translateModel = (model: string) => {
                             :config="{
                                 count: {
                                     label: 'Événements',
-                                    color: 'var(--chart-1)',
+                                    color: 'var(--chart-2)',
                                 },
                             }"
                             :x="(d) => d.year"
