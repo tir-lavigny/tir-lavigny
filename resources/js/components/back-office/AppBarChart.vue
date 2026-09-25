@@ -44,8 +44,8 @@ const mappedTickValues = computed(() => {
 
 <template>
     <ChartContainer :config="config">
-        <VisXYContainer :data="data" class="h-full" :margin="{ left: -24 }" :y-domain="[0, undefined]">
-            <VisGroupedBar :x="(d: T) => toX(x(d))" :y="y" :color="config[colorKey]?.color" :rounded-corners="10" />
+        <VisXYContainer :data="data" class="h-full" :y-domain="[0, undefined]">
+            <VisGroupedBar :x="(d: T) => toX(x(d))" :y="y" :color="config[colorKey]?.color" :rounded-corners="10" bar-padding="0.1" />
             <VisAxis
                 type="x"
                 :x="(d: T) => toX(x(d))"
@@ -65,6 +65,7 @@ const mappedTickValues = computed(() => {
                 :tick-values="mappedTickValues"
             />
             <VisAxis type="y" :num-ticks="3" :tick-line="false" :domain-line="false" :tick-format="yTickFormat" />
+            <VisAxis type="y" position="left" :num-ticks="3" :tick-line="false" :domain-line="false" :tick-format="yTickFormat" />
             <ChartTooltip />
             <ChartCrosshair
                 :x="(d: T) => toX(x(d))"

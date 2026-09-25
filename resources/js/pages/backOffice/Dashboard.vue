@@ -11,7 +11,6 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate } from '@/lib/utils';
 import { ActivityLog, type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
 import {
     ArrowRight,
     CalendarRange,
@@ -59,8 +58,6 @@ const dailySalesConfig = {
         color: 'var(--chart-4)',
     },
 };
-
-const dailySalesY = computed<((d: DailySale) => number)[]>(() => [(d) => d.cash, (d) => d.twint]);
 
 const actionConfig = (action: string) => {
     switch (action) {
@@ -188,28 +185,28 @@ const translateModel = (model: string) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <div class="grid gap-4 md:grid-cols-2">
-                <Card class="flex flex-col">
+            <div class="grid min-w-0 gap-4 md:grid-cols-2">
+                <Card class="min-w-0">
                     <CardHeader>
                         <CardTitle>Ventes</CardTitle>
                         <CardDescription>Recettes quotidiennes de la saison en cours</CardDescription>
                     </CardHeader>
-                    <CardContent class="flex-1">
+                    <CardContent class="overflow-hidden">
                         <AppBarChartMultiple
                             :data="dailySales"
                             :config="dailySalesConfig"
                             :x="(d: DailySale) => d.date"
-                            :y="dailySalesY"
+                            :y="[(d: DailySale) => d.cash, (d: DailySale) => d.twint]"
                             :tick-values="(d: DailySale) => d.date"
                         />
                     </CardContent>
                 </Card>
-                <Card class="flex flex-col">
+                <Card class="min-w-0">
                     <CardHeader>
                         <CardTitle>Événements</CardTitle>
                         <CardDescription>Nombre d'événements par année</CardDescription>
                     </CardHeader>
-                    <CardContent class="flex-1">
+                    <CardContent class="overflow-hidden">
                         <AppBarChart
                             :data="eventsPerYear"
                             :config="{

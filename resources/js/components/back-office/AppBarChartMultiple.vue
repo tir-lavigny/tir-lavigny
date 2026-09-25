@@ -31,11 +31,11 @@ const mappedTickValues = computed(() => (props.tickValues != null ? props.data.m
         <VisXYContainer :data="data" class="h-full">
             <VisGroupedBar
                 :x="(d: T) => parseDate(x(d))"
-                :y="y"
+                :y="[...y]"
                 :color="colorKeys.map((k) => config[k]?.color)"
                 :rounded-corners="4"
-                bar-padding="0.15"
-                group-padding="0"
+                bar-padding="0"
+                group-padding="0.3"
             />
             <VisAxis
                 type="x"
