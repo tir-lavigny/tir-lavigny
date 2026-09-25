@@ -52,11 +52,11 @@ type DailySale = DashboardProps['dailySales'][number];
 const dailySalesConfig = {
     cash: {
         label: 'Espèces (CHF)',
-        color: 'var(--chart-1)',
+        color: 'var(--chart-2)',
     },
     twint: {
         label: 'TWINT (CHF)',
-        color: 'var(--chart-2)',
+        color: 'var(--chart-4)',
     },
 };
 
