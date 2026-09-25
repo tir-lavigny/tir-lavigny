@@ -44,7 +44,7 @@ const mappedTickValues = computed(() => {
 
 <template>
     <ChartContainer :config="config">
-        <VisXYContainer :data="data" :margin="{ left: -24 }" :y-domain="[0, undefined]">
+        <VisXYContainer :data="data" class="h-full" :margin="{ left: -24 }" :y-domain="[0, undefined]">
             <VisGroupedBar :x="(d: T) => toX(x(d))" :y="y" :color="config[colorKey]?.color" :rounded-corners="10" />
             <VisAxis
                 type="x"

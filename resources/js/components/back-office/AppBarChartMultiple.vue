@@ -28,7 +28,7 @@ const mappedTickValues = computed(() => (props.tickValues != null ? props.data.m
 
 <template>
     <ChartContainer :config="config">
-        <VisXYContainer :data="data">
+        <VisXYContainer :data="data" class="h-full">
             <VisGroupedBar
                 :x="(d: T) => parseDate(x(d))"
                 :y="y"

@@ -188,13 +188,13 @@ const translateModel = (model: string) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <div class="grid auto-rows-min gap-4 md:grid-cols-2">
-                <Card>
+            <div class="grid gap-4 md:grid-cols-2">
+                <Card class="flex flex-col">
                     <CardHeader>
                         <CardTitle>Ventes</CardTitle>
                         <CardDescription>Recettes quotidiennes de la saison en cours</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent class="flex-1">
                         <AppBarChartMultiple
                             :data="dailySales"
                             :config="dailySalesConfig"
@@ -204,12 +204,12 @@ const translateModel = (model: string) => {
                         />
                     </CardContent>
                 </Card>
-                <Card>
+                <Card class="flex flex-col">
                     <CardHeader>
                         <CardTitle>Événements</CardTitle>
                         <CardDescription>Nombre d'événements par année</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent class="flex-1">
                         <AppBarChart
                             :data="eventsPerYear"
                             :config="{
