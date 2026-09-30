@@ -133,7 +133,7 @@ return [
         ] : [
             'driver' => 'sqlite',
             'url' => env('PULSE_DB_URL'),
-            'database' => env('PULSE_DB_DATABASE', database_path('pulse.sqlite')),
+            'database' => env('PULSE_DB_DATABASE') ?: database_path('pulse.sqlite'),
             'prefix' => '',
             'foreign_key_constraints' => env('PULSE_DB_FOREIGN_KEYS', true),
             'busy_timeout' => null,
@@ -162,7 +162,7 @@ return [
         ] : [
             'driver' => 'sqlite',
             'url' => env('TELESCOPE_DB_URL'),
-            'database' => env('TELESCOPE_DB_DATABASE', database_path('telescope.sqlite')),
+            'database' => env('TELESCOPE_DB_DATABASE') ?: database_path('telescope.sqlite'),
             'prefix' => '',
             'foreign_key_constraints' => env('TELESCOPE_DB_FOREIGN_KEYS', true),
             'busy_timeout' => null,
