@@ -11,6 +11,11 @@ deploy() {
     MIGRATION_BEFORE=$(php-8.4 artisan tinker --execute="echo DB::table('migrations')->count();" 2>/dev/null || echo "0")
     git fetch origin staging-deploy
     git reset --hard origin/staging-deploy
+
+    # Refresh environment from Doppler
+    chmod +x ./scripts/refresh-env.sh
+    ./scripts/refresh-env.sh stg
+
     composer_php8.4 install --no-interaction --prefer-dist --optimize-autoloader
     php-8.4 artisan migrate --force
 
