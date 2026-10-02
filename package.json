@@ -43,13 +43,16 @@
         "vue-tsc": "^3.0.0"
     },
     "dependencies": {
+        "@inertiajs/core": "^3.8.0",
         "@inertiajs/vue3": "^3.0",
+        "@internationalized/date": "^3.12.4",
         "@lucide/vue": "^1.48.0",
         "@tailwindcss/vite": "^4.1.1",
         "@tanstack/vue-table": "^9.0.0",
         "@unovis/ts": "^1.7.0",
         "@unovis/vue": "^1.7.0",
         "@vitejs/plugin-vue": "^6.0.0",
+        "@vue/server-renderer": "^3.5.43",
         "@vueuse/core": "^14.4.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",

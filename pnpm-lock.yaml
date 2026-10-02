@@ -166,9 +166,15 @@ importers:
 
   .:
     dependencies:
+      '@inertiajs/core':
+        specifier: ^3.8.0
+        version: 3.8.0
       '@inertiajs/vue3':
         specifier: ^3.0
         version: 3.8.0(vue@3.5.43(typescript@6.0.3))
+      '@internationalized/date':
+        specifier: ^3.12.4
+        version: 3.12.4
       '@lucide/vue':
         specifier: ^1.48.0
         version: 1.49.0(vue@3.5.43(typescript@6.0.3))
@@ -187,6 +193,9 @@ importers:
       '@vitejs/plugin-vue':
         specifier: ^6.0.0
         version: 6.0.9(vite@8.3.2(@types/node@24.19.0)(jiti@2.7.0))(vue@3.5.43(typescript@6.0.3))
+      '@vue/server-renderer':
+        specifier: ^3.5.43
+        version: 3.5.43
       '@vueuse/core':
         specifier: ^14.4.0
         version: 14.4.0(vue@3.5.43(typescript@6.0.3))
@@ -307,8 +316,8 @@ importers:
         version: 3.3.11(typescript@6.0.3)
     optionalDependencies:
       '@rollup/rollup-linux-x64-gnu':
-        specifier: 4.63.4
-        version: 4.63.4
+        specifier: 4.63.5
+        version: 4.63.5
       '@tailwindcss/oxide-linux-x64-gnu':
         specifier: ^4.0.1
         version: 4.3.3
@@ -738,8 +747,8 @@ packages:
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
-  '@rollup/rollup-linux-x64-gnu@4.63.4':
-    resolution: {integrity: sha512-791ET7W17NnScOZM7h4dX5hYspxE28htPFsb1awY/NRR8+PRNkS53e475rDdxXXDrP+kwnCcNWg9CX5ztn/Aqw==}
+  '@rollup/rollup-linux-x64-gnu@4.63.5':
+    resolution: {integrity: sha512-3W9bTFcQNJn71cSJVM9RKIiZOy8DO/XLDii8Uv/Pm6WKqDRj7JV3ZfuXIEfyuy5LXpIzAbB/1M4Ukp9GKNa7nA==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
@@ -3162,7 +3171,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
-  '@rollup/rollup-linux-x64-gnu@4.63.4':
+  '@rollup/rollup-linux-x64-gnu@4.63.5':
     optional: true
 
   '@swc/helpers@0.5.23':
