@@ -2,6 +2,13 @@
     "name": "tir-lavigny.ch",
     "private": true,
     "type": "module",
+    "devEngines": {
+        "packageManager": {
+            "name": "pnpm",
+            "version": "12.8.1",
+            "onFail": "download"
+        }
+    },
     "scripts": {
         "build": "vite build",
         "build:ssr": "vite build && vite build --ssr",

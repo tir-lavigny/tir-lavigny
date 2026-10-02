@@ -23,12 +23,12 @@ ENV APP_ENV=$APP_ENV
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
 
 COPY . .
 COPY --from=composer-deps /app/vendor ./vendor
-RUN npm run build
+RUN pnpm run build
 
 # Stage 3 - PHP base: shared system dependencies for dev and prod
 FROM php:${PHP_VERSION}-fpm AS php-base

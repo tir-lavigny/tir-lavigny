@@ -16,9 +16,9 @@ php artisan db:seed --class=E2eSeeder
 
 echo "[e2e] Building front-end..."
 if [ ! -d "$SCRIPT_DIR/node_modules" ]; then
-    npm install
+    pnpm install
 fi
-npm run build
+pnpm run build
 
 echo "[e2e] Starting Laravel server on port 9000..."
 php artisan serve --port=9000 --host=127.0.0.1

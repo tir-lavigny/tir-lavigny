@@ -1,6 +1,9 @@
 /.phpunit.cache
 /bootstrap/ssr
 /node_modules
+/package-lock.json
+/resources/js/ziggy.js
+/resources/js/ziggy.d.ts
 /public/build
 /public/hot
 /public/storage

@@ -111,7 +111,7 @@ Vue 3 + TypeScript component tests via **Vitest** + **Vue Test Utils**.
 **Run:**
 
 ```bash
-npm test
+pnpm test
 ```
 
 **Config:** `vitest.config.ts`
@@ -162,7 +162,7 @@ End-to-end tests use Playwright against the Laravel + Vue app.
 **Run:**
 
 ```bash
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 **How it works:**
@@ -183,7 +183,7 @@ npm run test:e2e
 | `database/seeders/E2eSeeder.php` | Relative-time test data                      |
 | `e2e/`                           | Test specs                                   |
 
-**Add a test:** create `e2e/my-test.spec.ts` with `import { test, expect } from '@playwright/test'`. It runs automatically with `npm run test:e2e`.
+**Add a test:** create `e2e/my-test.spec.ts` with `import { test, expect } from '@playwright/test'`. It runs automatically with `pnpm run test:e2e`.
 
 ---
 
@@ -212,7 +212,7 @@ make seed
 ## Run the application
 
 ```
-npm run dev
+pnpm run dev
 php artisan serve
 ```
 
