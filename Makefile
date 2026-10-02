@@ -16,8 +16,8 @@ help: ## Display this help message
 
 install: ## Install project dependencies
 	composer install
-	npm ci
-	npm run build
+	pnpm install --frozen-lockfile
+	pnpm run build
 	@echo "Installation complete"
 
 setup-dev: ## Set up the development environment (includes installation)
