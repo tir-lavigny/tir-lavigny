@@ -45,7 +45,7 @@ const xAccessor = computed(() => {
     if (props.ordinal) {
         return (_d: T, i: number) => i;
     }
-    return (_d: T, i: number) => parseDateToNumber(props.x(_d));
+    return (_d: T) => parseDateToNumber(props.x(_d));
 });
 
 const tickValues = computed(() => {
