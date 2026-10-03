@@ -1,0 +1,26 @@
+{
+    "agents": [
+        "opencode"
+    ],
+    "cloud": false,
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch": false,
+    "packages": [
+        "spatie/laravel-permission",
+        "dedoc/scramble"
+    ],
+    "sail": false,
+    "skills": [
+        "infer-conventions",
+        "laravel-best-practices",
+        "testing-best-practices",
+        "configure-nightwatch",
+        "pulse-development",
+        "telescope-debugging",
+        "inertia-vue-development",
+        "tailwindcss-development",
+        "scramble-development",
+        "laravel-permission-development"
+    ]
+}
