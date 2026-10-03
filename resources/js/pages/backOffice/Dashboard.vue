@@ -197,7 +197,6 @@ const translateModel = (model: string) => {
                             :config="dailySalesConfig"
                             :x="(d: DailySale) => d.date"
                             :y="[(d: DailySale) => Number(d.cash), (d: DailySale) => Number(d.twint)]"
-                            :tick-values="(d: DailySale) => d.date"
                         />
                     </CardContent>
                 </Card>

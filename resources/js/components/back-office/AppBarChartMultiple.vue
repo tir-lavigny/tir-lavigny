@@ -12,25 +12,60 @@ const props = withDefaults(
         x: (d: T) => Date | string | number;
         y: ((d: T) => number)[];
         tickFormat?: (d: number) => string;
-        tickValues?: (d: T) => Date | string | number;
+        ordinal?: boolean;
     }>(),
     {
-        tickValues: undefined,
+        ordinal: true,
     },
 );
 
 const colorKeys = Object.keys(props.config).filter((k) => props.config[k]?.color);
 
-const parseDate = (v: Date | string | number) => (v instanceof Date ? v : new Date(v));
+const tickLabels = computed(() =>
+    props.data.map((d, i) => ({
+        index: i,
+        label: props.tickFormat ? props.tickFormat(parseDateToNumber(props.x(d))) : formatDefault(parseDateToNumber(props.x(d))),
+    })),
+);
 
-const mappedTickValues = computed(() => (props.tickValues != null ? props.data.map((d) => parseDate(props.tickValues!(d))) : undefined));
+function parseDateToNumber(v: Date | string | number): number {
+    if (v instanceof Date) return v.getTime();
+    if (typeof v === 'number') return v;
+    return new Date(v).getTime();
+}
+
+function formatDefault(ts: number): string {
+    const date = new Date(ts);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${day}.${month}`;
+}
+
+const xAccessor = computed(() => {
+    if (props.ordinal) {
+        return (_d: T, i: number) => i;
+    }
+    return (_d: T, i: number) => parseDateToNumber(props.x(_d));
+});
+
+const tickValues = computed(() => {
+    if (!props.ordinal) return undefined;
+    return props.data.map((_, i) => i);
+});
+
+const tickFormatFn = (v: number) => {
+    if (props.ordinal) {
+        return tickLabels.value[v]?.label ?? '';
+    }
+    return formatDefault(v);
+};
 </script>
 
 <template>
     <ChartContainer :config="config">
         <VisXYContainer :data="data" class="h-full">
             <VisGroupedBar
-                :x="(d: T) => parseDate(x(d))"
+                :x="xAccessor"
                 :y="[...y]"
                 :color="colorKeys.map((k) => config[k]?.color)"
                 :rounded-corners="4"
@@ -39,27 +74,19 @@ const mappedTickValues = computed(() => (props.tickValues != null ? props.data.m
             />
             <VisAxis
                 type="x"
-                :x="(d: T) => parseDate(x(d))"
+                :x="xAccessor"
                 :tick-line="false"
                 :domain-line="false"
                 :grid-line="false"
-                :num-ticks="6"
-                :tick-format="
-                    tickFormat ??
-                    ((d: number) => {
-                        const date = new Date(d);
-                        const day = String(date.getDate()).padStart(2, '0');
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        return `${day}.${month}`;
-                    })
-                "
-                :tick-values="mappedTickValues"
+                :num-ticks="data.length"
+                :tick-format="tickFormatFn"
+                :tick-values="tickValues"
             />
             <VisAxis type="y" :num-ticks="3" :tick-line="false" :domain-line="false" />
             <ChartTooltip />
             <ChartCrosshair
-                :x="(d: T) => parseDate(x(d))"
-                :y="(d: T) => y[0](d)"
+                :x="xAccessor"
+                :y="(d: T, i: number) => y[0](d)"
                 :template="componentToString(config, ChartTooltipContent, { indicator: 'dashed', hideLabel: true })"
                 color="#0000"
             />
