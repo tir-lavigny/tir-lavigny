@@ -20,7 +20,7 @@ jobs:
         with:
           php-version: 8.4
           tools: composer:v2
-          coverage: xdebug
+          coverage: pcov
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -64,4 +64,23 @@ jobs:
         run: pnpm test
 
       - name: Tests
-        run: ./vendor/bin/phpunit
+        run: |
+          mkdir -p build/logs
+          ./vendor/bin/phpunit \
+            --coverage-text=build/coverage.txt \
+            --coverage-clover=build/logs/clover.xml
+
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          {
+            echo '## PHPUnit coverage'
+            echo ''
+            echo '```'
+            if [ -f build/coverage.txt ]; then
+              cat build/coverage.txt
+            else
+              echo 'No coverage report produced.'
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

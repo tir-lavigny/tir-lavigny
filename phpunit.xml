@@ -37,12 +37,4 @@
         <env name="DAV_PASSWORD" value="test"/>
         <env name="DAV_ADDRESSBOOK_URL" value="http://localhost/"/>
     </php>
-
-    <coverage>
-        <report>
-            <html outputDirectory="build/coverage"/>
-            <text outputFile="build/coverage.txt"/>
-            <clover outputFile="build/logs/clover.xml"/>
-        </report>
-    </coverage>
 </phpunit>
