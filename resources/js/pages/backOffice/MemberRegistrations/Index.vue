@@ -26,14 +26,13 @@ const props = withDefaults(
     { filters: () => ({}) },
 );
 
-const statusTabs = [
-    { label: 'Toutes', value: '' },
-    { label: 'En attente', value: 'pending' },
-    { label: 'Formulaire rempli', value: 'form_filled' },
-    { label: 'DAV créé', value: 'dav_created' },
-    { label: 'Membre créé', value: 'member_created' },
-    { label: 'Email envoyé', value: 'email_sent' },
-    { label: 'Terminé', value: 'completed' },
+const status = [
+    { label: 'Toutes', value: '', displayTab: true },
+    { label: 'En attente', value: 'pending', displayTab: true },
+    { label: 'En attente de validation', value: 'form_filled', displayTab: true },
+    { label: 'DAV créé', value: 'dav_created', displayTab: false },
+    { label: 'Membre créé', value: 'member_created', displayTab: false },
+    { label: 'Terminé', value: 'completed', displayTab: true },
 ];
 
 const handleTabClick = (status: string) => {
@@ -63,7 +62,7 @@ const statusBadgeVariant = (registration: any) => {
 };
 
 const statusLabel = (registration: any) => {
-    const tab = statusTabs.find((t) => t.value === registration.status);
+    const tab = status.find((t) => t.value === registration.status);
     const label = tab?.label ?? registration.status;
     return registration.failed_at ? `${label} — Échoué` : label;
 };
@@ -101,7 +100,7 @@ const statusLabel = (registration: any) => {
 
                 <div class="mb-4 flex flex-wrap gap-2">
                     <Button
-                        v-for="tab in statusTabs"
+                        v-for="tab in status.filter((t) => t.displayTab)"
                         :key="tab.value"
                         :variant="filters.status === tab.value || (!filters.status && tab.value === '') ? 'default' : 'outline'"
                         size="sm"

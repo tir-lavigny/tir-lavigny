@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\BackOffice;
 
 use App\Http\Controllers\Controller;
+use App\MemberRegistrationStatus;
 use App\Models\MemberRegistration;
 use App\Services\MemberRegistrationPipelineService;
 use Illuminate\Http\RedirectResponse;
@@ -18,7 +19,7 @@ class MemberRegistrationController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('permission:create member registration', only: ['store']),
-            new Middleware('permission:manage member registration', only: ['index', 'show', 'retry']),
+            new Middleware('permission:manage member registration', only: ['index', 'show', 'validate', 'retry']),
         ];
     }
 
@@ -59,6 +60,24 @@ class MemberRegistrationController extends Controller implements HasMiddleware
 
         return redirect()->route('bo.member-registrations.show', $registration)
             ->with('success', 'Formulaire créé avec succès.');
+    }
+
+    public function validate(MemberRegistration $memberRegistration, MemberRegistrationPipelineService $pipeline): RedirectResponse
+    {
+        abort_unless(
+            $memberRegistration->status === MemberRegistrationStatus::FORM_FILLED,
+            403,
+            'Seules les inscriptions au statut « en attente de validation » peuvent être validées.'
+        );
+
+        $memberRegistration->error_message = null;
+        $memberRegistration->failed_at = null;
+        $memberRegistration->save();
+
+        $pipeline->processFormSubmission($memberRegistration);
+
+        return redirect()->route('bo.member-registrations.show', $memberRegistration)
+            ->with('success', 'Inscription validée, traitement lancé.');
     }
 
     public function retry(MemberRegistration $memberRegistration, MemberRegistrationPipelineService $pipeline): RedirectResponse

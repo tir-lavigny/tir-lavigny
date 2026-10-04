@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\MemberRegistrationCompleted as MemberRegistrationCompletedMail;
 use App\Mail\MemberRegistrationError;
+use App\Mail\MemberRegistrationValidationRequested;
 use App\MemberRegistrationStatus;
 use App\Models\Member;
 use App\Models\MemberRegistration;
@@ -20,6 +21,20 @@ class MemberRegistrationPipelineService
     public function __construct(
         private readonly DavServiceInterface $dav,
     ) {}
+
+    /**
+     * Notify admins that a form was filled and needs validation.
+     */
+    public function sendValidationRequest(MemberRegistration $registration): void
+    {
+        try {
+            Mail::to(User::getMemberRegistrationEmails())->send(
+                new MemberRegistrationValidationRequested($registration)
+            );
+        } catch (\Throwable $e) {
+            $this->handleFailure($registration, $e);
+        }
+    }
 
     /**
      * Run the full registration pipeline from FORM_FILLED status.
@@ -52,7 +67,7 @@ class MemberRegistrationPipelineService
     public function retryFromStep(MemberRegistration $registration): void
     {
         match ($registration->status) {
-            MemberRegistrationStatus::FORM_FILLED,
+            MemberRegistrationStatus::FORM_FILLED => $this->sendValidationRequest($registration),
             MemberRegistrationStatus::ERROR => $this->processFormSubmission($registration),
             MemberRegistrationStatus::DAV_CREATED => $this->processFromDavCreated($registration),
             MemberRegistrationStatus::MEMBER_CREATED => $this->processFromMemberCreated($registration),
@@ -164,8 +179,14 @@ class MemberRegistrationPipelineService
         $registration->failed_at = Carbon::now('Europe/Zurich')->utc();
         $registration->save();
 
-        Mail::to(User::getMemberRegistrationEmails())->send(
-            new MemberRegistrationError($registration)
-        );
+        try {
+            Mail::to(User::getMemberRegistrationEmails())->send(
+                new MemberRegistrationError($registration)
+            );
+        } catch (\Throwable) {
+            Log::error('Member registration error email failed', [
+                'registration_id' => $registration->id,
+            ]);
+        }
     }
 }

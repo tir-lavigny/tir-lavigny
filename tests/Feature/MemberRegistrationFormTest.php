@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Events\MemberRegistrationFormSubmitted;
+use App\Mail\MemberRegistrationValidationRequested;
 use App\Models\MemberRegistration;
 use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class MemberRegistrationFormTest extends TestCase
@@ -607,5 +609,39 @@ class MemberRegistrationFormTest extends TestCase
 
         $registration->refresh();
         $this->assertEquals('form_filled', $registration->status->value);
+    }
+
+    public function test_form_submission_sends_validation_request_without_running_pipeline(): void
+    {
+        Mail::fake();
+
+        $registration = MemberRegistration::create();
+
+        $data = [
+            'form_uuid' => (string) $registration->form_uuid,
+            'last_name' => 'Dupont',
+            'first_name' => 'Jean',
+            'email' => 'jean@example.com',
+            'is_swiss_citizen' => true,
+            'avs' => '756.1234.5678.90',
+            'tel' => '+41 21 123 45 67',
+            'street' => 'Rue du Marché 1',
+            'npa' => '1003',
+            'city' => 'Lausanne',
+            'canton' => 'VD',
+            'country' => 'Suisse',
+        ];
+
+        $response = $this->post(route('member-registration.store'), $data);
+
+        $response->assertStatus(302);
+
+        $registration->refresh();
+        $this->assertEquals('form_filled', $registration->status->value);
+        $this->assertNull($registration->dav_uid);
+        $this->assertNull($registration->member_id);
+        $this->assertNull($registration->failed_at);
+
+        Mail::assertSent(MemberRegistrationValidationRequested::class);
     }
 }

@@ -110,6 +110,9 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         ->name('bo.member-registrations.show');
     Route::post('member-registrations', [BackOfficeMemberRegistrationController::class, 'store'])
         ->name('bo.member-registrations.store');
+    Route::post('member-registrations/{memberRegistration}/validate', [BackOfficeMemberRegistrationController::class, 'validate'])
+        ->name('bo.member-registrations.validate')
+        ->middleware('permission:manage member registration');
     Route::post('member-registrations/{memberRegistration}/retry', [BackOfficeMemberRegistrationController::class, 'retry'])
         ->name('bo.member-registrations.retry')
         ->middleware('permission:manage member registration');

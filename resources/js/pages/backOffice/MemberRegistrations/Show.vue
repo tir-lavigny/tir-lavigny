@@ -35,6 +35,8 @@ const copyToClipboard = async () => {
 
 const hasFailed = () => props.registration.failed_at !== null;
 
+const canValidate = () => props.registration.status === 'form_filled';
+
 const statusBadgeVariant = (status: string) => {
     if (hasFailed()) return 'destructive';
     switch (status) {
@@ -48,10 +50,9 @@ const statusBadgeVariant = (status: string) => {
 const statusLabel = (status: string) => {
     const labels: Record<string, string> = {
         pending: 'En attente',
-        form_filled: 'Formulaire rempli',
+        form_filled: 'En attente de validation',
         dav_created: 'DAV créé',
         member_created: 'Membre créé',
-        email_sent: 'Email envoyé',
         completed: 'Terminé',
     };
     const label = labels[status] ?? status;
@@ -60,11 +61,24 @@ const statusLabel = (status: string) => {
 
 const retryLabel = (status: string) => {
     const labels: Record<string, string> = {
-        form_filled: 'Relancer la création DAV',
+        form_filled: "Renvoyer l'email de validation",
         dav_created: 'Relancer la création du membre',
         member_created: "Relancer l'envoi de l'email",
+        error: 'Relancer le traitement',
     };
     return labels[status] ?? 'Réessayer';
+};
+
+const handleValidate = () => {
+    router.post(
+        route('bo.member-registrations.validate', props.registration.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => toast.success('Inscription validée, traitement lancé.'),
+            onError: () => toast.error("Impossible de valider l'inscription."),
+        },
+    );
 };
 
 const handleRetry = () => {
@@ -91,6 +105,9 @@ const displayUrl = flash?.form_url ?? props.formUrl;
             <Badge :variant="statusBadgeVariant(registration.status)">
                 {{ statusLabel(registration.status) }}
             </Badge>
+            <Button v-if="canValidate()" size="sm" @click="handleValidate">
+                Valider
+            </Button>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <Card v-if="displayUrl">

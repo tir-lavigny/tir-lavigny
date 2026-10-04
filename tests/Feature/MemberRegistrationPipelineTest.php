@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\MemberRegistrationCompleted;
 use App\Mail\MemberRegistrationError;
+use App\Mail\MemberRegistrationValidationRequested;
 use App\MemberRegistrationStatus;
 use App\Models\Member;
 use App\Models\MemberRegistration;
@@ -88,6 +89,44 @@ class MemberRegistrationPipelineTest extends TestCase
         return $davMock;
     }
 
+    // ── Validation request ─────────────────────────────────────────────────
+
+    public function test_send_validation_request_sends_email(): void
+    {
+        Mail::fake();
+
+        $registration = $this->createRegistrationWithData();
+        $pipeline = new MemberRegistrationPipelineService(Mockery::mock(DavServiceInterface::class));
+
+        $pipeline->sendValidationRequest($registration);
+
+        $registration->refresh();
+        $this->assertEquals(MemberRegistrationStatus::FORM_FILLED, $registration->status);
+        $this->assertNull($registration->failed_at);
+        $this->assertNull($registration->dav_uid);
+        $this->assertNull($registration->member_id);
+
+        Mail::assertSent(MemberRegistrationValidationRequested::class, function ($mail) {
+            return $mail->hasTo($this->admin->email);
+        });
+        Mail::assertNotSent(MemberRegistrationCompleted::class);
+    }
+
+    public function test_send_validation_request_handles_failure(): void
+    {
+        Mail::shouldReceive('to')->andThrow(new \RuntimeException('Mail server down'));
+
+        $registration = $this->createRegistrationWithData();
+        $pipeline = new MemberRegistrationPipelineService(Mockery::mock(DavServiceInterface::class));
+
+        $pipeline->sendValidationRequest($registration);
+
+        $registration->refresh();
+        $this->assertEquals(MemberRegistrationStatus::FORM_FILLED, $registration->status);
+        $this->assertNotNull($registration->failed_at);
+        $this->assertStringContainsString('Mail server down', $registration->error_message);
+    }
+
     // ── Pipeline: success cases ─────────────────────────────────────────────
 
     public function test_process_form_submission_completes_full_pipeline(): void
@@ -166,26 +205,28 @@ class MemberRegistrationPipelineTest extends TestCase
 
     // ── Retry cases ─────────────────────────────────────────────────────────
 
-    public function test_retry_from_form_filled_restarts_pipeline(): void
+    public function test_retry_from_form_filled_resends_validation_email(): void
     {
         Mail::fake();
 
-        Season::factory()->create([
-            'start_date' => now()->subMonth(),
-            'end_date' => now()->addMonth(),
-        ]);
-
-        Product::factory()->create(['name' => 'Tir du jeudi']);
-        Product::factory()->create(['name' => 'Ouverture']);
-        Product::factory()->create(['name' => 'Clôture']);
-
         $registration = $this->createRegistrationWithData();
-        $pipeline = new MemberRegistrationPipelineService($this->mockDavSuccess());
+        $registration->failed_at = now();
+        $registration->error_message = 'Erreur : Mail server down';
+        $registration->save();
+
+        $pipeline = new MemberRegistrationPipelineService(Mockery::mock(DavServiceInterface::class));
 
         $pipeline->retryFromStep($registration);
 
         $registration->refresh();
-        $this->assertEquals(MemberRegistrationStatus::COMPLETED, $registration->status);
+        $this->assertEquals(MemberRegistrationStatus::FORM_FILLED, $registration->status);
+        $this->assertNull($registration->dav_uid);
+        $this->assertNull($registration->member_id);
+
+        Mail::assertSent(MemberRegistrationValidationRequested::class, function ($mail) {
+            return $mail->hasTo($this->admin->email);
+        });
+        Mail::assertNotSent(MemberRegistrationCompleted::class);
     }
 
     public function test_retry_from_dav_created_processes_remaining_steps(): void

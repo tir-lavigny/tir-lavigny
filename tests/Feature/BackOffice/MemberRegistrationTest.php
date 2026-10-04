@@ -2,12 +2,17 @@
 
 namespace Tests\Feature\BackOffice;
 
+use App\Mail\MemberRegistrationValidationRequested;
 use App\MemberRegistrationStatus;
 use App\Models\Member;
 use App\Models\MemberRegistration;
 use App\Models\User;
+use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Mockery;
 use Tests\TestCase;
 
 class MemberRegistrationTest extends TestCase
@@ -21,6 +26,12 @@ class MemberRegistrationTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $this->actingAs($admin);
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
     }
 
     public function test_can_view_registration_list(): void
@@ -188,5 +199,97 @@ class MemberRegistrationTest extends TestCase
         $response->assertStatus(302);
         $registration = MemberRegistration::latest()->first();
         $this->assertNull($registration->form_data);
+    }
+
+    public function test_validate_runs_pipeline_for_form_filled_registration(): void
+    {
+        Mail::fake();
+
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('createContactFromMemberRegistration')
+            ->once()
+            ->andReturn(['uid' => 'validated-uid-123']);
+        $this->app->instance(DavServiceInterface::class, $davMock);
+
+        $registration = MemberRegistration::create([
+            'form_uuid' => Str::uuid(),
+            'form_data' => [
+                'first_name' => 'Jean',
+                'last_name' => 'Dupont',
+                'email' => 'jean.dupont@example.com',
+            ],
+            'form_submitted_at' => now(),
+            'status' => MemberRegistrationStatus::FORM_FILLED,
+            'error_message' => 'Erreur : Mail server down',
+            'failed_at' => now(),
+        ]);
+
+        $response = $this->post(route('bo.member-registrations.validate', $registration));
+
+        $response->assertRedirect(route('bo.member-registrations.show', $registration));
+        $response->assertSessionHas('success', 'Inscription validée, traitement lancé.');
+
+        $registration->refresh();
+        $this->assertEquals(MemberRegistrationStatus::COMPLETED, $registration->status);
+        $this->assertEquals('validated-uid-123', $registration->dav_uid);
+        $this->assertNotNull($registration->member_id);
+        $this->assertNull($registration->failed_at);
+        $this->assertNull($registration->error_message);
+    }
+
+    public function test_validate_rejects_registration_not_awaiting_validation(): void
+    {
+        $registration = MemberRegistration::create([
+            'status' => MemberRegistrationStatus::COMPLETED,
+        ]);
+
+        $response = $this->post(route('bo.member-registrations.validate', $registration));
+
+        $response->assertStatus(403);
+    }
+
+    public function test_validate_requires_manage_member_registration_permission(): void
+    {
+        $this->post('/logout');
+
+        $userWithoutPermission = User::factory()->create();
+        $this->actingAs($userWithoutPermission);
+
+        $registration = MemberRegistration::create([
+            'status' => MemberRegistrationStatus::FORM_FILLED,
+        ]);
+
+        $response = $this->post(route('bo.member-registrations.validate', $registration));
+
+        $response->assertForbidden();
+    }
+
+    public function test_retry_on_form_filled_resends_validation_email(): void
+    {
+        Mail::fake();
+
+        $registration = MemberRegistration::create([
+            'form_uuid' => Str::uuid(),
+            'form_data' => [
+                'first_name' => 'Jean',
+                'last_name' => 'Dupont',
+                'email' => 'jean.dupont@example.com',
+            ],
+            'form_submitted_at' => now(),
+            'status' => MemberRegistrationStatus::FORM_FILLED,
+            'error_message' => 'Erreur : Mail server down',
+            'failed_at' => now(),
+        ]);
+
+        $response = $this->post(route('bo.member-registrations.retry', $registration));
+
+        $response->assertRedirect(route('bo.member-registrations.show', $registration));
+
+        $registration->refresh();
+        $this->assertEquals(MemberRegistrationStatus::FORM_FILLED, $registration->status);
+        $this->assertNull($registration->failed_at);
+        $this->assertNull($registration->error_message);
+
+        Mail::assertSent(MemberRegistrationValidationRequested::class);
     }
 }
