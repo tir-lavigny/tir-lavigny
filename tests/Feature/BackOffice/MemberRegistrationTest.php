@@ -292,4 +292,61 @@ class MemberRegistrationTest extends TestCase
 
         Mail::assertSent(MemberRegistrationValidationRequested::class);
     }
+
+    public function test_destroy_deletes_unsubmitted_registration(): void
+    {
+        $registration = MemberRegistration::create([
+            'status' => MemberRegistrationStatus::PENDING,
+        ]);
+
+        $response = $this->delete(route('bo.member-registrations.destroy', $registration));
+
+        $response->assertRedirect(route('bo.member-registrations.index'));
+        $response->assertSessionHas('success', 'Lien supprimé avec succès.');
+        $this->assertDatabaseMissing('member_registrations', ['id' => $registration->id]);
+    }
+
+    public function test_destroy_rejects_submitted_registration(): void
+    {
+        $registration = MemberRegistration::create([
+            'form_submitted_at' => now(),
+            'status' => MemberRegistrationStatus::FORM_FILLED,
+        ]);
+
+        $response = $this->delete(route('bo.member-registrations.destroy', $registration));
+
+        $response->assertStatus(403);
+        $this->assertDatabaseHas('member_registrations', ['id' => $registration->id]);
+    }
+
+    public function test_destroy_requires_manage_member_registration_permission(): void
+    {
+        $this->post('/logout');
+
+        $userWithoutPermission = User::factory()->create();
+        $this->actingAs($userWithoutPermission);
+
+        $registration = MemberRegistration::create([
+            'status' => MemberRegistrationStatus::PENDING,
+        ]);
+
+        $response = $this->delete(route('bo.member-registrations.destroy', $registration));
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('member_registrations', ['id' => $registration->id]);
+    }
+
+    public function test_guest_is_redirected_to_login_on_destroy(): void
+    {
+        $this->post('/logout');
+
+        $registration = MemberRegistration::create([
+            'status' => MemberRegistrationStatus::PENDING,
+        ]);
+
+        $response = $this->delete(route('bo.member-registrations.destroy', $registration));
+
+        $response->assertRedirect('/login');
+        $this->assertDatabaseHas('member_registrations', ['id' => $registration->id]);
+    }
 }

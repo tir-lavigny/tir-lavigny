@@ -116,6 +116,9 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
     Route::post('member-registrations/{memberRegistration}/retry', [BackOfficeMemberRegistrationController::class, 'retry'])
         ->name('bo.member-registrations.retry')
         ->middleware('permission:manage member registration');
+    Route::delete('member-registrations/{memberRegistration}', [BackOfficeMemberRegistrationController::class, 'destroy'])
+        ->name('bo.member-registrations.destroy')
+        ->middleware('permission:manage member registration');
 
     require __DIR__.'/settings.php';
 

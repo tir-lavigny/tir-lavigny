@@ -19,7 +19,7 @@ class MemberRegistrationController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('permission:create member registration', only: ['store']),
-            new Middleware('permission:manage member registration', only: ['index', 'show', 'validate', 'retry']),
+            new Middleware('permission:manage member registration', only: ['index', 'show', 'validate', 'retry', 'destroy']),
         ];
     }
 
@@ -90,5 +90,19 @@ class MemberRegistrationController extends Controller implements HasMiddleware
 
         return redirect()->route('bo.member-registrations.show', $memberRegistration)
             ->with('success', 'Traitement relancé avec succès.');
+    }
+
+    public function destroy(MemberRegistration $memberRegistration): RedirectResponse
+    {
+        abort_unless(
+            $memberRegistration->form_submitted_at === null,
+            403,
+            'Seules les inscriptions sans formulaire soumis peuvent être supprimées.'
+        );
+
+        $memberRegistration->delete();
+
+        return redirect()->route('bo.member-registrations.index')
+            ->with('success', 'Lien supprimé avec succès.');
     }
 }

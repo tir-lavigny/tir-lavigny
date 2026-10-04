@@ -1,15 +1,17 @@
 <script setup lang="ts">
+import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Muted, P } from '@/components/typography/texts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate } from '@/lib/utils';
+import { formatDate, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, MemberRegistration, SharedData } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { Copy, ExternalLink, RotateCcw } from '@lucide/vue';
+import { Copy, ExternalLink, RotateCcw, Trash2 } from '@lucide/vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{
@@ -23,6 +25,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const page = usePage<SharedData>();
+const user = page.props.auth.user;
 
 const copyToClipboard = async () => {
     try {
@@ -36,6 +39,8 @@ const copyToClipboard = async () => {
 const hasFailed = () => props.registration.failed_at !== null;
 
 const canValidate = () => props.registration.status === 'form_filled';
+
+const canDelete = () => props.registration.form_submitted_at === null;
 
 const statusBadgeVariant = (status: string) => {
     if (hasFailed()) return 'destructive';
@@ -93,6 +98,16 @@ const handleRetry = () => {
     );
 };
 
+const handleDelete = () => {
+    router.delete(route('bo.member-registrations.destroy', props.registration.id), {
+        onSuccess: () => {
+            toast.success('Lien supprimé avec succès.');
+            router.get(route('bo.member-registrations.index'));
+        },
+        onError: () => toast.error('Impossible de supprimer le lien.'),
+    });
+};
+
 const flash = page.props.flash as Record<string, string | undefined>;
 const displayUrl = flash?.form_url ?? props.formUrl;
 </script>
@@ -106,6 +121,25 @@ const displayUrl = flash?.form_url ?? props.formUrl;
                 {{ statusLabel(registration.status) }}
             </Badge>
             <Button v-if="canValidate()" size="sm" @click="handleValidate"> Valider </Button>
+            <Tooltip v-if="canDelete() && hasPermissionTo(user, 'manage member registration')">
+                <TooltipTrigger>
+                    <AppAlertDialog
+                        title="Supprimer ce lien ?"
+                        description="Cette action est irréversible. Le formulaire n'a pas encore été soumis."
+                        cancelText="Annuler"
+                    >
+                        <template #trigger>
+                            <Button size="icon" variant="destructive"><Trash2 class="size-4" /></Button>
+                        </template>
+                        <template #action>
+                            <Button variant="destructive" @click="handleDelete">Supprimer</Button>
+                        </template>
+                    </AppAlertDialog>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Supprimer le lien</p>
+                </TooltipContent>
+            </Tooltip>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <Card v-if="displayUrl">
