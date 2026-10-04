@@ -105,9 +105,7 @@ const displayUrl = flash?.form_url ?? props.formUrl;
             <Badge :variant="statusBadgeVariant(registration.status)">
                 {{ statusLabel(registration.status) }}
             </Badge>
-            <Button v-if="canValidate()" size="sm" @click="handleValidate">
-                Valider
-            </Button>
+            <Button v-if="canValidate()" size="sm" @click="handleValidate"> Valider </Button>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <Card v-if="displayUrl">
