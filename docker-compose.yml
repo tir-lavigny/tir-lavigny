@@ -38,6 +38,30 @@ services:
         networks:
             - laravel
 
+    scheduler:
+        image: tir-lavigny-laravel:local
+        restart: unless-stopped
+        command: ["php", "artisan", "schedule:work"]
+
+        env_file:
+            - .env
+
+        environment:
+            APP_ENV: local
+            APP_DEBUG: "true"
+            DB_HOST: db
+            DB_PORT: 3306
+
+        volumes:
+            - laravel_storage:/var/www/storage
+
+        depends_on:
+            db:
+                condition: service_healthy
+
+        networks:
+            - laravel
+
     db:
         image: mariadb:10.6
         restart: unless-stopped
