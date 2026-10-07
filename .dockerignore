@@ -41,3 +41,25 @@ Thumbs.db
 
 # Build coverage
 build/
+
+.git
+.github
+
+.env
+.env.*
+!.env.example
+
+node_modules
+vendor
+
+public/build
+
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+Dockerfile*
+docker-compose*.yml
+bootstrap/cache/*
+!bootstrap/cache/.gitkeep
