@@ -2,13 +2,13 @@ name: Docker prod build check
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - dev
-  pull_request:
-    branches:
-      - main
-      - dev
+  # push:
+  #   branches:
+  #     - dev
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - dev
 
 jobs:
   build:

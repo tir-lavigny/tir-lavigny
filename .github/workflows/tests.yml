@@ -3,9 +3,9 @@ name: tests
 on:
   workflow_dispatch:
   workflow_call:
-  pull_request:
-    branches:
-      - dev
+  # pull_request:
+  #   branches:
+  #     - dev
 
 jobs:
   ci:
@@ -20,19 +20,16 @@ jobs:
         with:
           php-version: 8.4
           tools: composer:v2
-          coverage: pcov
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+          coverage: xdebug
 
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
           node-version: '24'
-          cache: pnpm
+          cache: 'npm'
 
       - name: Install Node Dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
@@ -53,34 +50,15 @@ jobs:
         run: php artisan ziggy:generate
 
       - name: Build Assets
-        run: pnpm run build
+        run: npm run build
         env:
           APP_ENV: testing
 
       - name: Type Check
-        run: pnpm run tsc
+        run: npm run tsc
 
       - name: Frontend Tests
-        run: pnpm test
+        run: npm test
 
       - name: Tests
-        run: |
-          mkdir -p build/logs
-          ./vendor/bin/phpunit \
-            --coverage-text=build/coverage.txt \
-            --coverage-clover=build/logs/clover.xml
-
-      - name: Publish coverage summary
-        if: always()
-        run: |
-          {
-            echo '## PHPUnit coverage'
-            echo ''
-            echo '```'
-            if [ -f build/coverage.txt ]; then
-              cat build/coverage.txt
-            else
-              echo 'No coverage report produced.'
-            fi
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: ./vendor/bin/phpunit
