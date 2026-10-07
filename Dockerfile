@@ -77,6 +77,8 @@ COPY docker/php/prod.ini \
     "$PHP_INI_DIR/conf.d/99-production.ini"
 
 COPY . .
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 COPY --from=composer-deps \
     /var/www/vendor \
@@ -100,6 +102,8 @@ RUN mkdir -p \
     bootstrap/cache
 
 EXPOSE 9000
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["php-fpm"]
 
