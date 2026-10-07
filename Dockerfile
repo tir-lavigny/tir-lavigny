@@ -1,9 +1,7 @@
 ARG PHP_VERSION=8.4
 ARG NODE_VERSION=24
 
-# ============================================================
-# PHP base with all runtime extensions
-# ============================================================
+ARG VCS_URL=https://github.com/tir-lavigny/tir-lavigny-laravel
 
 FROM php:${PHP_VERSION}-fpm-bookworm AS php-base
 
@@ -33,10 +31,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 
-# ============================================================
-# Composer dependencies
-# ============================================================
-
 FROM php-base AS composer-deps
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -59,10 +53,6 @@ RUN composer dump-autoload \
     --no-scripts
 
 
-# ============================================================
-# Frontend build
-# ============================================================
-
 FROM node:${NODE_VERSION}-bookworm-slim AS frontend
 
 WORKDIR /app
@@ -79,11 +69,9 @@ COPY --from=composer-deps /var/www/vendor ./vendor
 RUN pnpm run build
 
 
-# ============================================================
-# Laravel PHP-FPM production image
-# ============================================================
-
 FROM php-base AS production
+
+LABEL org.opencontainers.image.source="https://github.com/tir-lavigny/tir-lavigny"
 
 COPY docker/php/prod.ini \
     "$PHP_INI_DIR/conf.d/99-production.ini"
@@ -116,11 +104,9 @@ EXPOSE 9000
 CMD ["php-fpm"]
 
 
-# ============================================================
-# Laravel Nginx image
-# ============================================================
-
 FROM nginx:1.28-alpine AS web
+
+LABEL org.opencontainers.image.source="https://github.com/tir-lavigny/tir-lavigny"
 
 COPY docker/nginx/default.conf \
     /etc/nginx/conf.d/default.conf

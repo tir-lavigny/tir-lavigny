@@ -1,65 +1,42 @@
-# Dépendances (reinstallées dans l'image)
 vendor/
 node_modules/
 
-# Build artifacts front-end
 public/build/
 public/hot/
 
-# Fichiers d'environnement
 .env
 .env.*
 !.env.example
 !.env.prod.example
 
-# Logs & cache runtime
-storage/logs/*.log
+storage/logs/
 storage/framework/cache/
 storage/framework/sessions/
 storage/framework/views/
+storage/inertia-devtools/
 
-# Docker
-docker-compose.yml
+database/*.sqlite
+database/*.sqlite-*
+
+tests/
+phpunit.xml
+coverage/
+build/
+playwright-report/
+test-results/
+.phpunit.cache/
+e2e/
+
+Dockerfile*
 docker-compose*.yml
-Dockerfile
 .dockerignore
 
-# Git
 .git/
+.github/
 .gitignore
 .gitattributes
 
-# Tests
-tests/
-phpunit.xml
-
-# IDE / OS
 .idea/
 .vscode/
 .DS_Store
 Thumbs.db
-
-# Build coverage
-build/
-
-.git
-.github
-
-.env
-.env.*
-!.env.example
-
-node_modules
-vendor
-
-public/build
-
-storage/logs/*
-storage/framework/cache/*
-storage/framework/sessions/*
-storage/framework/views/*
-
-Dockerfile*
-docker-compose*.yml
-bootstrap/cache/*
-!bootstrap/cache/.gitkeep

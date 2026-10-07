@@ -1,0 +1,67 @@
+name: Build and publish Docker images
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_APP: ghcr.io/tir-lavigny/laravel-app
+  IMAGE_WEB: ghcr.io/tir-lavigny/laravel-web
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image tag
+        id: meta
+        run: |
+          echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Laravel app
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          target: production
+          push: true
+          tags: |
+            ${{ env.IMAGE_APP }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE_APP }}:${{ github.sha }}
+          cache-from: type=gha,scope=laravel-app
+          cache-to: type=gha,mode=max,scope=laravel-app
+
+      - name: Build and push Laravel web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          target: web
+          push: true
+          tags: |
+            ${{ env.IMAGE_WEB }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE_WEB }}:${{ github.sha }}
+          cache-from: type=gha,scope=laravel-web
+          cache-to: type=gha,mode=max,scope=laravel-web
