@@ -6,8 +6,9 @@ if [ "$(id -u)" = "0" ]; then
         mkdir -p /var/www/database
         touch /var/www/database/pulse.sqlite
         touch /var/www/database/telescope.sqlite
-        chown www-data:www-data /var/www/database/pulse.sqlite
-        chown www-data:www-data /var/www/database/telescope.sqlite
+        # directory must be www-data-writable too: sqlite creates its
+        # journal/WAL files next to the database file
+        chown -R www-data:www-data /var/www/database
     fi
 
     # storage is mounted read-only in the web container — skip there
