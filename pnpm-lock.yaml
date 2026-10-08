@@ -316,8 +316,8 @@ importers:
         version: 3.3.11(typescript@6.0.3)
     optionalDependencies:
       '@rollup/rollup-linux-x64-gnu':
-        specifier: 4.63.5
-        version: 4.63.5
+        specifier: 4.63.6
+        version: 4.63.6
       '@tailwindcss/oxide-linux-x64-gnu':
         specifier: ^4.0.1
         version: 4.3.3
@@ -747,8 +747,8 @@ packages:
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
-  '@rollup/rollup-linux-x64-gnu@4.63.5':
-    resolution: {integrity: sha512-3W9bTFcQNJn71cSJVM9RKIiZOy8DO/XLDii8Uv/Pm6WKqDRj7JV3ZfuXIEfyuy5LXpIzAbB/1M4Ukp9GKNa7nA==}
+  '@rollup/rollup-linux-x64-gnu@4.63.6':
+    resolution: {integrity: sha512-Ezx2E5D6Siz805j41x91JiGbzuCm8i2U98U37SQ7ytY737+wsJq+P9nPL6UmqDww491zO7MTivYOTrtmTTeCSw==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
@@ -3171,7 +3171,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
-  '@rollup/rollup-linux-x64-gnu@4.63.5':
+  '@rollup/rollup-linux-x64-gnu@4.63.6':
     optional: true
 
   '@swc/helpers@0.5.23':
