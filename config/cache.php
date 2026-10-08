@@ -1,5 +1,8 @@
 <?php
 
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 return [
@@ -117,10 +120,10 @@ return [
     */
 
     'serializable_classes' => [
-        \Illuminate\Support\Collection::class,
-        \stdClass::class,
-        \Carbon\Carbon::class,
-        \Carbon\CarbonImmutable::class,
+        Collection::class,
+        stdClass::class,
+        Carbon::class,
+        CarbonImmutable::class,
     ],
 
 ];
