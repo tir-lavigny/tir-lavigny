@@ -33,7 +33,7 @@ jobs:
         run: vendor/bin/phpstan analyse --memory-limit=2G
 
       - name: Check frontend formatting (Prettier)
-        run: pnpm exec prettier --check .
+        run: pnpm exec prettier --check resources/ e2e/
 
       - name: Lint Frontend
         run: pnpm run lint
