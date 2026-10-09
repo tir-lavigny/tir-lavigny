@@ -6,9 +6,6 @@ use App\Http\Controllers\API\Stock\StockLocationController;
 use App\Http\Controllers\API\Stock\StockLossController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok']);
-});
 Route::middleware('auth:sanctum')->get('test', fn () => response()->json(['ok' => true]))->name('test');
 
 Route::prefix('auth')->group(function () {
