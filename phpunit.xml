@@ -21,6 +21,7 @@
     <php>
         <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="APP_USER_EMAIL" value="test@email.com"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
