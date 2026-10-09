@@ -8,24 +8,25 @@ Route::get('/up', function () {
 })->name('health.up');
 
 $healthCheck = function () {
+    $failures = [];
+
     try {
         DB::select('select 1');
-        $db = 'ok';
-    } catch (Throwable) {
-        $db = 'failed';
+    } catch (Throwable $e) {
+        $failures['database'] = $e->getMessage();
     }
 
-    $storage = is_writable(storage_path('app')) ? 'ok' : 'failed';
+    if (! is_writable(storage_path('app'))) {
+        $failures['storage'] = storage_path('app').' is not writable';
+    }
 
-    $status = ($db === 'ok' && $storage === 'ok') ? 200 : 503;
+    if ($failures !== []) {
+        logger()->error('Health check failed', $failures);
 
-    return response()->json([
-        'status' => $status === 200 ? 'ok' : 'degraded',
-        'checks' => [
-            'database' => $db,
-            'storage' => $storage,
-        ],
-    ], $status);
+        return response()->json(['status' => 'degraded'], 503);
+    }
+
+    return response()->json(['status' => 'ok']);
 };
 
 Route::get('/health', $healthCheck)->name('health.check');
