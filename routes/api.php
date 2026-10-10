@@ -4,6 +4,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\Register;
 use App\Http\Controllers\API\Stock\StockLocationController;
 use App\Http\Controllers\API\Stock\StockLossController;
+use App\Http\Middleware\EnsureIdempotentRequest;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('test', fn () => response()->json(['ok' => true]))->name('test');
@@ -27,8 +28,10 @@ Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->g
         ->name('api.register.seasons.current');
 
     Route::post('/days', [Register\OperatingDayController::class, 'store'])
+        ->middleware(EnsureIdempotentRequest::class)
         ->name('api.register.operating-days.store');
     Route::patch('/days/{operatingDay}', [Register\OperatingDayController::class, 'update'])
+        ->middleware(EnsureIdempotentRequest::class)
         ->name('api.register.operating-days.update');
     Route::get('/days/current', [Register\OperatingDayController::class, 'current'])
         ->name('api.register.operating-days.current');
@@ -38,12 +41,15 @@ Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->g
         ->name('api.register.operating-days.show');
 
     Route::post('/tickets', [Register\TicketController::class, 'store'])
+        ->middleware(EnsureIdempotentRequest::class)
         ->name('api.register.tickets.store');
     Route::post('/tickets/preview', [Register\TicketController::class, 'preview'])
         ->name('api.register.tickets.preview');
     Route::get('/tickets/{ticket}', [Register\TicketController::class, 'show'])
         ->name('api.register.tickets.show');
     Route::post('/tickets/{ticket}/refund', [Register\TicketController::class, 'refund'])
+        ->withTrashed()
+        ->middleware(EnsureIdempotentRequest::class)
         ->name('api.register.tickets.refund');
 
     Route::get('/products', [Register\ProductController::class, 'index'])
@@ -66,5 +72,6 @@ Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('stock')->grou
     Route::get('{stockLocation}/{operatingDay}/losses', [StockLossController::class, 'index'])
         ->name('api.stock.losses.index');
     Route::post('losses', [StockLossController::class, 'store'])
+        ->middleware(EnsureIdempotentRequest::class)
         ->name('api.stock.losses.store');
 });
