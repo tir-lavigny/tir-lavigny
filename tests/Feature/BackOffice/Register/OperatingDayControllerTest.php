@@ -186,7 +186,7 @@ class OperatingDayControllerTest extends TestCase
     public function test_store_creates_operating_day(): void
     {
         $season = Season::factory()->create();
-        $today = Carbon::today();
+        $today = Carbon::today('Europe/Zurich');
 
         $response = $this->post(route('bo.register.operating-days.store'), [
             'season_id' => $season->id,
@@ -212,7 +212,7 @@ class OperatingDayControllerTest extends TestCase
 
         $response = $this->post(route('bo.register.operating-days.store'), [
             'season_id' => $season->id,
-            'date' => Carbon::tomorrow()->toDateString(),
+            'date' => Carbon::tomorrow('Europe/Zurich')->toDateString(),
         ]);
 
         $response->assertSessionHasErrors(['date']);
@@ -223,12 +223,12 @@ class OperatingDayControllerTest extends TestCase
         $season = Season::factory()->create();
         OperatingDay::factory()->create([
             'season_id' => $season->id,
-            'date' => Carbon::today()->toDateString(),
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
         ]);
 
         $response = $this->post(route('bo.register.operating-days.store'), [
             'season_id' => $season->id,
-            'date' => Carbon::today()->toDateString(),
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
         ]);
 
         $response->assertSessionHasErrors();
@@ -244,7 +244,7 @@ class OperatingDayControllerTest extends TestCase
 
         $response = $this->post(route('bo.register.operating-days.store'), [
             'season_id' => $season->id,
-            'date' => Carbon::today()->toDateString(),
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
         ]);
 
         $response->assertForbidden();

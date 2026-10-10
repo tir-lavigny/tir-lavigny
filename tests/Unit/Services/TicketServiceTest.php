@@ -53,7 +53,7 @@ class TicketServiceTest extends TestCase
         return OperatingDay::factory()->create([
             'season_id' => $season->id,
             'closed_at' => null,
-            'date' => Carbon::today()->toDateString(),
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
             'total_cash' => 0,
             'total_twint' => 0,
         ]);

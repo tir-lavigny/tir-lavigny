@@ -88,7 +88,7 @@ class DateNotDuplicateTest extends TestCase
             Carbon::now()->endOfYear()->toDateString(),
         );
 
-        $testDate = Carbon::now()->toDateString();
+        $testDate = Carbon::now('Europe/Zurich')->toDateString();
 
         DB::table('operating_days')->insert([
             'date' => $testDate,

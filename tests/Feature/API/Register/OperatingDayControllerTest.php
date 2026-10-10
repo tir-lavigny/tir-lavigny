@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Tests\Feature\API\AuthTestHelper;
 use Tests\TestCase;
 
@@ -42,7 +43,10 @@ class OperatingDayControllerTest extends TestCase
 
     private function authHeaders(): array
     {
-        return ['Authorization' => 'Bearer '.$this->tokens['accessToken']];
+        return [
+            'Authorization' => 'Bearer '.$this->tokens['accessToken'],
+            'Idempotency-Key' => (string) Str::uuid(),
+        ];
     }
 
     // --- store() ---
@@ -93,7 +97,7 @@ class OperatingDayControllerTest extends TestCase
         ]);
         OperatingDay::factory()->create([
             'season_id' => $season->id,
-            'date' => Carbon::today()->toDateString(),
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
         ]);
 
         $response = $this->postJson(route('api.register.operating-days.store'), [
@@ -156,7 +160,7 @@ class OperatingDayControllerTest extends TestCase
 
         $response = $this->patchJson(route('api.register.operating-days.update', $day), [
             'status' => 'open',
-        ], ['Authorization' => 'Bearer '.$tokens['accessToken']]);
+        ], ['Authorization' => 'Bearer '.$tokens['accessToken'], 'Idempotency-Key' => (string) Str::uuid()]);
 
         $response->assertOk();
         $this->assertNull($day->fresh()->closed_at);
@@ -225,7 +229,7 @@ class OperatingDayControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         $day = OperatingDay::create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'started_at' => Carbon::now(),
             'season_id' => $season->id,
             'closed_at' => null,
@@ -253,7 +257,7 @@ class OperatingDayControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         $day = OperatingDay::create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'started_at' => Carbon::now(),
             'season_id' => $season->id,
             'closed_at' => null,
@@ -305,7 +309,7 @@ class OperatingDayControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         OperatingDay::create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'started_at' => Carbon::now(),
             'season_id' => $season->id,
             'closed_at' => null,

@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use LogicException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class SeasonInventoryLifecycleTest extends TestCase
@@ -91,7 +92,7 @@ class SeasonInventoryLifecycleTest extends TestCase
 
         $this->day = OperatingDay::factory()->create([
             'season_id' => $this->season->id,
-            'date' => Carbon::today()->toDateString(),
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
             'closed_at' => null,
             'total_cash' => 0,
             'total_twint' => 0,
@@ -338,9 +339,10 @@ class SeasonInventoryLifecycleTest extends TestCase
 
         try {
             $this->ticketService->refund($ticket1);
-            $this->fail('Expected LogicException for double reversal');
-        } catch (LogicException $e) {
-            $this->assertStringContainsString('already been reversed', $e->getMessage());
+            $this->fail('Expected HttpException for double refund');
+        } catch (HttpException $e) {
+            $this->assertEquals(422, $e->getStatusCode());
+            $this->assertStringContainsString('already refunded', $e->getMessage());
         }
 
         $this->assertEquals($stockBeforeBeer, $this->currentStock($this->beer, $this->bar));
@@ -546,9 +548,10 @@ class SeasonInventoryLifecycleTest extends TestCase
 
         try {
             $this->ticketService->refund($ticket);
-            $this->fail('Expected LogicException for double reversal');
-        } catch (LogicException $e) {
-            $this->assertStringContainsString('already been reversed', $e->getMessage());
+            $this->fail('Expected HttpException for double refund');
+        } catch (HttpException $e) {
+            $this->assertEquals(422, $e->getStatusCode());
+            $this->assertStringContainsString('already refunded', $e->getMessage());
         }
 
         // No new movements, stock unchanged

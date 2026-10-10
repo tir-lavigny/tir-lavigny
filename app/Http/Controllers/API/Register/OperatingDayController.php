@@ -11,6 +11,7 @@ use App\Models\OperatingDay;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 use function Illuminate\Log\log;
@@ -38,12 +39,14 @@ class OperatingDayController extends Controller
                 return response()->json(['message' => 'This operating day is already closed.'], 422);
             }
 
-            $operatingDay->recalculateTotals();
-            $operatingDay->update([
-                'closed_at' => Carbon::now('Europe/Zurich')->utc(),
-                'closing_balance' => $operatingDay->closing_balance,
-                'cash_remark' => $cash_remark,
-            ]);
+            DB::transaction(function () use ($operatingDay, $cash_remark) {
+                $operatingDay->recalculateTotals();
+                $operatingDay->update([
+                    'closed_at' => Carbon::now('Europe/Zurich')->utc(),
+                    'closing_balance' => $operatingDay->closing_balance,
+                    'cash_remark' => $cash_remark,
+                ]);
+            });
 
             if (! empty($cash_remark)) {
                 try {
