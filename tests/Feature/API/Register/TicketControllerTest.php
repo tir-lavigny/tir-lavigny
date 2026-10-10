@@ -14,6 +14,7 @@ use App\Models\Voucher;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\Feature\API\AuthTestHelper;
 use Tests\TestCase;
 
@@ -42,7 +43,10 @@ class TicketControllerTest extends TestCase
 
     private function authHeaders(): array
     {
-        return ['Authorization' => 'Bearer '.$this->tokens['accessToken']];
+        return [
+            'Authorization' => 'Bearer '.$this->tokens['accessToken'],
+            'Idempotency-Key' => (string) Str::uuid(),
+        ];
     }
 
     // --- store() ---

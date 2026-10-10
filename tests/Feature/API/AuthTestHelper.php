@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\API;
 
+use App\Models\IdempotencyKey;
 use App\Models\User;
 use App\TokenAbility;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -27,6 +28,7 @@ class AuthTestHelper
 
     public static function clearUser(User $userModel): void
     {
+        IdempotencyKey::query()->where('user_id', $userModel->id)->delete();
         $userModel->tokens()->delete();
         $userModel->delete($userModel->id);
     }

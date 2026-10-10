@@ -12,6 +12,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Tests\Feature\API\AuthTestHelper;
 use Tests\TestCase;
@@ -47,7 +48,10 @@ class SeasonLifecycleTest extends TestCase
 
     private function authHeaders(): array
     {
-        return ['Authorization' => 'Bearer '.$this->cashierTokens['accessToken']];
+        return [
+            'Authorization' => 'Bearer '.$this->cashierTokens['accessToken'],
+            'Idempotency-Key' => (string) Str::uuid(),
+        ];
     }
 
     private function createTicket(array $overrides = []): TestResponse

@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Tests\Feature\API\AuthTestHelper;
 use Tests\TestCase;
 
@@ -42,7 +43,10 @@ class OperatingDayControllerTest extends TestCase
 
     private function authHeaders(): array
     {
-        return ['Authorization' => 'Bearer '.$this->tokens['accessToken']];
+        return [
+            'Authorization' => 'Bearer '.$this->tokens['accessToken'],
+            'Idempotency-Key' => (string) Str::uuid(),
+        ];
     }
 
     // --- store() ---
@@ -156,7 +160,7 @@ class OperatingDayControllerTest extends TestCase
 
         $response = $this->patchJson(route('api.register.operating-days.update', $day), [
             'status' => 'open',
-        ], ['Authorization' => 'Bearer '.$tokens['accessToken']]);
+        ], ['Authorization' => 'Bearer '.$tokens['accessToken'], 'Idempotency-Key' => (string) Str::uuid()]);
 
         $response->assertOk();
         $this->assertNull($day->fresh()->closed_at);
