@@ -4,7 +4,9 @@ namespace App\Http\Requests\BackOffice\Register;
 
 use App\Rules\Register\DateNotDuplicate;
 use App\Rules\Register\NoOpenDayExists;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreOperatingDayRequest extends FormRequest
 {
@@ -26,7 +28,7 @@ class StoreOperatingDayRequest extends FormRequest
             'date' => [
                 'required',
                 'date',
-                'before_or_equal:today',
+                Rule::date()->beforeOrEqual(Carbon::today('Europe/Zurich')),
             ],
         ];
     }

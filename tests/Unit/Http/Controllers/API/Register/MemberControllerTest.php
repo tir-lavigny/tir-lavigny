@@ -34,7 +34,7 @@ class MemberControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         $day = OperatingDay::factory()->create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'season_id' => $season->id,
             'closed_at' => null,
         ]);
@@ -63,7 +63,7 @@ class MemberControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         $day = OperatingDay::factory()->create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'season_id' => $season->id,
             'closed_at' => null,
         ]);
@@ -108,7 +108,7 @@ class MemberControllerTest extends TestCase
             'end_date' => Carbon::now()->addYear()->endOfYear(),
         ]);
         OperatingDay::factory()->create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'season_id' => $currentSeason->id,
             'closed_at' => null,
         ]);
@@ -145,7 +145,7 @@ class MemberControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         OperatingDay::factory()->create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'season_id' => $season->id,
             'closed_at' => null,
         ]);
@@ -174,7 +174,7 @@ class MemberControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         OperatingDay::factory()->create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'season_id' => $season->id,
             'closed_at' => null,
         ]);

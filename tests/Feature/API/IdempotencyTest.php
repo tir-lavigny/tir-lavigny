@@ -64,7 +64,7 @@ class IdempotencyTest extends TestCase
         return OperatingDay::factory()->create([
             'season_id' => $season->id,
             'closed_at' => null,
-            'date' => Carbon::today()->toDateString(),
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
         ]);
     }
 

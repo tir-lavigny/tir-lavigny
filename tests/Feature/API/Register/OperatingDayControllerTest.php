@@ -97,7 +97,7 @@ class OperatingDayControllerTest extends TestCase
         ]);
         OperatingDay::factory()->create([
             'season_id' => $season->id,
-            'date' => Carbon::today()->toDateString(),
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
         ]);
 
         $response = $this->postJson(route('api.register.operating-days.store'), [
@@ -229,7 +229,7 @@ class OperatingDayControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         $day = OperatingDay::create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'started_at' => Carbon::now(),
             'season_id' => $season->id,
             'closed_at' => null,
@@ -257,7 +257,7 @@ class OperatingDayControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         $day = OperatingDay::create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'started_at' => Carbon::now(),
             'season_id' => $season->id,
             'closed_at' => null,
@@ -309,7 +309,7 @@ class OperatingDayControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         OperatingDay::create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'started_at' => Carbon::now(),
             'season_id' => $season->id,
             'closed_at' => null,

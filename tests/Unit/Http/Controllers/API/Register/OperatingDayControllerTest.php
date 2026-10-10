@@ -70,7 +70,7 @@ class OperatingDayControllerTest extends TestCase
         ]);
 
         $day = OperatingDay::where('season_id', $season->id)->first();
-        $this->assertEquals(Carbon::today()->format('Y-m-d'), $day->date->format('Y-m-d'));
+        $this->assertEquals(Carbon::today('Europe/Zurich')->format('Y-m-d'), $day->date->format('Y-m-d'));
     }
 
     public function test_store_sets_started_at_to_now(): void
@@ -197,7 +197,7 @@ class OperatingDayControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         $day = OperatingDay::create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'started_at' => Carbon::now(),
             'season_id' => $season->id,
             'closed_at' => null,
@@ -226,7 +226,7 @@ class OperatingDayControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         OperatingDay::create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'started_at' => Carbon::now()->subHours(8),
             'closed_at' => Carbon::now(),
             'season_id' => $season->id,
@@ -247,7 +247,7 @@ class OperatingDayControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         $day = OperatingDay::create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'started_at' => Carbon::now(),
             'season_id' => $season->id,
             'closed_at' => null,
@@ -304,7 +304,7 @@ class OperatingDayControllerTest extends TestCase
             'end_date' => Carbon::now()->endOfYear(),
         ]);
         OperatingDay::create([
-            'date' => Carbon::today(),
+            'date' => Carbon::today('Europe/Zurich'),
             'started_at' => Carbon::now(),
             'season_id' => $season->id,
             'closed_at' => null,

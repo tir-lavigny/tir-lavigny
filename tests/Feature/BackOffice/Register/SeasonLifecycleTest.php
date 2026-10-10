@@ -93,7 +93,7 @@ class SeasonLifecycleTest extends TestCase
         // ─── Step 2: Open Day 1 (today) ──────────────────────────────────
         $this->post(route('bo.register.operating-days.store'), [
             'season_id' => $season->id,
-            'date' => Carbon::today()->toDateString(),
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
         ])->assertRedirect();
 
         $day1 = OperatingDay::where('season_id', $season->id)->first();
