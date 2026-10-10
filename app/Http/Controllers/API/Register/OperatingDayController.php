@@ -20,11 +20,11 @@ class OperatingDayController extends Controller
 {
     public function store(StoreDayRequest $request): JsonResponse
     {
-        $day = DB::transaction(fn () => OperatingDay::create([
+        $day = OperatingDay::create([
             'date' => Carbon::today('Europe/Zurich')->toDateString(),
             'started_at' => Carbon::now('Europe/Zurich')->utc(),
             'season_id' => $request->input('season_id'),
-        ]));
+        ]);
 
         return response()->json(['data' => new OperatingDayResource($day)], 201);
     }
