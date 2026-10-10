@@ -73,10 +73,6 @@ class TicketController extends Controller implements HasMiddleware
 
     public function refund(RefundTicketAction $action, Ticket $ticket): JsonResponse
     {
-        if ($ticket->trashed()) {
-            return response()->json(['message' => 'Ticket is already refunded.'], 422);
-        }
-
         $day = $ticket->operatingDay;
         assert($day instanceof OperatingDay);
 

@@ -44,6 +44,8 @@ class TicketService
 
     public function refund(Ticket $ticket): void
     {
+        abort_if($ticket->trashed(), 422, 'Ticket is already refunded.');
+
         $day = $ticket->operatingDay;
 
         DB::transaction(function () use ($ticket, $day) {
