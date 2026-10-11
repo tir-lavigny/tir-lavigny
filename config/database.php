@@ -112,7 +112,9 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
-        'pulse' => env('APP_ENV') === 'production' ? [
+        // MariaDB when PULSE_DB_HOST is set (staging + production VPS);
+        // sqlite fallback keeps local/testing zero-config.
+        'pulse' => env('PULSE_DB_HOST') ? [
             'driver' => 'mariadb',
             'url' => env('PULSE_DB_URL'),
             'host' => env('PULSE_DB_HOST', '127.0.0.1'),
@@ -141,7 +143,9 @@ return [
             'synchronous' => null,
         ],
 
-        'telescope' => env('APP_ENV') === 'production' ? [
+        // MariaDB when TELESCOPE_DB_HOST is set (staging + production VPS);
+        // sqlite fallback keeps local/testing zero-config.
+        'telescope' => env('TELESCOPE_DB_HOST') ? [
             'driver' => 'mariadb',
             'url' => env('TELESCOPE_DB_URL'),
             'host' => env('TELESCOPE_DB_HOST', '127.0.0.1'),
