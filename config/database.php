@@ -112,37 +112,6 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
-        // MariaDB when PULSE_DB_HOST is set (staging + production VPS);
-        // sqlite fallback keeps local/testing zero-config.
-        'pulse' => env('PULSE_DB_HOST') ? [
-            'driver' => 'mariadb',
-            'url' => env('PULSE_DB_URL'),
-            'host' => env('PULSE_DB_HOST', '127.0.0.1'),
-            'port' => env('PULSE_DB_PORT', '3306'),
-            'database' => env('PULSE_DB_DATABASE', 'laravel'),
-            'username' => env('PULSE_DB_USERNAME', 'root'),
-            'password' => env('PULSE_DB_PASSWORD', ''),
-            'unix_socket' => env('PULSE_DB_SOCKET', ''),
-            'charset' => env('PULSE_DB_CHARSET', 'utf8mb4'),
-            'collation' => env('PULSE_DB_COLLATION', 'utf8mb4_unicode_ci'),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ] : [
-            'driver' => 'sqlite',
-            'url' => env('PULSE_DB_URL'),
-            'database' => env('PULSE_DB_DATABASE') ?: database_path('pulse.sqlite'),
-            'prefix' => '',
-            'foreign_key_constraints' => env('PULSE_DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-        ],
-
         // MariaDB when TELESCOPE_DB_HOST is set (staging + production VPS);
         // sqlite fallback keeps local/testing zero-config.
         'telescope' => env('TELESCOPE_DB_HOST') ? [

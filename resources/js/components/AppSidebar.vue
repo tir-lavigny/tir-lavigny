@@ -19,7 +19,6 @@ import {
     Newspaper,
     PanelTop,
     Repeat,
-    ScanEye,
     ShoppingCart,
     Tag,
     Telescope,
@@ -202,11 +201,6 @@ const managementNavItems: NavItem[] = [
 const footerNavItems: NavItem[] = [
     ...(hasRole(user, 'admin')
         ? [
-              {
-                  title: 'Pulse',
-                  href: '/back-office/pulse',
-                  icon: ScanEye,
-              },
               {
                   title: 'Telescope',
                   href: '/back-office/telescope',

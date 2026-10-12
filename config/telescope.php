@@ -114,7 +114,6 @@ return [
     'ignore_paths' => [
         'livewire*',
         'nova-api*',
-        '#^/'.env('PULSE_PATH', 'pulse').'$#',
     ],
 
     'ignore_commands' => [

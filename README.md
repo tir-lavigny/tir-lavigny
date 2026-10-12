@@ -69,7 +69,7 @@ On failure: rolls back code to previous commit, reinstalls deps, app comes back 
 
 1. Drops staging DB, recreates empty
 2. Dumps prod DB → restores to staging DB (with `--single-transaction`)
-3. Recreates Pulse + Telescope SQLite files
+3. Recreates Telescope SQLite files
 4. Runs `artisan migrate --force` (catches up dev-only migrations)
 
 ## Required secrets

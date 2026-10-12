@@ -2,12 +2,10 @@
 
 namespace App\Providers;
 
-use App\Models\User;
 use App\Services\DavServiceInterface;
 use App\Services\InfomaniakDavService;
 use App\Services\StubDavService;
 use App\TokenAbility;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
 
@@ -32,9 +30,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::define('viewPulse', function (User $user) {
-            return $user->hasRole('admin');
-        });
         $this->overrideSanctumConfigurationToSupportRefreshToken();
     }
 

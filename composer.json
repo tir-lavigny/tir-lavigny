@@ -14,7 +14,6 @@
         "inertiajs/inertia-laravel": "^3.0",
         "laravel/framework": "^13.0",
         "laravel/nightwatch": "^1.7",
-        "laravel/pulse": "^1.4",
         "laravel/sanctum": "^4.0",
         "laravel/telescope": "^5.7",
         "laravel/tinker": "^3.0.0",
@@ -63,7 +62,6 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php -r \"file_exists('database/pulse.sqlite') || touch('database/pulse.sqlite');\"",
             "@php -r \"file_exists('database/telescope.sqlite') || touch('database/telescope.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ],

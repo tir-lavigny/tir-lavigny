@@ -25,7 +25,6 @@ setup-dev:	install
 	@echo "Setting up development environment..."
 	[ ! -f .env ] && cp .env.example .env || true
 	touch database/telescope.sqlite
-	touch database/pulse.sqlite
 	php artisan migrate
 	php artisan key:generate
 	@echo "Development environment setup complete"
@@ -49,7 +48,7 @@ docker-dev-build: ## Build the dev Docker image
 
 docker-dev-setup: ## First-time dev setup: build, start, generate key, migrate & seed
 	@echo "Setting up Docker dev environment..."
-	touch database/database.sqlite database/pulse.sqlite database/telescope.sqlite
+	touch database/database.sqlite database/telescope.sqlite
 	[ ! -f .env ] && cp .env.example .env || true
 	docker compose up -d --build
 	docker compose exec app php artisan key:generate
