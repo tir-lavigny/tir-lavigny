@@ -62,6 +62,9 @@ jobs:
           file: Dockerfile
           target: production
           push: true
+          build-args: |
+            VITE_APP_NAME=${{ steps.env.outputs.is_dev == 'true' && 'Staging - Tir Lavigny' || 'Tir Lavigny' }}
+
           tags: |
             ${{ env.IMAGE_APP }}:${{ steps.env.outputs.version }}
             ${{ env.IMAGE_APP }}:${{ steps.env.outputs.sha_tag }}
@@ -75,6 +78,9 @@ jobs:
           file: Dockerfile
           target: web
           push: true
+          build-args: |
+            VITE_APP_NAME=${{ steps.env.outputs.is_dev == 'true' && 'Staging - Tir Lavigny' || 'Tir Lavigny' }}
+
           tags: |
             ${{ env.IMAGE_WEB }}:${{ steps.env.outputs.version }}
             ${{ env.IMAGE_WEB }}:${{ steps.env.outputs.sha_tag }}

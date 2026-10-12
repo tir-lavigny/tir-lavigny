@@ -55,6 +55,9 @@ RUN composer dump-autoload \
 
 FROM node:${NODE_VERSION}-bookworm-slim AS frontend
 
+ARG VITE_APP_NAME="Tir Lavigny"
+ENV VITE_APP_NAME=$VITE_APP_NAME
+
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
