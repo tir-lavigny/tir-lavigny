@@ -1,104 +1,93 @@
-[![Deploy to Main](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/main.yml/badge.svg)](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/main.yml) [![Deploy to Staging](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/staging.yml/badge.svg?branch=dev)](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/staging.yml)
+[![CI](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/ci.yml/badge.svg)](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/ci.yml)
 
-# CI/CD Pipeline
+# Tir-Lavigny — Laravel + Inertia (Vue 3) application
+
+Public site, back-office and register API for Tir Lavigny. Runs as immutable Docker images (GHCR) on the Tir-Lavigny VPS, managed by the [tir-lavigny-infra](https://github.com/tir-lavigny/tir-lavigny-infra) repository (Ansible + Docker Compose). The infrastructure architecture, TLS, backups, monitoring and cutover plan live in that repo's `PLAN.md` — this README covers only the application.
+
+---
+
+# CI/CD
+
+Everything is **tag-based** (single branch: `main`). There is no legacy-VPS deploy path in this repo anymore.
 
 ## Branch model
 
 ```
-feature branches → PR → dev → auto-deploy to staging
-                                    ↓
-                              PR → main → auto-deploy to production
+push to main
+  → CI (tests + lint, check-only)
+  → green CI auto-creates vX.Y.Z-dev.N tag
+  → image build (app + web, SHA + version tags)
+  → staging auto-deploys via SSH
+
+manual release
+  → vX.Y.Z tag + GitHub release
+  → image build only (lands in GHCR)
+
+manual prod deploy
+  → workflow_dispatch with the vX.Y.Z tag
+  → prod deploy via SSH
 ```
 
-| Branch | Environment | URL                        |
-| ------ | ----------- | -------------------------- |
-| `dev`  | Staging     | https://dev.tir-lavigny.ch |
-| `main` | Production  | https://tir-lavigny.ch     |
+| Environment | URL                          | Trigger                                    |
+| ----------- | ---------------------------- | ------------------------------------------ |
+| Staging     | https://staging.tir-lavigny.ch | Auto: green CI on `main` → dev tag → deploy |
+| Production  | https://tir-lavigny.ch       | Manual: `deploy-production.yml` dispatch    |
 
 ## Workflows
 
-### CI (tests + lint)
+| Workflow               | Trigger                              | What it does                                                                          |
+| ---------------------- | ------------------------------------ | ------------------------------------------------------------------------------------- |
+| `ci.yml`               | Push to `main`, PRs                  | Calls `tests.yml` + `lint.yml`                                                         |
+| `tests.yml`            | `workflow_call`                      | PHPUnit + Vitest                                                                       |
+| `lint.yml`             | `workflow_call`                      | Check-only: Pint `--test`, PHPStan, Prettier `--check`, ESLint — **CI never commits**  |
+| `dev-tag.yml`          | Green CI on `main`                   | Auto-creates `vX.Y.Z-dev.N` tag (GitHub App token, so the tag triggers `docker.yml`)   |
+| `docker.yml`           | `v*` tags + `workflow_dispatch`      | Builds app + web images → GHCR; `-dev` tags then auto-deploy staging                   |
+| `release.yml`          | `workflow_dispatch` (version input)  | Creates `vX.Y.Z` tag + GitHub release                                                  |
+| `deploy-production.yml`| `workflow_dispatch` (tag input)      | Deploys an existing GHCR release tag to production                                     |
+| `staging-sync.yml`     | `workflow_dispatch`                  | Copies the production DB into staging (see below)                                      |
 
-| Workflow           | Trigger                           | What it does                                   |
-| ------------------ | --------------------------------- | ---------------------------------------------- |
-| `tests.yml`        | PR to `dev`, `workflow_call`      | PHP + JS tests, type check                     |
-| `lint.yml`         | PR to `dev`, `workflow_call`      | Pint, Prettier, ESLint (auto-commits fixes)    |
-| `docker-build.yml` | Push to `dev`, PR to `main`/`dev` | Smoke test: builds Docker prod image (no push) |
+Safety properties:
 
-### Staging deploy
+- **Staging** is CI-gated: no green CI → no dev tag → no image → no deploy.
+- **Production** is a deliberate human action: the dispatch click is the approval (environment reviewer gates need a GitHub Team plan).
+- Every deploy runs a **pre-migration DB dump** and a **health gate** (`/up` must answer); a failed gate or migration triggers the **rollback trap** — previous tag is restored automatically.
+- The register PWA is a separate repo with its own release cycle (`--register` deploys never restart this app, and vice versa — API changes must stay backward-compatible for at least one deploy cycle).
 
-**Trigger:** Push to `dev` or manual dispatch.
-
-**Flow:**
-
-```
-staging.yml triggers
-  ├─ tests (reusable workflow)
-  ├─ lint (reusable workflow) → auto-commits formatting fixes
-  └─ build + deploy (needs: [tests, lint])
-       → checks out latest dev HEAD (includes lint fixes)
-       → builds Vite assets → pushes to staging-deploy branch
-       → SSH into VPS → runs deploy-staging.sh
-       → cleans up staging-deploy branch
-```
-
-**Concurrency:** Only one staging deploy at a time (`staging-deploy` group).
-
-**Deploy script** (`deploy-staging.sh`):
-
-1. Enters maintenance mode
-2. Fetches `staging-deploy` branch, resets to it
-3. Installs Composer dependencies
-4. Runs `artisan migrate --force`
-5. Clears cache
-6. Exits maintenance mode
-
-On failure: rolls back code to previous commit, reinstalls deps, app comes back up on old version.
-
-### Production deploy
-
-**Trigger:** Push to `main` or manual dispatch.
-
-**Flow:** Same as staging but deploys to production directory and uses `deploy.sh`.
-
-### Staging DB sync
-
-**Trigger:** Manual dispatch only (`staging-sync.yml`).
-
-**Flow:** SSHs to VPS, runs `sync-staging-db.sh`:
-
-1. Drops staging DB, recreates empty
-2. Dumps prod DB → restores to staging DB (with `--single-transaction`)
-3. Recreates Telescope SQLite files
-4. Runs `artisan migrate --force` (catches up dev-only migrations)
-
-## Required secrets
-
-| Secret                | Purpose                  |
-| --------------------- | ------------------------ |
-| `MASTER_SSH_USERNAME` | VPS SSH user             |
-| `MASTER_SSH_HOST`     | VPS hostname/IP          |
-| `MASTER_SSH_KEY`      | VPS SSH private key      |
-| `MASTER_SSH_PORT`     | VPS SSH port             |
-| `MASTER_SSH_PATH`     | Prod directory on VPS    |
-| `STAGING_SSH_PATH`    | Staging directory on VPS |
-
-## VPS prerequisites
+## Deploying
 
 ### Staging
 
-- Directory at `STAGING_SSH_PATH` with correct permissions
-- `.env` file with `APP_ENV=staging`, `APP_URL=https://dev.tir-lavigny.ch`
-- `deploy-staging.sh` and `sync-staging-db.sh` present and executable
-- MySQL user with read access to prod DB + full access to staging DB
-- Apache vhost for `dev.tir-lavigny.ch`
+Nothing to do — push to `main`, watch the CI → dev tag → deploy chain. Deploy scripts live on the VPS (`/usr/local/sbin/tir-lavigny-deploy-staging`, Ansible-installed) and run migrations + `db:seed` (idempotent RBAC seeder) + `artisan optimize` + health check.
 
 ### Production
 
-- Directory at `MASTER_SSH_PATH` with correct permissions
-- `.env` file with `APP_ENV=production`
-- `deploy.sh` present and executable
-- MySQL database for production
+1. **Release**: Actions → `Release` → input version (e.g. `0.2.0`) → creates `v0.2.0` + build.
+2. **Wait** for `docker.yml` to finish (image in GHCR).
+3. **Deploy**: Actions → `Deploy to production` → input `v0.2.0`.
+
+Manual fallback (SSH to the VPS): `sudo tir-lavigny-deploy-production v0.2.0`.
+
+### Staging DB sync
+
+Actions → `staging-sync` → dispatch. SSHes into the VPS and runs `tir-lavigny-sync-staging`: dumps the prod DB, drops + recreates the staging schema, imports, runs `migrate` + idempotent seed. Aborts if prod/staging DB names ever match.
+
+## Required secrets (this repo)
+
+| Secret                  | Purpose                                                     |
+| ----------------------- | ----------------------------------------------------------- |
+| `VPS_SSH_HOST`          | VPS hostname for deploy SSH                                  |
+| `VPS_SSH_USER`          | Deploy user on the VPS                                       |
+| `VPS_SSH_PRIVATE_KEY`   | Private key for that user (CI key, also used by qr + register repos) |
+| `APP_CLIENT_ID`         | GitHub App id used to mint the tag-push token (`dev-tag.yml`) |
+| `APP_PRIVATE_KEY`       | GitHub App private key                                       |
+
+Everything else (DB creds, mail, Nightwatch token, …) lives in **Doppler** and reaches the VPS via `tir-lavigny-refresh-env` (Ansible-instained), never in GitHub.
+
+## Observability
+
+- **Nightwatch** (nightwatch.laravel.com, EU): app-level APM — requests, exceptions, queries. `NIGHTWATCH_ENABLED=false` in the test suite.
+- **Telescope** (back-office, admin only): per-request inspection. DB lives in its own MariaDB schema (`0g9zd_telescope`). `telescope:prune` runs weekly via the scheduler.
+- Health endpoints: `/up` (minimal, 204) and `/health` (DB + storage checks, JSON) — both grouped in `routes/health.php`, excluded from Nightwatch sampling, used by deploy health gates and the compose healthchecks.
 
 ---
 
@@ -108,209 +97,64 @@ On failure: rolls back code to previous commit, reinstalls deps, app comes back 
 
 Vue 3 + TypeScript component tests via **Vitest** + **Vue Test Utils**.
 
-**Run:**
-
 ```bash
 pnpm test
 ```
 
-**Config:** `vitest.config.ts`
-
-- Environment: `jsdom`
-- Test pattern: `resources/js/**/*.test.ts`
-- Setup: `resources/js/tests/setup.ts` (mocks Ziggy routes, Leaflet maps, Inertia)
-
-**Tests cover:** Vue components, composables, and any frontend logic. Unit-level, no HTTP calls, no real browser.
-
-**Add a test:** create `resources/js/something.test.ts` alongside the code. Vitest picks it up automatically.
+Config: `vitest.config.ts` — jsdom, `resources/js/**/*.test.ts`, setup mocks Ziggy/Leaflet/Inertia. Add a test next to the code as `something.test.ts`; it is picked up automatically.
 
 ## Backend
 
-PHP tests via **PHPUnit**, split into Unit and Feature suites.
-
-**Run:**
+PHP tests via **PHPUnit**, Unit + Feature suites.
 
 ```bash
-./vendor/bin/phpunit
+php artisan test
 ```
 
-**Config:** `phpunit.xml`
+Test env: `APP_ENV=testing`, sqlite `:memory:`, `RefreshDatabase` per test, mail/cache/queue faked. Add tests in `tests/Unit/` or `tests/Feature/`.
 
-- Test env: `APP_ENV=testing`, `DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`
-- `RefreshDatabase`: isolated state per test
-- Mail, cache, queue, session all faked/array-backed
+## E2E
 
-| Suite   | Directory        | Scope                                      |
-| ------- | ---------------- | ------------------------------------------ |
-| Unit    | `tests/Unit/`    | Isolated logic (services, traits, helpers) |
-| Feature | `tests/Feature/` | HTTP routes, controllers, auth flows       |
-
-**Examples:**
-
-- `ConvertsLocalDatetimesTest.php`: UTC conversion logic
-- `DashboardTest.php`: authenticated route access
-- `MemberRegistrationFormTest.php`: form validation & submission
-
-**Add a test:** create a file in `tests/Unit/` or `tests/Feature/` extending `Tests\TestCase`. Database state resets automatically.
-
----
-
-# E2E
-
-End-to-end tests use Playwright against the Laravel + Vue app.
-
-**Run:**
+Playwright against a real Laravel + Vue stack:
 
 ```bash
 pnpm run test:e2e
 ```
 
-**How it works:**
-
-1. `playwright.config.ts` starts `run-e2e-server.sh` via `webServer` before tests
-2. The script creates a fresh SQLite DB (`database/e2e.sqlite`), runs migrations, and seeds with `E2eSeeder`
-3. `E2eSeeder` creates events using **relative times** (e.g. `now()->subDays(5)`, `now()->addDays(14)`) converted from Europe/Zurich local to UTC, tests never expire
-4. Frontend builds if `public/build` is missing
-5. Laravel server starts on `http://localhost:9000`
-6. Playwright runs all specs in `e2e/` and kills the server
-
-**Files:**
-
-| File                             | Role                                         |
-| -------------------------------- | -------------------------------------------- |
-| `playwright.config.ts`           | Browser config, webServer command, port 9000 |
-| `run-e2e-server.sh`              | DB setup, build, server startup              |
-| `database/seeders/E2eSeeder.php` | Relative-time test data                      |
-| `e2e/`                           | Test specs                                   |
-
-**Add a test:** create `e2e/my-test.spec.ts` with `import { test, expect } from '@playwright/test'`. It runs automatically with `pnpm run test:e2e`.
+`playwright.config.ts` starts `run-e2e-server.sh`: fresh SQLite DB (`database/e2e.sqlite`), migrations, `E2eSeeder` (relative-time data so tests never expire), frontend build if needed, server on `http://localhost:9000`. Add specs in `e2e/*.spec.ts`.
 
 ---
 
-# Setup dev environment
+# Development
 
-## Makefile
+## Local setup (no Docker)
 
-```
-make setup-dev
-```
-
-## .env
-
-```
-APP_USER_EMAIL=
-APP_USER_NAME=
-APP_USER_PASSWORD=
-```
-
-## Seed the database with sample data
-
-```
-make seed
-```
-
-## Run the application
-
-```
-pnpm run dev
+```bash
+make setup-dev   # dependencies + .env + key + migrations
+make seed        # sample data (needs APP_USER_* in .env)
+pnpm run dev     # Vite HMR
 php artisan serve
 ```
 
----
-
-# Docker - Development
-
-Requires only Docker Desktop. No PHP, Composer or Node needed locally.
-
-**First-time setup:**
+## Docker dev (only Docker Desktop required)
 
 ```bash
-make docker-dev-setup
+make docker-dev-setup   # first time: build, key, migrate, seed
+make docker-dev-up      # http://localhost:8000 — Vite 5173, Mailpit 8025
+make docker-dev-artisan CMD="migrate"
 ```
 
-This single command creates the SQLite files, copies `.env.example`, builds the image, generates the app key and runs migrations with seeders.
+## Health routes & scheduled tasks
 
-| Service  | URL                   |
-| -------- | --------------------- |
-| App      | http://localhost:8000 |
-| Vite HMR | http://localhost:5173 |
-| Mailpit  | http://localhost:8025 |
+- `routes/health.php` — `/up`, `/health`, `/api/health` (register PWA offline check)
+- `routes/console.php` — `telescope:prune` (weekly), `idempotency:prune` (daily)
 
-**Daily usage:**
+## Makefile legacy note
 
-```bash
-make docker-dev-up       # Start the stack
-make docker-dev-down     # Stop the stack
-make docker-dev-logs     # Follow app logs
-make docker-dev-shell    # Shell inside the app container
-make docker-dev-artisan CMD="migrate"  # Run any Artisan command
-```
+`docker-prod-*` targets are leftovers from the old shared-hosting setup and are **not** the deploy path anymore — production runs the GHCR images via the infra repo's compose stacks and deploy scripts.
 
 ---
 
-# Docker - Production
+# Stack
 
-> **Prerequisites:** A VPS/Cloud Server with Docker installed, ports 80 and 443 open, and the DNS `A` record for `tir-lavigny.ch` already pointing to the server.
-> This will **not** work on shared/mutualized hosting (e.g. Infomaniak Web Hosting).
-
-## 1. Clone the repository on the server
-
-```bash
-git clone https://github.com/zurfjereluhmie/tir-lavigny.ch.git
-cd tir-lavigny.ch
-```
-
-## 2. Create the production environment file
-
-```bash
-cp .env.prod.example .env.prod
-```
-
-Edit `.env.prod` and fill in all required values:
-
-| Variable           | Description                                                                                                  |
-| ------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `APP_KEY`          | Generate with `docker run --rm php:8.3-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"` |
-| `DB_PASSWORD`      | Strong password for the MariaDB app user                                                                     |
-| `DB_ROOT_PASSWORD` | Strong password for the MariaDB root user                                                                    |
-| `MAIL_HOST`        | SMTP host (e.g. `smtp.infomaniak.com`)                                                                       |
-| `MAIL_USERNAME`    | SMTP username                                                                                                |
-| `MAIL_PASSWORD`    | SMTP password                                                                                                |
-
-## 3. First-time setup (SSL + start)
-
-```bash
-make docker-prod-setup EMAIL=your@email.com
-```
-
-This command:
-
-1. Checks that `.env.prod` exists
-2. Runs `init-ssl.sh` to obtain a Let's Encrypt certificate
-3. Starts the full stack (app, worker, nginx, certbot, MariaDB)
-
-The `entrypoint.prod.sh` script automatically caches config/routes/views and runs `php artisan migrate --force` on every container start.
-
-## 4. Subsequent deployments
-
-```bash
-make docker-prod-deploy
-```
-
-Pulls the latest code, rebuilds the image (including fresh Vite assets) and restarts the stack with zero-downtime container replacement.
-
-**Other useful commands:**
-
-```bash
-make docker-prod-up      # Start the stack (no rebuild)
-make docker-prod-down    # Stop the stack
-make docker-prod-logs    # Follow app logs
-make docker-prod-shell   # Shell inside the app container
-make docker-prod-artisan CMD="migrate:status"  # Run any Artisan command
-make docker-prod-ssl EMAIL=your@email.com      # Re-issue the SSL certificate
-```
-
-| Service | URL                    |
-| ------- | ---------------------- |
-| App     | https://tir-lavigny.ch |
-| MariaDB | internal (port 3306)   |
+PHP 8.4 · Laravel 13 · Inertia (Vue 3 + TS) · MariaDB · Redis-less (database cache/sessions) · Sanctum (register API) · Spatie permission (RBAC) · Nightwatch · Telescope · Docker (multi-stage: composer deps → node build → php-fpm + nginx web image)
