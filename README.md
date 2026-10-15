@@ -149,9 +149,9 @@ make docker-dev-artisan CMD="migrate"
 - `routes/health.php` — `/up`, `/health`, `/api/health` (register PWA offline check)
 - `routes/console.php` — `telescope:prune` (weekly), `idempotency:prune` (daily)
 
-## Makefile legacy note
+## Makefile note
 
-`docker-prod-*` targets are leftovers from the old shared-hosting setup and are **not** the deploy path anymore — production runs the GHCR images via the infra repo's compose stacks and deploy scripts.
+Only dev targets exist (`docker-dev-*`, local `docker-compose.yml`). Production deploys are CI-driven GHCR image swaps via the infra repo — there is no in-repo prod path anymore (the legacy shared-hosting scripts were deleted 2026-10-15).
 
 ---
 
