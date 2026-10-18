@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('telescope:prune')->weekly();
 Schedule::command('idempotency:prune')->daily();
+Schedule::command('activitylogs:prune')->daily();
