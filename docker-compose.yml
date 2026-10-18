@@ -92,6 +92,11 @@ services:
         networks:
             - laravel
 
+    mailpit:
+        image: axllent/mailpit
+        ports:
+            - 8025:8025
+            - 1025:1025
 networks:
     laravel:
 
