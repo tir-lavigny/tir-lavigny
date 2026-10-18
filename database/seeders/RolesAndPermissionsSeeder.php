@@ -71,6 +71,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $compactStockPermission = Permission::firstOrCreate(['name' => 'compact stock']);
 
         $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
+        $cashierManagerRole = Role::firstOrCreate(['name' => 'cashier manager']);
         $accountantRole = Role::firstOrCreate(['name' => 'accountant']);
 
         // Assign permissions to roles
@@ -146,6 +147,29 @@ class RolesAndPermissionsSeeder extends Seeder
             $viewTicketsPermission,
             $addProductToTicketPermission,
             $applyVoucherToTicketPermission,
+            $recordStockLossPermission,
+        ]);
+
+        $cashierManagerRole->syncPermissions([
+            $viewRegisterPermission,
+            $openDayPermission,
+            $closeDayPermission,
+            $reopenDayPermission,
+            $addCashRemarkPermission,
+            $createTicketPermission,
+            $viewTicketsPermission,
+            $refundTicketPermission,
+            $addProductToTicketPermission,
+            $applyVoucherToTicketPermission,
+            $manageProductsPermission,
+            $manageCategoriesPermission,
+            $manageVouchersPermission,
+            $manageSeasonsPermission,
+            $manageOperatingDaysPermission,
+            $viewReportsPermission,
+            $manageRegisterSettingsPermission,
+            $restoreRegisterPermission,
+            $manageStockPermission,
             $recordStockLossPermission,
         ]);
 
