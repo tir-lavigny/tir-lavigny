@@ -1,0 +1,17 @@
+name: Build image
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Build production image
+        run: docker build --target production --tag app:production .
+      - name: Build web image
+        run: docker build --target web --tag app:web .
