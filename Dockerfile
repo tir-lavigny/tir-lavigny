@@ -1,4 +1,4 @@
-ARG PHP_VERSION=8.4.26
+ARG PHP_VERSION=8.4.27
 ARG NODE_VERSION=24.22.0
 
 ARG VCS_URL=https://github.com/tir-lavigny/tir-lavigny-laravel
