@@ -1,20 +1,20 @@
-ARG PHP_VERSION=8.4
-ARG NODE_VERSION=24
+ARG PHP_VERSION=8.4.26
+ARG NODE_VERSION=24.22.0
 
 ARG VCS_URL=https://github.com/tir-lavigny/tir-lavigny-laravel
 
-FROM php:${PHP_VERSION}-fpm-bookworm AS php-base
+FROM php:${PHP_VERSION}-fpm-alpine AS php-base
 
 WORKDIR /var/www
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    libicu-dev \
-    libonig-dev \
+RUN apk add --no-cache \
+    icu-data-full \
+    icu-dev \
     libpng-dev \
-    libsqlite3-dev \
     libxml2-dev \
     libzip-dev \
+    oniguruma-dev \
+    sqlite-dev \
     unzip \
     zip \
     && docker-php-ext-configure intl \
@@ -27,8 +27,7 @@ RUN apt-get update \
     pdo_mysql \
     pdo_sqlite \
     xml \
-    zip \
-    && rm -rf /var/lib/apt/lists/*
+    zip
 
 
 FROM php-base AS composer-deps
@@ -53,7 +52,7 @@ RUN composer dump-autoload \
     --no-scripts
 
 
-FROM node:${NODE_VERSION}-bookworm-slim AS frontend
+FROM node:${NODE_VERSION}-alpine AS frontend
 
 ARG VITE_APP_NAME="Tir Lavigny"
 ENV VITE_APP_NAME=$VITE_APP_NAME
