@@ -15,3 +15,10 @@ jobs:
 
   lint:
     uses: ./.github/workflows/lint.yml
+
+  build-image:
+    if: github.event_name == 'pull_request'
+    needs:
+      - tests
+      - lint
+    uses: ./.github/workflows/build-image.yml
