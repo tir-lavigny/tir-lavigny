@@ -29,6 +29,10 @@ test-results/
 .phpunit.cache/
 e2e/
 
+**/*.md
+docs/
+.agents/
+
 Dockerfile*
 docker-compose*.yml
 .dockerignore
