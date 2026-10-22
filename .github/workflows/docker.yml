@@ -91,6 +91,7 @@ jobs:
     needs: docker
     if: needs.docker.outputs.is_dev == 'true'
     runs-on: ubuntu-latest
+    environment: staging
     concurrency:
       group: laravel-staging-deploy
       cancel-in-progress: false

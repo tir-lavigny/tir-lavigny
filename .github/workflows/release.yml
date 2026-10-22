@@ -13,8 +13,6 @@ jobs:
     name: Create release tag
     runs-on: ubuntu-latest
 
-    environment: production
-
     permissions:
       contents: write
 
