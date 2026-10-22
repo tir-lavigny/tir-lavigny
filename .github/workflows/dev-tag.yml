@@ -39,11 +39,11 @@ jobs:
           LATEST_TAG=$(git tag -l 'v*' | grep -v '\-dev' | sort -V | tail -1)
           if [ -z "$LATEST_TAG" ]; then
             COMMITS=$(git rev-list HEAD --count)
-            echo "tag=v0.0.0-dev.${COMMITS}" >> $GITHUB_OUTPUT
+            echo "tag=v0.0.0-dev.${COMMITS}" >> "$GITHUB_OUTPUT"
           else
-            COMMITS=$(git rev-list ${LATEST_TAG}..HEAD --count)
+            COMMITS=$(git rev-list "${LATEST_TAG}..HEAD" --count)
             BASE=${LATEST_TAG#v}
-            echo "tag=v${BASE}-dev.${COMMITS}" >> $GITHUB_OUTPUT
+            echo "tag=v${BASE}-dev.${COMMITS}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create and push tag
