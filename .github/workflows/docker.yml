@@ -110,3 +110,27 @@ jobs:
         run: |
           ssh ${{ secrets.VPS_SSH_USER }}@${{ secrets.VPS_SSH_HOST }} \
             "sudo /usr/local/sbin/tir-lavigny-deploy-staging ${{ needs.docker.outputs.version }}"
+
+  dev-release:
+    needs: docker
+    if: needs.docker.outputs.is_dev == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate app token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Create dev release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view "${{ needs.docker.outputs.version }}" >/dev/null 2>&1 || \
+          gh release create "${{ needs.docker.outputs.version }}" \
+            --title "${{ needs.docker.outputs.version }}" \
+            --prerelease \
+            --generate-notes
