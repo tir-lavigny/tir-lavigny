@@ -33,7 +33,28 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
+      - name: Check for image-relevant changes
+        id: relevant
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual dispatch: always build"
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BASE=$(git describe --tags --match 'v*-dev.*' --abbrev=0 HEAD 2>/dev/null || true)
+          if [ -z "$BASE" ]; then
+            echo "No previous dev tag: build"
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          elif files=$(.github/scripts/image-relevant-changes.sh "$BASE" HEAD); then
+            printf '%s\n' "$files"
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No image-relevant changes since $BASE: skip"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Calculate version
+        if: steps.relevant.outputs.build == 'true'
         id: version
         run: |
           LATEST_TAG=$(git tag -l 'v*' | grep -v '\-dev' | sort -V | tail -1)
@@ -47,6 +68,7 @@ jobs:
           fi
 
       - name: Create and push tag
+        if: steps.relevant.outputs.build == 'true'
         run: |
           git config user.name  "tir-lavigny-cd[bot]"
           git config user.email "${{ steps.app-token.outputs.installation-id }}+tir-lavigny-cd[bot]@users.noreply.github.com"

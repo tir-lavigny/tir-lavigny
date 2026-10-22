@@ -10,6 +10,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.filter.outputs.image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Detect image-relevant changes
+        id: filter
+        run: |
+          if files=$(.github/scripts/image-relevant-changes.sh "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"); then
+            printf '%s\n' "$files"
+            echo "image=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No image-relevant changes"
+            echo "image=false" >> "$GITHUB_OUTPUT"
+          fi
+
   tests:
     uses: ./.github/workflows/tests.yml
 
@@ -17,8 +37,9 @@ jobs:
     uses: ./.github/workflows/lint.yml
 
   build-image:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && needs.changes.outputs.image == 'true'
     needs:
       - tests
       - lint
+      - changes
     uses: ./.github/workflows/build-image.yml
