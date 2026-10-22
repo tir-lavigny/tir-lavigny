@@ -1,4 +1,4 @@
-[![CI](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/ci.yml/badge.svg)](https://github.com/zurfjereluhmie/tir-lavigny.ch/actions/workflows/ci.yml)
+[![CI](https://github.com/tir-lavigny/tir-lavigny/actions/workflows/ci.yml/badge.svg)](https://github.com/tir-lavigny/tir-lavigny/actions/workflows/ci.yml)
 
 # Tir-Lavigny — Laravel + Inertia (Vue 3) application
 
@@ -28,23 +28,23 @@ manual prod deploy
   → prod deploy via SSH
 ```
 
-| Environment | URL                          | Trigger                                    |
-| ----------- | ---------------------------- | ------------------------------------------ |
+| Environment | URL                            | Trigger                                     |
+| ----------- | ------------------------------ | ------------------------------------------- |
 | Staging     | https://staging.tir-lavigny.ch | Auto: green CI on `main` → dev tag → deploy |
-| Production  | https://tir-lavigny.ch       | Manual: `deploy-production.yml` dispatch    |
+| Production  | https://tir-lavigny.ch         | Manual: `deploy-production.yml` dispatch    |
 
 ## Workflows
 
-| Workflow               | Trigger                              | What it does                                                                          |
-| ---------------------- | ------------------------------------ | ------------------------------------------------------------------------------------- |
-| `ci.yml`               | Push to `main`, PRs                  | Calls `tests.yml` + `lint.yml`                                                         |
-| `tests.yml`            | `workflow_call`                      | PHPUnit + Vitest                                                                       |
-| `lint.yml`             | `workflow_call`                      | Check-only: Pint `--test`, PHPStan, Prettier `--check`, ESLint — **CI never commits**  |
-| `dev-tag.yml`          | Green CI on `main`                   | Auto-creates `vX.Y.Z-dev.N` tag (GitHub App token, so the tag triggers `docker.yml`)   |
-| `docker.yml`           | `v*` tags + `workflow_dispatch`      | Builds app + web images → GHCR; `-dev` tags then auto-deploy staging                   |
-| `release.yml`          | `workflow_dispatch` (version input)  | Creates `vX.Y.Z` tag + GitHub release                                                  |
-| `deploy-production.yml`| `workflow_dispatch` (tag input)      | Deploys an existing GHCR release tag to production                                     |
-| `staging-sync.yml`     | `workflow_dispatch`                  | Copies the production DB into staging (see below)                                      |
+| Workflow                | Trigger                             | What it does                                                                          |
+| ----------------------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| `ci.yml`                | Push to `main`, PRs                 | Calls `tests.yml` + `lint.yml`                                                        |
+| `tests.yml`             | `workflow_call`                     | PHPUnit + Vitest                                                                      |
+| `lint.yml`              | `workflow_call`                     | Check-only: Pint `--test`, PHPStan, Prettier `--check`, ESLint — **CI never commits** |
+| `dev-tag.yml`           | Green CI on `main`                  | Auto-creates `vX.Y.Z-dev.N` tag (GitHub App token, so the tag triggers `docker.yml`)  |
+| `docker.yml`            | `v*` tags + `workflow_dispatch`     | Builds app + web images → GHCR; `-dev` tags then auto-deploy staging                  |
+| `release.yml`           | `workflow_dispatch` (version input) | Creates `vX.Y.Z` tag + GitHub release                                                 |
+| `deploy-production.yml` | `workflow_dispatch` (tag input)     | Deploys an existing GHCR release tag to production                                    |
+| `staging-sync.yml`      | `workflow_dispatch`                 | Copies the production DB into staging (see below)                                     |
 
 Safety properties:
 
@@ -73,13 +73,13 @@ Actions → `staging-sync` → dispatch. SSHes into the VPS and runs `tir-lavign
 
 ## Required secrets (this repo)
 
-| Secret                  | Purpose                                                     |
-| ----------------------- | ----------------------------------------------------------- |
-| `VPS_SSH_HOST`          | VPS hostname for deploy SSH                                  |
-| `VPS_SSH_USER`          | Deploy user on the VPS                                       |
-| `VPS_SSH_PRIVATE_KEY`   | Private key for that user (CI key, also used by qr + register repos) |
-| `APP_CLIENT_ID`         | GitHub App id used to mint the tag-push token (`dev-tag.yml`) |
-| `APP_PRIVATE_KEY`       | GitHub App private key                                       |
+| Secret                | Purpose                                                              |
+| --------------------- | -------------------------------------------------------------------- |
+| `VPS_SSH_HOST`        | VPS hostname for deploy SSH                                          |
+| `VPS_SSH_USER`        | Deploy user on the VPS                                               |
+| `VPS_SSH_PRIVATE_KEY` | Private key for that user (CI key, also used by qr + register repos) |
+| `APP_CLIENT_ID`       | GitHub App id used to mint the tag-push token (`dev-tag.yml`)        |
+| `APP_PRIVATE_KEY`     | GitHub App private key                                               |
 
 Everything else (DB creds, mail, Nightwatch token, …) lives in **Doppler** and reaches the VPS via `tir-lavigny-refresh-env` (Ansible-instained), never in GitHub.
 
