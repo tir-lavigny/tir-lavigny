@@ -251,8 +251,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.9
       ziggy-js:
-        specifier: ^2.4.2
-        version: 2.6.4
+        specifier: ^2.6.5
+        version: 2.6.5
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -2758,8 +2758,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  ziggy-js@2.6.4:
-    resolution: {integrity: sha512-JIOpCCo0kA2f6cQa5F8cMBKsuFTc3MNrLtaf0RyYywQ30hRR6mq6F51h71woCs3O6MukzpeEpBVRfnlbmwfBNQ==}
+  ziggy-js@2.6.5:
+    resolution: {integrity: sha512-GVzO+DvvlMBLGU1Lvss/cw9t6ky8FvWdEVpXxKFqreoOf3jid/Zt5bTq8AUrQYRgySz2jQPuWGSpLw1V3YxfJA==}
 
 snapshots:
 
@@ -5130,6 +5130,6 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  ziggy-js@2.6.4:
+  ziggy-js@2.6.5:
     dependencies:
       qs-esm: 7.0.3
