@@ -91,7 +91,9 @@ jobs:
     needs: docker
     if: needs.docker.outputs.is_dev == 'true'
     runs-on: ubuntu-latest
-    environment: staging
+    environment:
+      name: staging
+      url: https://staging.tir-lavigny.ch/
     concurrency:
       group: laravel-staging-deploy
       cancel-in-progress: false

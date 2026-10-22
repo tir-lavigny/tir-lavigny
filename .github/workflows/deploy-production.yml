@@ -14,7 +14,9 @@ permissions:
 jobs:
   deploy-production:
     runs-on: ubuntu-latest
-    environment: production
+    environment:
+      name: production
+      url: https://tir-lavigny.ch/
     concurrency:
       group: laravel-production-deploy
       cancel-in-progress: false
