@@ -4,10 +4,16 @@ on:
   push:
     tags:
       - 'v*'
+      - '!*-rev.*'
   workflow_dispatch:
     inputs:
       version:
         description: 'Tag to build (e.g. v1.2.3 or v1.2.3-dev.5)'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      version:
         required: true
         type: string
 
@@ -31,12 +37,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.event.inputs.version || github.ref }}
+          ref: ${{ inputs.version || github.ref }}
 
       - name: Determine environment
         id: env
         run: |
-          VERSION="${{ github.event.inputs.version || github.ref_name }}"
+          VERSION="${{ inputs.version || github.ref_name }}"
           SHORT_SHA=$(git rev-parse --short=7 HEAD)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "sha_tag=$SHORT_SHA" >> "$GITHUB_OUTPUT"
@@ -86,6 +92,39 @@ jobs:
             ${{ env.IMAGE_WEB }}:${{ steps.env.outputs.sha_tag }}
           cache-from: type=gha,scope=laravel-web
           cache-to: type=gha,mode=max,scope=laravel-web
+
+      - name: Scan images
+        env:
+          VERSION: ${{ steps.env.outputs.version }}
+        run: |
+          set -euo pipefail
+          TRIVY_VERSION="0.76.1"
+          TRIVY_SHA256="3350f4fac96ed099590c4a353bddb226f86311a0a2e7a8c626c162790d947f10"
+          curl -sSLo /tmp/trivy.deb "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.deb"
+          echo "${TRIVY_SHA256}  /tmp/trivy.deb" | sha256sum -c -
+          sudo apt-get install -y /tmp/trivy.deb >/dev/null
+
+          APP="ghcr.io/tir-lavigny/laravel-app:${VERSION}"
+          WEB="ghcr.io/tir-lavigny/laravel-web:${VERSION}"
+
+          {
+            echo "## Trivy scan: ${VERSION}"
+            for img in "$APP" "$WEB"; do
+              echo "### ${img}"
+              trivy image --severity HIGH,CRITICAL --ignore-unfixed --quiet --format table "$img" || true
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          fail=0
+          for img in "$APP" "$WEB"; do
+            n="$(trivy image --severity CRITICAL --ignore-unfixed --quiet --format json "$img" \
+                | jq '[.Results[]?.Vulnerabilities[]?] | length')"
+            if (( n > 0 )); then
+              echo "::error::${img}: ${n} fixable CRITICAL — deploy blocked"
+              fail=1
+            fi
+          done
+          exit "$fail"
 
   deploy-staging:
     needs: docker

@@ -1,0 +1,106 @@
+name: Weekly rebuild
+
+# Rebuilds images from current main with a fresh base OS layer (apk upgrade),
+# scans them (Tier A gate runs inside docker.yml), deploys staging automatically,
+# and upserts the persistent review issue for the manual production pull.
+# Production never deploys from here (Option A).
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: laravel-rebuild
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate app token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Compute and create rev tags
+        id: tags
+        run: |
+          set -euo pipefail
+          LATEST=$(git tag -l 'v*' | grep -vE '\-(dev|rev)' | sort -V | tail -1)
+          if [ -z "$LATEST" ]; then echo "::error::no release tag found"; exit 1; fi
+          DATE=$(date -u +%Y%m%d)
+          PROD="${LATEST}-rev.${DATE}"
+          STAGING="${PROD}-dev"
+          echo "prod=${PROD}" >> "$GITHUB_OUTPUT"
+          echo "staging=${STAGING}" >> "$GITHUB_OUTPUT"
+
+          git config user.name "tir-lavigny-cd[bot]"
+          git config user.email "${{ steps.app-token.outputs.installation-id }}+tir-lavigny-cd[bot]@users.noreply.github.com"
+          for t in "$PROD" "$STAGING"; do
+            if git rev-parse "$t" >/dev/null 2>&1; then
+              echo "tag exists: $t"
+            else
+              git tag -a "$t" -m "Weekly rebuild"
+              git push origin "$t"
+              echo "created: $t"
+            fi
+          done
+
+      - name: Build + scan + deploy staging
+        uses: ./.github/workflows/docker.yml
+        with:
+          version: ${{ steps.tags.outputs.staging }}
+
+      - name: Build + scan production images
+        uses: ./.github/workflows/docker.yml
+        with:
+          version: ${{ steps.tags.outputs.prod }}
+
+      - name: Upsert review issue
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PROD: ${{ steps.tags.outputs.prod }}
+          STAGING: ${{ steps.tags.outputs.staging }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DEPLOY_URL: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/deploy-production.yml
+          TITLE: '[rev] Production image ready for review'
+        run: |
+          set -euo pipefail
+          BODY="$(cat <<EOF
+          Weekly rebuild ready for production review.
+
+          - **Production tag**: \`${PROD}\` (images built + scan-gated, NOT deployed)
+          - **Staging tag**: \`${STAGING}\` — deployed automatically; verify at https://staging.tir-lavigny.ch
+          - **Scan**: Tier A gate passed (no fixable CRITICAL) — full report in the [build run](${RUN_URL}) step summary
+
+          Checklist:
+          - [ ] Review scan summary + staging
+          - [ ] Deploy: run [Deploy to production](${DEPLOY_URL}) with version \`${PROD}\`
+          - [ ] Verify https://tir-lavigny.ch + /up
+          - [ ] Close this issue
+
+          Body refreshes on every rebuild while open; closing after deployment re-notifies on the next cycle.
+          EOF
+          )"
+          existing="$(gh issue list --state open --json number,title \
+            --jq ".[] | select(.title == \"${TITLE}\") | .number" | head -1)"
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body "$BODY" --add-assignee zurfjereluhmie
+            echo "issue updated #${existing}"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --assignee zurfjereluhmie
+            echo "issue created"
+          fi

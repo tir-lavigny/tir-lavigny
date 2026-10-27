@@ -57,7 +57,7 @@ jobs:
         if: steps.relevant.outputs.build == 'true'
         id: version
         run: |
-          LATEST_TAG=$(git tag -l 'v*' | grep -v '\-dev' | sort -V | tail -1)
+          LATEST_TAG=$(git tag -l 'v*' | grep -vE '\-(dev|rev)' | sort -V | tail -1)
           if [ -z "$LATEST_TAG" ]; then
             COMMITS=$(git rev-list HEAD --count)
             echo "tag=v0.0.0-dev.${COMMITS}" >> "$GITHUB_OUTPUT"
