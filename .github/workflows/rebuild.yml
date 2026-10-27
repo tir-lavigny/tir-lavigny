@@ -61,9 +61,15 @@ jobs:
 
           git config user.name "tir-lavigny-cd[bot]"
           git config user.email "${{ steps.app-token.outputs.installation-id }}+tir-lavigny-cd[bot]@users.noreply.github.com"
-          # Each rev tag pins its own environment's lineage: prod tag -> release
-          # commit, staging tag -> latest dev commit. The rebuild must refresh
-          # only the base layer, never move code.
+          # Peel tags to their commit first: git tag on a tag object would
+          # create a nested tag. Each rev tag then pins its environment's own
+          # lineage — prod -> release commit, staging -> latest dev commit —
+          # so the rebuild refreshes only the base layer, never code.
+          PROD_COMMIT=$(git rev-parse "${LATEST}^{commit}")
+          STAGING_COMMIT=""
+          if [ -n "$LATEST_DEV" ]; then
+            STAGING_COMMIT=$(git rev-parse "${LATEST_DEV}^{commit}")
+          fi
           tag_commit() {
             local tag="$1" commit="$2"
             if git rev-parse "$tag" >/dev/null 2>&1; then
@@ -74,9 +80,9 @@ jobs:
               echo "created: $tag -> $(git rev-parse --short "$commit")"
             fi
           }
-          tag_commit "$PROD" "$LATEST"
+          tag_commit "$PROD" "$PROD_COMMIT"
           if [ -n "$STAGING" ]; then
-            tag_commit "$STAGING" "$LATEST_DEV"
+            tag_commit "$STAGING" "$STAGING_COMMIT"
           fi
 
   build-staging:
