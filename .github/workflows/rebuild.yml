@@ -42,28 +42,46 @@ jobs:
         id: compute
         run: |
           set -euo pipefail
+          DATE=$(date -u +%Y%m%d)
+
           LATEST=$(git tag -l 'v*' | grep -vE '\-(dev|rev)' | sort -V | tail -1)
           if [ -z "$LATEST" ]; then echo "::error::no release tag found"; exit 1; fi
-          DATE=$(date -u +%Y%m%d)
           PROD="${LATEST}-rev.${DATE}"
-          STAGING="${PROD}-dev"
+
+          LATEST_DEV=$(git tag -l 'v*' | grep -v rev | grep -E '\-dev\.' | sort -V | tail -1 || true)
+          STAGING=""
+          if [ -n "$LATEST_DEV" ]; then
+            STAGING="${LATEST_DEV}-rev.${DATE}"
+          else
+            echo "::warning::no dev tag found — staging rebuild skipped"
+          fi
+
           echo "prod=${PROD}" >> "$GITHUB_OUTPUT"
           echo "staging=${STAGING}" >> "$GITHUB_OUTPUT"
 
           git config user.name "tir-lavigny-cd[bot]"
           git config user.email "${{ steps.app-token.outputs.installation-id }}+tir-lavigny-cd[bot]@users.noreply.github.com"
-          for t in "$PROD" "$STAGING"; do
-            if git rev-parse "$t" >/dev/null 2>&1; then
-              echo "tag exists: $t"
+          # Each rev tag pins its own environment's lineage: prod tag -> release
+          # commit, staging tag -> latest dev commit. The rebuild must refresh
+          # only the base layer, never move code.
+          tag_commit() {
+            local tag="$1" commit="$2"
+            if git rev-parse "$tag" >/dev/null 2>&1; then
+              echo "tag exists: $tag"
             else
-              git tag -a "$t" -m "Weekly rebuild"
-              git push origin "$t"
-              echo "created: $t"
+              git tag -a "$tag" "$commit" -m "Weekly rebuild"
+              git push origin "$tag"
+              echo "created: $tag -> $(git rev-parse --short "$commit")"
             fi
-          done
+          }
+          tag_commit "$PROD" "$LATEST"
+          if [ -n "$STAGING" ]; then
+            tag_commit "$STAGING" "$LATEST_DEV"
+          fi
 
   build-staging:
     needs: rebuild-tags
+    if: ${{ needs.rebuild-tags.outputs.staging != '' }}
     uses: ./.github/workflows/docker.yml
     with:
       version: ${{ needs.rebuild-tags.outputs.staging }}
@@ -78,6 +96,12 @@ jobs:
 
   review-issue:
     needs: [rebuild-tags, build-staging, build-production]
+    if: >-
+      always() &&
+      needs.rebuild-tags.result == 'success' &&
+      needs.build-production.result == 'success' &&
+      needs.build-staging.result != 'failure' &&
+      needs.build-staging.result != 'cancelled'
     runs-on: ubuntu-latest
     steps:
       - name: Generate app token
@@ -98,11 +122,16 @@ jobs:
           TITLE: '[rev] Production image ready for review'
         run: |
           set -euo pipefail
+          if [ -n "$STAGING" ]; then
+            STAGING_LINE="- **Staging tag**: \`${STAGING}\` — deployed automatically; verify at https://staging.tir-lavigny.ch"
+          else
+            STAGING_LINE="- **Staging**: skipped this cycle (no dev tag)"
+          fi
           BODY="$(cat <<EOF
           Weekly rebuild ready for production review.
 
           - **Production tag**: \`${PROD}\` (images built + scan-gated, NOT deployed)
-          - **Staging tag**: \`${STAGING}\` — deployed automatically; verify at https://staging.tir-lavigny.ch
+          ${STAGING_LINE}
           - **Scan**: gate passed (no fixable CRITICAL) — full report in the [build run](${RUN_URL}) step summary
 
           Checklist:
