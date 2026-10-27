@@ -5,6 +5,8 @@ ARG VCS_URL=https://github.com/tir-lavigny/tir-lavigny-laravel
 
 FROM php:${PHP_VERSION}-fpm-alpine AS php-base
 
+RUN apk upgrade --no-cache
+
 WORKDIR /var/www
 
 RUN apk add --no-cache \
@@ -111,6 +113,8 @@ CMD ["php-fpm"]
 
 
 FROM nginx:1.28-alpine AS web
+
+RUN apk upgrade --no-cache
 
 LABEL org.opencontainers.image.source="https://github.com/tir-lavigny/tir-lavigny"
 
