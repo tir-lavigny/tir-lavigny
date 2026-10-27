@@ -1,9 +1,9 @@
 name: Weekly rebuild
 
 # Rebuilds images from current main with a fresh base OS layer (apk upgrade),
-# scans them (Tier A gate runs inside docker.yml), deploys staging automatically,
-# and upserts the persistent review issue for the manual production pull.
-# Production never deploys from here (Option A).
+# scans them (the scan gate runs inside docker.yml), deploys staging
+# automatically, and upserts the persistent review issue for the manual
+# production pull. Production never deploys from here (Option A).
 
 on:
   schedule:
@@ -19,8 +19,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  rebuild:
+  rebuild-tags:
     runs-on: ubuntu-latest
+    outputs:
+      prod: ${{ steps.compute.outputs.prod }}
+      staging: ${{ steps.compute.outputs.staging }}
     steps:
       - name: Generate app token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
@@ -36,7 +39,7 @@ jobs:
           fetch-depth: 0
 
       - name: Compute and create rev tags
-        id: tags
+        id: compute
         run: |
           set -euo pipefail
           LATEST=$(git tag -l 'v*' | grep -vE '\-(dev|rev)' | sort -V | tail -1)
@@ -59,21 +62,37 @@ jobs:
             fi
           done
 
-      - name: Build + scan + deploy staging
-        uses: ./.github/workflows/docker.yml
-        with:
-          version: ${{ steps.tags.outputs.staging }}
+  build-staging:
+    needs: rebuild-tags
+    uses: ./.github/workflows/docker.yml
+    with:
+      version: ${{ needs.rebuild-tags.outputs.staging }}
+    secrets: inherit
 
-      - name: Build + scan production images
-        uses: ./.github/workflows/docker.yml
+  build-production:
+    needs: rebuild-tags
+    uses: ./.github/workflows/docker.yml
+    with:
+      version: ${{ needs.rebuild-tags.outputs.prod }}
+    secrets: inherit
+
+  review-issue:
+    needs: [rebuild-tags, build-staging, build-production]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate app token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app-token
         with:
-          version: ${{ steps.tags.outputs.prod }}
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Upsert review issue
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          PROD: ${{ steps.tags.outputs.prod }}
-          STAGING: ${{ steps.tags.outputs.staging }}
+          GH_REPO: ${{ github.repository }}
+          PROD: ${{ needs.rebuild-tags.outputs.prod }}
+          STAGING: ${{ needs.rebuild-tags.outputs.staging }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           DEPLOY_URL: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/deploy-production.yml
           TITLE: '[rev] Production image ready for review'
@@ -84,7 +103,7 @@ jobs:
 
           - **Production tag**: \`${PROD}\` (images built + scan-gated, NOT deployed)
           - **Staging tag**: \`${STAGING}\` — deployed automatically; verify at https://staging.tir-lavigny.ch
-          - **Scan**: Tier A gate passed (no fixable CRITICAL) — full report in the [build run](${RUN_URL}) step summary
+          - **Scan**: gate passed (no fixable CRITICAL) — full report in the [build run](${RUN_URL}) step summary
 
           Checklist:
           - [ ] Review scan summary + staging
