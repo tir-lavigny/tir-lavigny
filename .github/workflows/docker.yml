@@ -70,6 +70,7 @@ jobs:
           push: true
           build-args: |
             VITE_APP_NAME=${{ steps.env.outputs.is_dev == 'true' && 'Staging - Tir Lavigny' || 'Tir Lavigny' }}
+            VITE_BUILD_TAG=${{ steps.env.outputs.version }}
 
           tags: |
             ${{ env.IMAGE_APP }}:${{ steps.env.outputs.version }}
@@ -86,6 +87,7 @@ jobs:
           push: true
           build-args: |
             VITE_APP_NAME=${{ steps.env.outputs.is_dev == 'true' && 'Staging - Tir Lavigny' || 'Tir Lavigny' }}
+            VITE_BUILD_TAG=${{ steps.env.outputs.version }}
 
           tags: |
             ${{ env.IMAGE_WEB }}:${{ steps.env.outputs.version }}

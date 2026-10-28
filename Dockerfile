@@ -59,6 +59,9 @@ FROM node:${NODE_VERSION}-alpine AS frontend
 ARG VITE_APP_NAME="Tir Lavigny"
 ENV VITE_APP_NAME=$VITE_APP_NAME
 
+ARG VITE_BUILD_TAG=
+ENV VITE_BUILD_TAG=$VITE_BUILD_TAG
+
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
