@@ -36,7 +36,8 @@ class StockCountLineFactory extends Factory
     public function withDifference(): static
     {
         return $this->state(fn () => [
-            'counted_quantity' => fn (array $attrs) => $attrs['expected_quantity'] + fake()->numberBetween(-10, 10),
+            'counted_quantity' => fn (array $attrs) => $attrs['expected_quantity']
+                + fake()->numberBetween(1, 10) * (fake()->boolean() ? 1 : -1),
         ]);
     }
 }

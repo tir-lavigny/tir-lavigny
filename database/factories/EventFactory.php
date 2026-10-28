@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Event;
 use App\Models\Location;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,7 +26,7 @@ class EventFactory extends Factory
         return [
             'title' => $this->faker->sentence(4),
             'start_datetime' => $start,
-            'end_datetime' => (clone $start)->modify('+2 hours'),
+            'end_datetime' => fn (array $attrs) => Carbon::parse($attrs['start_datetime'])->modify('+2 hours'),
             'content_id' => null,
             'location_id' => $hasLocation ? Location::inRandomOrder()->first()?->id : null,
         ];
