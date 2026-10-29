@@ -77,12 +77,20 @@ class TicketCalculator
 
     /**
      * Discount one voucher applies to one unit, never more than the unit price.
+     * A zero percent is treated as absent so fixed vouchers stored with a
+     * legacy 0 percent still apply their fixed amount.
      */
     private function unitDiscount(Voucher $voucher, float $unitPrice): float
     {
-        $discount = $voucher->discount_percent !== null
-            ? $unitPrice * ((float) $voucher->discount_percent / 100)
-            : (float) $voucher->discount_fixed;
+        $percent = $voucher->discount_percent !== null
+            ? (float) $voucher->discount_percent
+            : null;
+
+        if ($percent !== null && $percent > 0) {
+            $discount = $unitPrice * ($percent / 100);
+        } else {
+            $discount = (float) $voucher->discount_fixed;
+        }
 
         return round(min(max($discount, 0), $unitPrice), 2);
     }

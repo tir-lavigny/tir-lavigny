@@ -174,6 +174,25 @@ class TicketCalculatorTest extends TestCase
         $this->assertEquals(0.00, $result['items'][0]['subtotal']);
     }
 
+    public function test_compute_fixed_voucher_stored_with_zero_percent(): void
+    {
+        $season = $this->makeSeason();
+        $product = $this->makeProduct(10.00);
+        $voucher = Voucher::factory()->fixed()->create([
+            'discount_percent' => 0.00,
+            'discount_fixed' => 5.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $result = $this->calculator->compute([
+            ['product_id' => $product->id, 'quantity' => 2, 'voucher_ids' => [$voucher->id]],
+        ]);
+
+        $this->assertEquals(15.00, $result['total']);
+        $this->assertEquals(5.00, $result['items'][0]['subtotal']);
+    }
+
     public function test_compute_mixed_percent_and_fixed_vouchers(): void
     {
         $season = $this->makeSeason();

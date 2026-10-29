@@ -39,8 +39,10 @@ const isRefunded = Boolean(props.ticket.deleted_at);
 const canRefund = props.dayIsOpen && !isRefunded && hasPermissionTo(user, 'refund ticket');
 
 function voucherLabel(voucher: NonNullable<TicketItem['voucher']>): string {
-    if (voucher.discount_percent) return `-${voucher.discount_percent}%`;
-    if (voucher.discount_fixed) return `-${formatMoney(voucher.discount_fixed)} CHF`;
+    const percent = voucher.discount_percent ?? 0;
+    const fixed = voucher.discount_fixed ?? 0;
+    if (percent > 0) return `-${percent}%`;
+    if (fixed > 0) return `-${formatMoney(fixed)} CHF`;
     return 'Bon';
 }
 

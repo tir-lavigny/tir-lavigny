@@ -31,19 +31,25 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const discountType = ref<'percent' | 'fixed'>('percent');
 
-const form = useForm({
+const form = useForm<{
+    product_id: string;
+    season_id: string;
+    member_id: string;
+    discount_percent: number | null;
+    discount_fixed: number | null;
+}>({
     product_id: '',
     season_id: '',
     member_id: '',
     discount_percent: 10,
-    discount_fixed: 0,
+    discount_fixed: null,
 });
 
 watch(discountType, (type) => {
     if (type === 'percent') {
-        form.discount_fixed = 0;
+        form.discount_fixed = null;
     } else {
-        form.discount_percent = 0;
+        form.discount_percent = null;
     }
 });
 

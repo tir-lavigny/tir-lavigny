@@ -34,8 +34,8 @@ const handleDelete = (id: number) => {
 };
 
 const formatDiscount = (voucher: any) => {
-    if (voucher.discount_percent) return `${voucher.discount_percent}%`;
-    if (voucher.discount_fixed) return `${formatMoney(voucher.discount_fixed)} CHF`;
+    if (voucher.discount_percent > 0) return `${voucher.discount_percent}%`;
+    if (voucher.discount_fixed > 0) return `${formatMoney(voucher.discount_fixed)} CHF`;
     return '—';
 };
 </script>

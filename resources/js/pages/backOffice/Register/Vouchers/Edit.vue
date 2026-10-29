@@ -29,23 +29,24 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Modifier', href: route('bo.register.vouchers.edit', props.voucher.id) },
 ];
 
-const discountType = ref<'percent' | 'fixed'>(props.voucher.discount_percent ? 'percent' : 'fixed');
+const discountType = ref<'percent' | 'fixed'>((props.voucher.discount_fixed ?? 0) > 0 ? 'fixed' : 'percent');
+
+const isFixed = discountType.value === 'fixed';
 
 const form = useForm({
     product_id: String(props.voucher.product_id),
     season_id: String(props.voucher.season_id),
     member_id: String(props.voucher.member_id),
-    discount_percent: props.voucher.discount_percent ?? 0,
-    discount_fixed: props.voucher.discount_fixed ?? 0,
+    discount_percent: isFixed ? null : (props.voucher.discount_percent ?? 0),
+    discount_fixed: isFixed ? (props.voucher.discount_fixed ?? 0) : null,
 });
 
 watch(discountType, (type) => {
     if (type === 'percent') {
-        form.discount_fixed = 0;
+        form.discount_fixed = null;
         form.discount_percent = form.discount_percent || 10;
     } else {
-        form.discount_percent = 0;
-        form.discount_fixed = form.discount_fixed || 0;
+        form.discount_percent = null;
     }
 });
 

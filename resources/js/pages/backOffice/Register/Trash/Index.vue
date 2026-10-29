@@ -417,7 +417,13 @@ const handleMemberFilterChange = () => {
                                     <TableCell class="font-medium">#{{ item.id }}</TableCell>
                                     <TableCell>{{ item.member ? item.member.first_name + ' ' + item.member.last_name : '—' }}</TableCell>
                                     <TableCell>{{ item.product?.name ?? '—' }}</TableCell>
-                                    <TableCell>{{ item.discount_percent ? item.discount_percent + '%' : item.discount_fixed + ' CHF' }}</TableCell>
+                                    <TableCell>{{
+                                        (item.discount_percent ?? 0) > 0
+                                            ? item.discount_percent + '%'
+                                            : (item.discount_fixed ?? 0) > 0
+                                              ? item.discount_fixed + ' CHF'
+                                              : '—'
+                                    }}</TableCell>
                                     <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
