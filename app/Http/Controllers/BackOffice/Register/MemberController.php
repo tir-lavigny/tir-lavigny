@@ -35,7 +35,7 @@ class MemberController extends Controller implements HasMiddleware
     {
         $member->load('vouchers.ticketItems');
         $seasons = Season::orderBy('id', 'desc')->get();
-        $vouchers = $member->vouchers;
+        $vouchers = $member->vouchers->load('product');
         $usedVouchers = $vouchers->filter(fn ($v) => $v->isUsed());
 
         return Inertia::render('backOffice/Register/Members/Show', [
