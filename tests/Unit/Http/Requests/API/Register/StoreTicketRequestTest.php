@@ -283,7 +283,7 @@ class StoreTicketRequestTest extends TestCase
         $this->assertTrue($validator->passes());
     }
 
-    public function test_voucher_id_must_exist(): void
+    public function test_voucher_ids_must_exist(): void
     {
         $operatingDayId = $this->createOperatingDay();
         $productId = $this->createProduct();
@@ -294,7 +294,7 @@ class StoreTicketRequestTest extends TestCase
             'operating_day_id' => $operatingDayId,
             'sold_at' => now()->toDateTimeString(),
             'stock_location_id' => $locationId,
-            'items' => [['product_id' => $productId, 'quantity' => 1, 'voucher_id' => 9999]],
+            'items' => [['product_id' => $productId, 'quantity' => 1, 'voucher_ids' => [9999]]],
         ]));
     }
 }

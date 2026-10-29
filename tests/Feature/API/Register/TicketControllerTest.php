@@ -185,7 +185,7 @@ class TicketControllerTest extends TestCase
             'sold_at' => now()->toDateTimeString(),
             'stock_location_id' => StockLocation::factory()->create()->id,
             'items' => [
-                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]],
             ],
         ], $this->authHeaders())->assertCreated();
 
@@ -194,6 +194,143 @@ class TicketControllerTest extends TestCase
             'voucher_id' => $voucher->id,
             'subtotal' => 9.00,
         ]);
+    }
+
+    public function test_store_applies_multiple_vouchers_to_one_line(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->subMonth(),
+            'end_date' => Carbon::now()->addMonth(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'unit_price' => 10.00,
+        ]);
+        $voucher1 = Voucher::factory()->percent()->create([
+            'discount_percent' => 100.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+        $voucher2 = Voucher::factory()->percent()->create([
+            'discount_percent' => 100.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $this->postJson(route('api.register.tickets.store'), [
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 3, 'voucher_ids' => [$voucher1->id, $voucher2->id]],
+            ],
+        ], $this->authHeaders())->assertCreated();
+
+        $this->assertDatabaseHas('tickets', ['total' => 10.00]);
+        $this->assertDatabaseCount('ticket_items', 3);
+        $this->assertDatabaseHas('ticket_items', [
+            'product_id' => $product->id,
+            'voucher_id' => $voucher1->id,
+            'quantity' => 1,
+            'subtotal' => 0.00,
+        ]);
+        $this->assertDatabaseHas('ticket_items', [
+            'product_id' => $product->id,
+            'voucher_id' => $voucher2->id,
+            'quantity' => 1,
+            'subtotal' => 0.00,
+        ]);
+        $this->assertDatabaseHas('ticket_items', [
+            'product_id' => $product->id,
+            'voucher_id' => null,
+            'quantity' => 1,
+            'subtotal' => 10.00,
+        ]);
+    }
+
+    public function test_store_rejects_more_vouchers_than_quantity(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->subMonth(),
+            'end_date' => Carbon::now()->addMonth(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'unit_price' => 10.00,
+        ]);
+        $voucher1 = Voucher::factory()->percent()->create([
+            'discount_percent' => 100.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+        $voucher2 = Voucher::factory()->percent()->create([
+            'discount_percent' => 100.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $response = $this->postJson(route('api.register.tickets.store'), [
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher1->id, $voucher2->id]],
+            ],
+        ], $this->authHeaders());
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['items.0.voucher_ids']);
+    }
+
+    public function test_store_rejects_duplicate_voucher_within_ticket(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->subMonth(),
+            'end_date' => Carbon::now()->addMonth(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'unit_price' => 10.00,
+        ]);
+        $voucher = Voucher::factory()->percent()->create([
+            'discount_percent' => 100.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $response = $this->postJson(route('api.register.tickets.store'), [
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'stock_location_id' => StockLocation::factory()->create()->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]],
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]],
+            ],
+        ], $this->authHeaders());
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['items.1.voucher_ids']);
     }
 
     public function test_store_with_custom_unit_price(): void
@@ -442,12 +579,60 @@ class TicketControllerTest extends TestCase
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
-                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]],
             ],
         ], $this->authHeaders());
 
         $response->assertOk();
         $response->json('items.0.subtotal', 9.00);
+    }
+
+    public function test_preview_expands_voucher_rows_per_unit(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->startOfYear(),
+            'end_date' => Carbon::now()->endOfYear(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'unit_price' => 10.00,
+        ]);
+        $voucher1 = Voucher::factory()->percent()->create([
+            'discount_percent' => 100.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+        $voucher2 = Voucher::factory()->percent()->create([
+            'discount_percent' => 100.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $response = $this->postJson(route('api.register.tickets.preview'), [
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'sold_at' => now()->toDateTimeString(),
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 3, 'voucher_ids' => [$voucher1->id, $voucher2->id]],
+            ],
+        ], $this->authHeaders());
+
+        $response->assertOk();
+        $this->assertEquals(10.00, $response->json('total'));
+        $this->assertCount(3, $response->json('items'));
+        $this->assertEquals($voucher1->id, $response->json('items.0.voucher_id'));
+        $this->assertEquals(1, $response->json('items.0.quantity'));
+        $this->assertEquals(0.00, $response->json('items.0.subtotal'));
+        $this->assertEquals($voucher2->id, $response->json('items.1.voucher_id'));
+        $this->assertNull($response->json('items.2.voucher_id'));
+        $this->assertEquals(1, $response->json('items.2.quantity'));
+        $this->assertEquals(10.00, $response->json('items.2.subtotal'));
     }
 
     public function test_preview_fails_for_closed_operating_day(): void
@@ -512,7 +697,7 @@ class TicketControllerTest extends TestCase
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
-                ['product_id' => $product->id, 'quantity' => 3, 'voucher_id' => $voucher->id],
+                ['product_id' => $product->id, 'quantity' => 3, 'voucher_ids' => [$voucher->id]],
             ],
         ];
 

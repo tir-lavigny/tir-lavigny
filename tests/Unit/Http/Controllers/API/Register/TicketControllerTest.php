@@ -197,7 +197,7 @@ class TicketControllerTest extends TestCase
             'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
-                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]],
             ],
         ]), $this->calculator);
 
@@ -205,6 +205,63 @@ class TicketControllerTest extends TestCase
             'product_id' => $product->id,
             'voucher_id' => $voucher->id,
             'subtotal' => 9.00,
+        ]);
+    }
+
+    public function test_store_expands_multiple_vouchers_into_unit_rows(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::now()->subMonth(),
+            'end_date' => Carbon::now()->addMonth(),
+        ]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'date' => Carbon::today('Europe/Zurich')->toDateString(),
+        ]);
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create([
+            'category_id' => $category->id,
+            'unit_price' => 10.00,
+        ]);
+        $voucher1 = Voucher::factory()->percent()->create([
+            'discount_percent' => 100.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+        $voucher2 = Voucher::factory()->percent()->create([
+            'discount_percent' => 100.00,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $response = $this->controller->store($this->createTicketAction, $this->storeRequest([
+            'payment_method' => 'cash',
+            'operating_day_id' => $day->id,
+            'stock_location_id' => StockLocation::factory()->create()->id,
+            'sold_at' => now()->toDateTimeString(),
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 3, 'voucher_ids' => [$voucher1->id, $voucher2->id]],
+            ],
+        ]), $this->calculator);
+
+        $this->assertEquals(201, $response->status());
+        $this->assertDatabaseHas('tickets', ['total' => 10.00]);
+        $this->assertDatabaseCount('ticket_items', 3);
+        $this->assertDatabaseHas('ticket_items', [
+            'voucher_id' => $voucher1->id,
+            'quantity' => 1,
+            'subtotal' => 0.00,
+        ]);
+        $this->assertDatabaseHas('ticket_items', [
+            'voucher_id' => $voucher2->id,
+            'quantity' => 1,
+            'subtotal' => 0.00,
+        ]);
+        $this->assertDatabaseHas('ticket_items', [
+            'voucher_id' => null,
+            'quantity' => 1,
+            'subtotal' => 10.00,
         ]);
     }
 
@@ -252,7 +309,7 @@ class TicketControllerTest extends TestCase
             'stock_location_id' => StockLocation::factory()->create()->id,
             'sold_at' => now()->toDateTimeString(),
             'items' => [
-                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]],
             ],
         ]), $this->calculator);
 

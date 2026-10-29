@@ -11,7 +11,7 @@ class TicketValidationService
     /**
      * Validate ticket items against business rules.
      */
-    /** @param array<int, array<string, mixed>> $items */
+    /** @param array<int, array<string, mixed>>  $items */
     public function validateItems(array $items, int $operatingDayId, ?int $memberId, Validator $validator): void
     {
         $usedVoucherIds = [];
@@ -19,17 +19,44 @@ class TicketValidationService
         foreach ($items as $index => $item) {
             $productId = $item['product_id'] ?? null;
             $customPrice = $item['custom_unit_price'] ?? null;
-            $voucherId = $item['voucher_id'] ?? null;
+            $quantity = $item['quantity'] ?? null;
+            $rawVoucherIds = $item['voucher_ids'] ?? [];
+            $voucherIds = is_array($rawVoucherIds) ? $rawVoucherIds : [];
 
             if ($productId) {
                 $this->validateCustomPrice($productId, $customPrice, $index, $validator);
             }
 
-            if ($voucherId) {
-                $this->validateVoucherUniqueness($voucherId, $usedVoucherIds, $index, $validator);
+            if (! $voucherIds) {
+                continue;
+            }
+
+            $errorKey = "items.{$index}.voucher_ids";
+
+            $this->validateVoucherCount($voucherIds, $quantity, $errorKey, $validator);
+
+            $seenInItem = [];
+
+            foreach ($voucherIds as $voucherIndex => $voucherId) {
+                if (empty($voucherId)) {
+                    continue;
+                }
+
+                if (in_array($voucherId, $seenInItem, true)) {
+                    $validator->errors()->add($errorKey, 'Each voucher can only be used once per ticket.');
+
+                    continue;
+                }
+                $seenInItem[] = $voucherId;
+
+                if (in_array($voucherId, $usedVoucherIds, true)) {
+                    $validator->errors()->add($errorKey, 'Each voucher can only be used once per ticket.');
+
+                    continue;
+                }
                 $usedVoucherIds[] = $voucherId;
 
-                $this->validateVoucherRules($voucherId, $productId, $operatingDayId, $memberId, $index, $validator);
+                $this->validateVoucherRules($voucherId, $productId, $operatingDayId, $memberId, "items.{$index}.voucher_ids.{$voucherIndex}", $validator);
             }
         }
     }
@@ -50,18 +77,20 @@ class TicketValidationService
         }
     }
 
-    /** @param array<int, int> $usedVoucherIds */
-    private function validateVoucherUniqueness(int $voucherId, array $usedVoucherIds, int $index, Validator $validator): void
+    /** @param array<int, int>  $voucherIds */
+    private function validateVoucherCount(array $voucherIds, $quantity, string $errorKey, Validator $validator): void
     {
-        if (in_array($voucherId, $usedVoucherIds)) {
-            $validator->errors()->add(
-                "items.{$index}.voucher_id",
-                'Each voucher can only be used once per ticket.'
-            );
+        if ($quantity === null || count($voucherIds) <= $quantity) {
+            return;
         }
+
+        $validator->errors()->add(
+            $errorKey,
+            'You cannot apply more vouchers than the quantity of the product.'
+        );
     }
 
-    private function validateVoucherRules(int $voucherId, ?int $productId, int $operatingDayId, ?int $memberId, int $index, Validator $validator): void
+    private function validateVoucherRules(int $voucherId, ?int $productId, int $operatingDayId, ?int $memberId, string $errorKey, Validator $validator): void
     {
         $day = OperatingDay::find($operatingDayId);
 
@@ -80,14 +109,14 @@ class TicketValidationService
 
         if ($voucher->product_id != $productId) {
             $validator->errors()->add(
-                "items.{$index}.voucher_id",
+                $errorKey,
                 'The voucher does not match the selected product.'
             );
         }
 
         if ($voucher->season_id != $day->season_id) {
             $validator->errors()->add(
-                "items.{$index}.voucher_id",
+                $errorKey,
                 'The voucher is not valid for the current season.'
             );
         }
@@ -99,14 +128,14 @@ class TicketValidationService
 
         if ($isUsed) {
             $validator->errors()->add(
-                "items.{$index}.voucher_id",
+                $errorKey,
                 'The voucher has already been used.'
             );
         }
 
         if ($memberId && $voucher->member_id != $memberId) {
             $validator->errors()->add(
-                "items.{$index}.voucher_id",
+                $errorKey,
                 'The voucher does not belong to this member.'
             );
         }

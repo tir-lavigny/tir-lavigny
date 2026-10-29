@@ -135,18 +135,18 @@ class TicketValidationServiceTest extends TestCase
         $validator = $this->makeValidator();
         $this->service->validateItems(
             [
-                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
-                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id],
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]],
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]],
             ],
             $day->id,
             null,
             $validator
         );
 
-        $this->assertTrue($this->hasError($validator, 'items.1.voucher_id'));
+        $this->assertTrue($this->hasError($validator, 'items.1.voucher_ids'));
         $this->assertContains(
             'Each voucher can only be used once per ticket.',
-            $this->getErrorMessages($validator, 'items.1.voucher_id')
+            $this->getErrorMessages($validator, 'items.1.voucher_ids')
         );
     }
 
@@ -168,16 +168,72 @@ class TicketValidationServiceTest extends TestCase
         $validator = $this->makeValidator();
         $this->service->validateItems(
             [
-                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher1->id],
-                ['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher2->id],
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher1->id]],
+                ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher2->id]],
             ],
             $day->id,
             null,
             $validator
         );
 
-        $this->assertFalse($this->hasError($validator, 'items.0.voucher_id'));
-        $this->assertFalse($this->hasError($validator, 'items.1.voucher_id'));
+        $this->assertFalse($this->hasError($validator, 'items.0.voucher_ids.0'));
+        $this->assertFalse($this->hasError($validator, 'items.1.voucher_ids'));
+    }
+
+    public function test_rejects_more_vouchers_than_quantity(): void
+    {
+        $season = Season::factory()->create();
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $day = OperatingDay::factory()->create(['season_id' => $season->id]);
+        $voucher1 = Voucher::factory()->percent()->create([
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+        $voucher2 = Voucher::factory()->percent()->create([
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $validator = $this->makeValidator();
+        $this->service->validateItems(
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher1->id, $voucher2->id]]],
+            $day->id,
+            null,
+            $validator
+        );
+
+        $this->assertTrue($this->hasError($validator, 'items.0.voucher_ids'));
+        $this->assertContains(
+            'You cannot apply more vouchers than the quantity of the product.',
+            $this->getErrorMessages($validator, 'items.0.voucher_ids')
+        );
+    }
+
+    public function test_rejects_duplicate_voucher_id_within_same_item(): void
+    {
+        $season = Season::factory()->create();
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $day = OperatingDay::factory()->create(['season_id' => $season->id]);
+        $voucher = Voucher::factory()->percent()->create([
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $validator = $this->makeValidator();
+        $this->service->validateItems(
+            [['product_id' => $product->id, 'quantity' => 2, 'voucher_ids' => [$voucher->id, $voucher->id]]],
+            $day->id,
+            null,
+            $validator
+        );
+
+        $this->assertTrue($this->hasError($validator, 'items.0.voucher_ids'));
+        $this->assertContains(
+            'Each voucher can only be used once per ticket.',
+            $this->getErrorMessages($validator, 'items.0.voucher_ids')
+        );
     }
 
     // ── Voucher product match ───────────────────────────────────────────────
@@ -196,16 +252,16 @@ class TicketValidationServiceTest extends TestCase
 
         $validator = $this->makeValidator();
         $this->service->validateItems(
-            [['product_id' => $product1->id, 'quantity' => 1, 'voucher_id' => $voucher->id]],
+            [['product_id' => $product1->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
             $day->id,
             null,
             $validator
         );
 
-        $this->assertTrue($this->hasError($validator, 'items.0.voucher_id'));
+        $this->assertTrue($this->hasError($validator, 'items.0.voucher_ids.0'));
         $this->assertContains(
             'The voucher does not match the selected product.',
-            $this->getErrorMessages($validator, 'items.0.voucher_id')
+            $this->getErrorMessages($validator, 'items.0.voucher_ids.0')
         );
     }
 
@@ -222,13 +278,13 @@ class TicketValidationServiceTest extends TestCase
 
         $validator = $this->makeValidator();
         $this->service->validateItems(
-            [['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id]],
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
             $day->id,
             null,
             $validator
         );
 
-        $this->assertFalse($this->hasError($validator, 'items.0.voucher_id'));
+        $this->assertFalse($this->hasError($validator, 'items.0.voucher_ids.0'));
     }
 
     // ── Voucher season match ────────────────────────────────────────────────
@@ -247,16 +303,16 @@ class TicketValidationServiceTest extends TestCase
 
         $validator = $this->makeValidator();
         $this->service->validateItems(
-            [['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id]],
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
             $day->id,
             null,
             $validator
         );
 
-        $this->assertTrue($this->hasError($validator, 'items.0.voucher_id'));
+        $this->assertTrue($this->hasError($validator, 'items.0.voucher_ids.0'));
         $this->assertContains(
             'The voucher is not valid for the current season.',
-            $this->getErrorMessages($validator, 'items.0.voucher_id')
+            $this->getErrorMessages($validator, 'items.0.voucher_ids.0')
         );
     }
 
@@ -273,13 +329,13 @@ class TicketValidationServiceTest extends TestCase
 
         $validator = $this->makeValidator();
         $this->service->validateItems(
-            [['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id]],
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
             $day->id,
             null,
             $validator
         );
 
-        $this->assertFalse($this->hasError($validator, 'items.0.voucher_id'));
+        $this->assertFalse($this->hasError($validator, 'items.0.voucher_ids.0'));
     }
 
     // ── Voucher usage ───────────────────────────────────────────────────────
@@ -303,16 +359,16 @@ class TicketValidationServiceTest extends TestCase
 
         $validator = $this->makeValidator();
         $this->service->validateItems(
-            [['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id]],
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
             $day->id,
             null,
             $validator
         );
 
-        $this->assertTrue($this->hasError($validator, 'items.0.voucher_id'));
+        $this->assertTrue($this->hasError($validator, 'items.0.voucher_ids.0'));
         $this->assertContains(
             'The voucher has already been used.',
-            $this->getErrorMessages($validator, 'items.0.voucher_id')
+            $this->getErrorMessages($validator, 'items.0.voucher_ids.0')
         );
     }
 
@@ -329,13 +385,13 @@ class TicketValidationServiceTest extends TestCase
 
         $validator = $this->makeValidator();
         $this->service->validateItems(
-            [['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id]],
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
             $day->id,
             null,
             $validator
         );
 
-        $this->assertFalse($this->hasError($validator, 'items.0.voucher_id'));
+        $this->assertFalse($this->hasError($validator, 'items.0.voucher_ids.0'));
     }
 
     // ── Voucher membership ──────────────────────────────────────────────────
@@ -356,16 +412,16 @@ class TicketValidationServiceTest extends TestCase
 
         $validator = $this->makeValidator();
         $this->service->validateItems(
-            [['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id]],
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
             $day->id,
             $member1->id,
             $validator
         );
 
-        $this->assertTrue($this->hasError($validator, 'items.0.voucher_id'));
+        $this->assertTrue($this->hasError($validator, 'items.0.voucher_ids.0'));
         $this->assertContains(
             'The voucher does not belong to this member.',
-            $this->getErrorMessages($validator, 'items.0.voucher_id')
+            $this->getErrorMessages($validator, 'items.0.voucher_ids.0')
         );
     }
 
@@ -384,13 +440,13 @@ class TicketValidationServiceTest extends TestCase
 
         $validator = $this->makeValidator();
         $this->service->validateItems(
-            [['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id]],
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
             $day->id,
             $member->id,
             $validator
         );
 
-        $this->assertFalse($this->hasError($validator, 'items.0.voucher_id'));
+        $this->assertFalse($this->hasError($validator, 'items.0.voucher_ids.0'));
     }
 
     public function test_skips_member_check_when_no_member_id(): void
@@ -408,13 +464,13 @@ class TicketValidationServiceTest extends TestCase
 
         $validator = $this->makeValidator();
         $this->service->validateItems(
-            [['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id]],
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
             $day->id,
             null,
             $validator
         );
 
-        $this->assertFalse($this->hasError($validator, 'items.0.voucher_id'));
+        $this->assertFalse($this->hasError($validator, 'items.0.voucher_ids.0'));
     }
 
     // ── No operating day ────────────────────────────────────────────────────
@@ -427,13 +483,13 @@ class TicketValidationServiceTest extends TestCase
 
         $validator = $this->makeValidator();
         $this->service->validateItems(
-            [['product_id' => $product->id, 'quantity' => 1, 'voucher_id' => $voucher->id]],
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
             9999,
             null,
             $validator
         );
 
-        $this->assertFalse($this->hasError($validator, 'items.0.voucher_id'));
+        $this->assertFalse($this->hasError($validator, 'items.0.voucher_ids.0'));
     }
 
     // ── No errors on clean input ────────────────────────────────────────────

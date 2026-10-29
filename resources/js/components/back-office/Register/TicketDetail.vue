@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import {
     AlertDialog,
@@ -15,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
-import type { Ticket, SharedData } from '@/types';
+import type { Ticket, TicketItem, SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { RotateCcw } from '@lucide/vue';
 import { toast } from 'vue-sonner';
@@ -37,12 +38,51 @@ const refundForm = useForm({});
 const isRefunded = Boolean(props.ticket.deleted_at);
 const canRefund = props.dayIsOpen && !isRefunded && hasPermissionTo(user, 'refund ticket');
 
-function voucherLabel(item: NonNullable<Ticket['ticket_items']>[number]) {
-    if (!item.voucher) return null;
-    if (item.voucher.discount_percent) return `-${item.voucher.discount_percent}%`;
-    if (item.voucher.discount_fixed) return `-${formatMoney(item.voucher.discount_fixed)} CHF`;
+function voucherLabel(voucher: NonNullable<TicketItem['voucher']>): string {
+    if (voucher.discount_percent) return `-${voucher.discount_percent}%`;
+    if (voucher.discount_fixed) return `-${formatMoney(voucher.discount_fixed)} CHF`;
     return 'Bon';
 }
+
+interface ItemGroup {
+    productId: number;
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    subtotal: number;
+    saved: number;
+    vouchers: { id: number; label: string }[];
+}
+
+const itemGroups = computed(() => {
+    const map = new Map<number, ItemGroup>();
+
+    for (const item of props.ticket.ticket_items ?? []) {
+        let group = map.get(item.product_id);
+        if (!group) {
+            group = {
+                productId: item.product_id,
+                name: item.product?.name ?? '—',
+                quantity: 0,
+                unitPrice: Number(item.unit_price),
+                subtotal: 0,
+                saved: 0,
+                vouchers: [],
+            };
+            map.set(item.product_id, group);
+        }
+        group.quantity += item.quantity;
+        group.subtotal += Number(item.subtotal);
+        if (item.voucher) {
+            group.vouchers.push({ id: item.voucher.id, label: voucherLabel(item.voucher) ?? 'Bon' });
+        }
+    }
+
+    return [...map.values()].map((group) => ({
+        ...group,
+        saved: Math.max(0, Math.round((group.unitPrice * group.quantity - group.subtotal) * 100) / 100),
+    }));
+});
 
 function handleRefund() {
     refundForm.post(route('bo.register.tickets.refund', props.ticket.id), {
@@ -90,17 +130,18 @@ function handleRefund() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                <TableRow v-for="item in ticket.ticket_items" :key="item.id">
+                <TableRow v-for="group in itemGroups" :key="group.productId">
                     <TableCell>
-                        {{ item.product?.name ?? '—' }}
-                        <Badge v-if="item.voucher" variant="outline" class="ml-2 text-xs">
-                            {{ voucherLabel(item) }}
+                        {{ group.name }}
+                        <Badge v-for="voucher in group.vouchers" :key="voucher.id" variant="outline" class="ml-2 text-xs">
+                            Bon {{ voucher.label }}
                         </Badge>
                     </TableCell>
-                    <TableCell class="text-center">{{ item.quantity }}</TableCell>
-                    <TableCell class="text-right">{{ formatMoney(item.unit_price) }} CHF</TableCell>
+                    <TableCell class="text-center">{{ group.quantity }}</TableCell>
+                    <TableCell class="text-right">{{ formatMoney(group.unitPrice) }} CHF</TableCell>
                     <TableCell class="text-right" :class="{ 'text-muted-foreground line-through': isRefunded }">
-                        {{ formatMoney(item.subtotal) }} CHF
+                        <span v-if="group.saved > 0" class="mr-2 text-xs text-green-600"> (-{{ formatMoney(group.saved) }} CHF) </span>
+                        {{ formatMoney(group.subtotal) }} CHF
                     </TableCell>
                 </TableRow>
             </TableBody>
