@@ -77,7 +77,10 @@ class TicketValidationService
         }
     }
 
-    /** @param array<int, int>  $voucherIds */
+    /**
+     * @param  array<int, int>  $voucherIds
+     * @param  int|null  $quantity
+     */
     private function validateVoucherCount(array $voucherIds, $quantity, string $errorKey, Validator $validator): void
     {
         if ($quantity === null || count($voucherIds) <= $quantity) {

@@ -27,9 +27,8 @@ class TicketCalculator
             $unitPrice = (float) ($item['custom_unit_price'] ?? $product->unit_price);
             $quantity = (int) $item['quantity'];
 
-            $rawVoucherIds = $item['voucher_ids'] ?? [];
             $voucherIds = array_values(array_filter(
-                is_array($rawVoucherIds) ? $rawVoucherIds : [],
+                $item['voucher_ids'] ?? [],
                 fn ($voucherId) => ! empty($voucherId)
             ));
 
