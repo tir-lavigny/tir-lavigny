@@ -1,0 +1,105 @@
+name: Release from prod
+
+# Merging a release PR (main -> prod) creates the release tag and the GitHub
+# Release here. The tag push then triggers the existing docker.yml flow
+# (build, scan gate, GHCR push); the production deploy stays a manual
+# dispatch of deploy-production.yml.
+
+on:
+  push:
+    branches: [prod]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    name: Tag and release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate app token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout prod
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Create release tag and GitHub Release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          PUSH_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          compute_version() {
+            local base="$1" kind="$2" major minor patch
+            major=$(printf '%s' "$base" | sed -nE 's/^v([0-9]+)\.[0-9]+\.[0-9]+$/\1/p')
+            minor=$(printf '%s' "$base" | sed -nE 's/^v[0-9]+\.([0-9]+)\.[0-9]+$/\1/p')
+            patch=$(printf '%s' "$base" | sed -nE 's/^v[0-9]+\.[0-9]+\.([0-9]+)$/\1/p')
+            case "$kind" in
+              major) printf 'v%d.%d.%d' $((major + 1)) 0 0 ;;
+              minor) printf 'v%d.%d.%d' "$major" $((minor + 1)) 0 ;;
+              patch) printf 'v%d.%d.%d' "$major" "$minor" $((patch + 1)) ;;
+            esac
+          }
+
+          # The PR that was just merged (works for merge, squash and rebase)
+          pr_json=$(gh api "repos/${GH_REPO}/commits/${PUSH_SHA}/pulls")
+          if [ -z "$(printf '%s' "$pr_json" | jq '.[0] // empty')" ]; then
+            echo "::warning::push to prod is not associated with a PR — no release created"
+            exit 0
+          fi
+          pr_number=$(printf '%s' "$pr_json" | jq -r '.[0].number')
+          pr_title=$(printf '%s' "$pr_json" | jq -r '.[0].title')
+          pr_body=$(printf '%s' "$pr_json" | jq -r '.[0].body // ""')
+
+          # idempotency: this merge commit already released (workflow re-run,
+          # duplicate push event) — the version would recompute PAST the
+          # existing tag and cut a second, spurious release
+          already=$(git tag --points-at "$PUSH_SHA")
+          if [ -n "$already" ]; then
+            echo "merge commit already tagged ($(printf '%s' "$already" | tr '\n' ',')) — skipping (idempotent rerun)"
+            exit 0
+          fi
+
+          # bump type: renamed title first, hidden body marker as fallback
+          bump=$(printf '%s' "$pr_title" | grep -oiE '#(major|minor|patch)' | head -1 | tr '[:upper:]' '[:lower:]' | tr -d '#' || true)
+          if [ -z "$bump" ]; then
+            bump=$(printf '%s' "$pr_body" | grep -oE '<!-- release-bump: (major|minor|patch) -->' | sed -E 's/.*: ([a-z]+) -->/\1/' | head -1 || true)
+          fi
+          if [ -z "$bump" ]; then
+            echo "::error::merged PR #${pr_number} has no bump marker in title or body"
+            gh pr comment "$pr_number" --body "Release skipped: no #major/#minor/#patch marker found in title or body. The tag was not created — reopen a PR with the marker."
+            exit 1
+          fi
+
+          latest=$(git tag -l 'v*' | grep -vE '\-(dev|rev)' | sort -V | tail -1)
+          version=$(compute_version "$latest" "$bump")
+
+          # if the PR preview shows another version, a different release won the race
+          preview=$(printf '%s' "$pr_title" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+          if [ -n "$preview" ] && [ "$preview" != "$version" ]; then
+            echo "::warning::version advanced from preview ${preview} to ${version}"
+            gh pr comment "$pr_number" --body "Release version advanced from \`${preview}\` to **${version}** — another release merged into prod before this one."
+          fi
+
+          if git rev-parse "$version" >/dev/null 2>&1; then
+            echo "::error::tag ${version} already exists but points elsewhere — manual collision, not creating it"
+            exit 1
+          fi
+
+          git config user.name "tir-lavigny-cd[bot]"
+          git config user.email "${{ steps.app-token.outputs.installation-id }}+tir-lavigny-cd[bot]@users.noreply.github.com"
+          git tag -a "$version" -m "Release ${version}"
+          git push origin "$version"
+
+          gh release create "$version" --title "$version" --generate-notes
+          echo "released ${version} (from PR #${pr_number})"

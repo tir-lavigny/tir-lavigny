@@ -1,0 +1,132 @@
+name: Release PR
+
+# Release flow (releases, not pre-releases): open a PR main -> prod titled
+# "#major", "#minor" or "#patch". This workflow computes the next version
+# from the last release tag, renames the PR to "New Release vX.Y.Z - #<bump>",
+# comments the computation, and acts as the branch-protection check (fails
+# until the title follows the convention). On merge, release-prod.yml creates
+# the tag + GitHub Release; the tag push then triggers docker.yml (build,
+# scan gate, GHCR push) as before.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+concurrency:
+  group: release-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  release-version:
+    name: Compute release version
+    if: github.base_ref == 'prod'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate app token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout (full history + tags)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Compute version and rename PR
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          EVENT_ACTION: ${{ github.event.action }}
+        run: |
+          set -euo pipefail
+
+          compute_version() {
+            local base="$1" kind="$2" major minor patch
+            major=$(printf '%s' "$base" | sed -nE 's/^v([0-9]+)\.[0-9]+\.[0-9]+$/\1/p')
+            minor=$(printf '%s' "$base" | sed -nE 's/^v[0-9]+\.([0-9]+)\.[0-9]+$/\1/p')
+            patch=$(printf '%s' "$base" | sed -nE 's/^v[0-9]+\.[0-9]+\.([0-9]+)$/\1/p')
+            case "$kind" in
+              major) printf 'v%d.%d.%d' $((major + 1)) 0 0 ;;
+              minor) printf 'v%d.%d.%d' "$major" $((minor + 1)) 0 ;;
+              patch) printf 'v%d.%d.%d' "$major" "$minor" $((patch + 1)) ;;
+            esac
+          }
+
+          latest=$(git tag -l 'v*' | grep -vE '\-(dev|rev)' | sort -V | tail -1)
+          if [ -z "$latest" ]; then
+            echo "::error::no release tag found — cannot compute a version"
+            exit 1
+          fi
+
+          # 1) Title carries a bump marker: compute, rename, refresh body marker
+          bump=""
+          if printf '%s' "$PR_TITLE" | grep -qiE '#(major|minor|patch)'; then
+            bump=$(printf '%s' "$PR_TITLE" | grep -oiE '#(major|minor|patch)' | head -1 | tr '[:upper:]' '[:lower:]' | tr -d '#')
+          fi
+
+          if [ -n "$bump" ]; then
+            version=$(compute_version "$latest" "$bump")
+            new_title="New Release ${version} - #${bump}"
+            if [ "$PR_TITLE" != "$new_title" ]; then
+              gh pr edit "$PR_NUMBER" --title "$new_title"
+              body=$(gh pr view "$PR_NUMBER" --json body -q '.body // ""')
+              body=$(printf '%s\n' "$body" | sed '/<!-- release-bump: /d')
+              body="${body}
+          <!-- release-bump: ${bump} -->"
+              gh pr edit "$PR_NUMBER" --body "$body"
+              gh pr comment "$PR_NUMBER" --body "$(cat <<EOF
+          **Release preview** (auto-computed, refreshes on every push to main)
+
+          - bump: \`#${bump}\` · last release tag: \`${latest}\`
+          - this PR will release: **${version}**
+          - title set to \`${new_title}\`
+
+          On merge into \`prod\`: tag \`${version}\` is created at the merge commit, a GitHub Release is generated, and the normal tag flow builds, scans and pushes the image. The version is recomputed at merge time — if another release merges first, the final number advances (this preview updates then).
+          EOF
+          )"
+              echo "renamed PR #${PR_NUMBER} -> ${new_title}"
+            else
+              echo "PR already correctly named: ${new_title}"
+            fi
+            exit 0
+          fi
+
+          # 2) Title already carries a version (renamed by us or manually):
+          #    keep the preview fresh using the body marker, never clobber edits
+          if printf '%s' "$PR_TITLE" | grep -qE 'v[0-9]+\.[0-9]+\.[0-9]+'; then
+            body_bump=$(gh pr view "$PR_NUMBER" --json body -q '.body // ""' \
+              | grep -oE '<!-- release-bump: (major|minor|patch) -->' \
+              | sed -E 's/.*: ([a-z]+) -->/\1/' | head -1 || true)
+            if [ -n "$body_bump" ]; then
+              version=$(compute_version "$latest" "$body_bump")
+              new_title="New Release ${version} - #${body_bump}"
+              if [ "$PR_TITLE" != "$new_title" ]; then
+                gh pr edit "$PR_NUMBER" --title "$new_title"
+                gh pr comment "$PR_NUMBER" --body "$(cat <<EOF
+          Release preview refreshed: another release merged into prod first — this PR now releases **${version}**.
+          EOF
+          )"
+              fi
+            fi
+            exit 0
+          fi
+
+          # 3) No marker, no version: instruct and fail (branch protection)
+          if [ "${EVENT_ACTION}" != "synchronize" ]; then
+            gh pr comment "$PR_NUMBER" --body "$(cat <<EOF
+          This PR targets \`prod\` but its title has no \`#major\`, \`#minor\` or \`#patch\` marker.
+
+          Rename it — e.g. \`#patch\` — and this check computes the next version from the last release tag (\`${latest}\`), retitles the PR to \`New Release vX.Y.Z - #<bump>\`, and goes green. Until then, branch protection blocks the merge.
+          EOF
+          )"
+          fi
+          echo "::error::PR title must contain #major, #minor or #patch"
+          exit 1
