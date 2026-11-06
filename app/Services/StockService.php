@@ -162,7 +162,7 @@ class StockService
      * Uses the latest snapshot (if any) as the base,
      * then sums only movements created after that snapshot.
      *
-     * @return Collection<int, array{product_id: int<0, max>, product: Product, quantity: int}>
+     * @return Collection<int, array{product_id: int, product: Product, quantity: int}>
      */
     public function getStockForLocation(StockLocation $location): Collection
     {
