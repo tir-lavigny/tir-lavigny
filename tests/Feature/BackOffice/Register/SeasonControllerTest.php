@@ -104,6 +104,120 @@ class SeasonControllerTest extends TestCase
         $this->assertDatabaseHas('seasons', ['id' => $season->id, 'name' => 'New']);
     }
 
+    public function test_edit_shares_closed_days_count(): void
+    {
+        $season = Season::factory()->create();
+        OperatingDay::factory()->closed()->create(['season_id' => $season->id]);
+        OperatingDay::factory()->closed()->create(['season_id' => $season->id]);
+        OperatingDay::factory()->create(['season_id' => $season->id, 'closed_at' => null]);
+
+        $response = $this->get(route('bo.register.seasons.edit', $season));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->where('closedDaysCount', 2));
+    }
+
+    public function test_update_initial_balance_cascades_to_closed_days(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 1000]);
+        $day1 = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-01'),
+            'total_cash' => 200,
+            'closing_balance' => 1200,
+        ]);
+        $day2 = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-02'),
+            'total_cash' => 100,
+            'closing_balance' => 1300,
+        ]);
+
+        $this->put(route('bo.register.seasons.update', $season), [
+            'initial_balance' => 1500,
+        ])->assertRedirect();
+
+        $this->assertEquals(1700.00, $day1->fresh()->closing_balance);
+        $this->assertEquals(1800.00, $day2->fresh()->closing_balance);
+        $this->assertDatabaseHas('seasons', ['id' => $season->id, 'initial_balance' => 1500]);
+    }
+
+    public function test_update_initial_balance_leaves_open_days_balance_null(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 1000]);
+        $openDay = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => null,
+            'closing_balance' => null,
+            'total_cash' => 50,
+        ]);
+
+        $this->put(route('bo.register.seasons.update', $season), [
+            'initial_balance' => 2000,
+        ])->assertRedirect();
+
+        $this->assertNull($openDay->fresh()->getRawOriginal('closing_balance'));
+        $this->assertEquals(2050.00, $openDay->fresh()->closing_balance);
+    }
+
+    public function test_update_without_initial_balance_change_keeps_stored_closing_balances(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 1000]);
+        $day = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-01'),
+            'total_cash' => 200,
+            'closing_balance' => 999.99,
+        ]);
+
+        $this->put(route('bo.register.seasons.update', $season), [
+            'name' => 'Renamed',
+            'initial_balance' => 1000,
+        ])->assertRedirect();
+
+        $this->assertEquals(999.99, $day->fresh()->closing_balance);
+    }
+
+    public function test_update_initial_balance_without_closed_days_succeeds(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 1000]);
+
+        $this->put(route('bo.register.seasons.update', $season), [
+            'initial_balance' => 300,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertEquals(300.00, $season->fresh()->end_balance);
+    }
+
+    public function test_update_rejects_negative_initial_balance(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 1000]);
+
+        $this->put(route('bo.register.seasons.update', $season), [
+            'initial_balance' => -10,
+        ])->assertSessionHasErrors(['initial_balance']);
+    }
+
+    public function test_end_balance_matches_last_closed_day_closing_balance(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 1000]);
+        OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-01'),
+            'total_cash' => 200,
+            'closing_balance' => 1200,
+        ]);
+        $lastDay = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-02'),
+            'total_cash' => -50,
+            'closing_balance' => 1150,
+        ]);
+
+        $this->assertEquals(1150.00, $season->fresh()->end_balance);
+        $this->assertEquals(1150.00, $lastDay->fresh()->closing_balance);
+    }
+
     public function test_destroy_soft_deletes_season(): void
     {
         $season = Season::factory()->create();

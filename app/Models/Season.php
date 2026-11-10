@@ -71,7 +71,49 @@ class Season extends Model
 
     public function getEndBalanceAttribute(): ?float
     {
-        return $this->initial_balance + $this->operatingDays()->sum('total_cash');
+        return $this->closingBalanceLedger()['end_balance'];
+    }
+
+    public function closingBalanceFor(OperatingDay $day): float
+    {
+        return $this->closingBalanceLedger()['day_balances'][$day->id]
+            ?? (float) $this->initial_balance;
+    }
+
+    public function recalculateClosingBalances(): void
+    {
+        foreach ($this->closingBalanceLedger()['day_balances'] as $dayId => $balance) {
+            OperatingDay::query()
+                ->whereKey($dayId)
+                ->whereNotNull('closed_at')
+                ->update(['closing_balance' => $balance]);
+        }
+    }
+
+    /**
+     * Running cash balance of the register for every operating day of the season.
+     *
+     * @return array{day_balances: array<int, float>, end_balance: float}
+     */
+    public function closingBalanceLedger(): array
+    {
+        $days = $this->operatingDays()
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get(['id', 'total_cash']);
+
+        $running = (float) $this->initial_balance;
+        $balances = [];
+
+        foreach ($days as $day) {
+            $running += (float) $day->total_cash;
+            $balances[$day->id] = round($running, 2);
+        }
+
+        return [
+            'day_balances' => $balances,
+            'end_balance' => round($running, 2),
+        ];
     }
 
     protected static function booted(): void

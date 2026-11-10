@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -60,12 +61,23 @@ class SeasonController extends Controller implements HasMiddleware
     {
         return Inertia::render('backOffice/Register/Seasons/Edit', [
             'season' => $season,
+            'closedDaysCount' => $season->operatingDays()->whereNotNull('closed_at')->count(),
         ]);
     }
 
     public function update(UpdateSeasonRequest $request, Season $season): RedirectResponse
     {
-        $season->update($request->validated());
+        $data = $request->validated();
+        $initialBalanceChanged = array_key_exists('initial_balance', $data)
+            && (float) $data['initial_balance'] !== (float) $season->initial_balance;
+
+        DB::transaction(function () use ($season, $data, $initialBalanceChanged) {
+            $season->update($data);
+
+            if ($initialBalanceChanged) {
+                $season->recalculateClosingBalances();
+            }
+        });
 
         return redirect()->route('bo.register.seasons.index')->with('success', 'Season updated successfully.');
     }

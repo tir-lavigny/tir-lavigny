@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import InputError from '@/components/InputError.vue';
 import { H1, H3 } from '@/components/typography/headings';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
@@ -10,12 +20,13 @@ import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Season, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { Save, Undo2 } from '@lucide/vue';
+import { ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
 
-const props = defineProps<{ season: Season }>();
+const props = defineProps<{ season: Season; closedDaysCount: number }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Saisons', href: route('bo.register.seasons.index') },
@@ -35,6 +46,20 @@ const handleSubmit = () => {
         toast.error("Vous n'avez pas les droits.");
         return;
     }
+
+    const initialBalanceChanged = Number(form.initial_balance) !== Number(props.season.initial_balance);
+    if (initialBalanceChanged && props.closedDaysCount > 0) {
+        showCascadeDialog.value = true;
+        return;
+    }
+
+    submit();
+};
+
+const showCascadeDialog = ref(false);
+
+const submit = () => {
+    showCascadeDialog.value = false;
     form.put(route('bo.register.seasons.update', props.season.id), {
         onSuccess: () => toast.success('Saison mise à jour.'),
         onError: () => toast.error('Erreur lors de la mise à jour.'),
@@ -91,5 +116,20 @@ const handleSubmit = () => {
                 </div>
             </div>
         </div>
+        <AlertDialog :open="showCascadeDialog" @update:open="showCascadeDialog = $event">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Recalculer les journées fermées ?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Le solde initial change. Le solde de clôture des {{ closedDaysCount }} journée(s) déjà fermée(s) de cette saison sera
+                        recalculé en cascade.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction @click="submit">Confirmer</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </AppLayout>
 </template>
