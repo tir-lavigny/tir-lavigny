@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
-import { H1, H3 } from '@/components/typography/headings';
+import { H3, H4 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -69,7 +69,7 @@ const handleSync = (id: number) => {
                     <div class="flex flex-wrap items-start justify-between gap-3">
                         <div class="flex flex-col gap-1">
                             <div class="flex flex-wrap items-center gap-2">
-                                <H1 class="text-lg">{{ priceList.name }}</H1>
+                                <H4 class="text-lg">{{ priceList.name }}</H4>
                                 <Badge v-if="priceList.is_active" variant="default">Active</Badge>
                                 <Badge variant="secondary">{{ priceList.items_count ?? 0 }} produit(s)</Badge>
                             </div>

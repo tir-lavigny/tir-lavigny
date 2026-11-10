@@ -71,7 +71,12 @@ const handleApply = () => {
                     </TooltipTrigger>
                     <TooltipContent><p>Retour</p></TooltipContent>
                 </Tooltip>
-                <Button size="icon" @click="handleApply"><Play /></Button>
+                <Tooltip>
+                    <TooltipTrigger>
+                        <Button size="icon" @click="handleApply"><Play /></Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Appliquer les prix</p></TooltipContent>
+                </Tooltip>
             </div>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
