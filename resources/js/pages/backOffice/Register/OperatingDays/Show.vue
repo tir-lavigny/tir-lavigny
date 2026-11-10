@@ -4,7 +4,10 @@ import { H1, H3 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Input } from '@/components/ui/input';
+import Label from '@/components/ui/label/Label.vue';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -14,7 +17,7 @@ import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, OperatingDay, Product, SharedData, Ticket } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core';
-import { Lock, Unlock } from '@lucide/vue';
+import { Lock, Plus, Unlock } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -70,6 +73,32 @@ function handleRefunded() {
     router.reload({ only: ['operatingDay'] });
 }
 
+const correctionForm = useForm({ amount: '' as string | number });
+const isCorrectionDialogOpen = ref(false);
+
+const canCreateCorrection = computed(() => props.correctionProduct !== null && hasPermissionTo(user, 'create ticket'));
+
+function openCorrectionDialog() {
+    correctionForm.reset();
+    correctionForm.clearErrors();
+    isCorrectionDialogOpen.value = true;
+}
+
+function handleCorrection() {
+    correctionForm.post(route('bo.register.operating-days.corrections.store', props.operatingDay.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            isCorrectionDialogOpen.value = false;
+            toast.success('Ticket correctif enregistré.');
+        },
+        onError: () => toast.error('Erreur lors de la création du ticket correctif.'),
+    });
+}
+
+function isCorrection(ticket: Ticket) {
+    return props.correctionProduct !== null && ticket.ticket_items?.some((item) => item.product_id === props.correctionProduct?.id);
+}
+
 onMounted(() => {
     try {
         const url = new URL(page.props.ziggy.url + page.url);
@@ -96,6 +125,9 @@ onMounted(() => {
                 <Badge :variant="isOpen ? 'default' : 'secondary'">{{ isOpen ? 'Ouverte' : 'Fermée' }}</Badge>
             </div>
             <div class="flex gap-2">
+                <Button v-if="canCreateCorrection" variant="outline" @click="openCorrectionDialog">
+                    <Plus class="mr-2 size-4" /> Ticket correctif
+                </Button>
                 <Button
                     v-if="isOpen && hasPermissionTo(user, 'close day')"
                     variant="destructive"
@@ -170,6 +202,7 @@ onMounted(() => {
                     >
                         <TableCell class="font-medium">
                             {{ ticket.id }}
+                            <Badge v-if="isCorrection(ticket)" variant="outline" class="ml-2">Correction</Badge>
                             <Badge v-if="ticket.deleted_at" variant="destructive" class="ml-2">Remboursé</Badge>
                         </TableCell>
                         <TableCell>{{ formatDate(ticket.sold_at, 'HH:mm') }}</TableCell>
@@ -217,5 +250,25 @@ onMounted(() => {
                 </div>
             </DrawerContent>
         </Drawer>
+
+        <Dialog :open="isCorrectionDialogOpen" @update:open="isCorrectionDialogOpen = $event">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Ticket correctif</DialogTitle>
+                    <DialogDescription>
+                        Ajoute un ajustement d'espèces à cette journée, même si elle est fermée. Un montant négatif retire de l'argent de la caisse.
+                    </DialogDescription>
+                </DialogHeader>
+                <div class="grid gap-2">
+                    <Label for="correction-amount">Montant (CHF)</Label>
+                    <Input id="correction-amount" v-model="correctionForm.amount" type="number" step="0.01" placeholder="Ex: -15.00" />
+                    <p class="text-muted-foreground text-xs">Paiement en espèces uniquement.</p>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" :disabled="correctionForm.processing" @click="isCorrectionDialogOpen = false">Annuler</Button>
+                    <Button :disabled="correctionForm.processing" @click="handleCorrection">Enregistrer</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>

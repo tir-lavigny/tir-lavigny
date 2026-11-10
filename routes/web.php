@@ -199,6 +199,11 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         ]);
     });
 
+    Route::middleware('permission:create ticket')->prefix('register')->group(function () {
+        Route::post('operating-days/{operatingDay}/corrections', [Register\OperatingDayController::class, 'storeCorrection'])
+            ->name('bo.register.operating-days.corrections.store');
+    });
+
     Route::middleware('permission:manage members')->prefix('register')->group(function () {
         Route::resource('members', Register\MemberController::class)->only([
             'index', 'show', 'edit', 'update', 'destroy',

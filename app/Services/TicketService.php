@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\OperatingDay;
 use App\Models\Ticket;
 use App\Traits\ConvertsLocalDatetimes;
@@ -16,18 +15,24 @@ class TicketService
         private readonly StockService $stockService,
     ) {}
 
-    public function create(StoreTicketRequest $request, OperatingDay $day, TicketCalculator $calculator): Ticket
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function create(array $data, OperatingDay $day, TicketCalculator $calculator): Ticket
     {
-        return DB::transaction(function () use ($request, $day, $calculator) {
-            $result = $calculator->compute($request->input('items'));
+        return DB::transaction(function () use ($data, $day, $calculator) {
+            /** @var array<int, array{product_id: int, quantity: int, custom_unit_price?: float, voucher_ids?: array<int, int|null>}> $items */
+            $items = $data['items'];
+
+            $result = $calculator->compute($items);
 
             $ticket = Ticket::create([
                 'total' => $result['total'],
-                'payment_method' => $request->input('payment_method'),
+                'payment_method' => $data['payment_method'],
                 'operating_day_id' => $day->id,
-                'member_id' => $request->input('member_id'),
-                'sold_at' => $this->localToUtc($request->input('sold_at')),
-                'stock_location_id' => $request->input('stock_location_id'),
+                'member_id' => $data['member_id'] ?? null,
+                'sold_at' => $this->localToUtc($data['sold_at']),
+                'stock_location_id' => $data['stock_location_id'],
             ]);
 
             foreach ($result['items'] as $itemData) {

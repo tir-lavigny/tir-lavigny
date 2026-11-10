@@ -2,7 +2,6 @@
 
 namespace App\Actions\Ticket;
 
-use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\OperatingDay;
 use App\Models\Ticket;
 use App\Services\TicketCalculator;
@@ -15,10 +14,13 @@ class CreateTicketAction
         private readonly TicketService $ticketService,
     ) {}
 
-    public function execute(StoreTicketRequest $request, OperatingDay $day, TicketCalculator $calculator): Ticket
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function execute(array $data, OperatingDay $day, TicketCalculator $calculator): Ticket
     {
-        return DB::transaction(function () use ($request, $day, $calculator) {
-            return $this->ticketService->create($request, $day, $calculator);
+        return DB::transaction(function () use ($data, $day, $calculator) {
+            return $this->ticketService->create($data, $day, $calculator);
         });
     }
 }

@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\BackOffice\Register;
 
+use App\Actions\Ticket\CreateTicketAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Register\StoreOperatingDayRequest;
 use App\Http\Requests\BackOffice\Register\UpdateOperatingDayRequest;
 use App\Models\OperatingDay;
 use App\Models\Product;
 use App\Models\Season;
+use App\Models\StockLocation;
+use App\Services\TicketCalculator;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,6 +79,51 @@ class OperatingDayController extends Controller implements HasMiddleware
             'operatingDay' => $operatingDay,
             'correctionProduct' => Product::where('name', 'Correction')->first(),
         ]);
+    }
+
+    public function storeCorrection(
+        Request $request,
+        OperatingDay $operatingDay,
+        CreateTicketAction $action,
+        TicketCalculator $calculator,
+    ): RedirectResponse {
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'not_in:0'],
+        ]);
+
+        $product = Product::where('name', 'Correction')->first();
+
+        if ($product === null) {
+            return back()->with('error', 'Le produit Correction est introuvable.');
+        }
+
+        $lastTicket = $operatingDay->tickets()->withTrashed()->latest('sold_at')->first();
+        $location = $lastTicket !== null
+            ? $lastTicket->stockLocation
+            : StockLocation::where('active', true)->orderBy('id')->first();
+
+        if ($location === null) {
+            return back()->with('error', 'Aucun emplacement de stock actif.');
+        }
+
+        $action->execute([
+            'payment_method' => 'cash',
+            'operating_day_id' => $operatingDay->id,
+            'member_id' => null,
+            'sold_at' => Carbon::now('Europe/Zurich')->toDateTimeString(),
+            'stock_location_id' => $location->id,
+            'items' => [[
+                'product_id' => $product->id,
+                'quantity' => 1,
+                'custom_unit_price' => (float) $validated['amount'],
+            ]],
+        ], $operatingDay, $calculator);
+
+        $season = $operatingDay->season;
+        $season->recalculateClosingBalances();
+
+        return redirect()->route('bo.register.operating-days.show', $operatingDay)
+            ->with('success', 'Ticket correctif enregistré.');
     }
 
     public function update(UpdateOperatingDayRequest $request, OperatingDay $operatingDay): RedirectResponse
