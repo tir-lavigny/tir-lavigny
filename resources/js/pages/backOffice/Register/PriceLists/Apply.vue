@@ -10,9 +10,12 @@ import { formatDate, formatMoney } from '@/lib/utils';
 import type { BreadcrumbItem, PriceList, PriceListPreview, PriceListPreviewRow } from '@/types';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ArrowLeft, Play } from '@lucide/vue';
+import { ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{ priceList: PriceList; preview: PriceListPreview }>();
+
+const processing = ref(false);
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Listes de prix', href: route('bo.register.price-lists.index') },
@@ -46,10 +49,20 @@ const statusVariant = (status: PriceListPreviewRow['status']): 'default' | 'seco
 };
 
 const handleApply = () => {
+    if (processing.value) {
+        return;
+    }
+
     router.post(
         route('bo.register.price-lists.apply', props.priceList.id),
         {},
         {
+            onStart: () => {
+                processing.value = true;
+            },
+            onFinish: () => {
+                processing.value = false;
+            },
             onSuccess: () => toast.success('Prix appliqués.'),
             onError: () => toast.error("Erreur lors de l'application."),
         },
@@ -73,7 +86,7 @@ const handleApply = () => {
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger>
-                        <Button size="icon" @click="handleApply"><Play /></Button>
+                        <Button size="icon" :disabled="processing" @click="handleApply"><Play /></Button>
                     </TooltipTrigger>
                     <TooltipContent><p>Appliquer les prix</p></TooltipContent>
                 </Tooltip>

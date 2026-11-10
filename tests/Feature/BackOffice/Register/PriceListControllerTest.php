@@ -66,6 +66,20 @@ class PriceListControllerTest extends TestCase
         $response->assertSessionHasErrors(['name', 'items']);
     }
 
+    public function test_store_rejects_price_above_max(): void
+    {
+        $product = Product::factory()->create(['category_id' => $this->category->id]);
+
+        $response = $this->post(route('bo.register.price-lists.store'), [
+            'name' => 'Normal',
+            'items' => [
+                ['product_id' => $product->id, 'unit_price' => 100000000.00],
+            ],
+        ]);
+
+        $response->assertSessionHasErrors(['items.0.unit_price']);
+    }
+
     public function test_create_rolls_back_when_items_fail(): void
     {
         $product = Product::factory()->create(['category_id' => $this->category->id]);
@@ -159,6 +173,7 @@ class PriceListControllerTest extends TestCase
         $response = $this->post(route('bo.register.price-lists.apply', $priceList));
 
         $response->assertRedirect();
+        $response->assertSessionHas('success', 'Prix appliqués : 0 produit(s) mis à jour, 1 ignoré(s).');
         $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 10.00]);
     }
 
@@ -180,6 +195,7 @@ class PriceListControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
+            ->where('priceLists.0.items_count', 2)
             ->where('priceLists.0.drift.changed', 1)
             ->where('priceLists.0.drift.missing', 1)
             ->where('priceLists.0.drift.not_in_list', 1));
@@ -236,6 +252,7 @@ class PriceListControllerTest extends TestCase
         $response = $this->post(route('bo.register.price-lists.sync-prices', $priceList));
 
         $response->assertRedirect();
+        $response->assertSessionHas('success', 'Prix de la liste synchronisés : 0 prix mis à jour, 1 ignoré(s).');
         $this->assertDatabaseHas('price_list_items', [
             'price_list_id' => $priceList->id,
             'product_id' => $product->id,

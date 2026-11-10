@@ -26,7 +26,10 @@ class PriceListController extends Controller implements HasMiddleware
 
     public function index(PriceListService $service): Response
     {
+        $allProductIds = Product::query()->pluck('id')->map(fn ($id): int => (int) $id)->all();
+
         $priceLists = PriceList::query()
+            ->with(['items.product' => fn ($query) => $query->withTrashed()])
             ->withCount('items')
             ->orderBy('name')
             ->get()
@@ -37,7 +40,7 @@ class PriceListController extends Controller implements HasMiddleware
                 'is_active' => $priceList->is_active,
                 'last_applied_at' => $priceList->last_applied_at,
                 'items_count' => $priceList->getAttribute('items_count'),
-                'drift' => $service->drift($priceList),
+                'drift' => $service->drift($priceList, $allProductIds),
             ]);
 
         return Inertia::render('backOffice/Register/PriceLists/Index', [

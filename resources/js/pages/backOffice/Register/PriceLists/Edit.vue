@@ -36,6 +36,10 @@ const form = useForm({
 });
 
 const handleSubmit = () => {
+    if (form.processing) {
+        return;
+    }
+
     if (!hasPermissionTo(user, 'manage products')) {
         toast.error("Vous n'avez pas les droits.");
         return;
@@ -58,9 +62,9 @@ const handleSubmit = () => {
         <div class="m-4 flex flex-row items-center justify-between">
             <H1>Modifier {{ priceList.name }}</H1>
             <div class="flex flex-row gap-2">
-                <Tooltip :disabled="!form.isDirty">
+                <Tooltip :disabled="!form.isDirty || form.processing">
                     <TooltipTrigger>
-                        <Button size="icon" :disabled="!form.isDirty" @click="handleSubmit"><Save /></Button>
+                        <Button size="icon" :disabled="!form.isDirty || form.processing" @click="handleSubmit"><Save /></Button>
                     </TooltipTrigger>
                     <TooltipContent><p>Enregistrer</p></TooltipContent>
                 </Tooltip>

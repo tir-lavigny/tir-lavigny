@@ -146,17 +146,17 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             'update' => 'bo.register.price-lists.update',
             'destroy' => 'bo.register.price-lists.destroy',
         ]);
-        Route::get('price-lists/{priceList}/preview', [Register\PriceListController::class, 'preview'])
+        Route::get('price-lists/{price_list}/preview', [Register\PriceListController::class, 'preview'])
             ->name('bo.register.price-lists.preview');
-        Route::get('price-lists/{priceList}/apply', [Register\PriceListController::class, 'applyPreview'])
+        Route::get('price-lists/{price_list}/apply', [Register\PriceListController::class, 'applyPreview'])
             ->name('bo.register.price-lists.apply.preview');
-        Route::post('price-lists/{priceList}/apply', [Register\PriceListController::class, 'apply'])
+        Route::post('price-lists/{price_list}/apply', [Register\PriceListController::class, 'apply'])
             ->name('bo.register.price-lists.apply');
-        Route::post('price-lists/{priceList}/sync-from-catalog', [Register\PriceListController::class, 'syncFromCatalog'])
+        Route::post('price-lists/{price_list}/sync-from-catalog', [Register\PriceListController::class, 'syncFromCatalog'])
             ->name('bo.register.price-lists.sync-from-catalog');
-        Route::post('price-lists/{priceList}/sync-prices', [Register\PriceListController::class, 'syncPrices'])
+        Route::post('price-lists/{price_list}/sync-prices', [Register\PriceListController::class, 'syncPrices'])
             ->name('bo.register.price-lists.sync-prices');
-        Route::post('price-lists/{priceList}/duplicate', [Register\PriceListController::class, 'duplicate'])
+        Route::post('price-lists/{price_list}/duplicate', [Register\PriceListController::class, 'duplicate'])
             ->name('bo.register.price-lists.duplicate');
     });
 

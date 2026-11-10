@@ -74,7 +74,7 @@ class PriceListService
 
             $rows[] = [
                 'product_id' => $item->product_id,
-                'product_name' => $product->name,
+                'product_name' => $product === null ? 'Produit supprimé' : $product->name,
                 'category_name' => $product?->category?->name,
                 'current_price' => $product === null || $product->trashed() ? null : (float) $product->unit_price,
                 'new_price' => (float) $item->unit_price,
@@ -142,32 +142,33 @@ class PriceListService
     }
 
     /**
+     * @param  array<int, int>|null  $allProductIds
      * @return array{changed: int, missing: int, not_in_list: int}
      */
-    public function drift(PriceList $list): array
+    public function drift(PriceList $list, ?array $allProductIds = null): array
     {
-        $items = $this->itemsWithTrashedProducts($list);
+        $items = $list->relationLoaded('items') ? $list->items : $this->itemsWithTrashedProducts($list);
         $listedProductIds = $items->pluck('product_id')->all();
 
         $changed = 0;
         $missing = 0;
 
         foreach ($items as $item) {
-            if ($this->statusFor($item, $item->product) === 'changed') {
-                $changed++;
-            }
-        }
+            $status = $this->statusFor($item, $item->product);
 
-        foreach ($items as $item) {
-            if ($item->product === null || $item->product->trashed()) {
+            if ($status === 'changed') {
+                $changed++;
+            } elseif ($status === 'missing') {
                 $missing++;
             }
         }
 
+        $allProductIds ??= Product::query()->pluck('id')->map(fn ($id): int => (int) $id)->all();
+
         return [
             'changed' => $changed,
             'missing' => $missing,
-            'not_in_list' => Product::query()->whereNotIn('id', $listedProductIds)->count(),
+            'not_in_list' => count(array_diff($allProductIds, $listedProductIds)),
         ];
     }
 
@@ -234,20 +235,22 @@ class PriceListService
 
     public function duplicate(PriceList $list): PriceList
     {
-        $copy = PriceList::create([
-            'name' => $this->uniqueName($list->name.' (copie)'),
-            'notes' => $list->notes,
-            'is_active' => false,
-        ]);
+        return DB::transaction(function () use ($list): PriceList {
+            $copy = PriceList::create([
+                'name' => $this->uniqueName($list->name.' (copie)'),
+                'notes' => $list->notes,
+                'is_active' => false,
+            ]);
 
-        $copy->items()->createMany(
-            $list->items()->get(['product_id', 'unit_price'])->map(fn (PriceListItem $item): array => [
-                'product_id' => $item->product_id,
-                'unit_price' => $item->unit_price,
-            ])->all()
-        );
+            $copy->items()->createMany(
+                $list->items()->get(['product_id', 'unit_price'])->map(fn (PriceListItem $item): array => [
+                    'product_id' => $item->product_id,
+                    'unit_price' => $item->unit_price,
+                ])->all()
+            );
 
-        return $copy;
+            return $copy;
+        });
     }
 
     /**

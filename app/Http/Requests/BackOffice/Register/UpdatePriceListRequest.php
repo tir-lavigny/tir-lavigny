@@ -20,7 +20,7 @@ class UpdatePriceListRequest extends FormRequest
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array'],
             'items.*.product_id' => ['required', 'distinct', 'exists:products,id,deleted_at,NULL'],
-            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
         ];
     }
 }
