@@ -2,6 +2,13 @@
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 
 const buildTag = import.meta.env.VITE_BUILD_TAG || 'unknown';
+
+defineProps({
+    displayBuildTag: {
+        type: Boolean,
+        default: false,
+    },
+});
 </script>
 
 <template>
@@ -10,6 +17,6 @@ const buildTag = import.meta.env.VITE_BUILD_TAG || 'unknown';
     </div>
     <div class="ml-1 grid flex-1 text-left text-sm">
         <span class="mb-0.5 truncate leading-none font-semibold">Société de tir de Lavigny</span>
-        <span>{{ buildTag }}</span>
+        <span v-if="displayBuildTag">{{ buildTag }}</span>
     </div>
 </template>
