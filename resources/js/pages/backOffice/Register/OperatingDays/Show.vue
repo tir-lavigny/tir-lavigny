@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate, formatDateOnly, formatMoney, hasPermissionTo } from '@/lib/utils';
+import { formatDate, formatMoney, hasPermissionTo, parseDateOnly } from '@/lib/utils';
 import type { BreadcrumbItem, CashMovement, OperatingDay, Product, SharedData, Ticket } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core';
@@ -191,7 +191,7 @@ onMounted(() => {
                 <ul class="mt-4 flex flex-col gap-2 text-sm">
                     <li v-for="movement in cashMovements" :key="movement.id" class="flex items-center justify-between">
                         <span>
-                            {{ formatDateOnly(movement.occurred_at) }} —
+                            {{ formatDate(parseDateOnly(movement.occurred_at), 'DD.MM.YYYY') }} —
                             {{ Number(movement.amount) < 0 ? 'Retrait vers la banque' : 'Injection depuis la banque' }}
                             <span v-if="movement.remark" class="text-muted-foreground">({{ movement.remark }})</span>
                         </span>

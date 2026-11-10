@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: string, format: string, options?: UseDateFormatOptions) {
+export function formatDate(date: string | Date, format: string, options?: UseDateFormatOptions) {
     if (!date) return '—';
     const dateObj = new Date(date);
 
@@ -17,17 +17,6 @@ export function formatDate(date: string, format: string, options?: UseDateFormat
         locales: 'fr-CH',
         ...options,
     });
-}
-
-export function formatDateOnly(date: string, format = 'DD.MM.YYYY') {
-    if (!date) return '—';
-    const [year, month, day] = date.slice(0, 10).split('-').map(Number);
-
-    return FD(new Date(year, month - 1, day), format, { locales: 'fr-CH' });
-}
-
-export function todayIsoDate(): string {
-    return new Date().toLocaleDateString('sv-SE');
 }
 
 export function toLocalDatetimeString(utcIso: string): string {

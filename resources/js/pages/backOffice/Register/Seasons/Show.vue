@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate, formatDateOnly, formatMoney, hasPermissionTo, todayIsoDate } from '@/lib/utils';
+import { formatDate, formatMoney, hasPermissionTo, parseDateOnly } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BreadcrumbItem, CashMovement, Season, SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
@@ -47,7 +47,8 @@ const canManageCashMovements = computed(() => hasPermissionTo(user, 'manage cash
 
 const movements = computed(() => props.season.cash_movements ?? []);
 
-const today = todayIsoDate();
+const now = new Date();
+const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 const seasonEndDate = computed(() => props.season.end_date.slice(0, 10));
 const movementMaxDate = computed(() => (seasonEndDate.value < today ? seasonEndDate.value : today));
 
@@ -249,7 +250,7 @@ function confirmGenerate() {
                         </TableHeader>
                         <TableBody>
                             <TableRow v-for="movement in movements" :key="movement.id">
-                                <TableCell>{{ formatDateOnly(movement.occurred_at) }}</TableCell>
+                                <TableCell>{{ formatDate(parseDateOnly(movement.occurred_at), 'DD.MM.YYYY') }}</TableCell>
                                 <TableCell>
                                     <Badge :variant="Number(movement.amount) < 0 ? 'secondary' : 'default'">
                                         {{ Number(movement.amount) < 0 ? 'Retrait' : 'Injection' }}
