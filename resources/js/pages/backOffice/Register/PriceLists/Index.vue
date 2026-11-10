@@ -118,32 +118,40 @@ const handleSyncPrices = (id: number) => {
                             </TooltipTrigger>
                             <TooltipContent><p>Dupliquer la liste</p></TooltipContent>
                         </Tooltip>
-                        <AppAlertDialog
-                            v-if="hasPermissionTo(user, 'manage products')"
-                            title="Synchroniser la structure de cette liste ?"
-                            description="Les produits manquants seront ajoutés avec leur prix actuel et les produits supprimés seront retirés."
-                            cancelText="Annuler"
-                        >
-                            <template #trigger>
-                                <Button variant="outline" size="sm"><RefreshCw /></Button>
-                            </template>
-                            <template #action>
-                                <Button variant="default" @click="handleSync(priceList.id)">Synchroniser</Button>
-                            </template>
-                        </AppAlertDialog>
-                        <AppAlertDialog
-                            v-if="hasPermissionTo(user, 'manage products')"
-                            title="Synchroniser les prix de cette liste ?"
-                            description="Les prix de la liste seront remplacés par les prix actuels des produits. Les produits supprimés sont ignorés."
-                            cancelText="Annuler"
-                        >
-                            <template #trigger>
-                                <Button variant="outline" size="sm"><RotateCw /></Button>
-                            </template>
-                            <template #action>
-                                <Button variant="default" @click="handleSyncPrices(priceList.id)">Synchroniser</Button>
-                            </template>
-                        </AppAlertDialog>
+                        <Tooltip v-if="hasPermissionTo(user, 'manage products')">
+                            <TooltipTrigger>
+                                <AppAlertDialog
+                                    title="Synchroniser la structure de cette liste ?"
+                                    description="Les produits manquants seront ajoutés avec leur prix actuel et les produits supprimés seront retirés."
+                                    cancelText="Annuler"
+                                >
+                                    <template #trigger>
+                                        <Button variant="outline" size="sm"><RefreshCw /></Button>
+                                    </template>
+                                    <template #action>
+                                        <Button variant="default" @click="handleSync(priceList.id)">Synchroniser</Button>
+                                    </template>
+                                </AppAlertDialog>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Ajouter les produits manquants et retirer les produits supprimés</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip v-if="hasPermissionTo(user, 'manage products')">
+                            <TooltipTrigger>
+                                <AppAlertDialog
+                                    title="Synchroniser les prix de cette liste ?"
+                                    description="Les prix de la liste seront remplacés par les prix actuels des produits. Les produits supprimés sont ignorés."
+                                    cancelText="Annuler"
+                                >
+                                    <template #trigger>
+                                        <Button variant="outline" size="sm"><RotateCw /></Button>
+                                    </template>
+                                    <template #action>
+                                        <Button variant="default" @click="handleSyncPrices(priceList.id)">Synchroniser</Button>
+                                    </template>
+                                </AppAlertDialog>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Mettre à jour les prix de la liste avec les prix actuels</p></TooltipContent>
+                        </Tooltip>
                         <AppAlertDialog
                             v-if="hasPermissionTo(user, 'manage products')"
                             title="Supprimer cette liste de prix ?"
