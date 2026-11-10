@@ -239,7 +239,7 @@ watch(
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
                         <Link :href="route('dashboard')">
-                            <AppLogo />
+                            <AppLogo :display-build-tag="true" />
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
