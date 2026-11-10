@@ -137,6 +137,23 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             ->name('bo.register.products.attach-child');
         Route::delete('products/{product}/detach-child/{child}', [Register\ProductController::class, 'detachChild'])
             ->name('bo.register.products.detach-child');
+
+        Route::resource('price-lists', Register\PriceListController::class)->except('show')->names([
+            'index' => 'bo.register.price-lists.index',
+            'create' => 'bo.register.price-lists.create',
+            'store' => 'bo.register.price-lists.store',
+            'edit' => 'bo.register.price-lists.edit',
+            'update' => 'bo.register.price-lists.update',
+            'destroy' => 'bo.register.price-lists.destroy',
+        ]);
+        Route::get('price-lists/{priceList}/preview', [Register\PriceListController::class, 'preview'])
+            ->name('bo.register.price-lists.preview');
+        Route::post('price-lists/{priceList}/apply', [Register\PriceListController::class, 'apply'])
+            ->name('bo.register.price-lists.apply');
+        Route::post('price-lists/{priceList}/sync-from-catalog', [Register\PriceListController::class, 'syncFromCatalog'])
+            ->name('bo.register.price-lists.sync-from-catalog');
+        Route::post('price-lists/{priceList}/duplicate', [Register\PriceListController::class, 'duplicate'])
+            ->name('bo.register.price-lists.duplicate');
     });
 
     Route::middleware('permission:manage categories')->prefix('register')->group(function () {

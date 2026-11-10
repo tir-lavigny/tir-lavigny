@@ -100,4 +100,12 @@ class Product extends Model
     {
         return $this->hasMany(StockTransferLine::class);
     }
+
+    /**
+     * @return HasMany<PriceListItem, $this>
+     */
+    public function priceListItems(): HasMany
+    {
+        return $this->hasMany(PriceListItem::class);
+    }
 }
