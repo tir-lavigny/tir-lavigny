@@ -33,6 +33,12 @@ class Category extends Model
 
     protected static function booted(): void
     {
+        static::deleting(function (Category $category) {
+            if ($category->products()->where('name', 'Correction')->exists()) {
+                abort(422, 'La catégorie contient le produit Correction protégé.');
+            }
+        });
+
         static::deleted(function (Category $category) {
             $category->products()->delete();
         });

@@ -12,6 +12,7 @@ import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Category, Product, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { Save, Undo2 } from '@lucide/vue';
+import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
 const page = usePage<SharedData>();
@@ -25,6 +26,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Modifier', href: route('bo.register.products.edit', props.product.id) },
 ];
 
+const isProtected = computed(() => props.product.name === 'Correction');
+
 const form = useForm({
     name: props.product.name,
     unit_price: props.product.unit_price,
@@ -36,6 +39,10 @@ const form = useForm({
 const handleSubmit = () => {
     if (!hasPermissionTo(user, 'manage products')) {
         toast.error("Vous n'avez pas les droits.");
+        return;
+    }
+    if (isProtected.value) {
+        toast.error('Ce produit est protégé.');
         return;
     }
     form.put(route('bo.register.products.update', props.product.id), {
@@ -51,9 +58,9 @@ const handleSubmit = () => {
         <div class="m-4 flex flex-row items-center justify-between">
             <H1>Modifier {{ product.name }}</H1>
             <div class="flex flex-row gap-2">
-                <Tooltip :disabled="!form.isDirty">
+                <Tooltip :disabled="!form.isDirty || isProtected">
                     <TooltipTrigger>
-                        <Button size="icon" :disabled="!form.isDirty" @click="handleSubmit"><Save /></Button>
+                        <Button size="icon" :disabled="!form.isDirty || isProtected" @click="handleSubmit"><Save /></Button>
                     </TooltipTrigger>
                     <TooltipContent><p>Enregistrer</p></TooltipContent>
                 </Tooltip>
@@ -68,21 +75,32 @@ const handleSubmit = () => {
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative w-full overflow-hidden rounded-xl border p-4">
                 <H3>Informations</H3>
+                <p v-if="isProtected" class="text-muted-foreground mt-2 text-sm">
+                    Ce produit est protégé : il est utilisé pour les tickets correctifs et ne peut pas être modifié ni supprimé.
+                </p>
                 <div class="mt-6 flex flex-col gap-4">
                     <div class="grid gap-2">
                         <Label for="name">Nom</Label>
-                        <Input id="name" v-model="form.name" type="text" placeholder="Nom du produit" maxlength="255" required />
+                        <Input
+                            id="name"
+                            v-model="form.name"
+                            type="text"
+                            placeholder="Nom du produit"
+                            maxlength="255"
+                            required
+                            :disabled="isProtected"
+                        />
                         <InputError :message="form.errors.name" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="grid gap-2">
                             <Label for="unit_price">Prix unitaire (CHF)</Label>
-                            <Input id="unit_price" v-model="form.unit_price" type="number" step="0.01" min="0" required />
+                            <Input id="unit_price" v-model="form.unit_price" type="number" step="0.01" min="0" required :disabled="isProtected" />
                             <InputError :message="form.errors.unit_price" />
                         </div>
                         <div class="grid gap-2">
                             <Label for="category_id">Catégorie</Label>
-                            <Select v-model="form.category_id">
+                            <Select v-model="form.category_id" :disabled="isProtected">
                                 <SelectTrigger>
                                     <SelectValue placeholder="Sélectionner une catégorie" />
                                 </SelectTrigger>
@@ -96,11 +114,11 @@ const handleSubmit = () => {
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <Switch id="allows_custom_price" v-model="form.allows_custom_price" />
+                        <Switch id="allows_custom_price" v-model="form.allows_custom_price" :disabled="isProtected" />
                         <Label for="allows_custom_price">Prix libre (permet un prix personnalisé)</Label>
                     </div>
                     <div class="flex items-center gap-3">
-                        <Switch id="is_stockable" v-model="form.is_stockable" />
+                        <Switch id="is_stockable" v-model="form.is_stockable" :disabled="isProtected" />
                         <Label for="is_stockable">Produit stockable (géré en inventaire)</Label>
                     </div>
                 </div>
