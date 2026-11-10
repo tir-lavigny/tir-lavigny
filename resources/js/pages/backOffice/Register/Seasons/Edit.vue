@@ -59,9 +59,11 @@ const handleSubmit = () => {
 const showCascadeDialog = ref(false);
 
 const submit = () => {
-    showCascadeDialog.value = false;
     form.put(route('bo.register.seasons.update', props.season.id), {
-        onSuccess: () => toast.success('Saison mise à jour.'),
+        onSuccess: () => {
+            showCascadeDialog.value = false;
+            toast.success('Saison mise à jour.');
+        },
         onError: () => toast.error('Erreur lors de la mise à jour.'),
     });
 };

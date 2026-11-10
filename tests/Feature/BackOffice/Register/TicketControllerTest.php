@@ -284,18 +284,61 @@ class TicketControllerTest extends TestCase
             ->assertSessionHasErrors(['amount']);
         $this->post(route('bo.register.operating-days.corrections.store', $day), ['amount' => 0])
             ->assertSessionHasErrors(['amount']);
+        $this->post(route('bo.register.operating-days.corrections.store', $day), ['amount' => '0.00'])
+            ->assertSessionHasErrors(['amount']);
+        $this->post(route('bo.register.operating-days.corrections.store', $day), ['amount' => -0.001])
+            ->assertSessionHasErrors(['amount']);
         $this->post(route('bo.register.operating-days.corrections.store', $day), ['amount' => 'abc'])
+            ->assertSessionHasErrors(['amount']);
+        $this->post(route('bo.register.operating-days.corrections.store', $day), ['amount' => 100000000])
             ->assertSessionHasErrors(['amount']);
 
         $this->assertDatabaseCount('tickets', 0);
     }
 
-    public function test_correction_requires_create_ticket_permission(): void
+    public function test_refund_is_rejected_on_a_closed_day(): void
+    {
+        $season = Season::factory()->create();
+        $day = $this->createClosedDay($season);
+        $ticket = Ticket::factory()->cash()->create(['operating_day_id' => $day->id]);
+
+        $response = $this->post(route('bo.register.tickets.refund', $ticket));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('tickets', ['id' => $ticket->id, 'deleted_at' => null]);
+    }
+
+    public function test_refund_cascades_closing_balances_to_later_closed_days(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 1000]);
+        $openDay = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-01'),
+            'closed_at' => null,
+            'total_cash' => 100,
+            'total_twint' => 0,
+        ]);
+        $laterDay = $this->createClosedDay($season, [
+            'date' => Carbon::parse('2026-05-02'),
+            'total_cash' => 50,
+            'closing_balance' => 1150,
+        ]);
+        Ticket::factory()->cash()->create(['operating_day_id' => $laterDay->id, 'total' => 50]);
+        $ticket = Ticket::factory()->cash()->create(['operating_day_id' => $openDay->id, 'total' => 100]);
+
+        $this->post(route('bo.register.tickets.refund', $ticket))->assertRedirect()->assertSessionHas('success');
+
+        $this->assertEquals('0.00', $openDay->fresh()->total_cash);
+        $this->assertEquals(1050.00, $laterDay->fresh()->closing_balance);
+    }
+
+    public function test_correction_requires_manage_operating_days_permission(): void
     {
         $this->createCorrectionProduct();
         StockLocation::factory()->create(['active' => true]);
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo('create ticket');
         $this->actingAs($user);
 
         $season = Season::factory()->create();

@@ -110,7 +110,8 @@ class CategoryControllerTest extends TestCase
 
         $response = $this->delete(route('bo.register.categories.destroy', $category));
 
-        $response->assertStatus(422);
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('categories', ['id' => $category->id, 'deleted_at' => null]);
     }
 

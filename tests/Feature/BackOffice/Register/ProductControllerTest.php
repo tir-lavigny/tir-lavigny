@@ -120,7 +120,8 @@ class ProductControllerTest extends TestCase
             'is_stockable' => true,
         ]);
 
-        $response->assertStatus(422);
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
         $this->assertFalse($product->fresh()->is_stockable);
     }
 
@@ -136,7 +137,8 @@ class ProductControllerTest extends TestCase
             'is_stockable' => false,
         ]);
 
-        $response->assertStatus(422);
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 0]);
     }
 
@@ -152,7 +154,8 @@ class ProductControllerTest extends TestCase
             'is_stockable' => false,
         ]);
 
-        $response->assertStatus(422);
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('products', ['id' => $product->id, 'name' => 'Correction']);
     }
 
@@ -179,7 +182,8 @@ class ProductControllerTest extends TestCase
 
         $response = $this->delete(route('bo.register.products.destroy', $product));
 
-        $response->assertStatus(422);
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
         $this->assertDatabaseHas('products', ['id' => $product->id, 'deleted_at' => null]);
     }
 

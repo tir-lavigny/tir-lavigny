@@ -12,6 +12,7 @@ use App\Models\Season;
 use App\Models\StockLocation;
 use App\Services\TicketCalculator;
 use Carbon\Carbon;
+use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -109,7 +110,17 @@ class OperatingDayController extends Controller implements HasMiddleware
         TicketCalculator $calculator,
     ): RedirectResponse {
         $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'not_in:0'],
+            'amount' => [
+                'required',
+                'numeric',
+                'decimal:0,2',
+                'between:-99999999.99,99999999.99',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if ((float) $value === 0.0) {
+                        $fail('Le montant ne peut pas être zéro.');
+                    }
+                },
+            ],
         ]);
 
         $product = Product::where('name', 'Correction')->first();

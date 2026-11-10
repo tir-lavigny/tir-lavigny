@@ -59,6 +59,7 @@ class TicketService
             $ticket->delete();
 
             $day->recalculateTotals();
+            $day->season->recalculateClosingBalances();
         });
     }
 }

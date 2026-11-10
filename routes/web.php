@@ -208,7 +208,7 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             ->name('bo.register.seasons.cash-movements.destroy');
     });
 
-    Route::middleware('permission:create ticket')->prefix('register')->group(function () {
+    Route::middleware('permission:manage operating days')->prefix('register')->group(function () {
         Route::post('operating-days/{operatingDay}/corrections', [Register\OperatingDayController::class, 'storeCorrection'])
             ->name('bo.register.operating-days.corrections.store');
     });

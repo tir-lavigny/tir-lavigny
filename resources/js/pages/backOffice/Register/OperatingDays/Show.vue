@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
+import { formatDate, formatDateOnly, formatMoney, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, CashMovement, OperatingDay, Product, SharedData, Ticket } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core';
@@ -74,7 +74,7 @@ const handleReopen = () => {
 
 function handleRefunded() {
     isSheetOpen.value = false;
-    router.reload({ only: ['operatingDay'] });
+    router.reload({ only: ['operatingDay', 'openingBalance', 'cashMovements'] });
 }
 
 const correctionForm = useForm({ amount: '' as string | number });
@@ -191,7 +191,7 @@ onMounted(() => {
                 <ul class="mt-4 flex flex-col gap-2 text-sm">
                     <li v-for="movement in cashMovements" :key="movement.id" class="flex items-center justify-between">
                         <span>
-                            {{ formatDate(movement.occurred_at, 'DD.MM.YYYY') }} —
+                            {{ formatDateOnly(movement.occurred_at) }} —
                             {{ Number(movement.amount) < 0 ? 'Retrait vers la banque' : 'Injection depuis la banque' }}
                             <span v-if="movement.remark" class="text-muted-foreground">({{ movement.remark }})</span>
                         </span>
@@ -294,6 +294,7 @@ onMounted(() => {
                 <div class="grid gap-2">
                     <Label for="correction-amount">Montant (CHF)</Label>
                     <Input id="correction-amount" v-model="correctionForm.amount" type="number" step="0.01" placeholder="Ex: -15.00" />
+                    <p v-if="correctionForm.errors.amount" class="text-destructive text-sm">{{ correctionForm.errors.amount }}</p>
                     <p class="text-muted-foreground text-xs">Paiement en espèces uniquement.</p>
                 </div>
                 <DialogFooter>

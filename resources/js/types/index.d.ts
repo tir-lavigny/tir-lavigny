@@ -268,7 +268,7 @@ export interface PriceListPreview {
 export interface CashMovement {
     id: number;
     season_id: number;
-    amount: number;
+    amount: number | string;
     occurred_at: string;
     remark?: string | null;
     created_at: string;

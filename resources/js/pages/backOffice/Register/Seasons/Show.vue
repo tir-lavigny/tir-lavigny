@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
+import { formatDate, formatDateOnly, formatMoney, hasPermissionTo, todayIsoDate } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BreadcrumbItem, CashMovement, Season, SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
@@ -47,13 +47,14 @@ const canManageCashMovements = computed(() => hasPermissionTo(user, 'manage cash
 
 const movements = computed(() => props.season.cash_movements ?? []);
 
-const today = new Date().toISOString().slice(0, 10);
-const movementMaxDate = computed(() => (props.season.end_date.slice(0, 10) < today ? props.season.end_date.slice(0, 10) : today));
+const today = todayIsoDate();
+const seasonEndDate = computed(() => props.season.end_date.slice(0, 10));
+const movementMaxDate = computed(() => (seasonEndDate.value < today ? seasonEndDate.value : today));
 
 const movementForm = useForm({
     direction: 'out' as 'in' | 'out',
     amount: '' as string | number,
-    occurred_at: today,
+    occurred_at: seasonEndDate.value < today ? seasonEndDate.value : today,
     remark: '',
 });
 
@@ -65,7 +66,7 @@ function openMovementDialog(direction: 'in' | 'out', movement?: CashMovement) {
     movementForm.clearErrors();
     movementForm.direction = direction;
     movementForm.amount = movement ? Math.abs(Number(movement.amount)) : '';
-    movementForm.occurred_at = movement?.occurred_at?.slice(0, 10) ?? today;
+    movementForm.occurred_at = movement?.occurred_at?.slice(0, 10) ?? (seasonEndDate.value < today ? seasonEndDate.value : today);
     movementForm.remark = movement?.remark ?? '';
     showMovementDialog.value = true;
 }
@@ -248,7 +249,7 @@ function confirmGenerate() {
                         </TableHeader>
                         <TableBody>
                             <TableRow v-for="movement in movements" :key="movement.id">
-                                <TableCell>{{ formatDate(movement.occurred_at, 'DD.MM.YYYY') }}</TableCell>
+                                <TableCell>{{ formatDateOnly(movement.occurred_at) }}</TableCell>
                                 <TableCell>
                                     <Badge :variant="Number(movement.amount) < 0 ? 'secondary' : 'default'">
                                         {{ Number(movement.amount) < 0 ? 'Retrait' : 'Injection' }}
@@ -321,6 +322,25 @@ function confirmGenerate() {
                     </DialogDescription>
                 </DialogHeader>
                 <div class="grid gap-4">
+                    <div class="grid gap-2">
+                        <Label>Type</Label>
+                        <div class="flex gap-2">
+                            <Button
+                                type="button"
+                                :variant="movementForm.direction === 'in' ? 'default' : 'outline'"
+                                @click="movementForm.direction = 'in'"
+                            >
+                                <ArrowDownToLine class="mr-2 size-4" /> Injection
+                            </Button>
+                            <Button
+                                type="button"
+                                :variant="movementForm.direction === 'out' ? 'default' : 'outline'"
+                                @click="movementForm.direction = 'out'"
+                            >
+                                <ArrowUpFromLine class="mr-2 size-4" /> Retrait
+                            </Button>
+                        </div>
+                    </div>
                     <div class="grid gap-2">
                         <Label for="movement-amount">Montant (CHF)</Label>
                         <Input id="movement-amount" v-model="movementForm.amount" type="number" step="0.01" min="0.01" />

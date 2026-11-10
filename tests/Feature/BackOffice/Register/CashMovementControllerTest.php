@@ -85,12 +85,12 @@ class CashMovementControllerTest extends TestCase
     public function test_movement_dated_before_first_day_counts_in_first_day(): void
     {
         $season = $this->createSeason();
-        $day1 = $this->createClosedDay($season, '2026-05-01', 200, 1200);
+        $day1 = $this->createClosedDay($season, '2026-05-10', 200, 1200);
 
         $this->post(route('bo.register.seasons.cash-movements.store', $season), [
             'direction' => 'in',
             'amount' => 100,
-            'occurred_at' => '2026-05-01',
+            'occurred_at' => '2026-05-05',
         ])->assertRedirect();
 
         $this->assertEquals(1300.00, $day1->fresh()->closing_balance);
@@ -139,7 +139,7 @@ class CashMovementControllerTest extends TestCase
         $this->assertEquals(1600.00, $summary['end_balance']);
     }
 
-    public function test_update_recomputes_only_days_after_the_movement_date(): void
+    public function test_update_recomputes_balances_and_keeps_earlier_days_unchanged(): void
     {
         $season = $this->createSeason();
         $day1 = $this->createClosedDay($season, '2026-05-01', 200, 1200);
