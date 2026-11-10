@@ -12,7 +12,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -53,18 +52,9 @@ class PriceListController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function store(StorePriceListRequest $request): RedirectResponse
+    public function store(StorePriceListRequest $request, PriceListService $service): RedirectResponse
     {
-        $data = $request->validated();
-
-        DB::transaction(function () use ($data): void {
-            $priceList = PriceList::create([
-                'name' => $data['name'],
-                'notes' => $data['notes'] ?? null,
-            ]);
-
-            $priceList->items()->createMany($data['items']);
-        });
+        $service->create($request->validated());
 
         return redirect()->route('bo.register.price-lists.index')->with('success', 'Liste de prix créée.');
     }
@@ -79,26 +69,16 @@ class PriceListController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(UpdatePriceListRequest $request, PriceList $priceList): RedirectResponse
+    public function update(UpdatePriceListRequest $request, PriceList $priceList, PriceListService $service): RedirectResponse
     {
-        $data = $request->validated();
-
-        DB::transaction(function () use ($data, $priceList): void {
-            $priceList->update([
-                'name' => $data['name'],
-                'notes' => $data['notes'] ?? null,
-            ]);
-
-            $priceList->items()->delete();
-            $priceList->items()->createMany($data['items']);
-        });
+        $service->update($priceList, $request->validated());
 
         return redirect()->route('bo.register.price-lists.index')->with('success', 'Liste de prix mise à jour.');
     }
 
-    public function destroy(PriceList $priceList): RedirectResponse
+    public function destroy(PriceList $priceList, PriceListService $service): RedirectResponse
     {
-        $priceList->delete();
+        $service->delete($priceList);
 
         return redirect()->route('bo.register.price-lists.index')->with('success', 'Liste de prix supprimée.');
     }

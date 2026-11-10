@@ -6,7 +6,9 @@ use App\Models\Category;
 use App\Models\PriceList;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\PriceListService;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -62,6 +64,24 @@ class PriceListControllerTest extends TestCase
         $response = $this->post(route('bo.register.price-lists.store'), []);
 
         $response->assertSessionHasErrors(['name', 'items']);
+    }
+
+    public function test_create_rolls_back_when_items_fail(): void
+    {
+        $product = Product::factory()->create(['category_id' => $this->category->id]);
+
+        try {
+            app(PriceListService::class)->create([
+                'name' => 'Broken',
+                'items' => [
+                    ['product_id' => $product->id, 'unit_price' => 10.00],
+                    ['product_id' => $product->id, 'unit_price' => 12.00],
+                ],
+            ]);
+            $this->fail('Expected a query exception.');
+        } catch (QueryException) {
+            $this->assertDatabaseCount('price_lists', 0);
+        }
     }
 
     public function test_update_replaces_items(): void

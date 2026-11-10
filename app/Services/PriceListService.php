@@ -11,6 +11,46 @@ use Illuminate\Support\Facades\DB;
 class PriceListService
 {
     /**
+     * @param  array<string, mixed>  $data
+     */
+    public function create(array $data): PriceList
+    {
+        return DB::transaction(function () use ($data): PriceList {
+            $list = PriceList::create([
+                'name' => $data['name'],
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            $list->items()->createMany($data['items']);
+
+            return $list;
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function update(PriceList $list, array $data): PriceList
+    {
+        return DB::transaction(function () use ($list, $data): PriceList {
+            $list->update([
+                'name' => $data['name'],
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            $list->items()->delete();
+            $list->items()->createMany($data['items']);
+
+            return $list;
+        });
+    }
+
+    public function delete(PriceList $list): void
+    {
+        $list->delete();
+    }
+
+    /**
      * @return array{rows: list<array{product_id: int, product_name: string, category_name: string|null, current_price: float|null, new_price: float|null, status: string}>, summary: array{changed: int, unchanged: int, missing: int, not_in_list: int}}
      */
     public function preview(PriceList $list): array
