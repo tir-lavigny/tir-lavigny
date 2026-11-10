@@ -20,7 +20,7 @@ class PriceListController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:manage products', only: ['create', 'store', 'edit', 'update', 'destroy', 'preview', 'applyPreview', 'apply', 'syncFromCatalog', 'duplicate']),
+            new Middleware('permission:manage products', only: ['create', 'store', 'edit', 'update', 'destroy', 'preview', 'applyPreview', 'apply', 'syncFromCatalog', 'syncPrices', 'duplicate']),
         ];
     }
 
@@ -108,6 +108,13 @@ class PriceListController extends Controller implements HasMiddleware
         $result = $service->updateFromCatalog($priceList);
 
         return back()->with('success', "Liste synchronisée : {$result['added']} produit(s) ajouté(s), {$result['removed']} retiré(s).");
+    }
+
+    public function syncPrices(PriceList $priceList, PriceListService $service): RedirectResponse
+    {
+        $result = $service->syncPrices($priceList);
+
+        return back()->with('success', "Prix de la liste synchronisés : {$result['updated']} prix mis à jour, {$result['skipped']} ignoré(s).");
     }
 
     public function duplicate(PriceList $priceList, PriceListService $service): RedirectResponse

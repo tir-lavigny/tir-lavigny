@@ -9,7 +9,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, PriceList, SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Copy, Pencil, Play, Plus, RefreshCw, Trash2 } from '@lucide/vue';
+import { Copy, Pencil, Play, Plus, RefreshCw, RotateCw, Trash2 } from '@lucide/vue';
 import { toast } from 'vue-sonner';
 
 const page = usePage<SharedData>();
@@ -44,6 +44,17 @@ const handleSync = (id: number) => {
         {
             onSuccess: () => toast.success('Liste synchronisée.'),
             onError: () => toast.error('Erreur lors de la synchronisation.'),
+        },
+    );
+};
+
+const handleSyncPrices = (id: number) => {
+    router.post(
+        route('bo.register.price-lists.sync-prices', id),
+        {},
+        {
+            onSuccess: () => toast.success('Prix de la liste synchronisés.'),
+            onError: () => toast.error('Erreur lors de la synchronisation des prix.'),
         },
     );
 };
@@ -112,6 +123,14 @@ const handleSync = (id: number) => {
                                 <Button variant="outline" size="sm" @click="handleSync(priceList.id)"><RefreshCw /> Synchroniser</Button>
                             </TooltipTrigger>
                             <TooltipContent><p>Ajouter les produits manquants et retirer les produits supprimés</p></TooltipContent>
+                        </Tooltip>
+                        <Tooltip v-if="hasPermissionTo(user, 'manage products')">
+                            <TooltipTrigger>
+                                <Button variant="outline" size="sm" @click="handleSyncPrices(priceList.id)"
+                                    ><RotateCw /> Synchroniser les prix</Button
+                                >
+                            </TooltipTrigger>
+                            <TooltipContent><p>Mettre à jour les prix de la liste avec les prix actuels</p></TooltipContent>
                         </Tooltip>
                         <AppAlertDialog
                             v-if="hasPermissionTo(user, 'manage products')"

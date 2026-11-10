@@ -154,6 +154,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
             ->name('bo.register.price-lists.apply');
         Route::post('price-lists/{priceList}/sync-from-catalog', [Register\PriceListController::class, 'syncFromCatalog'])
             ->name('bo.register.price-lists.sync-from-catalog');
+        Route::post('price-lists/{priceList}/sync-prices', [Register\PriceListController::class, 'syncPrices'])
+            ->name('bo.register.price-lists.sync-prices');
         Route::post('price-lists/{priceList}/duplicate', [Register\PriceListController::class, 'duplicate'])
             ->name('bo.register.price-lists.duplicate');
     });

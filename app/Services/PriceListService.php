@@ -204,6 +204,34 @@ class PriceListService
         });
     }
 
+    /**
+     * @return array{updated: int, skipped: int}
+     */
+    public function syncPrices(PriceList $list): array
+    {
+        return DB::transaction(function () use ($list): array {
+            $updated = 0;
+            $skipped = 0;
+
+            foreach ($this->itemsWithTrashedProducts($list) as $item) {
+                $product = $item->product;
+
+                if (! $product || $product->trashed()) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                if ((float) $item->unit_price !== (float) $product->unit_price) {
+                    $item->update(['unit_price' => $product->unit_price]);
+                    $updated++;
+                }
+            }
+
+            return ['updated' => $updated, 'skipped' => $skipped];
+        });
+    }
+
     public function duplicate(PriceList $list): PriceList
     {
         $copy = PriceList::create([

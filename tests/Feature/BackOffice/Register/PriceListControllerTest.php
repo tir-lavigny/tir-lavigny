@@ -207,6 +207,42 @@ class PriceListControllerTest extends TestCase
         $this->assertDatabaseHas('price_list_items', ['product_id' => $added->id, 'unit_price' => 2.00]);
     }
 
+    public function test_sync_prices_updates_list_from_current_products(): void
+    {
+        $product = Product::factory()->create(['category_id' => $this->category->id, 'unit_price' => 10.00]);
+        $priceList = PriceList::factory()->active()->create(['name' => 'Normal']);
+        $priceList->items()->create(['product_id' => $product->id, 'unit_price' => 12.00]);
+
+        $response = $this->post(route('bo.register.price-lists.sync-prices', $priceList));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('price_list_items', [
+            'price_list_id' => $priceList->id,
+            'product_id' => $product->id,
+            'unit_price' => 10.00,
+        ]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 10.00]);
+        $this->assertDatabaseHas('price_lists', ['id' => $priceList->id, 'is_active' => true]);
+    }
+
+    public function test_sync_prices_skips_soft_deleted_products(): void
+    {
+        $product = Product::factory()->create(['category_id' => $this->category->id, 'unit_price' => 10.00]);
+        $priceList = PriceList::factory()->create(['name' => 'Normal']);
+        $priceList->items()->create(['product_id' => $product->id, 'unit_price' => 12.00]);
+
+        $product->delete();
+
+        $response = $this->post(route('bo.register.price-lists.sync-prices', $priceList));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('price_list_items', [
+            'price_list_id' => $priceList->id,
+            'product_id' => $product->id,
+            'unit_price' => 12.00,
+        ]);
+    }
+
     public function test_duplicate_copies_list(): void
     {
         $product = Product::factory()->create(['category_id' => $this->category->id, 'unit_price' => 10.00]);
