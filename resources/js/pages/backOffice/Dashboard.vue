@@ -24,6 +24,7 @@ import {
     MapPin,
     ShoppingCart,
     Tag,
+    Tags,
     Ticket,
     ClipboardList,
     Trash2,
@@ -109,6 +110,8 @@ const modelIcon = (model: string) => {
             return ShoppingCart;
         case 'category':
             return Tag;
+        case 'pricelist':
+            return Tags;
         case 'member':
             return Users;
         case 'voucher':
@@ -160,6 +163,8 @@ const translateModel = (model: string) => {
             return 'produit';
         case 'category':
             return 'catégorie';
+        case 'pricelist':
+            return 'liste de prix';
         case 'member':
             return 'membre';
         case 'voucher':
