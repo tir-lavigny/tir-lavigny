@@ -148,6 +148,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         ]);
         Route::get('price-lists/{priceList}/preview', [Register\PriceListController::class, 'preview'])
             ->name('bo.register.price-lists.preview');
+        Route::get('price-lists/{priceList}/apply', [Register\PriceListController::class, 'applyPreview'])
+            ->name('bo.register.price-lists.apply.preview');
         Route::post('price-lists/{priceList}/apply', [Register\PriceListController::class, 'apply'])
             ->name('bo.register.price-lists.apply');
         Route::post('price-lists/{priceList}/sync-from-catalog', [Register\PriceListController::class, 'syncFromCatalog'])

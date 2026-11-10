@@ -21,7 +21,7 @@ class PriceListController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:manage products', only: ['create', 'store', 'edit', 'update', 'destroy', 'preview', 'apply', 'syncFromCatalog', 'duplicate']),
+            new Middleware('permission:manage products', only: ['create', 'store', 'edit', 'update', 'destroy', 'preview', 'applyPreview', 'apply', 'syncFromCatalog', 'duplicate']),
         ];
     }
 
@@ -106,6 +106,14 @@ class PriceListController extends Controller implements HasMiddleware
     public function preview(PriceList $priceList, PriceListService $service): JsonResponse
     {
         return response()->json($service->preview($priceList));
+    }
+
+    public function applyPreview(PriceList $priceList, PriceListService $service): Response
+    {
+        return Inertia::render('backOffice/Register/PriceLists/Apply', [
+            'priceList' => $priceList,
+            'preview' => $service->preview($priceList),
+        ]);
     }
 
     public function apply(PriceList $priceList, PriceListService $service): RedirectResponse

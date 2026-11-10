@@ -217,6 +217,54 @@ export interface Product {
     deleted_at?: string;
 }
 
+export interface PriceList {
+    id: number;
+    name: string;
+    notes?: string | null;
+    is_active: boolean;
+    last_applied_at?: string | null;
+    items_count?: number;
+    drift?: PriceListDrift;
+    items?: PriceListItem[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PriceListItem {
+    id: number;
+    price_list_id: number;
+    product_id: number;
+    unit_price: number;
+    product?: Product;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PriceListDrift {
+    changed: number;
+    missing: number;
+    not_in_list: number;
+}
+
+export interface PriceListPreviewRow {
+    product_id: number;
+    product_name: string;
+    category_name: string | null;
+    current_price: number | null;
+    new_price: number | null;
+    status: 'changed' | 'unchanged' | 'missing' | 'not_in_list';
+}
+
+export interface PriceListPreview {
+    rows: PriceListPreviewRow[];
+    summary: {
+        changed: number;
+        unchanged: number;
+        missing: number;
+        not_in_list: number;
+    };
+}
+
 export interface Season {
     id: number;
     name: string;
