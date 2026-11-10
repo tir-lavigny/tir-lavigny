@@ -48,12 +48,18 @@ class SeasonController extends Controller implements HasMiddleware
 
     public function show(Season $season): Response
     {
-        $season->load(['operatingDays' => function ($query) {
-            $query->orderBy('date');
-        }]);
+        $season->load([
+            'operatingDays' => function ($query) {
+                $query->orderBy('date');
+            },
+            'cashMovements' => function ($query) {
+                $query->orderByDesc('occurred_at')->orderByDesc('id');
+            },
+        ]);
 
         return Inertia::render('backOffice/Register/Seasons/Show', [
             'season' => $season,
+            'balanceSummary' => $season->balanceSummary(),
         ]);
     }
 

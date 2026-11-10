@@ -199,6 +199,15 @@ Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function (
         ]);
     });
 
+    Route::middleware('permission:manage cash movements')->prefix('register')->group(function () {
+        Route::post('seasons/{season}/cash-movements', [Register\CashMovementController::class, 'store'])
+            ->name('bo.register.seasons.cash-movements.store');
+        Route::put('seasons/{season}/cash-movements/{cashMovement}', [Register\CashMovementController::class, 'update'])
+            ->name('bo.register.seasons.cash-movements.update');
+        Route::delete('seasons/{season}/cash-movements/{cashMovement}', [Register\CashMovementController::class, 'destroy'])
+            ->name('bo.register.seasons.cash-movements.destroy');
+    });
+
     Route::middleware('permission:create ticket')->prefix('register')->group(function () {
         Route::post('operating-days/{operatingDay}/corrections', [Register\OperatingDayController::class, 'storeCorrection'])
             ->name('bo.register.operating-days.corrections.store');

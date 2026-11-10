@@ -14,7 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasPermissionTo } from '@/lib/utils';
-import type { BreadcrumbItem, OperatingDay, Product, SharedData, Ticket } from '@/types';
+import type { BreadcrumbItem, CashMovement, OperatingDay, Product, SharedData, Ticket } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core';
 import { Lock, Plus, Unlock } from '@lucide/vue';
@@ -27,6 +27,8 @@ const user = page.props.auth.user;
 const props = defineProps<{
     operatingDay: OperatingDay;
     correctionProduct: Product | null;
+    openingBalance: number;
+    cashMovements: CashMovement[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -38,6 +40,8 @@ const closeForm = useForm({ status: 'closed' });
 const reopenForm = useForm({ status: 'open' });
 
 const isOpen = computed(() => !props.operatingDay.closed_at);
+
+const dayMovementsTotal = computed(() => props.cashMovements.reduce((total, movement) => total + Number(movement.amount), 0));
 
 const isDesktop = useMediaQuery('(min-width: 768px)');
 const selectedTicket = ref<Ticket | null>(null);
@@ -147,12 +151,26 @@ onMounted(() => {
             </div>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
                 <Card>
-                    <CardHeader class="pb-2"><CardTitle class="text-sm">Total Espèces</CardTitle></CardHeader>
+                    <CardHeader class="pb-2"><CardTitle class="text-sm">Solde d'ouverture</CardTitle></CardHeader>
+                    <CardContent
+                        ><p class="text-2xl font-bold">{{ formatMoney(openingBalance) }} CHF</p></CardContent
+                    >
+                </Card>
+                <Card>
+                    <CardHeader class="pb-2"><CardTitle class="text-sm">Ventes espèces</CardTitle></CardHeader>
                     <CardContent
                         ><p class="text-2xl font-bold">{{ formatMoney(operatingDay.total_cash) }} CHF</p></CardContent
                     >
+                </Card>
+                <Card>
+                    <CardHeader class="pb-2"><CardTitle class="text-sm">Mouvements de caisse</CardTitle></CardHeader>
+                    <CardContent>
+                        <p class="text-2xl font-bold" :class="dayMovementsTotal < 0 ? 'text-destructive' : ''">
+                            {{ formatMoney(dayMovementsTotal) }} CHF
+                        </p>
+                    </CardContent>
                 </Card>
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Total Twint</CardTitle></CardHeader>
@@ -161,11 +179,25 @@ onMounted(() => {
                     >
                 </Card>
                 <Card>
-                    <CardHeader class="pb-2"><CardTitle class="text-sm">Solde clôture</CardTitle></CardHeader>
+                    <CardHeader class="pb-2"><CardTitle class="text-sm">Solde attendu de clôture</CardTitle></CardHeader>
                     <CardContent>
                         <p class="text-2xl font-bold">{{ formatMoney(operatingDay.closing_balance) }} CHF</p>
                     </CardContent>
                 </Card>
+            </div>
+
+            <div v-if="cashMovements.length" class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
+                <H3>Mouvements de caisse</H3>
+                <ul class="mt-4 flex flex-col gap-2 text-sm">
+                    <li v-for="movement in cashMovements" :key="movement.id" class="flex items-center justify-between">
+                        <span>
+                            {{ formatDate(movement.occurred_at, 'DD.MM.YYYY') }} —
+                            {{ Number(movement.amount) < 0 ? 'Retrait vers la banque' : 'Injection depuis la banque' }}
+                            <span v-if="movement.remark" class="text-muted-foreground">({{ movement.remark }})</span>
+                        </span>
+                        <span :class="Number(movement.amount) < 0 ? 'text-destructive' : ''">{{ formatMoney(movement.amount) }} CHF</span>
+                    </li>
+                </ul>
             </div>
 
             <Separator />

@@ -75,9 +75,30 @@ class OperatingDayController extends Controller implements HasMiddleware
             'season',
         ]);
 
+        $season = $operatingDay->season;
+        $previousDay = $season->operatingDays()
+            ->where('date', '<', $operatingDay->date->toDateString())
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->first();
+
+        $cashMovements = $season->cashMovements()
+            ->whereDate('occurred_at', '<=', $operatingDay->date->toDateString())
+            ->when($previousDay, fn ($query) => $query->whereDate('occurred_at', '>', $previousDay->date->toDateString()))
+            ->orderBy('occurred_at')
+            ->orderBy('id')
+            ->get();
+
+        $openingBalance = round(
+            (float) $operatingDay->closing_balance - (float) $operatingDay->total_cash - (float) $cashMovements->sum('amount'),
+            2
+        );
+
         return Inertia::render('backOffice/Register/OperatingDays/Show', [
             'operatingDay' => $operatingDay,
             'correctionProduct' => Product::where('name', 'Correction')->first(),
+            'openingBalance' => $openingBalance,
+            'cashMovements' => $cashMovements,
         ]);
     }
 
