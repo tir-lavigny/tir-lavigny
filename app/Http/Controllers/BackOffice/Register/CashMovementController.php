@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\Controller;
 use App\Models\CashMovement;
 use App\Models\Season;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -72,6 +73,7 @@ class CashMovementController extends Controller implements HasMiddleware
                 'date',
                 'after_or_equal:'.$season->start_date->toDateString(),
                 'before_or_equal:'.$season->end_date->toDateString(),
+                'before_or_equal:'.Carbon::today('Europe/Zurich')->toDateString(),
             ],
             'remark' => ['nullable', 'string', 'max:255'],
         ]);

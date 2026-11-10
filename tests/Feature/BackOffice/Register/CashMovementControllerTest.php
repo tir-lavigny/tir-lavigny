@@ -306,6 +306,54 @@ class CashMovementControllerTest extends TestCase
         $this->assertDatabaseCount('cash_movements', 0);
     }
 
+    public function test_store_rejects_future_occurred_at(): void
+    {
+        $season = $this->createSeason();
+
+        $this->post(route('bo.register.seasons.cash-movements.store', $season), [
+            'direction' => 'in',
+            'amount' => 10,
+            'occurred_at' => Carbon::tomorrow('Europe/Zurich')->toDateString(),
+        ])->assertSessionHasErrors(['occurred_at']);
+
+        $this->assertDatabaseCount('cash_movements', 0);
+    }
+
+    public function test_update_rejects_future_occurred_at(): void
+    {
+        $season = $this->createSeason();
+        $movement = CashMovement::factory()->injection()->create([
+            'season_id' => $season->id,
+            'amount' => 100,
+            'occurred_at' => '2026-05-02',
+        ]);
+
+        $this->put(route('bo.register.seasons.cash-movements.update', [$season, $movement]), [
+            'direction' => 'in',
+            'amount' => 10,
+            'occurred_at' => Carbon::tomorrow('Europe/Zurich')->toDateString(),
+        ])->assertSessionHasErrors(['occurred_at']);
+
+        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount' => 100]);
+    }
+
+    public function test_store_accepts_today(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::today('Europe/Zurich')->subDays(10),
+            'end_date' => Carbon::today('Europe/Zurich')->addDays(10),
+            'initial_balance' => 100,
+        ]);
+
+        $this->post(route('bo.register.seasons.cash-movements.store', $season), [
+            'direction' => 'in',
+            'amount' => 10,
+            'occurred_at' => Carbon::today('Europe/Zurich')->toDateString(),
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $this->assertDatabaseCount('cash_movements', 1);
+    }
+
     public function test_store_rejects_too_long_remark(): void
     {
         $season = $this->createSeason();

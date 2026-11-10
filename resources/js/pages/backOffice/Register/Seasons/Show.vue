@@ -47,10 +47,13 @@ const canManageCashMovements = computed(() => hasPermissionTo(user, 'manage cash
 
 const movements = computed(() => props.season.cash_movements ?? []);
 
+const today = new Date().toISOString().slice(0, 10);
+const movementMaxDate = computed(() => (props.season.end_date.slice(0, 10) < today ? props.season.end_date.slice(0, 10) : today));
+
 const movementForm = useForm({
     direction: 'out' as 'in' | 'out',
     amount: '' as string | number,
-    occurred_at: new Date().toISOString().slice(0, 10),
+    occurred_at: today,
     remark: '',
 });
 
@@ -62,7 +65,7 @@ function openMovementDialog(direction: 'in' | 'out', movement?: CashMovement) {
     movementForm.clearErrors();
     movementForm.direction = direction;
     movementForm.amount = movement ? Math.abs(Number(movement.amount)) : '';
-    movementForm.occurred_at = movement?.occurred_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+    movementForm.occurred_at = movement?.occurred_at?.slice(0, 10) ?? today;
     movementForm.remark = movement?.remark ?? '';
     showMovementDialog.value = true;
 }
@@ -330,7 +333,7 @@ function confirmGenerate() {
                             v-model="movementForm.occurred_at"
                             type="date"
                             :min="season.start_date.slice(0, 10)"
-                            :max="season.end_date.slice(0, 10)"
+                            :max="movementMaxDate"
                         />
                         <p v-if="movementForm.errors.occurred_at" class="text-destructive text-sm">{{ movementForm.errors.occurred_at }}</p>
                     </div>
