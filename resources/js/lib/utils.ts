@@ -33,7 +33,7 @@ export function localToUtcIso(localDatetime: string): string {
 }
 
 export function parseDateOnly(dateStr: string): Date {
-    return new Date(dateStr + 'T12:00:00Z');
+    return new Date(dateStr.slice(0, 10) + 'T12:00:00Z');
 }
 export function valueUpdater<T extends Updater<any>>(updaterOrValue: T, ref: Ref) {
     ref.value = typeof updaterOrValue === 'function' ? updaterOrValue(ref.value) : updaterOrValue;
