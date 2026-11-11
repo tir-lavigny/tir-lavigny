@@ -14,7 +14,7 @@ import { formatDate, formatMoney, hasPermissionTo, parseDateOnly } from '@/lib/u
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BreadcrumbItem, CashMovement, Season, SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { ArrowDownToLine, ArrowUpFromLine, Pencil, Ticket, Trash2 } from '@lucide/vue';
+import { ArrowDownToLine, ArrowUpFromLine, Pencil, Ticket, Trash2, Landmark } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -209,14 +209,9 @@ function confirmGenerate() {
             <Card>
                 <CardHeader class="flex flex-row items-center justify-between">
                     <CardTitle>Mouvements de caisse</CardTitle>
-                    <div v-if="canManageCashMovements" class="flex gap-2">
-                        <Button variant="outline" @click="openMovementDialog('out')">
-                            <ArrowUpFromLine class="mr-2 size-4" /> Retrait vers la banque
-                        </Button>
-                        <Button variant="outline" @click="openMovementDialog('in')">
-                            <ArrowDownToLine class="mr-2 size-4" /> Injection depuis la banque
-                        </Button>
-                    </div>
+                    <Button v-if="canManageCashMovements" variant="outline" @click="openMovementDialog('out')">
+                        <Landmark class="mr-2 size-4" /> Nouveau mouvement
+                    </Button>
                 </CardHeader>
                 <CardContent class="flex flex-col gap-4">
                     <dl class="grid grid-cols-2 gap-4">
