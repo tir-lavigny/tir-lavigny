@@ -36,6 +36,7 @@ const emit = defineEmits<{
 const refundForm = useForm({});
 
 const isRefunded = Boolean(props.ticket.deleted_at);
+const isCorrection = computed(() => (props.ticket.ticket_items ?? []).some((item) => item.product?.name === 'Correction'));
 const canRefund = props.dayIsOpen && !isRefunded && hasPermissionTo(user, 'refund ticket');
 
 function voucherLabel(voucher: NonNullable<TicketItem['voucher']>): string {
@@ -109,6 +110,7 @@ function handleRefund() {
                     {{ ticket.stock_location.name }}
                 </Badge>
                 <Badge v-if="isRefunded" variant="destructive">Remboursé</Badge>
+                <Badge v-if="isCorrection" variant="outline">Correction</Badge>
             </div>
             <span class="text-muted-foreground text-sm">{{ formatDate(ticket.sold_at, 'HH:mm') }}</span>
         </div>

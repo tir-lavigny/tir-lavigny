@@ -24,11 +24,13 @@ import {
     MapPin,
     ShoppingCart,
     Tag,
+    Tags,
     Ticket,
     ClipboardList,
     Trash2,
     Users,
     ArrowRightLeft,
+    Landmark,
 } from '@lucide/vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -109,12 +111,16 @@ const modelIcon = (model: string) => {
             return ShoppingCart;
         case 'category':
             return Tag;
+        case 'pricelist':
+            return Tags;
         case 'member':
             return Users;
         case 'voucher':
             return Tag;
         case 'operatingday':
             return CalendarDays;
+        case 'cashmovement':
+            return Landmark;
         case 'memberregistration':
             return ClipboardList;
         case 'stockmovement':
@@ -160,12 +166,16 @@ const translateModel = (model: string) => {
             return 'produit';
         case 'category':
             return 'catégorie';
+        case 'pricelist':
+            return 'liste de prix';
         case 'member':
             return 'membre';
         case 'voucher':
             return 'bon';
         case 'operatingday':
             return "jour d'ouverture";
+        case 'cashmovement':
+            return 'mouvement de caisse';
         case 'memberregistration':
             return "inscription d'un membre";
         case 'stockmovement':

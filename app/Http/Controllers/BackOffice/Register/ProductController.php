@@ -13,6 +13,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class ProductController extends Controller implements HasMiddleware
 {
@@ -77,14 +78,22 @@ class ProductController extends Controller implements HasMiddleware
 
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
-        $product->update($request->validated());
+        try {
+            $product->update($request->validated());
+        } catch (HttpExceptionInterface $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return redirect()->route('bo.register.products.index')->with('success', 'Product updated successfully.');
     }
 
     public function destroy(Product $product): RedirectResponse
     {
-        $product->delete();
+        try {
+            $product->delete();
+        } catch (HttpExceptionInterface $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return redirect()->route('bo.register.products.index')->with('success', 'Product deleted successfully.');
     }

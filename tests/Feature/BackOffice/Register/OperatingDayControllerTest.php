@@ -3,6 +3,7 @@
 namespace Tests\Feature\BackOffice\Register;
 
 use App\Mail\OperatingDayClosed;
+use App\Models\CashMovement;
 use App\Models\OperatingDay;
 use App\Models\Season;
 use App\Models\Ticket;
@@ -50,6 +51,89 @@ class OperatingDayControllerTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_show_exposes_opening_balance_and_cash_movements(): void
+    {
+        $season = Season::factory()->create([
+            'start_date' => Carbon::parse('2026-05-01'),
+            'end_date' => Carbon::parse('2026-06-30'),
+            'initial_balance' => 1000,
+        ]);
+        OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-01'),
+            'total_cash' => 200,
+            'closing_balance' => 1200,
+        ]);
+        CashMovement::factory()->injection()->create([
+            'season_id' => $season->id,
+            'amount' => 500,
+            'occurred_at' => '2026-05-02',
+        ]);
+        $day = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-02'),
+            'total_cash' => 100,
+            'closing_balance' => 1800,
+        ]);
+
+        $response = $this->get(route('bo.register.operating-days.show', $day));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->where('openingBalance', 1200)
+            ->where('cashMovements.0.amount', '500.00')
+            ->where('cashMovements.0.occurred_at', '2026-05-02T00:00:00.000000Z'));
+    }
+
+    public function test_show_counts_later_closed_days(): void
+    {
+        $season = Season::factory()->create();
+        $day = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-01'),
+        ]);
+        OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-02'),
+        ]);
+        OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-03'),
+        ]);
+        OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-04'),
+        ]);
+        $otherSeason = Season::factory()->create();
+        OperatingDay::factory()->closed()->create([
+            'season_id' => $otherSeason->id,
+            'date' => Carbon::parse('2026-05-03'),
+        ]);
+
+        $response = $this->get(route('bo.register.operating-days.show', $day));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->where('laterClosedDaysCount', 2));
+    }
+
+    public function test_show_reports_no_later_closed_days_for_the_last_closed_day(): void
+    {
+        $season = Season::factory()->create();
+        OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-01'),
+        ]);
+        $day = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-02'),
+        ]);
+
+        $response = $this->get(route('bo.register.operating-days.show', $day));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->where('laterClosedDaysCount', 0));
+    }
+
     public function test_show_returns_day_with_tickets(): void
     {
         $season = Season::factory()->create();
@@ -84,13 +168,15 @@ class OperatingDayControllerTest extends TestCase
     {
         $season = Season::factory()->create(['initial_balance' => 500.00]);
 
-        $day1 = OperatingDay::factory()->create([
+        OperatingDay::factory()->create([
             'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-01'),
             'total_cash' => 100.00,
         ]);
 
         $day2 = OperatingDay::factory()->create([
             'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-02'),
             'total_cash' => 150.00,
         ]);
 

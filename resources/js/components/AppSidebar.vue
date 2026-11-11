@@ -21,6 +21,7 @@ import {
     Repeat,
     ShoppingCart,
     Tag,
+    Tags,
     Telescope,
     Ticket,
     Trash2,
@@ -100,6 +101,11 @@ const registerNavItems: NavItem[] = [
                   title: 'Produits',
                   href: route('bo.register.products.index'),
                   icon: ShoppingCart,
+              },
+              {
+                  title: 'Listes de prix',
+                  href: route('bo.register.price-lists.index'),
+                  icon: Tags,
               },
           ]
         : []),
@@ -233,7 +239,7 @@ watch(
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
                         <Link :href="route('dashboard')">
-                            <AppLogo />
+                            <AppLogo :display-build-tag="true" />
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

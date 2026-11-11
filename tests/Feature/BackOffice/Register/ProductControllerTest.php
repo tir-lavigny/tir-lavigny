@@ -108,6 +108,98 @@ class ProductControllerTest extends TestCase
         $this->assertSoftDeleted('products', ['id' => $product->id]);
     }
 
+    public function test_update_rejects_stockable_flag_on_correction_product(): void
+    {
+        $product = $this->createCorrectionProduct();
+
+        $response = $this->put(route('bo.register.products.update', $product), [
+            'name' => 'Correction',
+            'unit_price' => 0,
+            'category_id' => $product->category_id,
+            'allows_custom_price' => true,
+            'is_stockable' => true,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertFalse($product->fresh()->is_stockable);
+    }
+
+    public function test_update_rejects_price_change_on_correction_product(): void
+    {
+        $product = $this->createCorrectionProduct();
+
+        $response = $this->put(route('bo.register.products.update', $product), [
+            'name' => 'Correction',
+            'unit_price' => 10,
+            'category_id' => $product->category_id,
+            'allows_custom_price' => true,
+            'is_stockable' => false,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 0]);
+    }
+
+    public function test_update_rejects_renaming_correction_product(): void
+    {
+        $product = $this->createCorrectionProduct();
+
+        $response = $this->put(route('bo.register.products.update', $product), [
+            'name' => 'Correction libre',
+            'unit_price' => 0,
+            'category_id' => $product->category_id,
+            'allows_custom_price' => true,
+            'is_stockable' => false,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'name' => 'Correction']);
+    }
+
+    public function test_update_allows_saving_correction_product_unchanged(): void
+    {
+        $product = $this->createCorrectionProduct();
+
+        $response = $this->put(route('bo.register.products.update', $product), [
+            'name' => 'Correction',
+            'unit_price' => 0,
+            'category_id' => $product->category_id,
+            'allows_custom_price' => true,
+            'is_stockable' => false,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $this->assertFalse($product->fresh()->is_stockable);
+    }
+
+    public function test_destroy_rejects_deleting_correction_product(): void
+    {
+        $product = $this->createCorrectionProduct();
+
+        $response = $this->delete(route('bo.register.products.destroy', $product));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'deleted_at' => null]);
+    }
+
+    private function createCorrectionProduct(): Product
+    {
+        $category = Category::factory()->create(['name' => 'Correction', 'is_restricted' => true]);
+
+        return Product::factory()->create([
+            'name' => 'Correction',
+            'unit_price' => 0,
+            'allows_custom_price' => true,
+            'is_stockable' => false,
+            'category_id' => $category->id,
+        ]);
+    }
+
     public function test_attach_child_creates_pivot(): void
     {
         $category = Category::factory()->create(['is_restricted' => false]);

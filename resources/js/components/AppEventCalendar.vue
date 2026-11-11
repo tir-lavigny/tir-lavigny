@@ -69,7 +69,7 @@ const copyToClipboard = async (text: string) => {
                         :class="{ 'text-primary': parseDateOnly(date).toDateString() === new Date().toDateString() }"
                         class="bg-background sticky top-0 z-10 py-4"
                     >
-                        {{ formatDate(date, 'ddd DD MMMM YYYY') }}
+                        {{ formatDate(parseDateOnly(date), 'ddd DD MMMM YYYY') }}
                     </H3>
                     <AppEventCalendarCard v-for="event in events" :key="event.id" :event="event" class="mt-4" />
                 </div>

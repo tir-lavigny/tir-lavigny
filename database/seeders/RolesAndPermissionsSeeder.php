@@ -61,6 +61,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $manageSeasonsPermission = Permission::firstOrCreate(['name' => 'manage seasons']);
         $manageMembersPermission = Permission::firstOrCreate(['name' => 'manage members']);
         $manageOperatingDaysPermission = Permission::firstOrCreate(['name' => 'manage operating days']);
+        $manageCashMovementsPermission = Permission::firstOrCreate(['name' => 'manage cash movements']);
         $viewReportsPermission = Permission::firstOrCreate(['name' => 'view reports']);
         $manageRegisterSettingsPermission = Permission::firstOrCreate(['name' => 'manage register settings']);
         $restoreRegisterPermission = Permission::firstOrCreate(['name' => 'restore register']);
@@ -110,6 +111,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $manageSeasonsPermission,
             $manageMembersPermission,
             $manageOperatingDaysPermission,
+            $manageCashMovementsPermission,
             $viewReportsPermission,
             $manageRegisterSettingsPermission,
             $restoreRegisterPermission,
@@ -166,6 +168,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $manageVouchersPermission,
             $manageSeasonsPermission,
             $manageOperatingDaysPermission,
+            $manageCashMovementsPermission,
             $viewReportsPermission,
             $manageRegisterSettingsPermission,
             $restoreRegisterPermission,

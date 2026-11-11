@@ -36,7 +36,7 @@ class TicketController extends Controller implements HasMiddleware
             return response()->json(['message' => 'The operating day is in the past. Can\'t create tickets for it.'], 422);
         }
 
-        $ticket = $action->execute($request, $day, $calculator);
+        $ticket = $action->execute($request->validated(), $day, $calculator);
 
         $ticket->load(['ticketItems.product', 'ticketItems.voucher']);
 

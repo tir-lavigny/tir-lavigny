@@ -74,11 +74,7 @@ class OperatingDay extends Model
             return (float) $this->attributes['closing_balance'];
         }
 
-        $previousDaysCash = $this->season->operatingDays()
-            ->where('id', '<=', $this->id)
-            ->sum('total_cash');
-
-        return $this->season->initial_balance + $previousDaysCash;
+        return $this->season->closingBalanceFor($this);
     }
 
     protected static function booted(): void

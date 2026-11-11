@@ -50,6 +50,9 @@ class TicketControllerTest extends TestCase
         $request = new StoreTicketRequest;
         $request->merge($data);
         $request->setUserResolver(fn () => $user);
+        $request->setContainer($this->app);
+        $request->setRedirector($this->app->make('redirect'));
+        $request->validateResolved();
 
         return $request;
     }
