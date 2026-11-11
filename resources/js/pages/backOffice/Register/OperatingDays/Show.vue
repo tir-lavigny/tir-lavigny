@@ -30,6 +30,7 @@ const props = defineProps<{
     correctionProduct: Product | null;
     openingBalance: number;
     cashMovements: CashMovement[];
+    laterClosedDaysCount: number;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -317,6 +318,9 @@ onMounted(() => {
                         Ajoute un ajustement d'espèces à cette journée, même si elle est fermée. Un montant négatif retire de l'argent de la caisse.
                     </DialogDescription>
                 </DialogHeader>
+                <div v-if="laterClosedDaysCount > 0" class="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+                    {{ laterClosedDaysCount }} journée(s) postérieure(s) sont déjà fermées. Leur solde de clôture sera recalculé en cascade.
+                </div>
                 <div class="grid gap-2">
                     <Label for="correction-amount">Montant (CHF)</Label>
                     <Input id="correction-amount" v-model="correctionForm.amount" type="number" step="0.01" placeholder="Ex: -15.00" />
@@ -325,7 +329,9 @@ onMounted(() => {
                 </div>
                 <DialogFooter>
                     <Button variant="outline" :disabled="correctionForm.processing" @click="isCorrectionDialogOpen = false">Annuler</Button>
-                    <Button :disabled="correctionForm.processing" @click="handleCorrection">Enregistrer</Button>
+                    <Button :disabled="correctionForm.processing" @click="handleCorrection">
+                        {{ laterClosedDaysCount > 0 ? 'Confirmer et recalculer' : 'Enregistrer' }}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -85,6 +85,51 @@ class OperatingDayControllerTest extends TestCase
             ->where('cashMovements.0.occurred_at', '2026-05-02T00:00:00.000000Z'));
     }
 
+    public function test_show_counts_later_closed_days(): void
+    {
+        $season = Season::factory()->create();
+        $day = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-01'),
+        ]);
+        OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-02'),
+        ]);
+        OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-03'),
+        ]);
+        OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-04'),
+            'closed_at' => null,
+        ]);
+
+        $response = $this->get(route('bo.register.operating-days.show', $day));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->where('laterClosedDaysCount', 2));
+    }
+
+    public function test_show_reports_no_later_closed_days_for_the_last_closed_day(): void
+    {
+        $season = Season::factory()->create();
+        OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-01'),
+        ]);
+        $day = OperatingDay::factory()->closed()->create([
+            'season_id' => $season->id,
+            'date' => Carbon::parse('2026-05-02'),
+        ]);
+
+        $response = $this->get(route('bo.register.operating-days.show', $day));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->where('laterClosedDaysCount', 0));
+    }
+
     public function test_show_returns_day_with_tickets(): void
     {
         $season = Season::factory()->create();

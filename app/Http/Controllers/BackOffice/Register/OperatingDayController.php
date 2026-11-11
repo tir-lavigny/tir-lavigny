@@ -100,6 +100,10 @@ class OperatingDayController extends Controller implements HasMiddleware
             'correctionProduct' => Product::where('name', 'Correction')->first(),
             'openingBalance' => $openingBalance,
             'cashMovements' => $cashMovements,
+            'laterClosedDaysCount' => $season->operatingDays()
+                ->whereDate('date', '>', $operatingDay->date->toDateString())
+                ->whereNotNull('closed_at')
+                ->count(),
         ]);
     }
 
