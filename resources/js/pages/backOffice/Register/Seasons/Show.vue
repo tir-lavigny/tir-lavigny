@@ -14,7 +14,7 @@ import { formatDate, formatMoney, hasPermissionTo, parseDateOnly } from '@/lib/u
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BreadcrumbItem, CashMovement, Season, SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { ArrowDownToLine, ArrowUpFromLine, Pencil, Ticket, Trash2, Landmark } from '@lucide/vue';
+import { ArrowDownToLine, ArrowUpFromLine, Info, Landmark, Pencil, Ticket, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -208,7 +208,20 @@ function confirmGenerate() {
 
             <Card>
                 <CardHeader class="flex flex-row items-center justify-between">
-                    <CardTitle>Mouvements de caisse</CardTitle>
+                    <div class="flex items-center gap-2">
+                        <CardTitle>Mouvements de caisse</CardTitle>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Info class="text-muted-foreground size-4 cursor-help" aria-label="Aide sur les mouvements de caisse" />
+                            </TooltipTrigger>
+                            <TooltipContent class="max-w-xs">
+                                <p>
+                                    Transferts d'argent entre la caisse et la banque, indépendants des ventes. Un retrait diminue le solde des
+                                    journées suivantes, une injection l'augmente. La banque n'est pas suivie.
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
                     <Button v-if="canManageCashMovements" variant="outline" @click="openMovementDialog('out')">
                         <Landmark class="mr-2 size-4" /> Nouveau mouvement
                     </Button>
@@ -228,7 +241,20 @@ function confirmGenerate() {
                             <dd class="font-medium">{{ formatMoney(balanceSummary.last_day_balance) }} CHF</dd>
                         </div>
                         <div v-if="balanceSummary.post_last_day_movements !== 0">
-                            <dt class="text-muted-foreground text-sm">Mouvements après la dernière journée</dt>
+                            <dt class="text-muted-foreground flex items-center gap-1 text-sm">
+                                Mouvements après la dernière journée
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <Info class="size-4 cursor-help" aria-label="Aide sur les mouvements après la dernière journée" />
+                                    </TooltipTrigger>
+                                    <TooltipContent class="max-w-xs">
+                                        <p>
+                                            Mouvements datés après la dernière journée d'opération de la saison. Ils ne modifient pas le solde de
+                                            cette journée, mais entrent dans le solde final.
+                                        </p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </dt>
                             <dd class="font-medium">{{ formatMoney(balanceSummary.post_last_day_movements) }} CHF</dd>
                         </div>
                     </dl>
