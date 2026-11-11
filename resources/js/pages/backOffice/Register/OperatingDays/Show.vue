@@ -82,7 +82,7 @@ function handleRefunded() {
 const correctionForm = useForm({ amount: '' as string | number });
 const isCorrectionDialogOpen = ref(false);
 
-const canCreateCorrection = computed(() => props.correctionProduct !== null && hasPermissionTo(user, 'create ticket'));
+const canCreateCorrection = computed(() => props.correctionProduct !== null && hasPermissionTo(user, 'manage operating days'));
 
 function openCorrectionDialog() {
     correctionForm.reset();
@@ -171,7 +171,13 @@ onMounted(() => {
                         <CardTitle class="text-sm">Ventes Twint</CardTitle>
                         <Tooltip>
                             <TooltipTrigger as-child>
-                                <Info class="text-muted-foreground size-3.5 cursor-help" aria-label="Aide sur les ventes Twint" />
+                                <button
+                                    type="button"
+                                    class="text-muted-foreground inline-flex cursor-help items-center"
+                                    aria-label="Aide sur les ventes Twint"
+                                >
+                                    <Info class="size-3.5" />
+                                </button>
                             </TooltipTrigger>
                             <TooltipContent class="max-w-xs">
                                 <p>
@@ -189,10 +195,13 @@ onMounted(() => {
                         <CardTitle class="text-sm">Mouvements de caisse</CardTitle>
                         <Tooltip>
                             <TooltipTrigger as-child>
-                                <Info
-                                    class="text-muted-foreground size-3.5 cursor-help"
+                                <button
+                                    type="button"
+                                    class="text-muted-foreground inline-flex cursor-help items-center"
                                     aria-label="Aide sur les mouvements de caisse de la journée"
-                                />
+                                >
+                                    <Info class="size-3.5" />
+                                </button>
                             </TooltipTrigger>
                             <TooltipContent class="max-w-xs">
                                 <p>Transferts d'argent entre la caisse et la banque (retraits et injections) pris en compte pour cette journée.</p>

@@ -103,7 +103,11 @@ class OperatingDayControllerTest extends TestCase
         OperatingDay::factory()->create([
             'season_id' => $season->id,
             'date' => Carbon::parse('2026-05-04'),
-            'closed_at' => null,
+        ]);
+        $otherSeason = Season::factory()->create();
+        OperatingDay::factory()->closed()->create([
+            'season_id' => $otherSeason->id,
+            'date' => Carbon::parse('2026-05-03'),
         ]);
 
         $response = $this->get(route('bo.register.operating-days.show', $day));

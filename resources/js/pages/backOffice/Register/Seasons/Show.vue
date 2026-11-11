@@ -47,27 +47,33 @@ const canManageCashMovements = computed(() => hasPermissionTo(user, 'manage cash
 
 const movements = computed(() => props.season.cash_movements ?? []);
 
-const now = new Date();
-const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 const seasonEndDate = computed(() => props.season.end_date.slice(0, 10));
-const movementMaxDate = computed(() => (seasonEndDate.value < today ? seasonEndDate.value : today));
+const movementMaxDate = computed(() => {
+    const today = localToday();
+    return seasonEndDate.value < today ? seasonEndDate.value : today;
+});
 
 const movementForm = useForm({
     direction: 'out' as 'in' | 'out',
     amount: '' as string | number,
-    occurred_at: seasonEndDate.value < today ? seasonEndDate.value : today,
+    occurred_at: movementMaxDate.value,
     remark: '',
 });
 
 const showMovementDialog = ref(false);
 const editedMovementId = ref<number | null>(null);
 
+function localToday(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
 function openMovementDialog(direction: 'in' | 'out', movement?: CashMovement) {
     editedMovementId.value = movement?.id ?? null;
     movementForm.clearErrors();
     movementForm.direction = direction;
     movementForm.amount = movement ? Math.abs(Number(movement.amount)) : '';
-    movementForm.occurred_at = movement?.occurred_at?.slice(0, 10) ?? (seasonEndDate.value < today ? seasonEndDate.value : today);
+    movementForm.occurred_at = movement?.occurred_at?.slice(0, 10) ?? movementMaxDate.value;
     movementForm.remark = movement?.remark ?? '';
     showMovementDialog.value = true;
 }
@@ -212,12 +218,18 @@ function confirmGenerate() {
                         <CardTitle>Mouvements de caisse</CardTitle>
                         <Tooltip>
                             <TooltipTrigger as-child>
-                                <Info class="text-muted-foreground size-4 cursor-help" aria-label="Aide sur les mouvements de caisse" />
+                                <button
+                                    type="button"
+                                    class="text-muted-foreground inline-flex cursor-help items-center"
+                                    aria-label="Aide sur les mouvements de caisse"
+                                >
+                                    <Info class="size-4" />
+                                </button>
                             </TooltipTrigger>
                             <TooltipContent class="max-w-xs">
                                 <p>
-                                    Transferts d'argent entre la caisse et la banque, indépendants des ventes. Un retrait diminue le solde des
-                                    journées suivantes, une injection l'augmente. La banque n'est pas suivie.
+                                    Transferts d'argent entre la caisse et la banque, indépendants des ventes. Un retrait diminue le solde de la
+                                    première journée à partir de la date choisie, une injection l'augmente. La banque n'est pas suivie.
                                 </p>
                             </TooltipContent>
                         </Tooltip>
@@ -245,7 +257,13 @@ function confirmGenerate() {
                                 Mouvements après la dernière journée
                                 <Tooltip>
                                     <TooltipTrigger as-child>
-                                        <Info class="size-4 cursor-help" aria-label="Aide sur les mouvements après la dernière journée" />
+                                        <button
+                                            type="button"
+                                            class="inline-flex cursor-help items-center"
+                                            aria-label="Aide sur les mouvements après la dernière journée"
+                                        >
+                                            <Info class="size-4" />
+                                        </button>
                                     </TooltipTrigger>
                                     <TooltipContent class="max-w-xs">
                                         <p>
