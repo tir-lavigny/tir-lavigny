@@ -167,33 +167,29 @@ onMounted(() => {
                 </Card>
                 <Card>
                     <CardHeader class="flex flex-row items-center gap-1 pb-2">
-                        <CardTitle class="text-sm">Mouvements de caisse</CardTitle>
+                        <CardTitle class="text-sm">Ventes Twint</CardTitle>
                         <Tooltip>
                             <TooltipTrigger as-child>
-                                <Info
-                                    class="text-muted-foreground size-3.5 cursor-help"
-                                    aria-label="Aide sur les mouvements de caisse de la journée"
-                                />
+                                <Info class="text-muted-foreground size-3.5 cursor-help" aria-label="Aide sur les ventes Twint" />
                             </TooltipTrigger>
                             <TooltipContent class="max-w-xs">
                                 <p>
-                                    Transferts d'argent entre la caisse et la banque (retraits et injections) pris en compte pour cette journée. Ils
-                                    modifient le solde de clôture, contrairement aux ventes.
+                                    Les ventes Twint sont enregistrées pour les statistiques, mais n'entrent pas dans le comptage final de la caisse.
                                 </p>
                             </TooltipContent>
                         </Tooltip>
                     </CardHeader>
+                    <CardContent
+                        ><p class="text-2xl font-bold">{{ formatMoney(operatingDay.total_twint) }} CHF</p></CardContent
+                    >
+                </Card>
+                <Card>
+                    <CardHeader class="pb-2"><CardTitle class="text-sm">Mouvements de caisse</CardTitle></CardHeader>
                     <CardContent>
                         <p class="text-2xl font-bold" :class="dayMovementsTotal < 0 ? 'text-destructive' : ''">
                             {{ formatMoney(dayMovementsTotal) }} CHF
                         </p>
                     </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader class="pb-2"><CardTitle class="text-sm">Ventes Twint</CardTitle></CardHeader>
-                    <CardContent
-                        ><p class="text-2xl font-bold">{{ formatMoney(operatingDay.total_twint) }} CHF</p></CardContent
-                    >
                 </Card>
                 <Card>
                     <CardHeader class="pb-2"><CardTitle class="text-sm">Solde attendu de clôture</CardTitle></CardHeader>
