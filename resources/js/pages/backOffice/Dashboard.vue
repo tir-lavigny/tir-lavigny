@@ -30,6 +30,7 @@ import {
     Trash2,
     Users,
     ArrowRightLeft,
+    Landmark,
 } from '@lucide/vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -118,6 +119,8 @@ const modelIcon = (model: string) => {
             return Tag;
         case 'operatingday':
             return CalendarDays;
+        case 'cashmovement':
+            return Landmark;
         case 'memberregistration':
             return ClipboardList;
         case 'stockmovement':
@@ -171,6 +174,8 @@ const translateModel = (model: string) => {
             return 'bon';
         case 'operatingday':
             return "jour d'ouverture";
+        case 'cashmovement':
+            return 'mouvement de caisse';
         case 'memberregistration':
             return "inscription d'un membre";
         case 'stockmovement':
