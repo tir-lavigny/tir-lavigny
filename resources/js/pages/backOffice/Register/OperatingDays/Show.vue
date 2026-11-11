@@ -184,7 +184,20 @@ onMounted(() => {
                     >
                 </Card>
                 <Card>
-                    <CardHeader class="pb-2"><CardTitle class="text-sm">Mouvements de caisse</CardTitle></CardHeader>
+                    <CardHeader class="flex flex-row items-center gap-1 pb-2">
+                        <CardTitle class="text-sm">Mouvements de caisse</CardTitle>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Info
+                                    class="text-muted-foreground size-3.5 cursor-help"
+                                    aria-label="Aide sur les mouvements de caisse de la journée"
+                                />
+                            </TooltipTrigger>
+                            <TooltipContent class="max-w-xs">
+                                <p>Transferts d'argent entre la caisse et la banque (retraits et injections) pris en compte pour cette journée.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </CardHeader>
                     <CardContent>
                         <p class="text-2xl font-bold" :class="dayMovementsTotal < 0 ? 'text-destructive' : ''">
                             {{ formatMoney(dayMovementsTotal) }} CHF
