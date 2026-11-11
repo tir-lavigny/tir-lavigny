@@ -108,4 +108,24 @@ class Product extends Model
     {
         return $this->hasMany(PriceListItem::class);
     }
+
+    public function isCorrection(): bool
+    {
+        return $this->name === 'Correction';
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function (Product $product) {
+            if ($product->getOriginal('name') === 'Correction' && $product->isDirty(['name', 'category_id', 'unit_price', 'allows_custom_price', 'is_stockable'])) {
+                abort(422, 'Le produit Correction est protégé.');
+            }
+        });
+
+        static::deleting(function (Product $product) {
+            if ($product->isCorrection()) {
+                abort(422, 'Le produit Correction est protégé.');
+            }
+        });
+    }
 }

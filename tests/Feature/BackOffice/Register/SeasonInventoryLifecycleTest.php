@@ -4,7 +4,6 @@ namespace Tests\Feature\BackOffice\Register;
 
 use App\Enums\StockCountType;
 use App\Enums\StockMovementType;
-use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\Category;
 use App\Models\OperatingDay;
 use App\Models\Product;
@@ -114,18 +113,15 @@ class SeasonInventoryLifecycleTest extends TestCase
             ->get();
     }
 
-    private function makeTicketRequest(array $items, StockLocation $location): StoreTicketRequest
+    private function makeTicketRequest(array $items, StockLocation $location): array
     {
-        $request = new StoreTicketRequest;
-        $request->merge([
+        return [
             'payment_method' => 'cash',
             'operating_day_id' => $this->day->id,
             'sold_at' => now()->toDateTimeString(),
             'stock_location_id' => $location->id,
             'items' => $items,
-        ]);
-
-        return $request;
+        ];
     }
 
     private function seedStockAt(StockLocation $location, array $items): void

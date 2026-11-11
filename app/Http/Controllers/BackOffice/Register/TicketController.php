@@ -28,6 +28,10 @@ class TicketController extends Controller implements HasMiddleware
 
     public function refund(Ticket $ticket, RefundTicketAction $action): RedirectResponse
     {
+        if (! $ticket->operatingDay->isOpen()) {
+            return back()->with('error', 'Impossible de rembourser un ticket d\'une journée fermée.');
+        }
+
         $action->execute($ticket);
 
         return redirect()->back()->with('success', 'Ticket refunded successfully.');

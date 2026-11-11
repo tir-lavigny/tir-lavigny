@@ -117,7 +117,7 @@ class PriceListService
             foreach ($this->itemsWithTrashedProducts($list) as $item) {
                 $product = $item->product;
 
-                if (! $product || $product->trashed()) {
+                if (! $product || $product->trashed() || $product->isCorrection()) {
                     $skipped++;
 
                     continue;

@@ -11,6 +11,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class CategoryController extends Controller implements HasMiddleware
 {
@@ -58,7 +59,11 @@ class CategoryController extends Controller implements HasMiddleware
 
     public function destroy(Category $category): RedirectResponse
     {
-        $category->delete();
+        try {
+            $category->delete();
+        } catch (HttpExceptionInterface $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return redirect()->route('bo.register.categories.index')->with('success', 'Category deleted successfully.');
     }

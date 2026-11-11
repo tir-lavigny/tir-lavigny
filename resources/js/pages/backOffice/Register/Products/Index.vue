@@ -84,6 +84,7 @@ const handleDelete = (id: number) => {
                             <span v-if="product.category">· {{ product.category.name }}</span>
                             <Badge v-if="product.allows_custom_price" variant="secondary" class="text-xs">Prix libre</Badge>
                             <Badge v-if="product.is_stockable" variant="secondary" class="text-xs">Stockable</Badge>
+                            <Badge v-if="product.name === 'Correction'" variant="outline" class="text-xs">Protégé</Badge>
                         </div>
                     </Link>
                     <div class="flex gap-2">
@@ -104,7 +105,7 @@ const handleDelete = (id: number) => {
                             <TooltipContent><p>Modifier</p></TooltipContent>
                         </Tooltip>
                         <AppAlertDialog
-                            v-if="hasPermissionTo(user, 'manage products')"
+                            v-if="hasPermissionTo(user, 'manage products') && product.name !== 'Correction'"
                             title="Supprimer ce produit ?"
                             description="Cette action est irréversible."
                             cancelText="Annuler"

@@ -3,6 +3,7 @@
 namespace Tests\Feature\BackOffice\Register;
 
 use App\Models\Category;
+use App\Models\Product;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -94,6 +95,24 @@ class CategoryControllerTest extends TestCase
 
         $response->assertRedirect();
         $this->assertSoftDeleted('categories', ['id' => $category->id]);
+    }
+
+    public function test_destroy_rejects_category_containing_correction_product(): void
+    {
+        $category = Category::factory()->create(['name' => 'Correction', 'is_restricted' => true]);
+        Product::factory()->create([
+            'name' => 'Correction',
+            'unit_price' => 0,
+            'allows_custom_price' => true,
+            'is_stockable' => false,
+            'category_id' => $category->id,
+        ]);
+
+        $response = $this->delete(route('bo.register.categories.destroy', $category));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('categories', ['id' => $category->id, 'deleted_at' => null]);
     }
 
     public function test_store_requires_permission(): void

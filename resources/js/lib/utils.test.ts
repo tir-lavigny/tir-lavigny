@@ -76,6 +76,11 @@ describe('utils.ts', () => {
             expect(result.getUTCDate()).toBe(3);
         });
 
+        test('accepts a full ISO datetime string', () => {
+            const result = Utils.parseDateOnly('2025-07-03T00:00:00.000000Z');
+            expect(result.toISOString()).toBe('2025-07-03T12:00:00.000Z');
+        });
+
         test('anchors to noon UTC', () => {
             const result = Utils.parseDateOnly('2025-07-03');
             expect(result.getUTCHours()).toBe(12);

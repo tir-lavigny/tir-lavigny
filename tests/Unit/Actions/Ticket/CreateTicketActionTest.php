@@ -3,7 +3,6 @@
 namespace Tests\Unit\Actions\Ticket;
 
 use App\Actions\Ticket\CreateTicketAction;
-use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\Category;
 use App\Models\OperatingDay;
 use App\Models\Product;
@@ -29,12 +28,9 @@ class CreateTicketActionTest extends TestCase
         $this->calculator = $this->app->make(TicketCalculator::class);
     }
 
-    private function makeRequest(array $data): StoreTicketRequest
+    private function makePayload(array $data): array
     {
-        $request = new StoreTicketRequest;
-        $request->merge($data);
-
-        return $request;
+        return $data;
     }
 
     private function createOpenDay(): OperatingDay
@@ -70,7 +66,7 @@ class CreateTicketActionTest extends TestCase
 
         $action = $this->app->make(CreateTicketAction::class);
 
-        $ticket = $action->execute($this->makeRequest([
+        $ticket = $action->execute($this->makePayload([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -98,7 +94,7 @@ class CreateTicketActionTest extends TestCase
         $product = $this->createProduct($category);
         $location = StockLocation::factory()->create();
 
-        $request = $this->makeRequest([
+        $payload = $this->makePayload([
             'payment_method' => 'cash',
             'operating_day_id' => $day->id,
             'sold_at' => now()->toDateTimeString(),
@@ -112,9 +108,9 @@ class CreateTicketActionTest extends TestCase
             ->andReturnUsing(fn ($r, $d, $c) => $service->create($r, $d, $c));
 
         $action = new CreateTicketAction($spy);
-        $ticket = $action->execute($request, $day, $this->calculator);
+        $ticket = $action->execute($payload, $day, $this->calculator);
 
-        $spy->shouldHaveReceived('create')->with($request, $day, $this->calculator);
+        $spy->shouldHaveReceived('create')->with($payload, $day, $this->calculator);
         $this->assertDatabaseHas('tickets', [
             'id' => $ticket->id,
             'operating_day_id' => $day->id,
@@ -145,7 +141,7 @@ class CreateTicketActionTest extends TestCase
         $action = new CreateTicketAction($spy);
 
         try {
-            $action->execute($this->makeRequest([
+            $action->execute($this->makePayload([
                 'payment_method' => 'cash',
                 'operating_day_id' => $day->id,
                 'sold_at' => now()->toDateTimeString(),

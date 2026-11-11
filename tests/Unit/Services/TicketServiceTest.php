@@ -3,7 +3,6 @@
 namespace Tests\Unit\Services;
 
 use App\Enums\StockMovementType;
-use App\Http\Requests\API\Register\StoreTicketRequest;
 use App\Models\Category;
 use App\Models\OperatingDay;
 use App\Models\Product;
@@ -35,12 +34,9 @@ class TicketServiceTest extends TestCase
         $this->calculator = $this->app->make(TicketCalculator::class);
     }
 
-    private function makeRequest(array $data): StoreTicketRequest
+    private function makeRequest(array $data): array
     {
-        $request = new StoreTicketRequest;
-        $request->merge($data);
-
-        return $request;
+        return $data;
     }
 
     private function createOpenDay(): OperatingDay

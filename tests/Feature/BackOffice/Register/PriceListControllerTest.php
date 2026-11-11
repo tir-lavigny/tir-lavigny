@@ -177,6 +177,33 @@ class PriceListControllerTest extends TestCase
         $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 10.00]);
     }
 
+    public function test_apply_skips_the_protected_correction_product(): void
+    {
+        $correctionCategory = Category::factory()->create(['name' => 'Correction', 'is_restricted' => true]);
+        $correction = Product::factory()->create([
+            'name' => 'Correction',
+            'unit_price' => 0,
+            'allows_custom_price' => true,
+            'is_stockable' => false,
+            'category_id' => $correctionCategory->id,
+        ]);
+        $product = Product::factory()->create(['category_id' => $this->category->id, 'unit_price' => 10.00]);
+
+        $priceList = PriceList::factory()->create(['name' => 'Normal']);
+        $priceList->items()->createMany([
+            ['product_id' => $correction->id, 'unit_price' => 15.00],
+            ['product_id' => $product->id, 'unit_price' => 12.00],
+        ]);
+
+        $response = $this->post(route('bo.register.price-lists.apply', $priceList));
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('products', ['id' => $correction->id, 'unit_price' => 0]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 12.00]);
+        $response->assertSessionHas('success', 'Prix appliqués : 1 produit(s) mis à jour, 1 ignoré(s).');
+    }
+
     public function test_drift_reports_counts(): void
     {
         $changed = Product::factory()->create(['category_id' => $this->category->id, 'unit_price' => 10.00]);

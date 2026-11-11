@@ -265,6 +265,16 @@ export interface PriceListPreview {
     };
 }
 
+export interface CashMovement {
+    id: number;
+    season_id: number;
+    amount: number | string;
+    occurred_at: string;
+    remark?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface Season {
     id: number;
     name: string;
@@ -273,6 +283,7 @@ export interface Season {
     initial_balance: number;
     end_balance?: number;
     operating_days?: OperatingDay[];
+    cash_movements?: CashMovement[];
     created_at: string;
     updated_at: string;
     deleted_at?: string;
