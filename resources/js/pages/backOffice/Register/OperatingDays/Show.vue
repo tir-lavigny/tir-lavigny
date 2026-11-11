@@ -12,12 +12,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasPermissionTo, parseDateOnly } from '@/lib/utils';
 import type { BreadcrumbItem, CashMovement, OperatingDay, Product, SharedData, Ticket } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core';
-import { Lock, Plus, Unlock } from '@lucide/vue';
+import { Info, Lock, Plus, Unlock } from '@lucide/vue';
 import { computed, onMounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -165,7 +166,23 @@ onMounted(() => {
                     >
                 </Card>
                 <Card>
-                    <CardHeader class="pb-2"><CardTitle class="text-sm">Mouvements de caisse</CardTitle></CardHeader>
+                    <CardHeader class="flex flex-row items-center gap-1 pb-2">
+                        <CardTitle class="text-sm">Mouvements de caisse</CardTitle>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Info
+                                    class="text-muted-foreground size-3.5 cursor-help"
+                                    aria-label="Aide sur les mouvements de caisse de la journée"
+                                />
+                            </TooltipTrigger>
+                            <TooltipContent class="max-w-xs">
+                                <p>
+                                    Transferts d'argent entre la caisse et la banque (retraits et injections) pris en compte pour cette journée. Ils
+                                    modifient le solde de clôture, contrairement aux ventes.
+                                </p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </CardHeader>
                     <CardContent>
                         <p class="text-2xl font-bold" :class="dayMovementsTotal < 0 ? 'text-destructive' : ''">
                             {{ formatMoney(dayMovementsTotal) }} CHF
@@ -173,7 +190,7 @@ onMounted(() => {
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader class="pb-2"><CardTitle class="text-sm">Total Twint</CardTitle></CardHeader>
+                    <CardHeader class="pb-2"><CardTitle class="text-sm">Ventes Twint</CardTitle></CardHeader>
                     <CardContent
                         ><p class="text-2xl font-bold">{{ formatMoney(operatingDay.total_twint) }} CHF</p></CardContent
                     >
