@@ -15,6 +15,7 @@ use App\Services\DavServiceInterface;
 use App\Services\MemberRegistrationPipelineService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Mockery;
@@ -189,6 +190,7 @@ class MemberRegistrationPipelineTest extends TestCase
     public function test_process_form_submission_handles_dav_failure(): void
     {
         Mail::fake();
+        Log::spy();
 
         $registration = $this->createRegistrationWithData();
         $pipeline = new MemberRegistrationPipelineService($this->mockDavFailure('DAV connection failed'));
@@ -201,6 +203,13 @@ class MemberRegistrationPipelineTest extends TestCase
         $this->assertStringContainsString('DAV connection failed', $registration->error_message);
 
         Mail::assertSent(MemberRegistrationError::class);
+
+        Log::shouldHaveReceived('error')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Member registration pipeline failed'
+                && $context['registration_id'] === $registration->id
+                && $context['step'] === 'dav_contact'
+                && $context['status'] === MemberRegistrationStatus::FORM_FILLED->value
+        );
     }
 
     // ── Retry cases ─────────────────────────────────────────────────────────
