@@ -8,6 +8,7 @@ use App\MemberRegistrationStatus;
 use App\Models\MemberRegistration;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -53,8 +54,14 @@ class MemberRegistrationController extends Controller
 
         try {
             MemberRegistrationFormSubmitted::dispatch($registration);
-        } catch (\Throwable) {
-            // Pipeline failure is non-blocking — admin can retry from back office
+        } catch (\Throwable $e) {
+            report($e);
+
+            Log::error('Member registration submission dispatch failed', [
+                'registration_id' => $registration->id,
+                'status' => $registration->status->value,
+                'exception' => $e,
+            ]);
         }
 
         return redirect()->route('member-registration.show', $registration->form_uuid)

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Event;
 use App\Models\EventChain;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class EventChainUpdaterService
 {
@@ -65,6 +66,13 @@ class EventChainUpdaterService
             $updatedCount++;
         }
 
+        Log::info('Event chain updated', [
+            'event_chain_id' => $chain->id,
+            'scope' => $scope,
+            'updated_count' => $updatedCount,
+            'conflict_count' => count($conflictedEventIds),
+        ]);
+
         return [
             'updated_count' => $updatedCount,
             'conflicted_event_ids' => $conflictedEventIds,
@@ -88,6 +96,11 @@ class EventChainUpdaterService
         $event->has_chain_conflict = false;
         $event->pending_conflict_fields = [];
         $event->save();
+
+        Log::info('Event reset to chain values', [
+            'event_id' => $event->id,
+            'event_chain_id' => $chain->id,
+        ]);
     }
 
     /**
@@ -119,6 +132,13 @@ class EventChainUpdaterService
         }
 
         $event->save();
+
+        Log::info('Event chain conflict resolved', [
+            'event_id' => $event->id,
+            'event_chain_id' => $chain->id,
+            'field' => $field,
+            'resolution' => $resolution,
+        ]);
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────

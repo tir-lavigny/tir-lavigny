@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Cookie;
 
 class AuthController extends Controller
@@ -24,6 +25,11 @@ class AuthController extends Controller
     {
         $credentials = $request->validated();
         if (! Auth::attempt($credentials)) {
+            Log::warning('API login failed', [
+                'email_hash' => hash('sha256', strtolower((string) $credentials['email'])),
+                'ip' => $request->ip(),
+            ]);
+
             return $this->error('Wrong credentials.', 401);
         }
 

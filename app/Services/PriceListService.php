@@ -7,6 +7,7 @@ use App\Models\PriceListItem;
 use App\Models\Product;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PriceListService
 {
@@ -15,7 +16,7 @@ class PriceListService
      */
     public function create(array $data): PriceList
     {
-        return DB::transaction(function () use ($data): PriceList {
+        $list = DB::transaction(function () use ($data): PriceList {
             $list = PriceList::create([
                 'name' => $data['name'],
                 'notes' => $data['notes'] ?? null,
@@ -25,6 +26,13 @@ class PriceListService
 
             return $list;
         });
+
+        Log::info('Price list created', [
+            'price_list_id' => $list->id,
+            'item_count' => count($data['items']),
+        ]);
+
+        return $list;
     }
 
     /**
@@ -32,7 +40,7 @@ class PriceListService
      */
     public function update(PriceList $list, array $data): PriceList
     {
-        return DB::transaction(function () use ($list, $data): PriceList {
+        DB::transaction(function () use ($list, $data): void {
             $list->update([
                 'name' => $data['name'],
                 'notes' => $data['notes'] ?? null,
@@ -40,14 +48,23 @@ class PriceListService
 
             $list->items()->delete();
             $list->items()->createMany($data['items']);
-
-            return $list;
         });
+
+        Log::info('Price list updated', [
+            'price_list_id' => $list->id,
+            'item_count' => count($data['items']),
+        ]);
+
+        return $list;
     }
 
     public function delete(PriceList $list): void
     {
         $list->delete();
+
+        Log::info('Price list deleted', [
+            'price_list_id' => $list->id,
+        ]);
     }
 
     /**
@@ -110,7 +127,7 @@ class PriceListService
      */
     public function apply(PriceList $list): array
     {
-        return DB::transaction(function () use ($list): array {
+        $result = DB::transaction(function () use ($list): array {
             $updated = 0;
             $skipped = 0;
 
@@ -139,6 +156,14 @@ class PriceListService
 
             return ['updated' => $updated, 'skipped' => $skipped];
         });
+
+        Log::info('Price list applied', [
+            'price_list_id' => $list->id,
+            'updated' => $result['updated'],
+            'skipped' => $result['skipped'],
+        ]);
+
+        return $result;
     }
 
     /**
@@ -177,7 +202,7 @@ class PriceListService
      */
     public function updateFromCatalog(PriceList $list): array
     {
-        return DB::transaction(function () use ($list): array {
+        $result = DB::transaction(function () use ($list): array {
             $removed = 0;
 
             foreach ($this->itemsWithTrashedProducts($list) as $item) {
@@ -203,6 +228,14 @@ class PriceListService
 
             return ['added' => $added, 'removed' => $removed];
         });
+
+        Log::info('Price list updated from catalog', [
+            'price_list_id' => $list->id,
+            'added' => $result['added'],
+            'removed' => $result['removed'],
+        ]);
+
+        return $result;
     }
 
     /**
@@ -210,7 +243,7 @@ class PriceListService
      */
     public function syncPrices(PriceList $list): array
     {
-        return DB::transaction(function () use ($list): array {
+        $result = DB::transaction(function () use ($list): array {
             $updated = 0;
             $skipped = 0;
 
@@ -231,11 +264,19 @@ class PriceListService
 
             return ['updated' => $updated, 'skipped' => $skipped];
         });
+
+        Log::info('Price list prices synced', [
+            'price_list_id' => $list->id,
+            'updated' => $result['updated'],
+            'skipped' => $result['skipped'],
+        ]);
+
+        return $result;
     }
 
     public function duplicate(PriceList $list): PriceList
     {
-        return DB::transaction(function () use ($list): PriceList {
+        $copy = DB::transaction(function () use ($list): PriceList {
             $copy = PriceList::create([
                 'name' => $this->uniqueName($list->name.' (copie)'),
                 'notes' => $list->notes,
@@ -251,6 +292,13 @@ class PriceListService
 
             return $copy;
         });
+
+        Log::info('Price list duplicated', [
+            'source_price_list_id' => $list->id,
+            'price_list_id' => $copy->id,
+        ]);
+
+        return $copy;
     }
 
     /**

@@ -9,6 +9,7 @@ use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use LogicException;
 
 class RecordStockLossAction
@@ -36,7 +37,7 @@ class RecordStockLossAction
             throw new LogicException('Stock loss quantity must be greater than zero.');
         }
 
-        return DB::transaction(function () use ($season, $location, $product, $quantity, $reason) {
+        $movement = DB::transaction(function () use ($season, $location, $product, $quantity, $reason) {
             return $this->stockService->addMovement(
                 product: $product,
                 location: $location,
@@ -46,5 +47,15 @@ class RecordStockLossAction
                 reason: $reason,
             );
         });
+
+        Log::info('Stock loss recorded', [
+            'stock_movement_id' => $movement->id,
+            'season_id' => $season?->id,
+            'stock_location_id' => $location->id,
+            'product_id' => $product->id,
+            'quantity' => $quantity,
+        ]);
+
+        return $movement;
     }
 }

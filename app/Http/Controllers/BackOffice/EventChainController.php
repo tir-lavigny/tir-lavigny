@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -133,8 +134,15 @@ class EventChainController extends Controller implements HasMiddleware
         // Events will be detached (event_chain_id set to null) via nullOnDelete FK constraint.
         // Delete the now-orphaned chain events explicitly first, or keep them standalone.
         // Per spec: deleting a chain deletes ALL its events.
+        $eventCount = $eventChain->events()->count();
+
         $eventChain->events()->delete();
         $eventChain->delete();
+
+        Log::info('Event chain deleted', [
+            'event_chain_id' => $eventChain->id,
+            'deleted_event_count' => $eventCount,
+        ]);
 
         return redirect()
             ->route('bo.event-chains.index')

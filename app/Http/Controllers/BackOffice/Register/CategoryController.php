@@ -9,6 +9,7 @@ use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -62,6 +63,11 @@ class CategoryController extends Controller implements HasMiddleware
         try {
             $category->delete();
         } catch (HttpExceptionInterface $e) {
+            Log::warning('Category deletion blocked', [
+                'category_id' => $category->id,
+                'reason' => $e->getMessage(),
+            ]);
+
             return back()->with('error', $e->getMessage());
         }
 

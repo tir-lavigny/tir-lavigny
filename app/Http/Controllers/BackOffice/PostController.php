@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -130,6 +131,13 @@ class PostController extends Controller implements HasMiddleware
         try {
             $post->save();
         } catch (Exception $e) {
+            report($e);
+
+            Log::error('Post update failed', [
+                'post_public_id' => $post->public_id,
+                'exception' => $e,
+            ]);
+
             return back()->with('error', 'Unable to update post. Please try again later.');
         }
 
@@ -146,6 +154,13 @@ class PostController extends Controller implements HasMiddleware
         try {
             $post->delete();
         } catch (Exception $e) {
+            report($e);
+
+            Log::error('Post deletion failed', [
+                'post_public_id' => $post->public_id,
+                'exception' => $e,
+            ]);
+
             return back()->with('error', 'Unable to delete post. Please try again later.');
         }
 

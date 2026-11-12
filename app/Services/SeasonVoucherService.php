@@ -8,6 +8,7 @@ use App\Models\Season;
 use App\Models\Voucher;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SeasonVoucherService
 {
@@ -37,6 +38,10 @@ class SeasonVoucherService
             $product = Product::whereRaw('LOWER(name) = ?', [strtolower($name)])->first();
 
             if (! $product) {
+                Log::error('Base voucher product missing', [
+                    'product_name' => $name,
+                ]);
+
                 abort(422, "Produit introuvable : {$name}");
             }
 
@@ -69,8 +74,9 @@ class SeasonVoucherService
     {
         $products = $this->resolveProducts($basePackage);
         $plan = $this->computePlan($season, $basePackage, $products);
+        $created = 0;
 
-        DB::transaction(function () use ($plan, $season) {
+        DB::transaction(function () use ($plan, $season, &$created) {
             foreach ($plan as $memberPlan) {
                 foreach ($memberPlan['vouchers'] as $voucherPlan) {
                     if ($voucherPlan['count'] <= 0) {
@@ -87,10 +93,18 @@ class SeasonVoucherService
                             'season_id' => $season->id,
                             'member_id' => $memberPlan['member_id'],
                         ]);
+
+                        $created++;
                     }
                 }
             }
         });
+
+        Log::info('Base vouchers generated', [
+            'season_id' => $season->id,
+            'created' => $created,
+            'members_with_plan' => count($plan),
+        ]);
     }
 
     /** @param Collection<int, Member> $members

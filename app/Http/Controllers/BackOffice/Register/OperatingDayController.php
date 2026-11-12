@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -58,6 +59,12 @@ class OperatingDayController extends Controller implements HasMiddleware
             'date' => $request->input('date'),
             'started_at' => Carbon::now('Europe/Zurich')->utc(),
             'season_id' => $request->input('season_id'),
+        ]);
+
+        Log::info('Operating day opened', [
+            'operating_day_id' => $day->id,
+            'date' => $day->date->toDateString(),
+            'season_id' => $day->season_id,
         ]);
 
         return redirect()->route('bo.register.operating-days.show', $day)
@@ -158,6 +165,13 @@ class OperatingDayController extends Controller implements HasMiddleware
         $season = $operatingDay->season;
         $season->recalculateClosingBalances();
 
+        Log::info('Operating day correction ticket created', [
+            'operating_day_id' => $operatingDay->id,
+            'season_id' => $season->id,
+            'stock_location_id' => $location->id,
+            'amount' => (float) $validated['amount'],
+        ]);
+
         return redirect()->route('bo.register.operating-days.show', $operatingDay)
             ->with('success', 'Ticket correctif enregistré.');
     }
@@ -177,10 +191,31 @@ class OperatingDayController extends Controller implements HasMiddleware
                 'closing_balance' => $operatingDay->closing_balance,
             ]);
 
+            Log::info('Operating day closed', [
+                'operating_day_id' => $operatingDay->id,
+                'season_id' => $operatingDay->season_id,
+                'date' => $operatingDay->date->toDateString(),
+                'total_cash' => $operatingDay->total_cash,
+                'total_twint' => $operatingDay->total_twint,
+                'closing_balance' => $operatingDay->closing_balance,
+                'cash_remark_present' => filled($operatingDay->cash_remark),
+            ]);
+
         } elseif ($status === 'open') {
             $operatingDay->update(['closed_at' => null, 'closing_balance' => null]);
+
+            Log::warning('Operating day reopened', [
+                'operating_day_id' => $operatingDay->id,
+                'season_id' => $operatingDay->season_id,
+                'date' => $operatingDay->date->toDateString(),
+            ]);
         } else {
             $operatingDay->update($request->only(['cash_remark']));
+
+            Log::info('Operating day cash remark updated', [
+                'operating_day_id' => $operatingDay->id,
+                'cash_remark_present' => filled($operatingDay->cash_remark),
+            ]);
         }
 
         return redirect()->route('bo.register.operating-days.show', $operatingDay)

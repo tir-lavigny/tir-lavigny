@@ -4,6 +4,7 @@ namespace App\Actions\Stock;
 
 use App\Models\StockLocation;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UpdateStockLocationAction
 {
@@ -12,14 +13,20 @@ class UpdateStockLocationAction
      */
     public function execute(StockLocation $location, array $data): StockLocation
     {
-        return DB::transaction(function () use ($location, $data) {
+        DB::transaction(function () use ($location, $data) {
             $location->update([
                 'name' => $data['name'],
                 'description' => $data['description'] ?? null,
                 'active' => $data['active'],
             ]);
-
-            return $location;
         });
+
+        Log::info('Stock location updated', [
+            'stock_location_id' => $location->id,
+            'name' => $location->name,
+            'active' => $location->active,
+        ]);
+
+        return $location;
     }
 }

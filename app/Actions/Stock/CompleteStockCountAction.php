@@ -6,6 +6,7 @@ use App\Enums\StockMovementType;
 use App\Models\StockCount;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use LogicException;
 
 class CompleteStockCountAction
@@ -28,7 +29,10 @@ class CompleteStockCountAction
             }
         }
 
-        return DB::transaction(function () use ($count, $lines) {
+        $adjustedLines = 0;
+        $totalDifference = 0;
+
+        $count = DB::transaction(function () use ($count, $lines, &$adjustedLines, &$totalDifference) {
             foreach ($lines as $line) {
                 $difference = $line->counted_quantity - $line->expected_quantity;
 
@@ -41,6 +45,9 @@ class CompleteStockCountAction
                         reference: $count,
                         season: $count->season,
                     );
+
+                    $adjustedLines++;
+                    $totalDifference += $difference;
                 }
             }
 
@@ -51,5 +58,16 @@ class CompleteStockCountAction
 
             return $count;
         });
+
+        Log::info('Stock count completed', [
+            'stock_count_id' => $count->id,
+            'season_id' => $count->season_id,
+            'stock_location_id' => $count->stock_location_id,
+            'line_count' => $lines->count(),
+            'adjusted_lines' => $adjustedLines,
+            'total_difference' => $totalDifference,
+        ]);
+
+        return $count;
     }
 }

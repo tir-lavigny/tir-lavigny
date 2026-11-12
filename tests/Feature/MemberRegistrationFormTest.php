@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
@@ -69,6 +70,39 @@ class MemberRegistrationFormTest extends TestCase
             'id' => $registration->id,
             'status' => 'form_filled',
         ]);
+    }
+
+    public function test_submission_logs_dispatch_failure_and_still_succeeds(): void
+    {
+        Log::spy();
+
+        Event::listen(MemberRegistrationFormSubmitted::class, function (): void {
+            throw new \RuntimeException('Pipeline down');
+        });
+
+        $registration = MemberRegistration::create();
+
+        $response = $this->post(route('member-registration.store'), [
+            'form_uuid' => (string) $registration->form_uuid,
+            'last_name' => 'Dupont',
+            'first_name' => 'Jean',
+            'email' => 'jean.dupont@example.com',
+            'is_swiss_citizen' => true,
+            'avs' => '756.1234.5678.90',
+            'tel' => '+41 21 123 45 67',
+            'street' => 'Rue du Marché 1',
+            'npa' => '1003',
+            'city' => 'Lausanne',
+            'canton' => 'VD',
+            'country' => 'Suisse',
+        ]);
+
+        $response->assertRedirect(route('member-registration.show', $registration->form_uuid));
+
+        Log::shouldHaveReceived('error')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Member registration submission dispatch failed'
+                && $context['registration_id'] === $registration->id
+        );
     }
 
     public function test_form_data_is_stored_correctly(): void

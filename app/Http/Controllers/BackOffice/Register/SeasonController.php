@@ -13,8 +13,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class SeasonController extends Controller implements HasMiddleware
 {
@@ -95,6 +97,20 @@ class SeasonController extends Controller implements HasMiddleware
 
             return redirect()->route('bo.register.seasons.index')->with('success', 'Saison supprimée.');
         } catch (\Exception $e) {
+            if ($e instanceof HttpExceptionInterface) {
+                Log::warning('Season deletion blocked', [
+                    'season_id' => $season->id,
+                    'reason' => $e->getMessage(),
+                ]);
+            } else {
+                report($e);
+
+                Log::error('Season deletion failed', [
+                    'season_id' => $season->id,
+                    'exception' => $e,
+                ]);
+            }
+
             return back()->with('error', $e->getMessage());
         }
     }

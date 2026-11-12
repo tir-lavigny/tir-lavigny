@@ -31,8 +31,12 @@ class MemberRegistrationPipelineService
             Mail::to(User::getMemberRegistrationEmails())->send(
                 new MemberRegistrationValidationRequested($registration)
             );
+
+            Log::info('Member registration validation email sent', [
+                'registration_id' => $registration->id,
+            ]);
         } catch (\Throwable $e) {
-            $this->handleFailure($registration, $e);
+            $this->handleFailure($registration, $e, 'validation_email');
         }
     }
 
@@ -41,23 +45,41 @@ class MemberRegistrationPipelineService
      */
     public function processFormSubmission(MemberRegistration $registration): void
     {
+        $step = 'dav_contact';
+
         try {
-            // Step 1: Create DAV contact
             $davResult = $this->dav->createContactFromMemberRegistration($registration);
             $registration->dav_uid = $davResult['uid'];
             $this->transitionStatus($registration, MemberRegistrationStatus::DAV_CREATED);
 
-            // Step 2: Create member + vouchers
+            Log::info('Member registration DAV contact created', [
+                'registration_id' => $registration->id,
+                'dav_uid' => $davResult['uid'],
+            ]);
+
+            $step = 'member_creation';
             $member = $this->createMemberFromRegistration($registration);
             $registration->member()->associate($member);
             $this->transitionStatus($registration, MemberRegistrationStatus::MEMBER_CREATED);
+
+            Log::info('Member registration member created', [
+                'registration_id' => $registration->id,
+                'member_id' => $member->id,
+            ]);
+
+            $step = 'voucher_generation';
             $this->generateBaseVouchers($member);
 
-            // Step 3: Send completion email
+            $step = 'completion_email';
             $this->sendCompletionEmail($registration);
             $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
+
+            Log::info('Member registration completed', [
+                'registration_id' => $registration->id,
+                'member_id' => $member->id,
+            ]);
         } catch (\Throwable $e) {
-            $this->handleFailure($registration, $e);
+            $this->handleFailure($registration, $e, $step);
         }
     }
 
@@ -77,16 +99,31 @@ class MemberRegistrationPipelineService
 
     private function processFromDavCreated(MemberRegistration $registration): void
     {
+        $step = 'member_creation';
+
         try {
             $member = $this->createMemberFromRegistration($registration);
             $registration->member()->associate($member);
             $this->transitionStatus($registration, MemberRegistrationStatus::MEMBER_CREATED);
+
+            Log::info('Member registration member created', [
+                'registration_id' => $registration->id,
+                'member_id' => $member->id,
+            ]);
+
+            $step = 'voucher_generation';
             $this->generateBaseVouchers($member);
 
+            $step = 'completion_email';
             $this->sendCompletionEmail($registration);
             $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
+
+            Log::info('Member registration completed', [
+                'registration_id' => $registration->id,
+                'member_id' => $member->id,
+            ]);
         } catch (\Throwable $e) {
-            $this->handleFailure($registration, $e);
+            $this->handleFailure($registration, $e, $step);
         }
     }
 
@@ -95,8 +132,13 @@ class MemberRegistrationPipelineService
         try {
             $this->sendCompletionEmail($registration);
             $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
+
+            Log::info('Member registration completed', [
+                'registration_id' => $registration->id,
+                'member_id' => $registration->member_id,
+            ]);
         } catch (\Throwable $e) {
-            $this->handleFailure($registration, $e);
+            $this->handleFailure($registration, $e, 'completion_email');
         }
     }
 
@@ -124,6 +166,10 @@ class MemberRegistrationPipelineService
             ->first();
 
         if (! $season) {
+            Log::warning('Base vouchers skipped because no active season exists', [
+                'member_id' => $member->id,
+            ]);
+
             return;
         }
 
@@ -133,10 +179,18 @@ class MemberRegistrationPipelineService
             'Clôture' => 1,
         ];
 
+        $created = 0;
+
         foreach ($basePackage as $productName => $count) {
             $product = Product::whereRaw('LOWER(name) = ?', [strtolower($productName)])->first();
 
             if (! $product) {
+                Log::warning('Base voucher product not found', [
+                    'member_id' => $member->id,
+                    'season_id' => $season->id,
+                    'product_name' => $productName,
+                ]);
+
                 continue;
             }
 
@@ -156,8 +210,16 @@ class MemberRegistrationPipelineService
                     'season_id' => $season->id,
                     'member_id' => $member->id,
                 ]);
+
+                $created++;
             }
         }
+
+        Log::info('Base vouchers generated for member', [
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'count' => $created,
+        ]);
     }
 
     private function sendCompletionEmail(MemberRegistration $registration): void
@@ -167,12 +229,17 @@ class MemberRegistrationPipelineService
         );
     }
 
-    private function handleFailure(MemberRegistration $registration, \Throwable $e): void
+    private function handleFailure(MemberRegistration $registration, \Throwable $e, string $step): void
     {
+        report($e);
+
         Log::error('Member registration pipeline failed', [
             'registration_id' => $registration->id,
             'status' => $registration->status->value,
-            'error' => $e->getMessage(),
+            'step' => $step,
+            'dav_uid' => $registration->dav_uid,
+            'member_id' => $registration->member_id,
+            'exception' => $e,
         ]);
 
         $registration->error_message = 'Erreur : '.$e->getMessage();
@@ -183,9 +250,12 @@ class MemberRegistrationPipelineService
             Mail::to(User::getMemberRegistrationEmails())->send(
                 new MemberRegistrationError($registration)
             );
-        } catch (\Throwable) {
+        } catch (\Throwable $emailException) {
+            report($emailException);
+
             Log::error('Member registration error email failed', [
                 'registration_id' => $registration->id,
+                'exception' => $emailException,
             ]);
         }
     }

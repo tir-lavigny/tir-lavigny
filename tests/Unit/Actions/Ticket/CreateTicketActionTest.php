@@ -13,6 +13,7 @@ use App\Services\TicketCalculator;
 use App\Services\TicketService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\TestCase;
 
@@ -59,6 +60,8 @@ class CreateTicketActionTest extends TestCase
 
     public function test_execute_creates_ticket(): void
     {
+        Log::spy();
+
         $day = $this->createOpenDay();
         $category = Category::factory()->create(['is_restricted' => false]);
         $product = $this->createProduct($category);
@@ -85,6 +88,14 @@ class CreateTicketActionTest extends TestCase
             'product_id' => $product->id,
             'quantity' => 2,
         ]);
+
+        Log::shouldHaveReceived('info')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Ticket created'
+                && $context['ticket_id'] === $ticket->id
+                && $context['operating_day_id'] === $day->id
+                && (float) $context['total'] === 10.0
+                && $context['item_count'] === 1
+        );
     }
 
     public function test_execute_delegates_to_ticket_service(): void

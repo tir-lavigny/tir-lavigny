@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\IdempotencyKey;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class PruneIdempotencyKeys extends Command
 {
@@ -16,6 +17,8 @@ class PruneIdempotencyKeys extends Command
         $deleted = IdempotencyKey::query()
             ->where('created_at', '<', now()->subDay())
             ->delete();
+
+        Log::info('Idempotency keys pruned', ['deleted' => $deleted]);
 
         $this->info("Deleted {$deleted} idempotency keys.");
 

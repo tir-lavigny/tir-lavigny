@@ -6,6 +6,7 @@ use App\Models\IdempotencyKey;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureIdempotentRequest
@@ -49,6 +50,12 @@ class EnsureIdempotentRequest
             }
 
             if (! hash_equals($existing->request_hash, $requestHash)) {
+                Log::warning('Idempotency key reused with different request body', [
+                    'user_id' => $user->id,
+                    'key_hash' => hash('sha256', $key),
+                    'path' => $request->path(),
+                ]);
+
                 abort(422, 'Idempotency-Key was already used with a different request body.');
             }
 
@@ -70,6 +77,12 @@ class EnsureIdempotentRequest
                 }
             }
         }
+
+        Log::warning('Idempotency request still processing', [
+            'user_id' => $user->id,
+            'key_hash' => hash('sha256', $key),
+            'path' => $request->path(),
+        ]);
 
         abort(409, 'Request with this Idempotency-Key is still processing.');
     }
@@ -132,6 +145,12 @@ class EnsureIdempotentRequest
 
     private function replay(IdempotencyKey $record): Response
     {
+        Log::info('Idempotency request replayed', [
+            'user_id' => $record->user_id,
+            'key_hash' => hash('sha256', $record->key),
+            'response_status' => $record->response_status,
+        ]);
+
         return response($record->response_body, $record->response_status)
             ->header('Content-Type', 'application/json')
             ->header('Idempotency-Replayed', 'true');
@@ -164,6 +183,11 @@ class EnsureIdempotentRequest
             && $record->status === IdempotencyKey::STATUS_PROCESSING
             && ($record->locked_until === null || $record->locked_until->isPast())
         ) {
+            Log::warning('Stale idempotency key released', [
+                'user_id' => $user->id,
+                'key_hash' => hash('sha256', $key),
+            ]);
+
             $record->delete();
 
             return true;
