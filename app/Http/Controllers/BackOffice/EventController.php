@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -195,6 +196,13 @@ class EventController extends Controller implements HasMiddleware
         try {
             $event->delete();
         } catch (Exception $e) {
+            report($e);
+
+            Log::error('Event deletion failed', [
+                'event_id' => $event->id,
+                'exception' => $e,
+            ]);
+
             return back()->with('error', 'Unable to delete event. Please try again later.');
         }
 

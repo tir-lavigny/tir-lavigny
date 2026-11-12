@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -81,6 +82,11 @@ class ProductController extends Controller implements HasMiddleware
         try {
             $product->update($request->validated());
         } catch (HttpExceptionInterface $e) {
+            Log::warning('Product update blocked', [
+                'product_id' => $product->id,
+                'reason' => $e->getMessage(),
+            ]);
+
             return back()->with('error', $e->getMessage());
         }
 
@@ -92,6 +98,11 @@ class ProductController extends Controller implements HasMiddleware
         try {
             $product->delete();
         } catch (HttpExceptionInterface $e) {
+            Log::warning('Product deletion blocked', [
+                'product_id' => $product->id,
+                'reason' => $e->getMessage(),
+            ]);
+
             return back()->with('error', $e->getMessage());
         }
 
