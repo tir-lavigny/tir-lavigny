@@ -376,7 +376,7 @@ class CashMovementControllerTest extends TestCase
         ]);
 
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $payload = ['direction' => 'in', 'amount' => 10, 'occurred_at' => '2026-05-02'];

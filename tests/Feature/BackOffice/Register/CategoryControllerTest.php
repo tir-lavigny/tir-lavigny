@@ -133,7 +133,7 @@ class CategoryControllerTest extends TestCase
     public function test_store_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $response = $this->post(route('bo.register.categories.store'), [

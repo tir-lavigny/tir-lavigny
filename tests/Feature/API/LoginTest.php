@@ -2,12 +2,20 @@
 
 namespace Tests\Feature\API;
 
+use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class LoginTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolesAndPermissionsSeeder::class);
+    }
 
     public function test_cannot_login_without_required_fields(): void
     {
@@ -68,6 +76,53 @@ class LoginTest extends TestCase
         $accessToken = $response->decodeResponseJson()['accessToken'];
 
         $this->assertTrue(AuthTestHelper::verifyAccessToken($accessToken));
+
+        AuthTestHelper::clearUser($user);
+    }
+
+    public function test_cannot_login_without_register_access(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->postJson(route('api.login'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertForbidden();
+        $response->assertJson([
+            'message' => 'This account cannot access the register.',
+        ]);
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_cashier_manager_can_login(): void
+    {
+        $user = AuthTestHelper::mockUser();
+        $user->syncRoles('cashier manager');
+
+        $response = $this->postJson(route('api.login'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertOk();
+
+        AuthTestHelper::clearUser($user);
+    }
+
+    public function test_accountant_can_login(): void
+    {
+        $user = AuthTestHelper::mockUser();
+        $user->syncRoles('accountant');
+
+        $response = $this->postJson(route('api.login'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertOk();
 
         AuthTestHelper::clearUser($user);
     }
@@ -135,6 +190,24 @@ class LoginTest extends TestCase
         $accessToken = $response->decodeResponseJson()['accessToken'];
 
         $this->assertTrue(AuthTestHelper::verifyAccessToken($accessToken));
+
+        AuthTestHelper::clearUser($user);
+    }
+
+    public function test_cannot_refresh_token_without_register_access(): void
+    {
+        $user = AuthTestHelper::mockUser();
+        $tokens = AuthTestHelper::generateTokens($user);
+        $user->removeRole('cashier');
+
+        $response = $this
+            ->withUnencryptedCookie('refreshToken', $tokens['refreshToken'])
+            ->withCredentials()
+            ->withHeader('Authorization', 'Bearer '.$tokens['accessToken'])
+            ->postJson(route('api.refresh'));
+
+        $response->assertForbidden();
+        $this->assertDatabaseCount('personal_access_tokens', 0);
 
         AuthTestHelper::clearUser($user);
     }

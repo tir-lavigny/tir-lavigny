@@ -4,7 +4,7 @@ import NavMain from '@/components/NavMain.vue';
 import NavMainCollapsible from '@/components/NavMainCollapsible.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { hasPermissionTo, hasRole } from '@/lib/utils';
+import { hasAnyPermission, hasPermissionTo, hasRole } from '@/lib/utils';
 import type { SharedData } from '@/types';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
@@ -44,36 +44,60 @@ const mainNavItems: NavItem[] = [
         href: route('dashboard'),
         icon: LayoutGrid,
     },
-    {
-        title: 'Événements',
-        href: route('bo.events.index'),
-        icon: Calendar,
-    },
-    {
-        title: "Séries d'événements",
-        href: route('bo.event-chains.index'),
-        icon: Repeat,
-    },
-    {
-        title: 'Communications',
-        href: route('bo.posts.index'),
-        icon: Newspaper,
-    },
-    {
-        title: 'Utilisateurs',
-        href: route('bo.users.index'),
-        icon: Users,
-    },
-    {
-        title: 'Lieux',
-        href: route('locations.index'),
-        icon: MapPin,
-    },
-    {
-        title: 'Contenu template',
-        href: route('contents.index'),
-        icon: FileText,
-    },
+    ...(hasAnyPermission(user, ['create event', 'edit event', 'delete event'])
+        ? [
+              {
+                  title: 'Événements',
+                  href: route('bo.events.index'),
+                  icon: Calendar,
+              },
+          ]
+        : []),
+    ...(hasAnyPermission(user, ['create event chain', 'edit event chain', 'delete event chain'])
+        ? [
+              {
+                  title: "Séries d'événements",
+                  href: route('bo.event-chains.index'),
+                  icon: Repeat,
+              },
+          ]
+        : []),
+    ...(hasAnyPermission(user, ['create post', 'edit post', 'delete post'])
+        ? [
+              {
+                  title: 'Communications',
+                  href: route('bo.posts.index'),
+                  icon: Newspaper,
+              },
+          ]
+        : []),
+    ...(hasAnyPermission(user, ['create user', 'edit user', 'delete user'])
+        ? [
+              {
+                  title: 'Utilisateurs',
+                  href: route('bo.users.index'),
+                  icon: Users,
+              },
+          ]
+        : []),
+    ...(hasAnyPermission(user, ['create location', 'edit location', 'delete location'])
+        ? [
+              {
+                  title: 'Lieux',
+                  href: route('locations.index'),
+                  icon: MapPin,
+              },
+          ]
+        : []),
+    ...(hasAnyPermission(user, ['create content', 'edit content', 'delete content'])
+        ? [
+              {
+                  title: 'Contenu template',
+                  href: route('contents.index'),
+                  icon: FileText,
+              },
+          ]
+        : []),
 ];
 
 const registerNavItems: NavItem[] = [

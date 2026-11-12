@@ -66,4 +66,49 @@ class CategoryControllerTest extends TestCase
 
         $response->assertUnauthorized();
     }
+
+    public function test_index_requires_register_access(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('editor');
+        $tokens = AuthTestHelper::generateTokens($user);
+
+        $response = $this->getJson(route('api.register.categories.index'), [
+            'Authorization' => 'Bearer '.$tokens['accessToken'],
+        ]);
+
+        $response->assertForbidden();
+
+        AuthTestHelper::clearUser($user);
+    }
+
+    public function test_cashier_manager_can_access_register_routes(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('cashier manager');
+        $tokens = AuthTestHelper::generateTokens($user);
+
+        $response = $this->getJson(route('api.register.categories.index'), [
+            'Authorization' => 'Bearer '.$tokens['accessToken'],
+        ]);
+
+        $response->assertOk();
+
+        AuthTestHelper::clearUser($user);
+    }
+
+    public function test_accountant_can_access_register_routes(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('accountant');
+        $tokens = AuthTestHelper::generateTokens($user);
+
+        $response = $this->getJson(route('api.register.categories.index'), [
+            'Authorization' => 'Bearer '.$tokens['accessToken'],
+        ]);
+
+        $response->assertOk();
+
+        AuthTestHelper::clearUser($user);
+    }
 }

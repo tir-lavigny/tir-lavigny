@@ -19,11 +19,25 @@ class SharedPropsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolesAndPermissionsSeeder::class);
+    }
+
+    private function backOfficeUser(): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole('editor');
+
+        return $user;
+    }
+
     // ─── name ────────────────────────────────────────────────────────────────
 
     public function test_name_prop_is_the_application_name(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->get('/back-office/dashboard')
@@ -37,7 +51,7 @@ class SharedPropsTest extends TestCase
 
     public function test_quote_prop_contains_message_and_author(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->get('/back-office/dashboard')
@@ -50,7 +64,7 @@ class SharedPropsTest extends TestCase
 
     public function test_quote_message_and_author_are_non_empty_strings(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->get('/back-office/dashboard')
@@ -74,7 +88,7 @@ class SharedPropsTest extends TestCase
 
     public function test_auth_user_contains_correct_id_and_email_for_authenticated_user(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->get('/back-office/dashboard')
@@ -88,8 +102,6 @@ class SharedPropsTest extends TestCase
 
     public function test_auth_user_includes_roles_relationship(): void
     {
-        $this->seed(RolesAndPermissionsSeeder::class);
-
         $user = User::factory()->create();
         $user->assignRole('admin');
 
@@ -103,7 +115,7 @@ class SharedPropsTest extends TestCase
 
     public function test_auth_user_password_is_not_exposed(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->get('/back-office/dashboard')
@@ -116,7 +128,7 @@ class SharedPropsTest extends TestCase
 
     public function test_ziggy_prop_is_present(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->get('/back-office/dashboard')
@@ -127,7 +139,7 @@ class SharedPropsTest extends TestCase
 
     public function test_ziggy_location_reflects_current_url(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->get('/back-office/dashboard')
@@ -138,7 +150,7 @@ class SharedPropsTest extends TestCase
 
     public function test_ziggy_contains_named_routes(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->get('/back-office/dashboard')
@@ -152,7 +164,7 @@ class SharedPropsTest extends TestCase
 
     public function test_sidebar_is_open_by_default_when_no_cookie(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->get('/back-office/dashboard')
@@ -163,7 +175,7 @@ class SharedPropsTest extends TestCase
 
     public function test_sidebar_is_open_when_cookie_is_true(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->withUnencryptedCookie('sidebar_state', 'true')
@@ -175,7 +187,7 @@ class SharedPropsTest extends TestCase
 
     public function test_sidebar_is_closed_when_cookie_is_false(): void
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
 
         $this->actingAs($user)
             ->withUnencryptedCookie('sidebar_state', 'false')

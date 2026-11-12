@@ -249,7 +249,7 @@ class OperatingDayControllerTest extends TestCase
     public function test_update_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $season = Season::factory()->create();
@@ -323,7 +323,7 @@ class OperatingDayControllerTest extends TestCase
     public function test_store_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $season = Season::factory()->create();

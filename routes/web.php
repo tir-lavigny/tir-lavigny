@@ -41,7 +41,7 @@ Route::get('/member-registration', function () {
     abort(404);
 });
 
-Route::prefix('back-office')->middleware(['auth', 'verified'])->group(function () {
+Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access backoffice'])->group(function () {
     Route::get('/', function () {
         return redirect()->route('dashboard');
     })->name('back-office');
