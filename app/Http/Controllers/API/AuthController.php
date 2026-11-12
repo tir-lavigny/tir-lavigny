@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\DTOs\TokenData;
+use App\Enums\AppAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\TokenResource;
@@ -33,7 +34,20 @@ class AuthController extends Controller
             return $this->error('Wrong credentials.', 401);
         }
 
-        $user = Auth::user()?->load('roles', 'roles.permissions');
+        $user = Auth::user();
+
+        if (! $user instanceof User || ! $user->canAccessApp(AppAccess::Register)) {
+            Auth::guard('web')->logout();
+
+            Log::warning('API login denied: no register access', [
+                'email_hash' => hash('sha256', strtolower((string) $credentials['email'])),
+                'ip' => $request->ip(),
+            ]);
+
+            return $this->error('This account cannot access the register.', 403);
+        }
+
+        $user->load('roles', 'roles.permissions');
         $tokens = $this->generateTokens($user);
 
         return (new TokenResource(new TokenData($tokens['accessToken'], $user)))
@@ -43,8 +57,16 @@ class AuthController extends Controller
 
     public function refresh(Request $request): JsonResponse
     {
-        $request->user()->tokens()->delete();
-        $tokens = $this->generateTokens($request->user());
+        $user = $request->user();
+
+        if (! $user instanceof User || ! $user->canAccessApp(AppAccess::Register)) {
+            $user?->tokens()->delete();
+
+            return $this->error('This account cannot access the register.', 403);
+        }
+
+        $user->tokens()->delete();
+        $tokens = $this->generateTokens($user);
 
         return (new TokenResource(new TokenData($tokens['accessToken'])))
             ->response()
