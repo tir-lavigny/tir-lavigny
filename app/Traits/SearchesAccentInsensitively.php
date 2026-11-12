@@ -29,6 +29,8 @@ trait SearchesAccentInsensitively
         $driver = $connection instanceof Connection ? $connection->getDriverName() : null;
         $term = $driver === 'sqlite' ? Str::lower(Str::ascii($search)) : $search;
 
+        $this->registerSqliteUnaccent($query);
+
         $query->where(function (Builder $query) use ($columns, $driver, $term): void {
             foreach ($columns as $column) {
                 $query->orWhere(new Expression($this->accentInsensitiveExpression($column, $driver)), 'LIKE', "%{$term}%");
@@ -47,9 +49,31 @@ trait SearchesAccentInsensitively
         $connection = $query->getConnection();
         $driver = $connection instanceof Connection ? $connection->getDriverName() : null;
 
+        $this->registerSqliteUnaccent($query);
+
         foreach ($columns as $column) {
             $query->orderBy(new Expression($this->accentInsensitiveExpression($column, $driver)));
         }
+    }
+
+    /**
+     * @template TModel of Model
+     *
+     * @param  Builder<TModel>  $query
+     */
+    private function registerSqliteUnaccent(Builder $query): void
+    {
+        $connection = $query->getConnection();
+
+        if (! $connection instanceof Connection || $connection->getDriverName() !== 'sqlite') {
+            return;
+        }
+
+        $connection->getPdo()->sqliteCreateFunction(
+            'unaccent',
+            fn (?string $value): ?string => $value === null ? null : Str::lower(Str::ascii($value)),
+            1,
+        );
     }
 
     /**

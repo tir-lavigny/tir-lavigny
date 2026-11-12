@@ -6,10 +6,7 @@ use App\Services\DavServiceInterface;
 use App\Services\InfomaniakDavService;
 use App\Services\StubDavService;
 use App\TokenAbility;
-use Illuminate\Database\Events\ConnectionEstablished;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
@@ -34,22 +31,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->overrideSanctumConfigurationToSupportRefreshToken();
-        $this->registerSqliteUnaccentFunction();
-    }
-
-    private function registerSqliteUnaccentFunction(): void
-    {
-        Event::listen(ConnectionEstablished::class, function (ConnectionEstablished $event): void {
-            if ($event->connection->getDriverName() !== 'sqlite') {
-                return;
-            }
-
-            $event->connection->getPdo()->sqliteCreateFunction(
-                'unaccent',
-                fn (?string $value): ?string => $value === null ? null : Str::lower(Str::ascii($value)),
-                1,
-            );
-        });
     }
 
     private function overrideSanctumConfigurationToSupportRefreshToken(): void
