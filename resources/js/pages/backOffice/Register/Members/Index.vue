@@ -6,12 +6,12 @@ import { Muted } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useListFilters } from '@/composables/useListFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedMembers, SharedData } from '@/types';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { Pencil, Search, TicketX, Trash2, Eye } from '@lucide/vue';
-import { ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
 const page = usePage<SharedData>();
@@ -27,19 +27,9 @@ const props = withDefaults(
     { filters: () => ({}) },
 );
 
-const filters = ref({ search: props.filters.search || '' });
-
-const handlePageChange = (p: number = 1) => {
-    router.get(route('bo.register.members.index'), { page: p, search: filters.value.search }, { preserveState: true, preserveScroll: true });
-};
-
-watch(
-    filters,
-    (f) => {
-        router.get(route('bo.register.members.index'), { page: 1, search: f.search }, { preserveState: true, preserveScroll: true });
-    },
-    { deep: true },
-);
+const { filters, visit } = useListFilters('bo.register.members.index', {
+    search: props.filters.search || '',
+});
 
 const handleDelete = (id: number) => {
     useForm({}).delete(route('bo.register.members.destroy', id), {
@@ -118,10 +108,10 @@ const handleDelete = (id: number) => {
                     :total-items="members.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="members.current_page"
+                    :page="members.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
-                    @page-changed="handlePageChange"
+                    @page-changed="visit"
                 />
             </div>
         </div>

@@ -280,7 +280,7 @@ const handlePageChange = (p: number = 1) => {
                     :total-items="paginatedEvents.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="paginatedEvents.current_page"
+                    :page="paginatedEvents.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
                     @page-changed="handlePageChange"

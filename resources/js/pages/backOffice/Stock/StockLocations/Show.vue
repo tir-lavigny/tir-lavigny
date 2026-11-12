@@ -183,7 +183,7 @@ const handleCompact = () => {
                 :total-items="movements.total"
                 :sibling-count="1"
                 :show-edges="true"
-                :default-page="movements.current_page"
+                :page="movements.current_page"
                 :show-prev-next="true"
                 :show-first-last="false"
                 @page-changed="handlePageChange"

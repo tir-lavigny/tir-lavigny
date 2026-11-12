@@ -145,7 +145,7 @@ const statusLabel = (registration: any) => {
                     :total-items="registrations.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="registrations.current_page"
+                    :page="registrations.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
                     @page-changed="handlePageChange"
