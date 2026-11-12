@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Traits\ConvertsLocalDatetimes;
+use App\Traits\SearchesAccentInsensitively;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ use Inertia\Response;
 class PostController extends Controller implements HasMiddleware
 {
     use ConvertsLocalDatetimes;
+    use SearchesAccentInsensitively;
 
     public static function middleware(): array
     {
@@ -36,12 +38,7 @@ class PostController extends Controller implements HasMiddleware
 
         $query = Post::query();
 
-        if ($search) {
-            $search = strtolower($search);
-            $query->where(function ($query) use ($search) {
-                $query->where('title', 'LIKE', "%{$search}%");
-            });
-        }
+        $this->whereAccentInsensitiveLike($query, ['title'], $search);
 
         $query->orderBy('publish_at', 'desc');
 

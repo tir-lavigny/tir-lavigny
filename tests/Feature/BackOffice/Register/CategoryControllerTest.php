@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class CategoryControllerTest extends TestCase
@@ -32,6 +33,20 @@ class CategoryControllerTest extends TestCase
         $response = $this->get(route('bo.register.categories.index'));
 
         $response->assertOk();
+    }
+
+    public function test_index_searches_categories_without_accents(): void
+    {
+        Category::factory()->create(['name' => 'Bière']);
+        Category::factory()->create(['name' => 'Tir']);
+
+        $response = $this->get(route('bo.register.categories.index', ['search' => 'biere']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('categories.data', 1)
+            ->where('categories.data.0.name', 'Bière')
+            ->where('filters.search', 'biere')
+        );
     }
 
     public function test_store_creates_category(): void

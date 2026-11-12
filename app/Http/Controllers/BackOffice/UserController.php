@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice;
 use App\Http\Controllers\Controller;
 use App\Mail\UserCreated;
 use App\Models\User;
+use App\Traits\SearchesAccentInsensitively;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,8 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller implements HasMiddleware
 {
+    use SearchesAccentInsensitively;
+
     public static function middleware(): array
     {
         return [
@@ -40,13 +43,7 @@ class UserController extends Controller implements HasMiddleware
         $query = User::query();
         $query->with('roles');
 
-        if ($search) {
-            $search = strtolower($search);
-            $query->where(function ($query) use ($search) {
-                $query->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('email', 'LIKE', "%{$search}%");
-            });
-        }
+        $this->whereAccentInsensitiveLike($query, ['name', 'email'], $search);
 
         $query->orderBy('created_at', 'desc');
 

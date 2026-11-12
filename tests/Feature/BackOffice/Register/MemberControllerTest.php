@@ -57,6 +57,20 @@ class MemberControllerTest extends TestCase
         );
     }
 
+    public function test_index_searches_members_without_accents(): void
+    {
+        Member::factory()->create(['first_name' => 'Émile', 'last_name' => 'Généreux']);
+        Member::factory()->create(['first_name' => 'Zoe', 'last_name' => 'Bernard']);
+
+        $response = $this->get(route('bo.register.members.index', ['search' => 'emile']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('members.data', 1)
+            ->where('members.data.0.first_name', 'Émile')
+            ->where('filters.search', 'emile')
+        );
+    }
+
     public function test_edit_returns_form(): void
     {
         $member = Member::factory()->create();

@@ -13,6 +13,7 @@ use App\Models\Voucher;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class SeasonControllerTest extends TestCase
@@ -37,6 +38,20 @@ class SeasonControllerTest extends TestCase
         $response = $this->get(route('bo.register.seasons.index'));
 
         $response->assertOk();
+    }
+
+    public function test_index_searches_seasons_without_accents(): void
+    {
+        Season::factory()->create(['name' => 'Été 2026']);
+        Season::factory()->create(['name' => 'Hiver 2026']);
+
+        $response = $this->get(route('bo.register.seasons.index', ['search' => 'ete']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('seasons.data', 1)
+            ->where('seasons.data.0.name', 'Été 2026')
+            ->where('filters.search', 'ete')
+        );
     }
 
     public function test_store_creates_season(): void

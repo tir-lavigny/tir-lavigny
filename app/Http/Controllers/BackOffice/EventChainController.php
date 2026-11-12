@@ -9,6 +9,7 @@ use App\Models\EventChain;
 use App\Models\Location;
 use App\Services\EventChainGeneratorService;
 use App\Services\EventChainUpdaterService;
+use App\Traits\SearchesAccentInsensitively;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,8 @@ use Inertia\Response;
 
 class EventChainController extends Controller implements HasMiddleware
 {
+    use SearchesAccentInsensitively;
+
     public static function middleware(): array
     {
         return [
@@ -35,9 +38,10 @@ class EventChainController extends Controller implements HasMiddleware
     {
         $search = $request->input('search');
 
-        $chains = EventChain::with('location')
-            ->withCount('events')
-            ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
+        $query = EventChain::with('location')->withCount('events');
+        $this->whereAccentInsensitiveLike($query, ['title'], $search);
+
+        $chains = $query
             ->orderBy('start_date')
             ->paginate(10)
             ->withQueryString();

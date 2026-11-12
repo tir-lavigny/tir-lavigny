@@ -370,6 +370,19 @@ class EventTest extends TestCase
         $response->assertDontSee('Non-Matching Event');
     }
 
+    public function test_index_searches_events_without_accents(): void
+    {
+        Event::factory()->create(['title' => 'Fête annuelle']);
+        Event::factory()->create(['title' => 'Tir sportif']);
+
+        $response = $this->get(route('bo.events.index', ['search' => 'fete']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('paginatedEvents.data', 1)
+            ->where('paginatedEvents.data.0.title', 'Fête annuelle')
+        );
+    }
+
     public function test_index_filters_events_by_past(): void
     {
         Event::factory()->create(['start_datetime' => now()->subDays(5)]);

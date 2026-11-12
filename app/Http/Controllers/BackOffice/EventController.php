@@ -10,19 +10,20 @@ use App\Models\Event;
 use App\Models\Location;
 use App\Services\EventService;
 use App\Traits\ConvertsLocalDatetimes;
+use App\Traits\SearchesAccentInsensitively;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class EventController extends Controller implements HasMiddleware
 {
     use ConvertsLocalDatetimes;
+    use SearchesAccentInsensitively;
 
     public static function middleware(): array
     {
@@ -43,12 +44,11 @@ class EventController extends Controller implements HasMiddleware
         $query = Event::query();
         $query->with('location');
 
-        if ($search) {
-            $search = Str::lower($search);
-            $query->where(function ($query) use ($search) {
-                $query->where('title', 'LIKE', "%{$search}%");
-                $query->orWhereHas('location', function ($query) use ($search) {
-                    $query->where('name', 'LIKE', "%{$search}%");
+        if (trim((string) $search) !== '') {
+            $query->where(function ($query) use ($search): void {
+                $this->whereAccentInsensitiveLike($query, ['title'], $search);
+                $query->orWhereHas('location', function ($query) use ($search): void {
+                    $this->whereAccentInsensitiveLike($query, ['name'], $search);
                 });
             });
         }

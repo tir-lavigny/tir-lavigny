@@ -64,7 +64,7 @@ class TrashController extends Controller implements HasMiddleware
             'tickets' => $tickets,
             'vouchers' => $vouchers,
             'memberFilter' => (int) $memberId,
-            'allMembers' => Member::withTrashed()->orderBy('first_name')->orderBy('last_name')->get(['id', 'first_name', 'last_name']),
+            'allMembers' => Member::withTrashed()->orderByName()->get(['id', 'first_name', 'last_name']),
         ]);
     }
 
