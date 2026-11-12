@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\Feature\API\AuthTestHelper;
@@ -126,6 +127,8 @@ class OperatingDayControllerTest extends TestCase
 
     public function test_update_closes_open_day(): void
     {
+        Log::spy();
+
         $season = Season::factory()->create([
             'start_date' => Carbon::now()->startOfYear(),
             'end_date' => Carbon::now()->endOfYear(),
@@ -142,6 +145,13 @@ class OperatingDayControllerTest extends TestCase
         $response->assertOk();
         $this->assertNotNull($day->fresh()->closed_at);
         $this->assertNotNull($day->fresh()->closing_balance);
+
+        Log::shouldHaveReceived('info')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Operating day closed'
+                && $context['operating_day_id'] === $day->id
+                && $context['season_id'] === $season->id
+                && $context['cash_remark_present'] === false
+        );
     }
 
     public function test_update_reopens_closed_day(): void

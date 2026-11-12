@@ -12,9 +12,8 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-
-use function Illuminate\Log\log;
 
 class OperatingDayController extends Controller
 {
@@ -24,6 +23,12 @@ class OperatingDayController extends Controller
             'date' => Carbon::today('Europe/Zurich')->toDateString(),
             'started_at' => Carbon::now('Europe/Zurich')->utc(),
             'season_id' => $request->input('season_id'),
+        ]);
+
+        Log::info('Operating day opened', [
+            'operating_day_id' => $day->id,
+            'date' => $day->date->toDateString(),
+            'season_id' => $day->season_id,
         ]);
 
         return response()->json(['data' => new OperatingDayResource($day)], 201);
@@ -48,18 +53,43 @@ class OperatingDayController extends Controller
                 ]);
             });
 
+            Log::info('Operating day closed', [
+                'operating_day_id' => $operatingDay->id,
+                'season_id' => $operatingDay->season_id,
+                'date' => $operatingDay->date->toDateString(),
+                'total_cash' => $operatingDay->total_cash,
+                'total_twint' => $operatingDay->total_twint,
+                'closing_balance' => $operatingDay->closing_balance,
+                'cash_remark_present' => filled($cash_remark),
+            ]);
+
             if (! empty($cash_remark)) {
                 try {
                     Mail::to(User::getRegisterCloseOperatingDayRemarkEmails())->send(new OperatingDayClosed($operatingDay));
                 } catch (\Throwable $e) {
-                    // Don't fail the close if email fails
-                    log('error', ['exception' => $e->getMessage()]);
+                    report($e);
+
+                    Log::error('Operating day close remark email failed', [
+                        'operating_day_id' => $operatingDay->id,
+                        'exception' => $e,
+                    ]);
                 }
             }
         } elseif ($status === 'open') {
             $operatingDay->update(['closed_at' => null, 'closing_balance' => null]);
+
+            Log::warning('Operating day reopened', [
+                'operating_day_id' => $operatingDay->id,
+                'season_id' => $operatingDay->season_id,
+                'date' => $operatingDay->date->toDateString(),
+            ]);
         } else {
             $operatingDay->update($request->only(['cash_remark']));
+
+            Log::info('Operating day cash remark updated', [
+                'operating_day_id' => $operatingDay->id,
+                'cash_remark_present' => filled($operatingDay->cash_remark),
+            ]);
         }
 
         return response()->json(['data' => new OperatingDayResource($operatingDay->fresh())]);

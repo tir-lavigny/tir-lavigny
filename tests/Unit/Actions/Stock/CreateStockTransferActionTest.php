@@ -12,6 +12,7 @@ use App\Models\StockMovement;
 use App\Models\StockTransfer;
 use App\Services\StockService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use LogicException;
 use Tests\TestCase;
 
@@ -32,6 +33,8 @@ class CreateStockTransferActionTest extends TestCase
 
     public function test_creates_transfer(): void
     {
+        Log::spy();
+
         $season = Season::factory()->create();
         $from = StockLocation::factory()->create();
         $to = StockLocation::factory()->create();
@@ -60,6 +63,15 @@ class CreateStockTransferActionTest extends TestCase
             'season_id' => $season->id,
             'reason' => 'Restock',
         ]);
+
+        Log::shouldHaveReceived('info')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Stock transfer created'
+                && $context['stock_transfer_id'] === $transfer->id
+                && $context['from_location_id'] === $from->id
+                && $context['to_location_id'] === $to->id
+                && $context['line_count'] === 1
+                && $context['total_quantity'] === 10
+        );
     }
 
     public function test_creates_transfer_lines(): void
