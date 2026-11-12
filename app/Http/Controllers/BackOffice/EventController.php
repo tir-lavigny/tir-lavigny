@@ -55,11 +55,11 @@ class EventController extends Controller implements HasMiddleware
 
         if ($past) {
             $query->where('start_datetime', '<', now()->startOfDay());
+            $query->orderByDesc('start_datetime');
         } else {
             $query->where('start_datetime', '>=', now()->startOfDay());
+            $query->orderBy('start_datetime');
         }
-
-        $query->orderBy('start_datetime');
 
         $data = $query->paginate(5)->withQueryString();
 

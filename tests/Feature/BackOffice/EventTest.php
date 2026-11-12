@@ -9,6 +9,7 @@ use App\Models\Location;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class EventTest extends TestCase
@@ -379,6 +380,19 @@ class EventTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee(now()->subDays(5)->format('Y-m-d'));
         $response->assertDontSee(now()->addDays(5)->format('Y-m-d'));
+    }
+
+    public function test_index_returns_most_recent_past_events_first(): void
+    {
+        $olderEvent = Event::factory()->create(['start_datetime' => now()->subDays(10)]);
+        $newerEvent = Event::factory()->create(['start_datetime' => now()->subDays(2)]);
+
+        $response = $this->get(route('bo.events.index', ['past' => true]));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('paginatedEvents.data.0.id', $newerEvent->id)
+            ->where('paginatedEvents.data.1.id', $olderEvent->id)
+        );
     }
 
     public function test_index_filters_events_by_upcoming_by_default(): void

@@ -24,7 +24,7 @@ class MemberController extends Controller implements HasMiddleware
 
     public function index(): Response
     {
-        $members = Member::orderBy('last_name')->paginate(15);
+        $members = Member::orderBy('first_name')->orderBy('last_name')->paginate(15);
 
         return Inertia::render('backOffice/Register/Members/Index', [
             'members' => $members,
