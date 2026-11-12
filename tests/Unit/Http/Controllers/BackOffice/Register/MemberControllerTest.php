@@ -5,6 +5,7 @@ namespace Tests\Unit\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\BackOffice\Register\MemberController;
 use App\Models\Member;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Inertia\Response;
 use Tests\TestCase;
 
@@ -24,7 +25,7 @@ class MemberControllerTest extends TestCase
     {
         Member::factory()->count(3)->create();
 
-        $response = $this->controller->index();
+        $response = $this->controller->index(new Request);
 
         $this->assertInstanceOf(Response::class, $response);
     }

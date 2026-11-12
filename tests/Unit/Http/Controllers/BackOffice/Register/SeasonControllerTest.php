@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
@@ -32,7 +33,7 @@ class SeasonControllerTest extends TestCase
     {
         Season::factory()->count(3)->create();
 
-        $response = $this->controller->index();
+        $response = $this->controller->index(new Request);
 
         $this->assertInstanceOf(Response::class, $response);
     }
