@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\OperatingDay;
 use App\Models\Season;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -12,6 +13,20 @@ use Tests\TestCase;
 class DashboardTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolesAndPermissionsSeeder::class);
+    }
+
+    private function backOfficeUser(): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole('editor');
+
+        return $user;
+    }
 
     public function test_guests_are_redirected_to_the_login_page()
     {
@@ -21,7 +36,7 @@ class DashboardTest extends TestCase
 
     public function test_authenticated_users_can_visit_the_dashboard()
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
         $this->actingAs($user);
 
         $response = $this->get('back-office/dashboard');
@@ -30,7 +45,7 @@ class DashboardTest extends TestCase
 
     public function test_daily_sales_is_empty_when_no_current_season()
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
         $this->actingAs($user);
 
         Season::factory()->create([
@@ -47,7 +62,7 @@ class DashboardTest extends TestCase
 
     public function test_daily_sales_returns_cash_and_twint_totals_per_day()
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
         $this->actingAs($user);
 
         $season = Season::factory()->create([
@@ -83,7 +98,7 @@ class DashboardTest extends TestCase
 
     public function test_daily_sales_ignores_operating_days_from_other_seasons()
     {
-        $user = User::factory()->create();
+        $user = $this->backOfficeUser();
         $this->actingAs($user);
 
         $currentSeason = Season::factory()->create([

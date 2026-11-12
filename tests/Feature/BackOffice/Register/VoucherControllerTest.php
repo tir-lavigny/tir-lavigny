@@ -137,7 +137,7 @@ class VoucherControllerTest extends TestCase
     public function test_store_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $category = Category::factory()->create(['is_restricted' => false]);

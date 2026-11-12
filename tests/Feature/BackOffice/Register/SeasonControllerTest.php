@@ -270,7 +270,7 @@ class SeasonControllerTest extends TestCase
     public function test_store_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $response = $this->post(route('bo.register.seasons.store'), [
@@ -304,7 +304,7 @@ class SeasonControllerTest extends TestCase
     public function test_preview_requires_manage_seasons_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $season = Season::factory()->create();
@@ -468,7 +468,7 @@ class SeasonControllerTest extends TestCase
     public function test_generate_requires_manage_seasons_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $season = Season::factory()->create();

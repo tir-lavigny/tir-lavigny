@@ -28,6 +28,7 @@ class DavControllerTest extends TestCase
         $this->admin->assignRole('admin');
 
         $this->user = User::factory()->create();
+        $this->user->givePermissionTo('access backoffice');
     }
 
     protected function tearDown(): void

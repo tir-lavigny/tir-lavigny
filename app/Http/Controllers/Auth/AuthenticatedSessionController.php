@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\AppAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,6 +32,15 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
+
+        if (! Auth::user()?->canAccessApp(AppAccess::BackOffice)) {
+            Auth::guard('web')->logout();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => __('auth.no_backoffice_access'),
+            ]);
+        }
 
         $request->session()->regenerate();
 

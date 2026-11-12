@@ -49,7 +49,7 @@ class StockLocationControllerTest extends TestCase
     public function test_index_requires_manage_stock_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $response = $this->get(route('bo.stock.locations.index'));
@@ -71,7 +71,7 @@ class StockLocationControllerTest extends TestCase
     public function test_create_requires_manage_stock_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $response = $this->get(route('bo.stock.locations.create'));
@@ -160,7 +160,7 @@ class StockLocationControllerTest extends TestCase
     public function test_store_requires_manage_stock_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $response = $this->post(route('bo.stock.locations.store'), [
@@ -265,7 +265,7 @@ class StockLocationControllerTest extends TestCase
     public function test_edit_requires_manage_stock_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
         $location = StockLocation::factory()->create();
 
@@ -342,7 +342,7 @@ class StockLocationControllerTest extends TestCase
     public function test_update_requires_manage_stock_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
         $location = StockLocation::factory()->create();
 
@@ -487,7 +487,7 @@ class StockLocationControllerTest extends TestCase
     public function test_compact_requires_manage_stock_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
         $location = StockLocation::factory()->create();
 

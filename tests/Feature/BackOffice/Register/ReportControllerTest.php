@@ -93,7 +93,7 @@ class ReportControllerTest extends TestCase
     public function test_reports_require_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $season = Season::factory()->create();

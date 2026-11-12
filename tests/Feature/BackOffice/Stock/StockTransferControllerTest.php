@@ -57,7 +57,7 @@ class StockTransferControllerTest extends TestCase
     public function test_create_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $response = $this->get(route('bo.stock.transfers.create'));
@@ -194,7 +194,7 @@ class StockTransferControllerTest extends TestCase
     public function test_store_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $fromLocation = StockLocation::factory()->create();

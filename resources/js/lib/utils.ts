@@ -72,6 +72,10 @@ export const hasPermissionTo = (user: User, permission: string) => {
     return false;
 };
 
+export const hasAnyPermission = (user: User, permissions: string[]) => {
+    return permissions.some((permission) => hasPermissionTo(user, permission));
+};
+
 export function formatMoney(value: unknown): string {
     return Number(value).toFixed(2);
 }

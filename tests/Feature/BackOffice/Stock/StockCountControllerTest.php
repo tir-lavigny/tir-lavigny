@@ -57,7 +57,7 @@ class StockCountControllerTest extends TestCase
     public function test_create_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $response = $this->get(route('bo.stock.counts.create'));
@@ -125,7 +125,7 @@ class StockCountControllerTest extends TestCase
     public function test_store_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $response = $this->post(route('bo.stock.counts.store'), [
@@ -320,7 +320,7 @@ class StockCountControllerTest extends TestCase
     public function test_complete_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $count = StockCount::factory()->create();
