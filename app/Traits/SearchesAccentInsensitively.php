@@ -2,9 +2,12 @@
 
 namespace App\Traits;
 
+use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 trait SearchesAccentInsensitively
 {
@@ -22,18 +25,13 @@ trait SearchesAccentInsensitively
             return;
         }
 
-        $driver = $query->getConnection()->getConfig('driver');
-        $grammar = $query->getQuery()->getGrammar();
+        $connection = $query->getConnection();
+        $driver = $connection instanceof Connection ? $connection->getDriverName() : null;
         $term = $driver === 'sqlite' ? Str::lower(Str::ascii($search)) : $search;
 
-        $query->where(function (Builder $query) use ($columns, $driver, $grammar, $term): void {
+        $query->where(function (Builder $query) use ($columns, $driver, $term): void {
             foreach ($columns as $column) {
-                $wrappedColumn = $grammar->wrap($column);
-                $expression = $driver === 'sqlite'
-                    ? $query->getConnection()->raw("unaccent({$wrappedColumn})")
-                    : $query->getConnection()->raw("{$wrappedColumn} COLLATE utf8mb4_unicode_ci");
-
-                $query->orWhere($expression, 'LIKE', "%{$term}%");
+                $query->orWhere(new Expression($this->accentInsensitiveExpression($column, $driver)), 'LIKE', "%{$term}%");
             }
         });
     }
@@ -46,15 +44,26 @@ trait SearchesAccentInsensitively
      */
     protected function orderByAccentInsensitive(Builder $query, array $columns): void
     {
-        $driver = $query->getConnection()->getConfig('driver');
-        $grammar = $query->getQuery()->getGrammar();
+        $connection = $query->getConnection();
+        $driver = $connection instanceof Connection ? $connection->getDriverName() : null;
 
         foreach ($columns as $column) {
-            $expression = $driver === 'sqlite'
-                ? $query->getConnection()->raw('unaccent('.$grammar->wrap($column).')')
-                : $column;
-
-            $query->orderBy($expression);
+            $query->orderBy(new Expression($this->accentInsensitiveExpression($column, $driver)));
         }
+    }
+
+    /**
+     * @return literal-string
+     */
+    private function accentInsensitiveExpression(string $column, ?string $driver): string
+    {
+        return match ($column) {
+            'first_name' => $driver === 'sqlite' ? 'unaccent(first_name)' : 'first_name COLLATE utf8mb4_unicode_ci',
+            'last_name' => $driver === 'sqlite' ? 'unaccent(last_name)' : 'last_name COLLATE utf8mb4_unicode_ci',
+            'name' => $driver === 'sqlite' ? 'unaccent(name)' : 'name COLLATE utf8mb4_unicode_ci',
+            'title' => $driver === 'sqlite' ? 'unaccent(title)' : 'title COLLATE utf8mb4_unicode_ci',
+            'email' => $driver === 'sqlite' ? 'unaccent(email)' : 'email COLLATE utf8mb4_unicode_ci',
+            default => throw new InvalidArgumentException("Unsupported accent-insensitive column [{$column}]."),
+        };
     }
 }

@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
-use PDO;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,13 +44,7 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            $pdo = $event->connection->getPdo();
-
-            if (! $pdo instanceof PDO) {
-                return;
-            }
-
-            $pdo->sqliteCreateFunction(
+            $event->connection->getPdo()->sqliteCreateFunction(
                 'unaccent',
                 fn (?string $value): ?string => $value === null ? null : Str::lower(Str::ascii($value)),
                 1,
