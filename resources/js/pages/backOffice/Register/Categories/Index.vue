@@ -5,15 +5,14 @@ import { Muted } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useListFilters } from '@/composables/useListFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedCategories, SharedData } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { Pencil, Plus, Search, Trash2 } from '@lucide/vue';
-import { ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
-import { useForm } from '@inertiajs/vue3';
 
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
@@ -28,19 +27,9 @@ const props = withDefaults(
     { filters: () => ({}) },
 );
 
-const filters = ref({ search: props.filters.search || '' });
-
-const handlePageChange = (p: number = 1) => {
-    router.get(route('bo.register.categories.index'), { page: p, search: filters.value.search }, { preserveState: true, preserveScroll: true });
-};
-
-watch(
-    filters,
-    (f) => {
-        router.get(route('bo.register.categories.index'), { page: 1, search: f.search }, { preserveState: true, preserveScroll: true });
-    },
-    { deep: true },
-);
+const { filters, visit } = useListFilters('bo.register.categories.index', {
+    search: props.filters.search || '',
+});
 
 const handleDelete = (id: number) => {
     const form = useForm({});
@@ -118,10 +107,10 @@ const handleDelete = (id: number) => {
                     :total-items="categories.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="categories.current_page"
+                    :page="categories.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
-                    @page-changed="handlePageChange"
+                    @page-changed="visit"
                 />
             </div>
         </div>

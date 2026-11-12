@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class PostTest extends TestCase
@@ -318,6 +319,19 @@ class PostTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Only Matching Event');
         $response->assertDontSee('Non-Matching Event');
+    }
+
+    public function test_index_searches_posts_without_accents(): void
+    {
+        Post::factory()->create(['title' => 'Fête annuelle']);
+        Post::factory()->create(['title' => 'Tir sportif']);
+
+        $response = $this->get(route('bo.posts.index', ['search' => 'fete']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('paginatedPosts.data', 1)
+            ->where('paginatedPosts.data.0.title', 'Fête annuelle')
+        );
     }
 
     public function test_index_pagination_works(): void

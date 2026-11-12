@@ -11,6 +11,7 @@ use App\Models\StockLocation;
 use App\Services\StockService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use LogicException;
 
 class CreateStockCountAction
@@ -34,7 +35,7 @@ class CreateStockCountAction
 
         $stockableProducts = $products->filter(fn (Product $product) => $product->is_stockable);
 
-        return DB::transaction(function () use ($season, $location, $type, $stockableProducts) {
+        $count = DB::transaction(function () use ($season, $location, $type, $stockableProducts) {
             $count = StockCount::create([
                 'season_id' => $season?->id,
                 'stock_location_id' => $location->id,
@@ -53,5 +54,15 @@ class CreateStockCountAction
 
             return $count;
         });
+
+        Log::info('Stock count created', [
+            'stock_count_id' => $count->id,
+            'season_id' => $season?->id,
+            'stock_location_id' => $location->id,
+            'type' => $type->value,
+            'line_count' => $stockableProducts->count(),
+        ]);
+
+        return $count;
     }
 }

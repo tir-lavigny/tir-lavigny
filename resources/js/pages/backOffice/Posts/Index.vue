@@ -6,12 +6,12 @@ import { Muted } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useListFilters } from '@/composables/useListFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import { PaginatedPosts, type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Plus, Search } from '@lucide/vue';
-import { ref, watch } from 'vue';
 
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
@@ -32,41 +32,9 @@ const props = defineProps<{
     };
 }>();
 
-const filters = ref({
+const { filters, visit } = useListFilters('bo.posts.index', {
     search: props.filters.search || '',
 });
-
-const handlePageChange = (page: number = 1) => {
-    router.get(
-        route('bo.posts.index'),
-        {
-            page: page,
-            search: filters.value.search,
-        },
-        {
-            preserveState: true,
-            preserveScroll: true,
-        },
-    );
-};
-
-watch(
-    filters,
-    (newFilters) => {
-        router.get(
-            route('bo.posts.index'),
-            {
-                page: 1,
-                search: newFilters.search,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
-    },
-    { deep: true },
-);
 </script>
 
 <template>
@@ -116,10 +84,10 @@ watch(
                     :total-items="paginatedPosts.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="paginatedPosts.current_page"
+                    :page="paginatedPosts.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
-                    @page-changed="handlePageChange"
+                    @page-changed="visit"
                 />
             </div>
         </div>

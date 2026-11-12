@@ -78,7 +78,7 @@ const handlePageChange = (p: number = 1) => {
                     :total-items="transfers.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="transfers.current_page"
+                    :page="transfers.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
                     @page-changed="handlePageChange"

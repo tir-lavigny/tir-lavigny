@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AppAccess;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Collection;
@@ -48,6 +49,11 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function canAccessApp(AppAccess $app): bool
+    {
+        return $this->can($app->value);
     }
 
     /**

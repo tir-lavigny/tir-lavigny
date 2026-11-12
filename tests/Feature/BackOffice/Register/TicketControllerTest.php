@@ -95,7 +95,7 @@ class TicketControllerTest extends TestCase
     public function test_refund_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $season = Season::factory()->create();
@@ -338,7 +338,7 @@ class TicketControllerTest extends TestCase
         $this->createCorrectionProduct();
         StockLocation::factory()->create(['active' => true]);
         $user = User::factory()->create();
-        $user->givePermissionTo('create ticket');
+        $user->givePermissionTo(['access backoffice', 'create ticket']);
         $this->actingAs($user);
 
         $season = Season::factory()->create();

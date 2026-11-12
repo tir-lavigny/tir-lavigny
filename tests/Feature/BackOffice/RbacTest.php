@@ -24,13 +24,13 @@ class RbacTest extends TestCase
 
     public function test_content_crud_with_ok_permissions(): void
     {
-        $createUser = User::factory()->create();
+        $createUser = User::factory()->create()->givePermissionTo('access backoffice');
         $createUser->givePermissionTo('create content');
 
-        $editUser = User::factory()->create();
+        $editUser = User::factory()->create()->givePermissionTo('access backoffice');
         $editUser->givePermissionTo('edit content');
 
-        $deleteUser = User::factory()->create();
+        $deleteUser = User::factory()->create()->givePermissionTo('access backoffice');
         $deleteUser->givePermissionTo('delete content');
 
         // Test create content
@@ -72,13 +72,13 @@ class RbacTest extends TestCase
 
     public function test_content_crud_with_nok_permissions(): void
     {
-        $createUser = User::factory()->create();
+        $createUser = User::factory()->create()->givePermissionTo('access backoffice');
         $createUser->givePermissionTo('create content');
 
-        $editUser = User::factory()->create();
+        $editUser = User::factory()->create()->givePermissionTo('access backoffice');
         $editUser->givePermissionTo('edit content');
 
-        $deleteUser = User::factory()->create();
+        $deleteUser = User::factory()->create()->givePermissionTo('access backoffice');
         $deleteUser->givePermissionTo('delete content');
 
         // Test create content without permission
@@ -123,13 +123,13 @@ class RbacTest extends TestCase
 
     public function test_events_crud_ok_permissions()
     {
-        $createUser = User::factory()->create();
+        $createUser = User::factory()->create()->givePermissionTo('access backoffice');
         $createUser->givePermissionTo('create event');
 
-        $editUser = User::factory()->create();
+        $editUser = User::factory()->create()->givePermissionTo('access backoffice');
         $editUser->givePermissionTo('edit event');
 
-        $deleteUser = User::factory()->create();
+        $deleteUser = User::factory()->create()->givePermissionTo('access backoffice');
         $deleteUser->givePermissionTo('delete event');
 
         $data = [
@@ -220,13 +220,13 @@ class RbacTest extends TestCase
 
     public function test_events_crud_nok_permissions()
     {
-        $createUser = User::factory()->create();
+        $createUser = User::factory()->create()->givePermissionTo('access backoffice');
         $createUser->givePermissionTo('create event');
 
-        $editUser = User::factory()->create();
+        $editUser = User::factory()->create()->givePermissionTo('access backoffice');
         $editUser->givePermissionTo('edit event');
 
-        $deleteUser = User::factory()->create();
+        $deleteUser = User::factory()->create()->givePermissionTo('access backoffice');
         $deleteUser->givePermissionTo('delete event');
 
         $data = [
@@ -299,13 +299,13 @@ class RbacTest extends TestCase
 
     public function test_locations_crud_ok_permissions()
     {
-        $createUser = User::factory()->create();
+        $createUser = User::factory()->create()->givePermissionTo('access backoffice');
         $createUser->givePermissionTo('create location');
 
-        $editUser = User::factory()->create();
+        $editUser = User::factory()->create()->givePermissionTo('access backoffice');
         $editUser->givePermissionTo('edit location');
 
-        $deleteUser = User::factory()->create();
+        $deleteUser = User::factory()->create()->givePermissionTo('access backoffice');
         $deleteUser->givePermissionTo('delete location');
 
         $data = [
@@ -363,13 +363,13 @@ class RbacTest extends TestCase
 
     public function test_locations_crud_nok_permissions()
     {
-        $createUser = User::factory()->create();
+        $createUser = User::factory()->create()->givePermissionTo('access backoffice');
         $createUser->givePermissionTo('create location');
 
-        $editUser = User::factory()->create();
+        $editUser = User::factory()->create()->givePermissionTo('access backoffice');
         $editUser->givePermissionTo('edit location');
 
-        $deleteUser = User::factory()->create();
+        $deleteUser = User::factory()->create()->givePermissionTo('access backoffice');
         $deleteUser->givePermissionTo('delete location');
 
         $data = [
@@ -436,13 +436,13 @@ class RbacTest extends TestCase
 
     public function test_posts_crud_ok_permissions(): void
     {
-        $createUser = User::factory()->create();
+        $createUser = User::factory()->create()->givePermissionTo('access backoffice');
         $createUser->givePermissionTo('create post');
 
-        $editUser = User::factory()->create();
+        $editUser = User::factory()->create()->givePermissionTo('access backoffice');
         $editUser->givePermissionTo('edit post');
 
-        $deleteUser = User::factory()->create();
+        $deleteUser = User::factory()->create()->givePermissionTo('access backoffice');
         $deleteUser->givePermissionTo('delete post');
 
         // Test create post
@@ -488,13 +488,13 @@ class RbacTest extends TestCase
 
     public function test_posts_crud_nok_permissions(): void
     {
-        $createUser = User::factory()->create();
+        $createUser = User::factory()->create()->givePermissionTo('access backoffice');
         $createUser->givePermissionTo('create post');
 
-        $editUser = User::factory()->create();
+        $editUser = User::factory()->create()->givePermissionTo('access backoffice');
         $editUser->givePermissionTo('edit post');
 
-        $deleteUser = User::factory()->create();
+        $deleteUser = User::factory()->create()->givePermissionTo('access backoffice');
         $deleteUser->givePermissionTo('delete post');
 
         // Test create post without permission
@@ -543,13 +543,13 @@ class RbacTest extends TestCase
 
     public function test_event_chains_crud_ok_permissions(): void
     {
-        $createUser = User::factory()->create();
+        $createUser = User::factory()->create()->givePermissionTo('access backoffice');
         $createUser->givePermissionTo('create event chain');
 
-        $editUser = User::factory()->create();
+        $editUser = User::factory()->create()->givePermissionTo('access backoffice');
         $editUser->givePermissionTo('edit event chain');
 
-        $deleteUser = User::factory()->create();
+        $deleteUser = User::factory()->create()->givePermissionTo('access backoffice');
         $deleteUser->givePermissionTo('delete event chain');
 
         $data = [
@@ -595,13 +595,13 @@ class RbacTest extends TestCase
 
     public function test_event_chains_crud_nok_permissions(): void
     {
-        $createUser = User::factory()->create();
+        $createUser = User::factory()->create()->givePermissionTo('access backoffice');
         $createUser->givePermissionTo('create event chain');
 
-        $editUser = User::factory()->create();
+        $editUser = User::factory()->create()->givePermissionTo('access backoffice');
         $editUser->givePermissionTo('edit event chain');
 
-        $deleteUser = User::factory()->create();
+        $deleteUser = User::factory()->create()->givePermissionTo('access backoffice');
         $deleteUser->givePermissionTo('delete event chain');
 
         $data = [

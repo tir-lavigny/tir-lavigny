@@ -6,15 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Register\StoreCategoryRequest;
 use App\Http\Requests\BackOffice\Register\UpdateCategoryRequest;
 use App\Models\Category;
+use App\Traits\SearchesAccentInsensitively;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class CategoryController extends Controller implements HasMiddleware
 {
+    use SearchesAccentInsensitively;
+
     public static function middleware(): array
     {
         return [
@@ -22,12 +27,19 @@ class CategoryController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $categories = Category::withCount('products')->orderBy('name')->paginate(15);
+        $search = $request->input('search');
+
+        $query = Category::query()->withCount('products');
+        $this->whereAccentInsensitiveLike($query, ['name'], $search);
+        $this->orderByAccentInsensitive($query, ['name']);
+
+        $categories = $query->paginate(15)->withQueryString();
 
         return Inertia::render('backOffice/Register/Categories/Index', [
             'categories' => $categories,
+            'filters' => ['search' => $search],
         ]);
     }
 
@@ -62,6 +74,11 @@ class CategoryController extends Controller implements HasMiddleware
         try {
             $category->delete();
         } catch (HttpExceptionInterface $e) {
+            Log::warning('Category deletion blocked', [
+                'category_id' => $category->id,
+                'reason' => $e->getMessage(),
+            ]);
+
             return back()->with('error', $e->getMessage());
         }
 

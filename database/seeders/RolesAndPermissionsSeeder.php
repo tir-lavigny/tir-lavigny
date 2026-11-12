@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\AppAccess;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -16,6 +17,9 @@ class RolesAndPermissionsSeeder extends Seeder
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $editorRole = Role::firstOrCreate(['name' => 'editor']);
         $userRole = Role::firstOrCreate(['name' => 'user']);
+
+        $backOfficeAccessPermission = Permission::firstOrCreate(['name' => AppAccess::BackOffice->value]);
+        $registerAccessPermission = Permission::firstOrCreate(['name' => AppAccess::Register->value]);
 
         $createEventPermission = Permission::firstOrCreate(['name' => 'create event']);
         $editEventPermission = Permission::firstOrCreate(['name' => 'edit event']);
@@ -77,6 +81,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Assign permissions to roles
         $adminRole->syncPermissions([
+            $backOfficeAccessPermission,
+            $registerAccessPermission,
             $createEventPermission,
             $editEventPermission,
             $deleteEventPermission,
@@ -123,6 +129,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         $editorRole->syncPermissions([
+            $backOfficeAccessPermission,
             $createEventPermission,
             $editEventPermission,
             $deleteEventPermission,
@@ -141,6 +148,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         $cashierRole->syncPermissions([
+            $registerAccessPermission,
             $viewRegisterPermission,
             $openDayPermission,
             $closeDayPermission,
@@ -153,6 +161,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         $cashierManagerRole->syncPermissions([
+            $registerAccessPermission,
             $viewRegisterPermission,
             $openDayPermission,
             $closeDayPermission,
@@ -177,6 +186,8 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         $accountantRole->syncPermissions([
+            $backOfficeAccessPermission,
+            $registerAccessPermission,
             $viewRegisterPermission,
             $viewTicketsPermission,
             $viewReportsPermission,

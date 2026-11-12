@@ -212,7 +212,7 @@ const handleMemberFilterChange = () => {
                             <AppPagination
                                 :total-items="categories.total"
                                 :items-per-page="categories.per_page"
-                                :default-page="categories.current_page"
+                                :page="categories.current_page"
                                 @page-changed="(p) => handlePageChange('categories', p)"
                             />
                         </div>
@@ -253,7 +253,7 @@ const handleMemberFilterChange = () => {
                             <AppPagination
                                 :total-items="products.total"
                                 :items-per-page="products.per_page"
-                                :default-page="products.current_page"
+                                :page="products.current_page"
                                 @page-changed="(p) => handlePageChange('products', p)"
                             />
                         </div>
@@ -292,7 +292,7 @@ const handleMemberFilterChange = () => {
                             <AppPagination
                                 :total-items="seasons.total"
                                 :items-per-page="seasons.per_page"
-                                :default-page="seasons.current_page"
+                                :page="seasons.current_page"
                                 @page-changed="(p) => handlePageChange('seasons', p)"
                             />
                         </div>
@@ -339,7 +339,7 @@ const handleMemberFilterChange = () => {
                             <AppPagination
                                 :total-items="members.total"
                                 :items-per-page="members.per_page"
-                                :default-page="members.current_page"
+                                :page="members.current_page"
                                 @page-changed="(p) => handlePageChange('members', p)"
                             />
                         </div>
@@ -383,7 +383,7 @@ const handleMemberFilterChange = () => {
                             <AppPagination
                                 :total-items="tickets.total"
                                 :items-per-page="tickets.per_page"
-                                :default-page="tickets.current_page"
+                                :page="tickets.current_page"
                                 @page-changed="(p) => handlePageChange('tickets', p)"
                             />
                         </div>
@@ -449,7 +449,7 @@ const handleMemberFilterChange = () => {
                             <AppPagination
                                 :total-items="vouchers.total"
                                 :items-per-page="vouchers.per_page"
-                                :default-page="vouchers.current_page"
+                                :page="vouchers.current_page"
                                 @page-changed="(p) => handlePageChange('vouchers', p)"
                             />
                         </div>

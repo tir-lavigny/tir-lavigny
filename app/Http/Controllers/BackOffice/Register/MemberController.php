@@ -7,7 +7,9 @@ use App\Http\Requests\BackOffice\Register\UpdateMemberRequest;
 use App\Models\Member;
 use App\Models\Season;
 use App\Services\DavServiceInterface;
+use App\Traits\SearchesAccentInsensitively;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
@@ -15,6 +17,8 @@ use Inertia\Response;
 
 class MemberController extends Controller implements HasMiddleware
 {
+    use SearchesAccentInsensitively;
+
     public static function middleware(): array
     {
         return [
@@ -22,12 +26,18 @@ class MemberController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $members = Member::orderBy('last_name')->paginate(15);
+        $search = $request->input('search');
+
+        $query = Member::query()->orderByName();
+        $this->whereAccentInsensitiveLike($query, ['first_name', 'last_name'], $search);
+
+        $members = $query->paginate(15)->withQueryString();
 
         return Inertia::render('backOffice/Register/Members/Index', [
             'members' => $members,
+            'filters' => ['search' => $search],
         ]);
     }
 

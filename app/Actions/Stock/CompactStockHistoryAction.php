@@ -7,6 +7,7 @@ use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Models\StockSnapshot;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CompactStockHistoryAction
 {
@@ -26,7 +27,9 @@ class CompactStockHistoryAction
      */
     public function execute(StockLocation $location): StockSnapshot
     {
-        return DB::transaction(function () use ($location) {
+        $archivedCount = 0;
+
+        $snapshot = DB::transaction(function () use ($location, &$archivedCount) {
             // Lock all movements for this location before calculating stock.
             // This prevents a concurrent movement from being committed with
             // created_at <= snapshot.created_at but not visible to the stock
@@ -61,9 +64,19 @@ class CompactStockHistoryAction
                 ]);
 
                 DB::table('stock_movements')->where('id', $movement->id)->delete();
+
+                $archivedCount++;
             }
 
             return $snapshot;
         });
+
+        Log::info('Stock history compacted', [
+            'stock_location_id' => $location->id,
+            'stock_snapshot_id' => $snapshot->id,
+            'archived_movements' => $archivedCount,
+        ]);
+
+        return $snapshot;
     }
 }

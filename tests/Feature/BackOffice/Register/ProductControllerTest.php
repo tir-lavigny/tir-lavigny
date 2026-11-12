@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class ProductControllerTest extends TestCase
@@ -32,6 +33,21 @@ class ProductControllerTest extends TestCase
         $response = $this->get(route('bo.register.products.index'));
 
         $response->assertOk();
+    }
+
+    public function test_index_searches_products_without_accents(): void
+    {
+        $category = Category::factory()->create(['is_restricted' => false]);
+        Product::factory()->create(['name' => 'Bière', 'category_id' => $category->id]);
+        Product::factory()->create(['name' => 'Café', 'category_id' => $category->id]);
+
+        $response = $this->get(route('bo.register.products.index', ['search' => 'biere']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('products.data', 1)
+            ->where('products.data.0.name', 'Bière')
+            ->where('filters.search', 'biere')
+        );
     }
 
     public function test_store_creates_product(): void
@@ -238,7 +254,7 @@ class ProductControllerTest extends TestCase
     public function test_store_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $category = Category::factory()->create(['is_restricted' => false]);

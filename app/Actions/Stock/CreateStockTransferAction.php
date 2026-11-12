@@ -12,6 +12,7 @@ use App\Models\StockTransferLine;
 use App\Services\StockService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use LogicException;
 
 class CreateStockTransferAction
@@ -77,7 +78,7 @@ class CreateStockTransferAction
             }
         }
 
-        return DB::transaction(function () use ($season, $fromLocation, $toLocation, $items, $reason, $products) {
+        $transfer = DB::transaction(function () use ($season, $fromLocation, $toLocation, $items, $reason, $products) {
             $transfer = StockTransfer::create([
                 'from_location_id' => $fromLocation->id,
                 'to_location_id' => $toLocation->id,
@@ -117,5 +118,16 @@ class CreateStockTransferAction
 
             return $transfer;
         });
+
+        Log::info('Stock transfer created', [
+            'stock_transfer_id' => $transfer->id,
+            'season_id' => $season?->id,
+            'from_location_id' => $fromLocation->id,
+            'to_location_id' => $toLocation->id,
+            'line_count' => $items->count(),
+            'total_quantity' => $items->sum('quantity'),
+        ]);
+
+        return $transfer;
     }
 }

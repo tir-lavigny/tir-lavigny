@@ -6,6 +6,7 @@ use App\Models\Member;
 use App\Services\DavServiceInterface;
 use App\Services\DavSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\TestCase;
 
@@ -285,6 +286,8 @@ class DavSyncServiceTest extends TestCase
 
     public function test_sync_logs_warning_on_failure(): void
     {
+        Log::spy();
+
         $member = Member::factory()->create([
             'first_name' => 'Pierre',
             'last_name' => 'Dupont',
@@ -304,5 +307,12 @@ class DavSyncServiceTest extends TestCase
             'id' => $member->id,
             'first_name' => 'Pierre',
         ]);
+
+        Log::shouldHaveReceived('warning')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Failed to sync member'
+                && $context['member_id'] === $member->id
+                && $context['dav_uid'] === 'uid-001'
+                && $context['source'] === 'dav'
+        );
     }
 }

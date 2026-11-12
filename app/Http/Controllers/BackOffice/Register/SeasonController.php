@@ -8,16 +8,22 @@ use App\Http\Requests\BackOffice\Register\UpdateSeasonRequest;
 use App\Models\Member;
 use App\Models\Season;
 use App\Services\SeasonVoucherService;
+use App\Traits\SearchesAccentInsensitively;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class SeasonController extends Controller implements HasMiddleware
 {
+    use SearchesAccentInsensitively;
+
     public static function middleware(): array
     {
         return [
@@ -25,12 +31,18 @@ class SeasonController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $seasons = Season::orderBy('start_date', 'desc')->paginate(15);
+        $search = $request->input('search');
+
+        $query = Season::query();
+        $this->whereAccentInsensitiveLike($query, ['name'], $search);
+
+        $seasons = $query->orderBy('start_date', 'desc')->paginate(15)->withQueryString();
 
         return Inertia::render('backOffice/Register/Seasons/Index', [
             'seasons' => $seasons,
+            'filters' => ['search' => $search],
         ]);
     }
 
@@ -95,6 +107,20 @@ class SeasonController extends Controller implements HasMiddleware
 
             return redirect()->route('bo.register.seasons.index')->with('success', 'Saison supprimée.');
         } catch (\Exception $e) {
+            if ($e instanceof HttpExceptionInterface) {
+                Log::warning('Season deletion blocked', [
+                    'season_id' => $season->id,
+                    'reason' => $e->getMessage(),
+                ]);
+            } else {
+                report($e);
+
+                Log::error('Season deletion failed', [
+                    'season_id' => $season->id,
+                    'exception' => $e,
+                ]);
+            }
+
             return back()->with('error', $e->getMessage());
         }
     }

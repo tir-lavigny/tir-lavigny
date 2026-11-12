@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Voucher;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class VoucherControllerTest extends TestCase
@@ -41,6 +42,32 @@ class VoucherControllerTest extends TestCase
         $response = $this->get(route('bo.register.vouchers.index'));
 
         $response->assertOk();
+    }
+
+    public function test_index_returns_newest_vouchers_first(): void
+    {
+        $oldVoucher = Voucher::factory()->percent()->create();
+        $newVoucher = Voucher::factory()->percent()->create();
+
+        $response = $this->get(route('bo.register.vouchers.index'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('vouchers.data.0.id', $newVoucher->id)
+            ->where('vouchers.data.1.id', $oldVoucher->id)
+        );
+    }
+
+    public function test_create_sorts_members_by_first_name(): void
+    {
+        Member::factory()->create(['first_name' => 'Zoe', 'last_name' => 'Bernard']);
+        Member::factory()->create(['first_name' => 'Alice', 'last_name' => 'Zurcher']);
+
+        $response = $this->get(route('bo.register.vouchers.create'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('members.0.first_name', 'Alice')
+            ->where('members.1.first_name', 'Zoe')
+        );
     }
 
     public function test_store_creates_voucher(): void
@@ -110,7 +137,7 @@ class VoucherControllerTest extends TestCase
     public function test_store_requires_permission(): void
     {
         $user = User::factory()->create();
-        $user->givePermissionTo('view register');
+        $user->givePermissionTo(['access backoffice', 'view register']);
         $this->actingAs($user);
 
         $category = Category::factory()->create(['is_restricted' => false]);

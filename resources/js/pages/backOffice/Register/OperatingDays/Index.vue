@@ -77,7 +77,7 @@ const handlePageChange = (p: number = 1) => {
                     :total-items="operatingDays.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="operatingDays.current_page"
+                    :page="operatingDays.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
                     @page-changed="handlePageChange"

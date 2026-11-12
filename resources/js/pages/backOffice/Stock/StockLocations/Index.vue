@@ -79,7 +79,7 @@ const handlePageChange = (p: number = 1) => {
                     :total-items="locations.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="locations.current_page"
+                    :page="locations.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
                     @page-changed="handlePageChange"

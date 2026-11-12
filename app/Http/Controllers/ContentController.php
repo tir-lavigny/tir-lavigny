@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Log;
 use Inertia\Response;
 
 class ContentController extends Controller implements HasMiddleware
@@ -90,6 +91,13 @@ class ContentController extends Controller implements HasMiddleware
         try {
             $content->update($request->only(['title', 'body']));
         } catch (Exception $e) {
+            report($e);
+
+            Log::error('Content update failed', [
+                'content_id' => $content->id,
+                'exception' => $e,
+            ]);
+
             return back()->with('error', 'Une erreur est survenue lors de la mise à jour du contenu.');
         }
 

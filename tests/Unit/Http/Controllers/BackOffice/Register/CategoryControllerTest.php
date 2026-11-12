@@ -5,6 +5,7 @@ namespace Tests\Unit\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\BackOffice\Register\CategoryController;
 use App\Models\Category;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Inertia\Response;
 use Tests\TestCase;
 
@@ -24,7 +25,7 @@ class CategoryControllerTest extends TestCase
     {
         Category::factory()->count(3)->create();
 
-        $response = $this->controller->index();
+        $response = $this->controller->index(new Request);
 
         $this->assertInstanceOf(Response::class, $response);
     }

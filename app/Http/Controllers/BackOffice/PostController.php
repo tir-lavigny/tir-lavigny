@@ -5,17 +5,20 @@ namespace App\Http\Controllers\BackOffice;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Traits\ConvertsLocalDatetimes;
+use App\Traits\SearchesAccentInsensitively;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class PostController extends Controller implements HasMiddleware
 {
     use ConvertsLocalDatetimes;
+    use SearchesAccentInsensitively;
 
     public static function middleware(): array
     {
@@ -35,12 +38,7 @@ class PostController extends Controller implements HasMiddleware
 
         $query = Post::query();
 
-        if ($search) {
-            $search = strtolower($search);
-            $query->where(function ($query) use ($search) {
-                $query->where('title', 'LIKE', "%{$search}%");
-            });
-        }
+        $this->whereAccentInsensitiveLike($query, ['title'], $search);
 
         $query->orderBy('publish_at', 'desc');
 
@@ -130,6 +128,13 @@ class PostController extends Controller implements HasMiddleware
         try {
             $post->save();
         } catch (Exception $e) {
+            report($e);
+
+            Log::error('Post update failed', [
+                'post_public_id' => $post->public_id,
+                'exception' => $e,
+            ]);
+
             return back()->with('error', 'Unable to update post. Please try again later.');
         }
 
@@ -146,6 +151,13 @@ class PostController extends Controller implements HasMiddleware
         try {
             $post->delete();
         } catch (Exception $e) {
+            report($e);
+
+            Log::error('Post deletion failed', [
+                'post_public_id' => $post->public_id,
+                'exception' => $e,
+            ]);
+
             return back()->with('error', 'Unable to delete post. Please try again later.');
         }
 

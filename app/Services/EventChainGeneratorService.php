@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Event;
 use App\Models\EventChain;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class EventChainGeneratorService
 {
@@ -14,9 +15,16 @@ class EventChainGeneratorService
      */
     public function generate(EventChain $chain): void
     {
-        foreach ($chain->getOccurrenceDates() as $date) {
+        $dates = $chain->getOccurrenceDates();
+
+        foreach ($dates as $date) {
             $this->createEventForDate($chain, $date);
         }
+
+        Log::info('Event chain occurrences generated', [
+            'event_chain_id' => $chain->id,
+            'event_count' => count($dates),
+        ]);
     }
 
     /**

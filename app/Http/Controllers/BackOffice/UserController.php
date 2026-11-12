@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice;
 use App\Http\Controllers\Controller;
 use App\Mail\UserCreated;
 use App\Models\User;
+use App\Traits\SearchesAccentInsensitively;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,8 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller implements HasMiddleware
 {
+    use SearchesAccentInsensitively;
+
     public static function middleware(): array
     {
         return [
@@ -40,13 +43,7 @@ class UserController extends Controller implements HasMiddleware
         $query = User::query();
         $query->with('roles');
 
-        if ($search) {
-            $search = strtolower($search);
-            $query->where(function ($query) use ($search) {
-                $query->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('email', 'LIKE', "%{$search}%");
-            });
-        }
+        $this->whereAccentInsensitiveLike($query, ['name', 'email'], $search);
 
         $query->orderBy('created_at', 'desc');
 
@@ -98,12 +95,21 @@ class UserController extends Controller implements HasMiddleware
         // Assign roles
         $user->syncRoles($request->input('roles'));
 
+        Log::info('User created', [
+            'user_id' => $user->id,
+            'roles' => $user->getRoleNames()->all(),
+        ]);
+
         // Send email with credentials
         try {
             Mail::to($user->email)->send(new UserCreated($user, $password));
         } catch (Exception $e) {
-            // Log the error but don't fail the user creation
-            Log::error('Failed to send user creation email: '.$e->getMessage());
+            report($e);
+
+            Log::error('User creation email failed', [
+                'user_id' => $user->id,
+                'exception' => $e,
+            ]);
         }
 
         return redirect()->route('bo.users.show', $user->id)->with('success', 'User created successfully.');
@@ -176,6 +182,11 @@ class UserController extends Controller implements HasMiddleware
         // Update roles
         $user->syncRoles($request->input('roles'));
 
+        Log::info('User updated', [
+            'user_id' => $user->id,
+            'roles' => $user->getRoleNames()->all(),
+        ]);
+
         return redirect()->route('bo.users.show', $user->id)->with('success', 'User updated successfully.');
     }
 
@@ -193,6 +204,10 @@ class UserController extends Controller implements HasMiddleware
         }
 
         $user->delete();
+
+        Log::info('User deleted', [
+            'user_id' => $user->id,
+        ]);
 
         return redirect()->route('bo.users.index')->with('success', 'User deleted successfully.');
     }

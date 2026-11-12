@@ -8,6 +8,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class EventChainTest extends TestCase
@@ -51,6 +52,19 @@ class EventChainTest extends TestCase
         $response = $this->get(route('bo.event-chains.index'));
 
         $response->assertStatus(200);
+    }
+
+    public function test_index_searches_event_chains_without_accents(): void
+    {
+        EventChain::factory()->create(['title' => 'Fête annuelle']);
+        EventChain::factory()->create(['title' => 'Tir sportif']);
+
+        $response = $this->get(route('bo.event-chains.index', ['search' => 'fete']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('paginatedChains.data', 1)
+            ->where('paginatedChains.data.0.title', 'Fête annuelle')
+        );
     }
 
     public function test_guest_is_redirected_on_event_chain_index(): void

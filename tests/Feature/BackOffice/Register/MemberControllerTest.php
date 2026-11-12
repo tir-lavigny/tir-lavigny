@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Mockery;
 use Tests\TestCase;
 
@@ -37,6 +38,37 @@ class MemberControllerTest extends TestCase
         $response = $this->get(route('bo.register.members.index'));
 
         $response->assertOk();
+    }
+
+    public function test_index_sorts_members_by_first_name_then_last_name(): void
+    {
+        Member::factory()->create(['first_name' => 'Zoe', 'last_name' => 'Bernard']);
+        Member::factory()->create(['first_name' => 'Alice', 'last_name' => 'Zurcher']);
+        Member::factory()->create(['first_name' => 'Alice', 'last_name' => 'Andre']);
+
+        $response = $this->get(route('bo.register.members.index'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('members.data.0.first_name', 'Alice')
+            ->where('members.data.0.last_name', 'Andre')
+            ->where('members.data.1.first_name', 'Alice')
+            ->where('members.data.1.last_name', 'Zurcher')
+            ->where('members.data.2.first_name', 'Zoe')
+        );
+    }
+
+    public function test_index_searches_members_without_accents(): void
+    {
+        Member::factory()->create(['first_name' => 'Émile', 'last_name' => 'Généreux']);
+        Member::factory()->create(['first_name' => 'Zoe', 'last_name' => 'Bernard']);
+
+        $response = $this->get(route('bo.register.members.index', ['search' => 'emile']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('members.data', 1)
+            ->where('members.data.0.first_name', 'Émile')
+            ->where('filters.search', 'emile')
+        );
     }
 
     public function test_edit_returns_form(): void

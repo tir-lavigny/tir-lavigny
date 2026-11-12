@@ -43,7 +43,11 @@ class DavSyncService
             $created++;
         }
 
-        Log::info('Imported members from DAV contacts', ['count' => $created]);
+        Log::info('Imported members from DAV contacts', [
+            'count' => $created,
+            'contacts' => count($contacts),
+            'skipped' => count($contacts) - count($toImport),
+        ]);
 
         return ['created' => $created];
     }
@@ -111,6 +115,11 @@ class DavSyncService
             $member = $members->get($choice['member_id']);
 
             if (! $member) {
+                Log::warning('DAV sync skipped missing member', [
+                    'member_id' => $choice['member_id'],
+                    'source' => $choice['source'],
+                ]);
+
                 continue;
             }
 
@@ -133,15 +142,21 @@ class DavSyncService
                     $updated++;
                 }
             } catch (\Exception $e) {
+                report($e);
+
                 Log::warning('Failed to sync member', [
                     'member_id' => $member->id,
+                    'dav_uid' => $member->dav_uid,
                     'source' => $choice['source'],
-                    'error' => $e->getMessage(),
+                    'exception' => $e,
                 ]);
             }
         }
 
-        Log::info('Synced members with DAV', ['count' => $updated]);
+        Log::info('Synced members with DAV', [
+            'count' => $updated,
+            'requested' => count($choices),
+        ]);
 
         return ['updated' => $updated];
     }

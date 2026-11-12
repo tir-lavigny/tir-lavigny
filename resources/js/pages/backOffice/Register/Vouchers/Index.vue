@@ -113,7 +113,7 @@ const formatDiscount = (voucher: any) => {
                     :total-items="vouchers.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="vouchers.current_page"
+                    :page="vouchers.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
                     @page-changed="handlePageChange"

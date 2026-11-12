@@ -23,7 +23,7 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->group(function () {
+Route::middleware(['auth:sanctum', 'permission:access register'])->prefix('register')->group(function () {
     Route::get('/seasons/current', [Register\SeasonController::class, 'getCurrentSeason'])
         ->name('api.register.seasons.current');
 
@@ -65,7 +65,7 @@ Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('register')->g
         ->name('api.register.members.vouchers');
 });
 
-Route::middleware(['auth:sanctum', 'role:cashier|admin'])->prefix('stock')->group(function () {
+Route::middleware(['auth:sanctum', 'permission:access register'])->prefix('stock')->group(function () {
     Route::get('/locations', [StockLocationController::class, 'index'])
         ->name('api.stock.locations.index');
 

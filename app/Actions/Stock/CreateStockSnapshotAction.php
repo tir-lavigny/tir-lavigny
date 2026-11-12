@@ -7,6 +7,7 @@ use App\Models\StockSnapshot;
 use App\Models\StockSnapshotLine;
 use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CreateStockSnapshotAction
 {
@@ -16,7 +17,7 @@ class CreateStockSnapshotAction
 
     public function execute(StockLocation $location): StockSnapshot
     {
-        return DB::transaction(function () use ($location) {
+        $snapshot = DB::transaction(function () use ($location) {
             $stock = $this->stockService->getStockForLocation($location);
 
             $snapshot = StockSnapshot::create([
@@ -40,5 +41,13 @@ class CreateStockSnapshotAction
 
             return $snapshot;
         });
+
+        Log::info('Stock snapshot created', [
+            'stock_snapshot_id' => $snapshot->id,
+            'stock_location_id' => $location->id,
+            'line_count' => $snapshot->stockSnapshotLines()->count(),
+        ]);
+
+        return $snapshot;
     }
 }

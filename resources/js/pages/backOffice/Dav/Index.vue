@@ -96,7 +96,9 @@ async function fetchSyncPreview() {
             },
         });
         const data = await response.json();
-        syncPairs.value = data.pairs;
+        syncPairs.value = [...data.pairs].sort((a: SyncPair, b: SyncPair) =>
+            `${a.member_first_name} ${a.member_last_name}`.localeCompare(`${b.member_first_name} ${b.member_last_name}`, 'fr'),
+        );
         syncChoices.value = {};
         for (const pair of data.pairs) {
             syncChoices.value[pair.member_id] = 'member';
@@ -292,12 +294,12 @@ onMounted(() => {
                                 <TableRow v-for="pair in syncPairs" :key="pair.member_id">
                                     <TableCell>
                                         <span :class="syncChoices[pair.member_id] === 'member' ? 'font-semibold' : 'text-muted-foreground'">
-                                            {{ pair.member_last_name }} {{ pair.member_first_name }}
+                                            {{ pair.member_first_name }} {{ pair.member_last_name }}
                                         </span>
                                     </TableCell>
                                     <TableCell>
                                         <span :class="syncChoices[pair.member_id] === 'dav' ? 'font-semibold' : 'text-muted-foreground'">
-                                            {{ pair.dav_last_name }} {{ pair.dav_first_name }}
+                                            {{ pair.dav_first_name }} {{ pair.dav_last_name }}
                                         </span>
                                     </TableCell>
                                     <TableCell>

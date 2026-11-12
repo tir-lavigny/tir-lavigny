@@ -9,16 +9,20 @@ use App\Models\EventChain;
 use App\Models\Location;
 use App\Services\EventChainGeneratorService;
 use App\Services\EventChainUpdaterService;
+use App\Traits\SearchesAccentInsensitively;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class EventChainController extends Controller implements HasMiddleware
 {
+    use SearchesAccentInsensitively;
+
     public static function middleware(): array
     {
         return [
@@ -34,9 +38,10 @@ class EventChainController extends Controller implements HasMiddleware
     {
         $search = $request->input('search');
 
-        $chains = EventChain::with('location')
-            ->withCount('events')
-            ->when($search, fn ($q) => $q->where('title', 'like', "%{$search}%"))
+        $query = EventChain::with('location')->withCount('events');
+        $this->whereAccentInsensitiveLike($query, ['title'], $search);
+
+        $chains = $query
             ->orderBy('start_date')
             ->paginate(10)
             ->withQueryString();
@@ -133,8 +138,15 @@ class EventChainController extends Controller implements HasMiddleware
         // Events will be detached (event_chain_id set to null) via nullOnDelete FK constraint.
         // Delete the now-orphaned chain events explicitly first, or keep them standalone.
         // Per spec: deleting a chain deletes ALL its events.
+        $eventCount = $eventChain->events()->count();
+
         $eventChain->events()->delete();
         $eventChain->delete();
+
+        Log::info('Event chain deleted', [
+            'event_chain_id' => $eventChain->id,
+            'deleted_event_count' => $eventCount,
+        ]);
 
         return redirect()
             ->route('bo.event-chains.index')

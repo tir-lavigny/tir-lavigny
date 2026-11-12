@@ -23,7 +23,10 @@ class AuthTestHelper
 
     public static function mockUser(): User
     {
-        return User::factory()->create();
+        $user = User::factory()->create();
+        $user->assignRole('cashier');
+
+        return $user;
     }
 
     public static function clearUser(User $userModel): void

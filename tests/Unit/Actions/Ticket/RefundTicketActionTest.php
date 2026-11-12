@@ -10,6 +10,7 @@ use App\Models\Ticket;
 use App\Services\TicketService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\TestCase;
 
@@ -40,6 +41,8 @@ class RefundTicketActionTest extends TestCase
 
     public function test_execute_soft_deletes_ticket(): void
     {
+        Log::spy();
+
         $day = $this->createOpenDay();
         $location = StockLocation::factory()->create();
         $ticket = Ticket::factory()->cash()->create([
@@ -54,6 +57,13 @@ class RefundTicketActionTest extends TestCase
         $action->execute($ticket);
 
         $this->assertSoftDeleted('tickets', ['id' => $ticket->id]);
+
+        Log::shouldHaveReceived('info')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Ticket refunded'
+                && $context['ticket_id'] === $ticket->id
+                && $context['operating_day_id'] === $day->id
+                && (float) $context['total'] === 25.0
+        );
     }
 
     public function test_execute_delegates_to_ticket_service(): void

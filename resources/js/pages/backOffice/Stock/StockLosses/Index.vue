@@ -70,7 +70,7 @@ const handlePageChange = (p: number = 1) => {
                     :total-items="losses.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="losses.current_page"
+                    :page="losses.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
                     @page-changed="handlePageChange"

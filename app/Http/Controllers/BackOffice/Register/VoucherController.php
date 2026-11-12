@@ -27,7 +27,7 @@ class VoucherController extends Controller implements HasMiddleware
     public function index(): Response
     {
         $vouchers = Voucher::with(['product', 'season', 'member', 'ticketItems'])
-            ->orderBy('id')
+            ->latest('id')
             ->paginate(15);
 
         return Inertia::render('backOffice/Register/Vouchers/Index', [
@@ -40,7 +40,7 @@ class VoucherController extends Controller implements HasMiddleware
         return Inertia::render('backOffice/Register/Vouchers/Create', [
             'products' => Product::orderBy('name')->get(),
             'seasons' => Season::orderBy('name')->get(),
-            'members' => Member::orderBy('last_name')->get(),
+            'members' => Member::query()->orderByName()->get(),
         ]);
     }
 
@@ -59,7 +59,7 @@ class VoucherController extends Controller implements HasMiddleware
             'voucher' => $voucher,
             'products' => Product::orderBy('name')->get(),
             'seasons' => Season::orderBy('name')->get(),
-            'members' => Member::orderBy('last_name')->get(),
+            'members' => Member::query()->orderByName()->get(),
         ]);
     }
 

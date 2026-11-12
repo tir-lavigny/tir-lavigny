@@ -10,18 +10,20 @@ use App\Models\Event;
 use App\Models\Location;
 use App\Services\EventService;
 use App\Traits\ConvertsLocalDatetimes;
+use App\Traits\SearchesAccentInsensitively;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class EventController extends Controller implements HasMiddleware
 {
     use ConvertsLocalDatetimes;
+    use SearchesAccentInsensitively;
 
     public static function middleware(): array
     {
@@ -42,23 +44,22 @@ class EventController extends Controller implements HasMiddleware
         $query = Event::query();
         $query->with('location');
 
-        if ($search) {
-            $search = Str::lower($search);
-            $query->where(function ($query) use ($search) {
-                $query->where('title', 'LIKE', "%{$search}%");
-                $query->orWhereHas('location', function ($query) use ($search) {
-                    $query->where('name', 'LIKE', "%{$search}%");
+        if (trim((string) $search) !== '') {
+            $query->where(function ($query) use ($search): void {
+                $this->whereAccentInsensitiveLike($query, ['title'], $search);
+                $query->orWhereHas('location', function ($query) use ($search): void {
+                    $this->whereAccentInsensitiveLike($query, ['name'], $search);
                 });
             });
         }
 
         if ($past) {
             $query->where('start_datetime', '<', now()->startOfDay());
+            $query->orderByDesc('start_datetime');
         } else {
             $query->where('start_datetime', '>=', now()->startOfDay());
+            $query->orderBy('start_datetime');
         }
-
-        $query->orderBy('start_datetime');
 
         $data = $query->paginate(5)->withQueryString();
 
@@ -195,6 +196,13 @@ class EventController extends Controller implements HasMiddleware
         try {
             $event->delete();
         } catch (Exception $e) {
+            report($e);
+
+            Log::error('Event deletion failed', [
+                'event_id' => $event->id,
+                'exception' => $e,
+            ]);
+
             return back()->with('error', 'Unable to delete event. Please try again later.');
         }
 

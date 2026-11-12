@@ -6,12 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useListFilters } from '@/composables/useListFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, hasPermissionTo } from '@/lib/utils';
 import { PaginatedEventChains, type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { CalendarDays, Eye, PenBox, Plus, Search } from '@lucide/vue';
-import { ref, watch } from 'vue';
 
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
@@ -28,7 +28,9 @@ const props = defineProps<{
     filters?: { search?: string };
 }>();
 
-const search = ref(props.filters?.search || '');
+const { filters, visit } = useListFilters('bo.event-chains.index', {
+    search: props.filters?.search || '',
+});
 
 const recurrenceLabel: Record<string, string> = {
     daily: 'Quotidien',
@@ -48,14 +50,6 @@ const recurrenceBadgeVariant = (type: string): 'default' | 'secondary' | 'outlin
     };
     return map[type] ?? 'default';
 };
-
-const handlePageChange = (p: number = 1) => {
-    router.get(route('bo.event-chains.index'), { page: p, search: search.value }, { preserveState: true, preserveScroll: true });
-};
-
-watch(search, (val) => {
-    router.get(route('bo.event-chains.index'), { page: 1, search: val }, { preserveState: true, preserveScroll: true });
-});
 </script>
 
 <template>
@@ -65,7 +59,7 @@ watch(search, (val) => {
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="flex w-full flex-col items-center justify-between gap-6 lg:flex-row">
                 <div class="relative w-full items-center lg:max-w-sm">
-                    <Input id="search" type="text" v-model="search" placeholder="Rechercher..." class="pl-10" />
+                    <Input id="search" type="text" v-model="filters.search" placeholder="Rechercher..." class="pl-10" />
                     <span class="absolute inset-y-0 start-0 flex items-center justify-center px-2">
                         <Search class="text-muted-foreground size-6" />
                     </span>
@@ -152,10 +146,10 @@ watch(search, (val) => {
                     :total-items="paginatedChains.total"
                     :sibling-count="1"
                     :show-edges="true"
-                    :default-page="paginatedChains.current_page"
+                    :page="paginatedChains.current_page"
                     :show-prev-next="true"
                     :show-first-last="false"
-                    @page-changed="handlePageChange"
+                    @page-changed="visit"
                 />
             </div>
         </div>
