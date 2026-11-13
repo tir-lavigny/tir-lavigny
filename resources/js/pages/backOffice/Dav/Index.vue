@@ -32,13 +32,19 @@ interface Contact {
     vcard_raw: string;
 }
 
-interface SyncPair {
+interface SyncField {
+    member: string | null;
+    dav: string | null;
+    base: string | null;
+    conflict: boolean;
+}
+
+interface SyncMember {
     member_id: number;
-    member_first_name: string;
-    member_last_name: string;
-    dav_first_name: string;
-    dav_last_name: string;
+    member_name: string;
     dav_uid: string;
+    missing_contact: boolean;
+    fields: Record<string, SyncField>;
 }
 
 const props = defineProps<{
@@ -53,14 +59,20 @@ const showPreviewDialog = ref(false);
 const generating = ref(false);
 
 const showSyncDialog = ref(false);
-const syncPairs = ref<SyncPair[]>([]);
-const syncChoices = ref<Record<number, 'member' | 'dav'>>({});
+const syncMembers = ref<SyncMember[]>([]);
+const syncChoices = ref<Record<number, Record<string, 'member' | 'dav'>>>({});
 const loadingSync = ref(false);
 const syncing = ref(false);
 
 const existingDavUidSet = computed(() => new Set(props.existingDavUids));
 
-const contactsToImport = computed(() => props.contacts.filter((c) => c.category.includes('Actifs') && !existingDavUidSet.value.has(c.uid)));
+const hasCategory = (category: string, value: string): boolean =>
+    category
+        .split(',')
+        .map((part) => part.trim())
+        .includes(value);
+
+const contactsToImport = computed(() => props.contacts.filter((c) => hasCategory(c.category, 'Actifs') && !existingDavUidSet.value.has(c.uid)));
 
 const toggleExpand = (url: string) => {
     expandedContact.value = expandedContact.value === url ? null : url;
@@ -96,12 +108,16 @@ async function fetchSyncPreview() {
             },
         });
         const data = await response.json();
-        syncPairs.value = [...data.pairs].sort((a: SyncPair, b: SyncPair) =>
-            `${a.member_first_name} ${a.member_last_name}`.localeCompare(`${b.member_first_name} ${b.member_last_name}`, 'fr'),
+        syncMembers.value = [...data.members].sort((a: SyncMember, b: SyncMember) =>
+            a.member_name.localeCompare(b.member_name, 'fr'),
         );
         syncChoices.value = {};
-        for (const pair of data.pairs) {
-            syncChoices.value[pair.member_id] = 'member';
+        for (const member of data.members) {
+            const row: Record<string, 'member' | 'dav'> = {};
+            for (const field of Object.keys(member.fields)) {
+                row[field] = 'member';
+            }
+            syncChoices.value[member.member_id] = row;
         }
         showSyncDialog.value = true;
     } catch {
@@ -112,24 +128,28 @@ async function fetchSyncPreview() {
 }
 
 function setAllChoices(source: 'member' | 'dav') {
-    for (const pair of syncPairs.value) {
-        syncChoices.value[pair.member_id] = source;
+    for (const member of syncMembers.value) {
+        const row: Record<string, 'member' | 'dav'> = {};
+        for (const field of Object.keys(member.fields)) {
+            row[field] = source;
+        }
+        syncChoices.value[member.member_id] = row;
     }
 }
 
-const syncForm = useForm<{ choices: { member_id: number; source: string }[] }>({ choices: [] });
+const syncForm = useForm<{ choices: { member_id: number; fields: Record<string, string> }[] }>({ choices: [] });
 
 function confirmSync() {
     syncing.value = true;
-    syncForm.choices = syncPairs.value.map((p) => ({
-        member_id: p.member_id,
-        source: syncChoices.value[p.member_id] ?? 'member',
+    syncForm.choices = syncMembers.value.map((member) => ({
+        member_id: member.member_id,
+        fields: syncChoices.value[member.member_id] ?? {},
     }));
     syncForm.post(route('bo.dav.sync'), {
         onSuccess: () => {
             toast.success('Synchronisation effectuée avec succès.');
             showSyncDialog.value = false;
-            syncPairs.value = [];
+            syncMembers.value = [];
             syncChoices.value = {};
         },
         onError: () => {
@@ -264,79 +284,86 @@ onMounted(() => {
 
         <!-- Sync dialog -->
         <Dialog v-model:open="showSyncDialog">
-            <DialogContent class="max-w-3xl">
+            <DialogContent class="max-w-4xl">
                 <DialogHeader>
-                    <DialogTitle>Synchroniser les noms</DialogTitle>
+                    <DialogTitle>Synchroniser les contacts</DialogTitle>
                     <DialogDescription>
-                        <template v-if="syncPairs.length > 0">
-                            {{ syncPairs.length }} modification(s) détectée(s). Choisissez la source de vérité pour chaque paire.
+                        <template v-if="syncMembers.length > 0">
+                            {{ syncMembers.length }} membre(s) avec des différences. Choisissez la source de vérité pour chaque champ.
                         </template>
                         <template v-else> Aucune différence détectée. </template>
                     </DialogDescription>
                 </DialogHeader>
 
-                <div v-if="syncPairs.length > 0">
+                <div v-if="syncMembers.length > 0">
                     <div class="mb-3 flex gap-2">
                         <Button size="sm" variant="outline" @click="setAllChoices('member')"> Tout Membre </Button>
                         <Button size="sm" variant="outline" @click="setAllChoices('dav')"> Tout DAV </Button>
                     </div>
 
-                    <div class="max-h-96 overflow-y-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Membre</TableHead>
-                                    <TableHead>DAV</TableHead>
-                                    <TableHead>Choix</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                <TableRow v-for="pair in syncPairs" :key="pair.member_id">
-                                    <TableCell>
-                                        <span :class="syncChoices[pair.member_id] === 'member' ? 'font-semibold' : 'text-muted-foreground'">
-                                            {{ pair.member_first_name }} {{ pair.member_last_name }}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        <span :class="syncChoices[pair.member_id] === 'dav' ? 'font-semibold' : 'text-muted-foreground'">
-                                            {{ pair.dav_first_name }} {{ pair.dav_last_name }}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div class="flex items-center gap-4">
-                                            <label class="flex items-center gap-1 text-sm">
-                                                <input
-                                                    type="radio"
-                                                    :name="'sync-' + pair.member_id"
-                                                    value="member"
-                                                    :checked="syncChoices[pair.member_id] === 'member'"
-                                                    @change="syncChoices[pair.member_id] = 'member'"
-                                                />
-                                                Membre
-                                            </label>
-                                            <label class="flex items-center gap-1 text-sm">
-                                                <input
-                                                    type="radio"
-                                                    :name="'sync-' + pair.member_id"
-                                                    value="dav"
-                                                    :checked="syncChoices[pair.member_id] === 'dav'"
-                                                    @change="syncChoices[pair.member_id] = 'dav'"
-                                                />
-                                                DAV
-                                            </label>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
+                    <div class="max-h-96 space-y-4 overflow-y-auto">
+                        <div v-for="member in syncMembers" :key="member.member_id" class="rounded-lg border p-3">
+                            <p class="font-medium">{{ member.member_name }}</p>
+                            <p v-if="member.missing_contact" class="text-muted-foreground text-sm">Contact DAV introuvable.</p>
+                            <Table v-else>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Champ</TableHead>
+                                        <TableHead>Membre</TableHead>
+                                        <TableHead>DAV</TableHead>
+                                        <TableHead>Choix</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableRow v-for="(field, name) in member.fields" :key="name">
+                                        <TableCell class="font-medium">{{ name }}</TableCell>
+                                        <TableCell>
+                                            <span :class="syncChoices[member.member_id]?.[name] === 'member' ? 'font-semibold' : 'text-muted-foreground'">
+                                                {{ field.member ?? '—' }}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span :class="syncChoices[member.member_id]?.[name] === 'dav' ? 'font-semibold' : 'text-muted-foreground'">
+                                                {{ field.dav ?? '—' }}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div class="flex flex-col gap-1">
+                                                <label class="flex items-center gap-1 text-sm">
+                                                    <input
+                                                        type="radio"
+                                                        :name="'sync-' + member.member_id + '-' + name"
+                                                        value="member"
+                                                        :checked="syncChoices[member.member_id]?.[name] === 'member'"
+                                                        @change="syncChoices[member.member_id][name] = 'member'"
+                                                    />
+                                                    Membre
+                                                </label>
+                                                <label class="flex items-center gap-1 text-sm">
+                                                    <input
+                                                        type="radio"
+                                                        :name="'sync-' + member.member_id + '-' + name"
+                                                        value="dav"
+                                                        :checked="syncChoices[member.member_id]?.[name] === 'dav'"
+                                                        @change="syncChoices[member.member_id][name] = 'dav'"
+                                                    />
+                                                    DAV
+                                                </label>
+                                            </div>
+                                            <span v-if="field.conflict" class="text-xs text-red-600">Conflit</span>
+                                        </TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                        </div>
                     </div>
                 </div>
 
                 <DialogFooter>
                     <Button variant="outline" @click="showSyncDialog = false">Annuler</Button>
-                    <Button :disabled="syncPairs.length === 0 || syncing" :loading="syncing" @click="confirmSync">
+                    <Button :disabled="syncMembers.length === 0 || syncing" :loading="syncing" @click="confirmSync">
                         <RefreshCw class="mr-1 h-4 w-4" />
-                        Synchroniser {{ syncPairs.length }} modification(s)
+                        Synchroniser {{ syncMembers.length }} membre(s)
                     </Button>
                 </DialogFooter>
             </DialogContent>

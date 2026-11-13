@@ -6,6 +6,7 @@ use App\Http\Controllers\BackOffice\DavController;
 use App\Models\Member;
 use App\Services\DavServiceInterface;
 use App\Services\DavSyncService;
+use App\Services\MemberSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Inertia\Response;
@@ -60,6 +61,24 @@ class DavControllerTest extends TestCase
         $syncMock = Mockery::mock(DavSyncService::class);
         $syncMock->shouldReceive($method)->andThrow(new \RuntimeException($message));
         $this->app->instance(DavSyncService::class, $syncMock);
+    }
+
+    private function mockMemberSyncService(array $methods = []): Mockery\MockInterface
+    {
+        $syncMock = Mockery::mock(MemberSyncService::class);
+        foreach ($methods as $method => $return) {
+            $syncMock->shouldReceive($method)->andReturn($return);
+        }
+        $this->app->instance(MemberSyncService::class, $syncMock);
+
+        return $syncMock;
+    }
+
+    private function mockMemberSyncServiceThrows(string $method, string $message = 'Connection failed'): void
+    {
+        $syncMock = Mockery::mock(MemberSyncService::class);
+        $syncMock->shouldReceive($method)->andThrow(new \RuntimeException($message));
+        $this->app->instance(MemberSyncService::class, $syncMock);
     }
 
     private function makeContact(string $uid, string $n, string $category = 'Actifs'): array
@@ -156,34 +175,29 @@ class DavControllerTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $pairs = [
+        $members = [
             [
                 'member_id' => $member->id,
-                'member_first_name' => 'Pierre',
-                'member_last_name' => 'Dupont',
-                'dav_first_name' => 'John',
-                'dav_last_name' => 'Doe',
+                'member_name' => 'Pierre Dupont',
                 'dav_uid' => 'uid-001',
+                'missing_contact' => false,
+                'fields' => [],
             ],
         ];
-        $this->mockDavSyncService(['syncPreview' => ['pairs' => $pairs]]);
+        $this->mockMemberSyncService(['preview' => ['members' => $members, 'unlinked_contacts' => [], 'unlinked_members' => []]]);
 
-        $response = $this->controller->syncPreview(app(DavSyncService::class));
+        $response = $this->controller->syncPreview(app(MemberSyncService::class));
 
         $data = $response->getData(true);
-        $this->assertCount(1, $data['pairs']);
-        $this->assertEquals($member->id, $data['pairs'][0]['member_id']);
-        $this->assertEquals('Pierre', $data['pairs'][0]['member_first_name']);
-        $this->assertEquals('Dupont', $data['pairs'][0]['member_last_name']);
-        $this->assertEquals('John', $data['pairs'][0]['dav_first_name']);
-        $this->assertEquals('Doe', $data['pairs'][0]['dav_last_name']);
+        $this->assertCount(1, $data['members']);
+        $this->assertEquals($member->id, $data['members'][0]['member_id']);
     }
 
     public function test_sync_preview_handles_exception(): void
     {
-        $this->mockDavSyncServiceThrows('syncPreview');
+        $this->mockMemberSyncServiceThrows('preview');
 
-        $response = $this->controller->syncPreview(app(DavSyncService::class));
+        $response = $this->controller->syncPreview(app(MemberSyncService::class));
 
         $this->assertEquals(500, $response->getStatusCode());
     }
@@ -198,12 +212,12 @@ class DavControllerTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $this->mockDavSyncService(['sync' => ['updated' => 1]]);
+        $this->mockMemberSyncService(['apply' => ['updated' => 1]]);
 
         $request = new Request;
-        $request->merge(['choices' => [['member_id' => $member->id, 'source' => 'dav']]]);
+        $request->merge(['choices' => [['member_id' => $member->id, 'fields' => ['first_name' => 'dav']]]]);
 
-        $this->controller->sync(app(DavSyncService::class), $request);
+        $this->controller->sync(app(MemberSyncService::class), $request);
 
         $this->assertDatabaseHas('members', [
             'id' => $member->id,
@@ -220,12 +234,12 @@ class DavControllerTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $this->mockDavSyncService(['sync' => ['updated' => 1]]);
+        $this->mockMemberSyncService(['apply' => ['updated' => 1]]);
 
         $request = new Request;
-        $request->merge(['choices' => [['member_id' => $member->id, 'source' => 'member']]]);
+        $request->merge(['choices' => [['member_id' => $member->id, 'fields' => ['first_name' => 'member']]]]);
 
-        $this->controller->sync(app(DavSyncService::class), $request);
+        $this->controller->sync(app(MemberSyncService::class), $request);
 
         $this->assertDatabaseHas('members', [
             'id' => $member->id,

@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Log;
 class DavSyncService
 {
     public function __construct(
-        private readonly DavServiceInterface $dav
+        private readonly DavServiceInterface $dav,
+        private readonly MemberSyncService $memberSync,
     ) {}
 
     /**
@@ -19,26 +20,16 @@ class DavSyncService
     public function importFromDav(): array
     {
         $contacts = $this->dav->getContacts();
-        $existingDavUids = Member::whereNotNull('dav_uid')->pluck('dav_uid')->flip()->toArray();
+        $existingDavUids = Member::withTrashed()->whereNotNull('dav_uid')->pluck('dav_uid')->flip()->toArray();
 
-        $activeContacts = array_filter($contacts, fn ($contact) => str_contains($contact['category'] ?? '', DavGroupLabels::ACTIVE_MEMBERS->value)
-        );
+        $activeContacts = collect($contacts)->filter(fn (array $contact): bool => $this->hasCategory($contact, DavGroupLabels::ACTIVE_MEMBERS->value));
 
-        $toImport = array_filter($activeContacts, fn ($contact) => ! isset($existingDavUids[$contact['uid']])
-        );
+        $toImport = $activeContacts->filter(fn (array $contact): bool => ! isset($existingDavUids[$contact['uid']]));
 
         $created = 0;
 
         foreach ($toImport as $contact) {
-            $parts = explode(';', $contact['n'] ?? '');
-            $lastName = $parts[0];
-            $firstName = $parts[1];
-
-            Member::create([
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'dav_uid' => $contact['uid'],
-            ]);
+            $this->memberSync->createFromContact($contact);
 
             $created++;
         }
@@ -61,11 +52,11 @@ class DavSyncService
     {
         $contacts = $this->dav->getContacts();
 
-        $activeContacts = array_filter($contacts, fn ($contact) => str_contains($contact['category'] ?? '', DavGroupLabels::ACTIVE_MEMBERS->value)
-        );
+        $activeContacts = collect($contacts)->filter(fn (array $contact): bool => $this->hasCategory($contact, DavGroupLabels::ACTIVE_MEMBERS->value));
 
-        $members = Member::whereNotNull('dav_uid')
-            ->whereIn('dav_uid', array_column($activeContacts, 'uid'))
+        $members = Member::withTrashed()
+            ->whereNotNull('dav_uid')
+            ->whereIn('dav_uid', $activeContacts->pluck('uid')->all())
             ->get()
             ->keyBy('dav_uid');
 
@@ -107,7 +98,7 @@ class DavSyncService
     public function sync(array $choices): array
     {
         $memberIds = array_column($choices, 'member_id');
-        $members = Member::whereIn('id', $memberIds)->get()->keyBy('id');
+        $members = Member::withTrashed()->whereIn('id', $memberIds)->get()->keyBy('id');
 
         $updated = 0;
 
@@ -124,21 +115,15 @@ class DavSyncService
             }
 
             try {
-                if ($choice['source'] === 'dav') {
-                    $contact = $this->dav->getContact(
-                        rtrim($this->dav->getAddressbookUrl(), '/').'/'.$member->dav_uid.'.vcf',
-                    );
+                $result = $this->memberSync->apply([[
+                    'member_id' => $member->id,
+                    'fields' => array_fill_keys(
+                        ['first_name', 'last_name', 'email', 'tel', 'status', 'archived'],
+                        $choice['source'] === 'dav' ? 'dav' : 'member',
+                    ),
+                ]]);
 
-                    if ($contact) {
-                        $parts = explode(';', $contact['n'] ?? '');
-                        $member->update([
-                            'first_name' => $parts[1],
-                            'last_name' => $parts[0],
-                        ]);
-                        $updated++;
-                    }
-                } else {
-                    $this->dav->updateMember($member);
+                if ($result['updated'] > 0) {
                     $updated++;
                 }
             } catch (\Exception $e) {
@@ -159,5 +144,12 @@ class DavSyncService
         ]);
 
         return ['updated' => $updated];
+    }
+
+    private function hasCategory(array $contact, string $category): bool
+    {
+        return collect(explode(',', (string) ($contact['category'] ?? '')))
+            ->map(fn (string $value): string => trim($value))
+            ->contains($category);
     }
 }

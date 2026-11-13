@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Member;
 use App\Services\DavServiceInterface;
 use App\Services\DavSyncService;
+use App\Services\MemberSyncService;
+use App\Support\PiiMasker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,7 +37,7 @@ class DavController extends Controller
             ]);
         }
 
-        $existingDavUids = Member::whereNotNull('dav_uid')->pluck('dav_uid')->toArray();
+        $existingDavUids = Member::withTrashed()->whereNotNull('dav_uid')->pluck('dav_uid')->toArray();
 
         return Inertia::render('backOffice/Dav/Index', [
             'contacts' => $contacts,
@@ -60,10 +63,10 @@ class DavController extends Controller
         return back()->with('success', "$result[created] membre(s) créé(s) avec succès.");
     }
 
-    public function syncPreview(DavSyncService $service): JsonResponse
+    public function syncPreview(MemberSyncService $service): JsonResponse
     {
         try {
-            $result = $service->syncPreview();
+            $result = $service->preview();
         } catch (\Exception $e) {
             report($e);
 
@@ -75,18 +78,32 @@ class DavController extends Controller
             return response()->json(['error' => 'Erreur lors de la récupération des contacts: '.$e->getMessage()], 500);
         }
 
+        if (! Auth::user()?->can('view member sensitive data')) {
+            $result['members'] = array_map(function (array $member): array {
+                foreach ($member['fields'] as $field => &$row) {
+                    if ($field === 'email') {
+                        $row['member'] = PiiMasker::email($row['member']);
+                        $row['dav'] = PiiMasker::email($row['dav']);
+                    }
+                }
+
+                return $member;
+            }, $result['members']);
+        }
+
         return response()->json($result);
     }
 
-    public function sync(DavSyncService $service, Request $request): RedirectResponse
+    public function sync(MemberSyncService $service, Request $request): RedirectResponse
     {
         $choices = $request->validate([
             'choices' => 'required|array|min:1',
             'choices.*.member_id' => 'required|exists:members,id',
-            'choices.*.source' => 'required|in:member,dav',
+            'choices.*.fields' => 'required|array',
+            'choices.*.fields.*' => 'required|in:member,dav',
         ]);
 
-        $result = $service->sync($choices['choices']);
+        $result = $service->apply($choices['choices']);
 
         return back()->with('success', "$result[updated] membre(s) synchronisé(s) avec succès.");
     }
