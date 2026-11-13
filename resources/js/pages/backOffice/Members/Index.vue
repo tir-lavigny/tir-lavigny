@@ -13,7 +13,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Member, PaginatedMembers, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Archive, Eye, Pencil, Plus, RefreshCw, Undo2 } from '@lucide/vue';
+import { Archive, Eye, Plus, RefreshCw, Undo2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -136,14 +136,6 @@ const handleSync = (member: Member) => {
                                 </Link>
                             </TooltipTrigger>
                             <TooltipContent><p>Voir</p></TooltipContent>
-                        </Tooltip>
-                        <Tooltip v-if="hasPermissionTo(user, 'manage members')">
-                            <TooltipTrigger>
-                                <Link :href="route('bo.members.edit', member.id)">
-                                    <Button size="icon" variant="outline"><Pencil /></Button>
-                                </Link>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Modifier</p></TooltipContent>
                         </Tooltip>
                         <Tooltip v-if="hasPermissionTo(user, 'manage members')">
                             <TooltipTrigger>

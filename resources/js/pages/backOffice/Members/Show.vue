@@ -19,8 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Member, MemberRegistration, SharedData, Voucher } from '@/types';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
-import { Archive, RefreshCw, Trash2, Undo2 } from '@lucide/vue';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Pencil, RefreshCw, Trash2, Undo2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -59,13 +59,6 @@ const handleSync = () => {
     useForm({}).post(route('bo.members.sync', member.value.id), {
         onSuccess: () => toast.success('Synchronisation effectuée.'),
         onError: () => toast.error('Erreur lors de la synchronisation.'),
-    });
-};
-
-const handleArchive = () => {
-    useForm({}).delete(route('bo.members.destroy', member.value.id), {
-        onSuccess: () => toast.success('Membre archivé.'),
-        onError: () => toast.error("Erreur lors de l'archivage."),
     });
 };
 
@@ -126,16 +119,11 @@ const handleRemoveUnused = () => {
                     <span v-if="member.deleted_at" class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">Archivé</span>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
+                    <Link v-if="hasPermissionTo(user, 'manage members')" :href="route('bo.members.edit', member.id)">
+                        <Button variant="outline"><Pencil class="mr-2 h-4 w-4" /> Modifier</Button>
+                    </Link>
                     <Button variant="outline" @click="handleSync"><RefreshCw class="mr-2 h-4 w-4" /> Synchroniser</Button>
                     <Button v-if="member.deleted_at" variant="outline" @click="handleRestore"><Undo2 class="mr-2 h-4 w-4" /> Restaurer</Button>
-                    <AppAlertDialog v-if="!member.deleted_at" title="Archiver ce membre ?" description="Le membre sera archivé." cancelText="Annuler">
-                        <template #trigger>
-                            <Button variant="destructive"><Archive class="mr-2 h-4 w-4" /> Archiver</Button>
-                        </template>
-                        <template #action>
-                            <Button variant="destructive" @click="handleArchive">Archiver</Button>
-                        </template>
-                    </AppAlertDialog>
                 </div>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative flex-1 rounded-xl border p-4">
