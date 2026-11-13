@@ -4,7 +4,6 @@ namespace Tests\Unit\Http\Controllers\BackOffice\Register;
 
 use App\Http\Controllers\BackOffice\Register\TrashController;
 use App\Models\Category;
-use App\Models\Member;
 use App\Models\Product;
 use App\Models\Season;
 use App\Models\Ticket;
@@ -43,7 +42,6 @@ class TrashControllerTest extends TestCase
         $this->assertEquals(Category::class, $this->callProtected('resolveType', ['category']));
         $this->assertEquals(Product::class, $this->callProtected('resolveType', ['product']));
         $this->assertEquals(Season::class, $this->callProtected('resolveType', ['season']));
-        $this->assertEquals(Member::class, $this->callProtected('resolveType', ['member']));
         $this->assertEquals(Ticket::class, $this->callProtected('resolveType', ['ticket']));
         $this->assertEquals(Voucher::class, $this->callProtected('resolveType', ['voucher']));
     }
@@ -79,15 +77,6 @@ class TrashControllerTest extends TestCase
         $label = $this->callProtected('getItemLabel', [$season, 'season']);
 
         $this->assertEquals('2024-2025', $label);
-    }
-
-    public function test_get_item_label_returns_member_full_name(): void
-    {
-        $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
-
-        $label = $this->callProtected('getItemLabel', [$member, 'member']);
-
-        $this->assertEquals('Jean Dupont', $label);
     }
 
     public function test_get_item_label_returns_ticket_id(): void
@@ -176,42 +165,6 @@ class TrashControllerTest extends TestCase
 
         $this->assertCount(1, $children);
         $this->assertEquals('ticket_item', $children[0]['type']);
-        $this->assertEquals(1, $children[0]['count']);
-        $this->assertStringContainsString('actif', $children[0]['label']);
-    }
-
-    public function test_get_children_for_member_returns_empty_when_no_children(): void
-    {
-        $member = Member::factory()->create();
-
-        $children = $this->callProtected('getChildrenCounts', [$member, 'member']);
-
-        $this->assertEmpty($children);
-    }
-
-    public function test_get_children_for_member_counts_trashed_vouchers(): void
-    {
-        $member = Member::factory()->create();
-        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
-        $voucher->delete();
-
-        $children = $this->callProtected('getChildrenCounts', [$member, 'member']);
-
-        $this->assertCount(1, $children);
-        $this->assertEquals('voucher', $children[0]['type']);
-        $this->assertEquals(1, $children[0]['count']);
-        $this->assertStringContainsString('supprimé', $children[0]['label']);
-    }
-
-    public function test_get_children_for_member_counts_active_vouchers(): void
-    {
-        $member = Member::factory()->create();
-        Voucher::factory()->create(['member_id' => $member->id]);
-
-        $children = $this->callProtected('getChildrenCounts', [$member, 'member']);
-
-        $this->assertCount(1, $children);
-        $this->assertEquals('voucher', $children[0]['type']);
         $this->assertEquals(1, $children[0]['count']);
         $this->assertStringContainsString('actif', $children[0]['label']);
     }

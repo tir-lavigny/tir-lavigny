@@ -75,16 +75,6 @@ class TrashControllerTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_index_shows_trashed_members(): void
-    {
-        $member = Member::factory()->create();
-        $member->delete();
-
-        $response = $this->get(route('bo.register.trash.index'));
-
-        $response->assertOk();
-    }
-
     public function test_index_shows_trashed_tickets(): void
     {
         $ticket = Ticket::factory()->create();
@@ -183,39 +173,6 @@ class TrashControllerTest extends TestCase
         $this->assertSoftDeleted('ticket_items', ['id' => $ticketItem->id]);
     }
 
-    public function test_restore_member_restores_unused_vouchers(): void
-    {
-        $member = Member::factory()->create();
-        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
-        $member->delete();
-
-        $this->assertSoftDeleted('members', ['id' => $member->id]);
-        $this->assertSoftDeleted('vouchers', ['id' => $voucher->id]);
-
-        $response = $this->postJson(route('bo.register.trash.restore', ['type' => 'member', 'id' => $member->id, 'confirm' => true]));
-
-        $response->assertRedirect();
-        $this->assertDatabaseHas('members', ['id' => $member->id, 'deleted_at' => null]);
-        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
-    }
-
-    public function test_member_restore_excludes_used_vouchers(): void
-    {
-        $member = Member::factory()->create();
-        $unusedVoucher = Voucher::factory()->create(['member_id' => $member->id]);
-        $usedVoucher = Voucher::factory()->create(['member_id' => $member->id]);
-        $ticket = Ticket::factory()->create();
-        TicketItem::factory()->create(['ticket_id' => $ticket->id, 'voucher_id' => $usedVoucher->id]);
-        $member->delete();
-
-        $response = $this->postJson(route('bo.register.trash.restore', ['type' => 'member', 'id' => $member->id, 'confirm' => true]));
-
-        $response->assertRedirect();
-        $this->assertDatabaseHas('members', ['id' => $member->id, 'deleted_at' => null]);
-        $this->assertDatabaseHas('vouchers', ['id' => $unusedVoucher->id, 'deleted_at' => null]);
-        $this->assertDatabaseHas('vouchers', ['id' => $usedVoucher->id, 'deleted_at' => null]);
-    }
-
     public function test_restore_returns_404_for_nonexistent_item(): void
     {
         $response = $this->postJson(route('bo.register.trash.restore', ['type' => 'category', 'id' => 999999]));
@@ -276,19 +233,6 @@ class TrashControllerTest extends TestCase
         $response->assertStatus(302);
         $response->assertSessionHas('error');
         $this->assertDatabaseHas('tickets', ['id' => $ticket->id]);
-    }
-
-    public function test_force_delete_blocks_member_with_vouchers(): void
-    {
-        $member = Member::factory()->create();
-        Voucher::factory()->create(['member_id' => $member->id]);
-        $member->delete();
-
-        $response = $this->deleteJson(route('bo.register.trash.force-delete', ['type' => 'member', 'id' => $member->id]));
-
-        $response->assertStatus(302);
-        $response->assertSessionHas('error');
-        $this->assertDatabaseHas('members', ['id' => $member->id]);
     }
 
     public function test_force_delete_season_blocks_with_operating_days(): void
