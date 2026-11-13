@@ -381,13 +381,19 @@ class InfomaniakDavService implements DavServiceInterface
     /** @param array<string, string> $data */
     private function buildAddress(array $data): string
     {
-        return implode(';', [
+        $parts = [
             $this->escapeVcardValue($data['street'] ?? ''),
             $this->escapeVcardValue($data['city'] ?? ''),
             $this->escapeVcardValue($data['canton'] ?? ''),
             $this->escapeVcardValue($data['npa'] ?? ''),
             $this->escapeVcardValue($data['country'] ?? ''),
-        ]);
+        ];
+
+        if (trim(implode('', $parts)) === '') {
+            return '';
+        }
+
+        return implode(';', $parts);
     }
 
     /** @param array<string, string> $parameters */
