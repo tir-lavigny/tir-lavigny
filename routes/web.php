@@ -106,6 +106,7 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
         Route::post('/import', [DavController::class, 'importFromDav'])->name('bo.dav.import');
         Route::get('/sync/preview', [DavController::class, 'syncPreview'])->name('bo.dav.sync.preview');
         Route::post('/sync', [DavController::class, 'sync'])->name('bo.dav.sync');
+        Route::post('/link', [DavController::class, 'link'])->name('bo.dav.link');
     });
 
     Route::get('member-registrations', [BackOfficeMemberRegistrationController::class, 'index'])

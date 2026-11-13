@@ -547,4 +547,59 @@ class DavControllerTest extends TestCase
         ])->assertRedirect()
             ->assertSessionHas('success', '1 membre(s) synchronisé(s) avec succès.');
     }
+
+    public function test_link_requires_authentication(): void
+    {
+        $this->post(route('bo.dav.link'), ['member_id' => 1, 'dav_uid' => 'uid-001'])->assertRedirect();
+    }
+
+    public function test_link_requires_manage_members_permission(): void
+    {
+        $this->actingAs($this->user);
+
+        $this->post(route('bo.dav.link'), ['member_id' => 1, 'dav_uid' => 'uid-001'])->assertForbidden();
+    }
+
+    public function test_link_links_member_to_contact(): void
+    {
+        $this->actingAs($this->admin);
+
+        $member = Member::factory()->create(['dav_uid' => null]);
+
+        $this->mockDavService([
+            [
+                'url' => 'http://localhost/uid-001.vcf',
+                'uid' => 'uid-001',
+                'fn' => 'Doe John',
+                'n' => 'Doe;John;;;',
+                'email' => 'john@example.com',
+                'tel' => '',
+                'org' => '',
+                'category' => 'Actifs',
+                'vcard_raw' => 'BEGIN:VCARD',
+            ],
+        ]);
+
+        $this->post(route('bo.dav.link'), [
+            'member_id' => $member->id,
+            'dav_uid' => 'uid-001',
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $this->assertSame('uid-001', $member->fresh()->dav_uid);
+    }
+
+    public function test_link_rejects_unknown_contact(): void
+    {
+        $this->actingAs($this->admin);
+
+        $member = Member::factory()->create(['dav_uid' => null]);
+        $this->mockDavService([]);
+
+        $this->post(route('bo.dav.link'), [
+            'member_id' => $member->id,
+            'dav_uid' => 'missing',
+        ])->assertRedirect()->assertSessionHas('error');
+
+        $this->assertNull($member->fresh()->dav_uid);
+    }
 }

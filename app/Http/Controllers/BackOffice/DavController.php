@@ -107,4 +107,21 @@ class DavController extends Controller
 
         return back()->with('success', "$result[updated] membre(s) synchronisé(s) avec succès.");
     }
+
+    public function link(Request $request, MemberSyncService $service): RedirectResponse
+    {
+        $data = $request->validate([
+            'member_id' => ['required', 'exists:members,id'],
+            'dav_uid' => ['required', 'string'],
+        ]);
+
+        $member = Member::withTrashed()->findOrFail($data['member_id']);
+        $result = $service->link($member, $data['dav_uid']);
+
+        if (! $result['success']) {
+            return back()->with('error', $result['error']);
+        }
+
+        return back()->with('success', 'Contact lié avec succès.');
+    }
 }

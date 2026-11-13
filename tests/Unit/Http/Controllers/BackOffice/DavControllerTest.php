@@ -247,4 +247,35 @@ class DavControllerTest extends TestCase
             'last_name' => 'Dupont',
         ]);
     }
+
+    public function test_link_links_member(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => null]);
+
+        $this->mockMemberSyncService(['link' => ['success' => true, 'error' => null]]);
+
+        $request = new Request;
+        $request->merge(['member_id' => $member->id, 'dav_uid' => 'uid-001']);
+
+        $this->controller->link($request, app(MemberSyncService::class));
+
+        $this->assertDatabaseHas('members', [
+            'id' => $member->id,
+        ]);
+    }
+
+    public function test_link_rejects_unknown_contact(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => null]);
+
+        $this->mockMemberSyncService(['link' => ['success' => false, 'error' => 'Contact DAV introuvable.']]);
+
+        $request = new Request;
+        $request->merge(['member_id' => $member->id, 'dav_uid' => 'missing']);
+
+        $response = $this->controller->link($request, app(MemberSyncService::class));
+
+        $this->assertSame('Contact DAV introuvable.', $response->getSession()->get('error'));
+        $this->assertNull($member->fresh()->dav_uid);
+    }
 }

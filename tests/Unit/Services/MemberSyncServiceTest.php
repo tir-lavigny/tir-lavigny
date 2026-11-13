@@ -259,15 +259,76 @@ class MemberSyncServiceTest extends TestCase
             'dav_synced_snapshot' => ['email' => 'old@example.com'],
         ]);
 
-        $service = new MemberSyncService($this->mockDav());
-        $service->link($member, 'uid-linked');
+        $service = new MemberSyncService($this->mockDav([
+            $this->contact(['uid' => 'uid-linked']),
+        ]));
+        $result = $service->link($member, 'uid-linked');
 
         $member->refresh();
 
+        $this->assertTrue($result['success']);
         $this->assertSame('uid-linked', $member->dav_uid);
         $this->assertNull($member->dav_synced_at);
         $this->assertNull($member->dav_synced_snapshot);
         $this->assertNull($member->dav_sync_error);
+    }
+
+    public function test_link_rejects_unknown_contact(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => null]);
+
+        $service = new MemberSyncService($this->mockDav());
+        $result = $service->link($member, 'missing-uid');
+
+        $this->assertFalse($result['success']);
+        $this->assertNull($member->fresh()->dav_uid);
+    }
+
+    public function test_preview_suggests_member_by_unique_email(): void
+    {
+        $member = Member::factory()->create([
+            'email' => 'jean.dupont@example.com',
+            'dav_uid' => null,
+        ]);
+
+        $service = new MemberSyncService($this->mockDav([
+            $this->contact(['uid' => 'unknown-uid', 'email' => 'jean.dupont@example.com']),
+        ]));
+
+        $preview = $service->preview();
+
+        $this->assertSame($member->id, $preview['unlinked_contacts'][0]['suggested_member_id']);
+    }
+
+    public function test_preview_does_not_suggest_member_when_email_is_ambiguous(): void
+    {
+        Member::factory()->create(['email' => 'shared@example.com', 'dav_uid' => null]);
+        Member::factory()->create(['email' => 'shared@example.com', 'dav_uid' => null]);
+
+        $service = new MemberSyncService($this->mockDav([
+            $this->contact(['uid' => 'unknown-uid', 'email' => 'shared@example.com']),
+        ]));
+
+        $preview = $service->preview();
+
+        $this->assertNull($preview['unlinked_contacts'][0]['suggested_member_id']);
+    }
+
+    public function test_preview_suggests_contact_for_unlinked_member(): void
+    {
+        $member = Member::factory()->create([
+            'email' => 'jean.dupont@example.com',
+            'dav_uid' => null,
+        ]);
+
+        $service = new MemberSyncService($this->mockDav([
+            $this->contact(['uid' => 'unknown-uid', 'email' => 'jean.dupont@example.com']),
+        ]));
+
+        $preview = $service->preview();
+
+        $this->assertSame('unknown-uid', $preview['unlinked_members'][0]['suggested_contact_uid']);
+        $this->assertSame($member->id, $preview['unlinked_members'][0]['member_id']);
     }
 
     public function test_create_from_contact_maps_passive_status(): void

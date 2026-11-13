@@ -7,6 +7,7 @@ use App\MemberStatus;
 use App\Models\Member;
 use App\Support\PiiMasker;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class MemberSyncService
@@ -148,10 +149,30 @@ class MemberSyncService
             return collect($row['fields'])->contains(fn (array $field): bool => $field['member'] !== $field['dav']);
         }));
 
+        $unlinkedMembers = Member::withTrashed()
+            ->whereNull('dav_uid')
+            ->orderByName()
+            ->get();
+
         $unlinkedContacts = $contacts
             ->filter(fn (array $contact) => ($contact['uid'] ?? '') !== '')
             ->reject(fn (array $contact) => in_array($contact['uid'], $memberUids, true))
-            ->map(fn (array $contact) => [
+            ->values();
+
+        $membersByEmail = $unlinkedMembers
+            ->filter(fn (Member $member): bool => $member->email !== null && $member->email !== '')
+            ->groupBy(fn (Member $member): string => Str::lower(trim((string) $member->email)));
+
+        $contactsByEmail = $unlinkedContacts
+            ->filter(fn (array $contact): bool => ($contact['email'] ?? '') !== '')
+            ->groupBy(fn (array $contact): string => Str::lower(trim((string) $contact['email'])));
+
+        $unlinkedContactRows = $unlinkedContacts->map(function (array $contact) use ($membersByEmail): array {
+            $emailKey = ($contact['email'] ?? '') !== '' ? Str::lower(trim((string) $contact['email'])) : null;
+            $matches = $emailKey !== null ? $membersByEmail->get($emailKey, collect()) : collect();
+            $suggested = $matches->count() === 1 ? $matches->first() : null;
+
+            return [
                 'uid' => $contact['uid'],
                 'name' => $this->contactName($contact),
                 'email' => PiiMasker::email($contact['email'] ?? null),
@@ -159,27 +180,30 @@ class MemberSyncService
                 'category' => $contact['category'] ?? '',
                 'suggested_status' => $this->statusFromCategory($contact['category'] ?? ''),
                 'archived' => $this->isArchivedCategory($contact['category'] ?? ''),
-            ])
-            ->values()
-            ->all();
+                'suggested_member_id' => $suggested?->id,
+                'suggested_member_name' => $suggested ? $this->memberName($suggested) : null,
+            ];
+        })->all();
 
-        $unlinkedMembers = Member::withTrashed()
-            ->whereNull('dav_uid')
-            ->orderByName()
-            ->get()
-            ->map(fn (Member $member) => [
+        $unlinkedMemberRows = $unlinkedMembers->map(function (Member $member) use ($contactsByEmail): array {
+            $emailKey = $member->email !== null && $member->email !== '' ? Str::lower(trim((string) $member->email)) : null;
+            $matches = $emailKey !== null ? $contactsByEmail->get($emailKey, collect()) : collect();
+            $suggested = $matches->count() === 1 ? $matches->first() : null;
+
+            return [
                 'member_id' => $member->id,
                 'member_name' => $this->memberName($member),
                 'email' => $member->email_masked,
                 'status' => $member->trashed() ? 'archived' : $member->status->value,
-            ])
-            ->values()
-            ->all();
+                'suggested_contact_uid' => $suggested['uid'] ?? null,
+                'suggested_contact_name' => $suggested ? $this->contactName($suggested) : null,
+            ];
+        })->all();
 
         return [
             'members' => $memberRows,
-            'unlinked_contacts' => $unlinkedContacts,
-            'unlinked_members' => $unlinkedMembers,
+            'unlinked_contacts' => $unlinkedContactRows,
+            'unlinked_members' => $unlinkedMemberRows,
         ];
     }
 
@@ -247,14 +271,29 @@ class MemberSyncService
         return ['updated' => $updated];
     }
 
-    public function link(Member $member, string $davUid): void
+    /** @return array{success: bool, error: string|null} */
+    public function link(Member $member, string $davUid): array
     {
+        try {
+            $contact = collect($this->dav->getContacts())->firstWhere('uid', $davUid);
+        } catch (Throwable $e) {
+            report($e);
+
+            return ['success' => false, 'error' => 'Impossible de vérifier le contact DAV.'];
+        }
+
+        if (! $contact) {
+            return ['success' => false, 'error' => 'Contact DAV introuvable.'];
+        }
+
         $member->forceFill([
             'dav_uid' => $davUid,
             'dav_synced_at' => null,
             'dav_synced_snapshot' => null,
             'dav_sync_error' => null,
         ])->saveQuietly();
+
+        return ['success' => true, 'error' => null];
     }
 
     /**
