@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Mail\MemberDavSyncFailed;
 use App\Mail\MemberRegistrationCompleted as MemberRegistrationCompletedMail;
 use App\Mail\MemberRegistrationError;
 use App\Mail\MemberRegistrationValidationRequested;
@@ -15,6 +14,7 @@ use App\Models\Season;
 use App\Models\User;
 use App\Models\Voucher;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -22,6 +22,7 @@ class MemberRegistrationPipelineService
 {
     public function __construct(
         private readonly MemberSyncService $sync,
+        private readonly ?MemberDavSyncFailureNotifier $davFailureNotifier = null,
     ) {}
 
     /**
@@ -50,18 +51,23 @@ class MemberRegistrationPipelineService
         $step = 'member_creation';
 
         try {
-            $member = $registration->member;
+            $member = DB::transaction(function () use ($registration): Member {
+                $member = $registration->member;
 
-            if (! $member) {
-                $member = $this->createMemberFromRegistration($registration);
-                $registration->member()->associate($member);
-                $this->transitionStatus($registration, MemberRegistrationStatus::MEMBER_CREATED);
+                if (! $member) {
+                    $member = $this->createMemberFromRegistration($registration);
+                    $registration->member()->associate($member);
+                    $registration->save();
+                    $this->transitionStatus($registration, MemberRegistrationStatus::MEMBER_CREATED);
 
-                Log::info('Member registration member created', [
-                    'registration_id' => $registration->id,
-                    'member_id' => $member->id,
-                ]);
-            }
+                    Log::info('Member registration member created', [
+                        'registration_id' => $registration->id,
+                        'member_id' => $member->id,
+                    ]);
+                }
+
+                return $member;
+            });
 
             $this->processAfterMemberCreated($registration, $member);
         } catch (\Throwable $e) {
@@ -105,20 +111,23 @@ class MemberRegistrationPipelineService
         $step = 'voucher_generation';
 
         try {
-            $this->generateBaseVouchers($member);
+            DB::transaction(function () use ($registration, $member): void {
+                $this->generateBaseVouchers($member);
+                $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
+            });
 
             $step = 'completion_email';
             $this->sendCompletionEmail($registration);
-            $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
 
             Log::info('Member registration completed', [
                 'registration_id' => $registration->id,
                 'member_id' => $member->id,
             ]);
 
+            $step = 'dav_sync';
             $this->sync->push($member);
 
-            if ($member->dav_uid) {
+            if ($member->dav_uid && $registration->dav_uid !== $member->dav_uid) {
                 $registration->dav_uid = $member->dav_uid;
                 $registration->save();
             }
@@ -138,28 +147,19 @@ class MemberRegistrationPipelineService
         }
 
         $this->sync->push($member);
+
+        if ($member->dav_uid && $registration->dav_uid !== $member->dav_uid) {
+            $registration->dav_uid = $member->dav_uid;
+            $registration->save();
+        }
+
         $this->notifyDavSyncFailure($registration, $member);
     }
 
     private function notifyDavSyncFailure(MemberRegistration $registration, Member $member): void
     {
-        if (! $member->dav_sync_error) {
-            return;
-        }
-
-        try {
-            Mail::to(User::getMemberRegistrationEmails())->send(
-                new MemberDavSyncFailed($registration, $member, $member->dav_sync_error)
-            );
-        } catch (\Throwable $e) {
-            report($e);
-
-            Log::error('Member DAV sync failure email failed', [
-                'registration_id' => $registration->id,
-                'member_id' => $member->id,
-                'exception' => $e,
-            ]);
-        }
+        ($this->davFailureNotifier ?? app(MemberDavSyncFailureNotifier::class))
+            ->notify($member, $registration);
     }
 
     private function transitionStatus(MemberRegistration $registration, MemberRegistrationStatus $status): void
@@ -279,6 +279,10 @@ class MemberRegistrationPipelineService
             'member_id' => $registration->member_id,
             'exception' => $e,
         ]);
+
+        if ($step !== 'validation_email') {
+            $registration->status = MemberRegistrationStatus::ERROR;
+        }
 
         $registration->error_message = 'Erreur : '.$e->getMessage();
         $registration->failed_at = Carbon::now('Europe/Zurich')->utc();

@@ -59,6 +59,10 @@ class MemberSyncService
                 throw new \RuntimeException('Impossible de supprimer le contact DAV.');
             }
 
+            if ($member->exists) {
+                $member->forceFill(['dav_sync_error' => null])->saveQuietly();
+            }
+
             return ['success' => true, 'error' => null];
         } catch (Throwable $e) {
             report($e);
@@ -68,6 +72,10 @@ class MemberSyncService
                 'dav_uid' => $member->dav_uid,
                 'error' => $e->getMessage(),
             ]);
+
+            if ($member->exists) {
+                $member->forceFill(['dav_sync_error' => $e->getMessage()])->saveQuietly();
+            }
 
             return ['success' => false, 'error' => $e->getMessage()];
         }
@@ -131,6 +139,14 @@ class MemberSyncService
                 'fields' => $fields,
             ];
         }
+
+        $memberRows = array_values(array_filter($memberRows, function (array $row): bool {
+            if ($row['missing_contact']) {
+                return true;
+            }
+
+            return collect($row['fields'])->contains(fn (array $field): bool => $field['member'] !== $field['dav']);
+        }));
 
         $unlinkedContacts = $contacts
             ->filter(fn (array $contact) => ($contact['uid'] ?? '') !== '')

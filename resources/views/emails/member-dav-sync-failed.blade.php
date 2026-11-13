@@ -20,9 +20,11 @@
                 <p style="margin: 0 0 8px;"><strong>Erreur :</strong> {{ $error }}</p>
             </div>
 
-            <p>Vous pouvez relancer la synchronisation depuis la fiche du membre ou depuis l'inscription.</p>
+            <p>Vous pouvez relancer la synchronisation depuis la fiche du membre.</p>
 
-            <a href="{{ route('bo.member-registrations.show', $registration) }}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 0.375rem; font-weight: 500;">Voir l'inscription</a>
+            @if ($registration)
+                <a href="{{ route('bo.member-registrations.show', $registration) }}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 0.375rem; font-weight: 500;">Voir l'inscription</a>
+            @endif
         </div>
         <div style="margin-top: 24px; padding: 16px 24px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #6b7280; text-align: center;">
             <p style="margin: 0;">Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>

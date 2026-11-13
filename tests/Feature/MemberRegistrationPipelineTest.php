@@ -78,6 +78,7 @@ class MemberRegistrationPipelineTest extends TestCase
                 'fn' => 'Dupont Jean',
                 'vcard_raw' => 'BEGIN:VCARD...',
             ]);
+        $dav->shouldReceive('updateMember')->andReturn(true);
 
         return new MemberRegistrationPipelineService(new MemberSyncService($dav));
     }
@@ -318,5 +319,44 @@ class MemberRegistrationPipelineTest extends TestCase
     {
         $this->assertNull(MemberRegistrationStatus::tryFrom('dav_created'));
         $this->assertEquals('member_created', MemberRegistrationStatus::MEMBER_CREATED->value);
+    }
+
+    public function test_pipeline_marks_error_status_when_completion_email_fails(): void
+    {
+        Mail::shouldReceive('to')->andThrow(new \RuntimeException('Mail server down'));
+
+        $registration = $this->createRegistrationWithData();
+        $pipeline = new MemberRegistrationPipelineService(new MemberSyncService(Mockery::mock(DavServiceInterface::class)));
+
+        $pipeline->processFormSubmission($registration);
+
+        $registration->refresh();
+        $this->assertEquals(MemberRegistrationStatus::ERROR, $registration->status);
+        $this->assertNotNull($registration->failed_at);
+        $this->assertStringContainsString('Mail server down', $registration->error_message);
+    }
+
+    public function test_retry_after_error_does_not_duplicate_member(): void
+    {
+        Mail::fake();
+
+        $registration = $this->createRegistrationWithData();
+        $pipeline = $this->pipelineWithSuccessfulDav();
+
+        $pipeline->processFormSubmission($registration);
+
+        $member = $registration->member;
+        $this->assertNotNull($member);
+
+        $registration->refresh();
+        $registration->status = MemberRegistrationStatus::ERROR;
+        $registration->save();
+
+        $pipeline->processFormSubmission($registration);
+
+        $registration->refresh();
+        $this->assertEquals(MemberRegistrationStatus::COMPLETED, $registration->status);
+        $this->assertSame($member->id, $registration->member_id);
+        $this->assertSame(1, Member::where('email', 'jean.dupont@example.com')->count());
     }
 }

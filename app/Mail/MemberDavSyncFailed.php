@@ -15,7 +15,7 @@ class MemberDavSyncFailed extends Mailable
     use Queueable, SerializesModels;
 
     public function __construct(
-        public MemberRegistration $registration,
+        public ?MemberRegistration $registration,
         public Member $member,
         public string $error,
     ) {}

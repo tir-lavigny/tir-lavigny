@@ -2,24 +2,27 @@
 
 namespace App\Http\Controllers\BackOffice;
 
+use App\Actions\Member\ArchiveMemberAction;
+use App\Actions\Member\CreateMemberAction;
+use App\Actions\Member\DeleteMemberAction;
+use App\Actions\Member\RestoreMemberAction;
+use App\Actions\Member\SyncMemberAction;
+use App\Actions\Member\UpdateMemberAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\ArchiveMemberRequest;
 use App\Http\Requests\BackOffice\ForceDeleteMemberRequest;
 use App\Http\Requests\BackOffice\StoreMemberRequest;
 use App\Http\Requests\BackOffice\UpdateMemberRequest;
 use App\MemberStatus;
-use App\Models\ActivityLog;
 use App\Models\Member;
-use App\Models\MemberRegistration;
 use App\Models\Season;
-use App\Services\MemberSyncService;
+use App\Services\MemberDavSyncFailureNotifier;
 use App\Traits\SearchesAccentInsensitively;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -52,7 +55,7 @@ class MemberController extends Controller implements HasMiddleware
             $query->where('status', $status);
         }
 
-        $this->whereAccentInsensitiveLike($query, ['first_name', 'last_name'], $search);
+        $this->whereAccentInsensitiveLike($query, ['first_name', 'last_name', 'email'], $search);
 
         $members = $query->paginate(15)->withQueryString();
 
@@ -73,31 +76,34 @@ class MemberController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function store(StoreMemberRequest $request, MemberSyncService $sync): RedirectResponse
-    {
-        $member = Member::create($request->validated());
-
-        $result = $sync->push($member);
+    public function store(
+        StoreMemberRequest $request,
+        CreateMemberAction $action,
+        MemberDavSyncFailureNotifier $notifier,
+    ): RedirectResponse {
+        $result = $action->execute($this->filterSensitiveFields($request->validated()));
 
         if (! $result['success']) {
-            return redirect()->route('bo.members.show', $member)
+            $notifier->notify($result['member']);
+
+            return redirect()->route('bo.members.show', $result['member'])
                 ->with('error', 'Membre créé, mais la synchronisation avec les contacts a échoué.');
         }
 
-        return redirect()->route('bo.members.show', $member)
+        return redirect()->route('bo.members.show', $result['member'])
             ->with('success', 'Membre créé avec succès.');
     }
 
     public function show(Member $member): Response
     {
-        if ($member->exists && Auth::user()?->can('view member sensitive data')) {
-            $member->makeVisible(['avs']);
+        if ($this->canViewSensitiveData()) {
+            $member->makeVisible(['email', 'avs']);
         }
 
-        $member->load(['vouchers.ticketItems', 'registration']);
+        $member->load(['vouchers.ticketItems', 'registration', 'tickets']);
         $seasons = Season::orderBy('id', 'desc')->get();
         $vouchers = $member->vouchers->load('product');
-        $usedVouchers = $vouchers->filter(fn ($voucher) => $voucher->isUsed());
+        $usedVouchers = $vouchers->filter(fn ($voucher) => $voucher->isUsed())->values();
 
         return Inertia::render('backOffice/Members/Show', [
             'member' => $member,
@@ -109,7 +115,13 @@ class MemberController extends Controller implements HasMiddleware
 
     public function edit(Member $member): Response
     {
-        $member->makeVisible(['email', 'avs']);
+        if ($member->isAnonymized()) {
+            abort(403, 'Ce membre a été anonymisé et ne peut plus être modifié.');
+        }
+
+        if ($this->canViewSensitiveData()) {
+            $member->makeVisible(['email', 'avs']);
+        }
 
         return Inertia::render('backOffice/Members/Edit', [
             'member' => $member,
@@ -117,92 +129,115 @@ class MemberController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(UpdateMemberRequest $request, Member $member, MemberSyncService $sync): RedirectResponse
-    {
-        $member->update($request->validated());
+    public function update(
+        UpdateMemberRequest $request,
+        Member $member,
+        UpdateMemberAction $action,
+        MemberDavSyncFailureNotifier $notifier,
+    ): RedirectResponse {
+        if ($member->isAnonymized()) {
+            return back()->with('error', 'Ce membre a été anonymisé et ne peut plus être modifié.');
+        }
 
-        $result = $sync->push($member);
+        $result = $action->execute($member, $this->filterSensitiveFields($request->validated()));
 
         if (! $result['success']) {
-            return redirect()->route('bo.members.show', $member)
+            $notifier->notify($result['member']);
+
+            return redirect()->route('bo.members.show', $result['member'])
                 ->with('error', 'Membre mis à jour, mais la synchronisation avec les contacts a échoué.');
         }
 
-        return redirect()->route('bo.members.show', $member)
+        return redirect()->route('bo.members.show', $result['member'])
             ->with('success', 'Membre mis à jour avec succès.');
     }
 
-    public function destroy(ArchiveMemberRequest $request, Member $member, MemberSyncService $sync): RedirectResponse
-    {
+    public function destroy(
+        ArchiveMemberRequest $request,
+        Member $member,
+        ArchiveMemberAction $action,
+        MemberDavSyncFailureNotifier $notifier,
+    ): RedirectResponse {
         if ($member->isAnonymized()) {
             return back()->with('error', 'Ce membre a été anonymisé et ne peut plus être archivé.');
         }
 
-        $deleteVouchers = $request->boolean('delete_vouchers');
+        $result = $action->execute($member, $request->boolean('delete_vouchers'));
 
-        if ($deleteVouchers) {
-            $member->vouchers()
-                ->whereDoesntHave('ticketItems')
-                ->delete();
+        if (! $result['success']) {
+            $notifier->notify($member);
+
+            return redirect()->route('bo.members.index')
+                ->with('error', 'Membre archivé, mais la synchronisation avec les contacts a échoué.');
         }
-
-        $member->delete();
-
-        $sync->push($member);
 
         return redirect()->route('bo.members.index')
             ->with('success', 'Membre archivé avec succès.');
     }
 
-    public function restore(Member $member, MemberSyncService $sync): RedirectResponse
-    {
+    public function restore(
+        Member $member,
+        RestoreMemberAction $action,
+        MemberDavSyncFailureNotifier $notifier,
+    ): RedirectResponse {
         if ($member->isAnonymized()) {
             return back()->with('error', 'Ce membre a été anonymisé et ne peut pas être restauré.');
         }
 
-        $member->restore();
+        $result = $action->execute($member);
 
-        $sync->push($member);
+        if (! $result['success']) {
+            $notifier->notify($result['member']);
 
-        return redirect()->route('bo.members.show', $member)
+            return redirect()->route('bo.members.show', $result['member'])
+                ->with('error', 'Membre restauré, mais la synchronisation avec les contacts a échoué.');
+        }
+
+        return redirect()->route('bo.members.show', $result['member'])
             ->with('success', 'Membre restauré avec succès.');
     }
 
-    public function forceDelete(ForceDeleteMemberRequest $request, Member $member, MemberSyncService $sync): RedirectResponse
-    {
+    public function forceDelete(
+        ForceDeleteMemberRequest $request,
+        Member $member,
+        DeleteMemberAction $action,
+        MemberDavSyncFailureNotifier $notifier,
+    ): RedirectResponse {
         if ($member->isAnonymized()) {
             return back()->with('error', 'Ce membre a déjà été anonymisé.');
         }
 
-        $hasVouchers = $member->vouchers()->withTrashed()->exists();
-        $hasTickets = $member->tickets()->exists();
+        $result = $action->execute($member);
 
-        if ($hasVouchers || $hasTickets) {
-            $this->anonymize($member);
-
-            $sync->delete($member);
+        if (! $result['dav_success']) {
+            $notifier->notify($member);
 
             return redirect()->route('bo.members.index')
-                ->with('success', 'Membre anonymisé avec succès. Les données personnelles ont été supprimées.');
+                ->with('error', $result['anonymized']
+                    ? 'Membre anonymisé, mais la suppression du contact a échoué.'
+                    : 'Membre supprimé, mais la suppression du contact a échoué.');
         }
 
-        $member->registration()->delete();
-
-        $sync->delete($member);
-
-        $member->forceDelete();
-
-        $this->purgeActivityLogs($member);
-
         return redirect()->route('bo.members.index')
-            ->with('success', 'Membre supprimé définitivement.');
+            ->with('success', $result['anonymized']
+                ? 'Membre anonymisé avec succès. Les données personnelles ont été supprimées.'
+                : 'Membre supprimé définitivement.');
     }
 
-    public function sync(Member $member, MemberSyncService $sync): RedirectResponse
-    {
-        $result = $sync->push($member);
+    public function sync(
+        Member $member,
+        SyncMemberAction $action,
+        MemberDavSyncFailureNotifier $notifier,
+    ): RedirectResponse {
+        if ($member->isAnonymized()) {
+            return back()->with('error', 'Ce membre a été anonymisé et ne peut plus être synchronisé.');
+        }
+
+        $result = $action->execute($member);
 
         if (! $result['success']) {
+            $notifier->notify($member);
+
             return redirect()->route('bo.members.show', $member)
                 ->with('error', 'La synchronisation avec les contacts a échoué.');
         }
@@ -211,55 +246,23 @@ class MemberController extends Controller implements HasMiddleware
             ->with('success', 'Membre synchronisé avec succès.');
     }
 
-    private function anonymize(Member $member): void
+    private function canViewSensitiveData(): bool
     {
-        $registrationId = $member->registration?->id;
-
-        $member->registration()->delete();
-
-        $member->forceFill([
-            'first_name' => '[Deleted]',
-            'last_name' => '',
-            'email' => null,
-            'tel' => null,
-            'avs' => null,
-            'avs_hash' => null,
-            'is_swiss_citizen' => null,
-            'street' => null,
-            'npa' => null,
-            'city' => null,
-            'canton' => null,
-            'country' => null,
-            'anonymized_at' => now(),
-        ])->saveQuietly();
-
-        $member->delete();
-
-        $this->purgeActivityLogs($member, $registrationId);
-
-        Log::info('Member anonymized', [
-            'member_id' => $member->id,
-        ]);
+        return Auth::user()?->can('view member sensitive data') ?? false;
     }
 
-    private function purgeActivityLogs(Member $member, ?int $registrationId = null): void
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function filterSensitiveFields(array $data): array
     {
-        ActivityLog::where('model', Member::class)
-            ->where('model_id', $member->id)
-            ->delete();
-
-        if ($registrationId !== null) {
-            ActivityLog::where('model', MemberRegistration::class)
-                ->where('model_id', $registrationId)
-                ->delete();
+        if ($this->canViewSensitiveData()) {
+            return $data;
         }
 
-        ActivityLog::create([
-            'model' => Member::class,
-            'model_id' => $member->id,
-            'action' => 'deleted',
-            'changes' => json_encode([]),
-            'user_id' => Auth::id(),
-        ]);
+        unset($data['email'], $data['avs']);
+
+        return $data;
     }
 }
