@@ -4,7 +4,6 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import type {
     BreadcrumbItem,
     PaginatedCategories,
-    PaginatedMembers,
     PaginatedProducts,
     PaginatedSeasons,
     PaginatedTickets,
@@ -43,7 +42,6 @@ const props = defineProps<{
     categories: PaginatedCategories;
     products: PaginatedProducts;
     seasons: PaginatedSeasons;
-    members: PaginatedMembers;
     tickets: PaginatedTickets;
     vouchers: PaginatedVouchers;
     memberFilter: number | null;
@@ -76,7 +74,7 @@ const confirmRestore = () => {
         onSuccess: () => {
             toast.success('Élément restauré avec succès.');
             restoreDialog.value.open = false;
-            router.reload({ only: ['categories', 'products', 'seasons', 'members', 'tickets', 'vouchers'] });
+            router.reload({ only: ['categories', 'products', 'seasons', 'tickets', 'vouchers'] });
         },
         onError: (errors) => {
             toast.error(errors.error || 'Erreur lors de la restauration.');
@@ -93,7 +91,7 @@ const confirmForceDelete = () => {
         onSuccess: () => {
             toast.success('Élément supprimé définitivement.');
             forceDeleteDialog.value.open = false;
-            router.reload({ only: ['categories', 'products', 'seasons', 'members', 'tickets', 'vouchers'] });
+            router.reload({ only: ['categories', 'products', 'seasons', 'tickets', 'vouchers'] });
         },
         onError: (errors) => {
             toast.error(errors.message || 'Erreur lors de la suppression.');
@@ -174,7 +172,6 @@ const handleMemberFilterChange = () => {
                         <TabsTrigger value="categories">Catégories ({{ categories.total }})</TabsTrigger>
                         <TabsTrigger value="products">Produits ({{ products.total }})</TabsTrigger>
                         <TabsTrigger value="seasons">Saisons ({{ seasons.total }})</TabsTrigger>
-                        <TabsTrigger value="members">Membres ({{ members.total }})</TabsTrigger>
                         <TabsTrigger value="tickets">Tickets ({{ tickets.total }})</TabsTrigger>
                         <TabsTrigger value="vouchers">Bons ({{ vouchers.total }})</TabsTrigger>
                     </TabsList>
@@ -294,53 +291,6 @@ const handleMemberFilterChange = () => {
                                 :items-per-page="seasons.per_page"
                                 :page="seasons.current_page"
                                 @page-changed="(p) => handlePageChange('seasons', p)"
-                            />
-                        </div>
-                    </TabsContent>
-
-                    <TabsContent value="members">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Nom</TableHead>
-                                    <TableHead>Supprimé le</TableHead>
-                                    <TableHead class="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                <TableRow v-for="item in members.data" :key="item.id">
-                                    <TableCell class="font-medium">{{ item.first_name }} {{ item.last_name }}</TableCell>
-                                    <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
-                                    <TableCell class="text-right">
-                                        <div class="flex justify-end gap-2">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                @click="openRestoreDialog('member', item.id, item.first_name + ' ' + item.last_name)"
-                                            >
-                                                <RotateCcw class="mr-1 h-4 w-4" /> Restaurer
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="destructive"
-                                                @click="openForceDeleteDialog('member', item.id, item.first_name + ' ' + item.last_name)"
-                                            >
-                                                <Trash2 class="mr-1 h-4 w-4" /> Supprimer
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                                <TableRow v-if="members.data?.length === 0">
-                                    <TableCell colspan="3" class="text-muted-foreground text-center">Aucun membre supprimé</TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                        <div class="mt-4">
-                            <AppPagination
-                                :total-items="members.total"
-                                :items-per-page="members.per_page"
-                                :page="members.current_page"
-                                @page-changed="(p) => handlePageChange('members', p)"
                             />
                         </div>
                     </TabsContent>

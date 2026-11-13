@@ -13,11 +13,12 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { hasPermissionTo } from '@/lib/utils';
+import { formatDate, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Member, MemberRegistration, SharedData, Voucher } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { Archive, Pencil, RefreshCw, Trash2, Undo2 } from '@lucide/vue';
@@ -27,6 +28,7 @@ import { toast } from 'vue-sonner';
 interface MemberWithDetails extends Member {
     vouchers?: Voucher[];
     registration?: MemberRegistration;
+    tickets?: import('@/types').Ticket[];
 }
 
 const page = usePage<SharedData>();
@@ -53,7 +55,9 @@ const unusedVouchers = computed(() => filteredVouchers.value.filter((v) => !prop
 
 const showAvs = ref(false);
 const showDeleteDialog = ref(false);
+const deleteVouchers = ref(false);
 const deleteForm = useForm({ confirmation: '' });
+const archiveForm = useForm({ delete_vouchers: false });
 
 const handleSync = () => {
     useForm({}).post(route('bo.members.sync', member.value.id), {
@@ -70,7 +74,8 @@ const handleRestore = () => {
 };
 
 const handleArchive = () => {
-    useForm({}).delete(route('bo.members.destroy', member.value.id), {
+    archiveForm.delete_vouchers = deleteVouchers.value;
+    archiveForm.delete(route('bo.members.destroy', member.value.id), {
         onSuccess: () => toast.success('Membre archivé.'),
         onError: () => toast.error("Erreur lors de l'archivage."),
     });
@@ -131,10 +136,19 @@ const handleRemoveUnused = () => {
                     </Link>
                     <Button variant="outline" @click="handleSync"><RefreshCw class="mr-2 h-4 w-4" /> Synchroniser</Button>
                     <Button v-if="member.deleted_at" variant="outline" @click="handleRestore"><Undo2 class="mr-2 h-4 w-4" /> Restaurer</Button>
-                    <AppAlertDialog v-if="!member.deleted_at" title="Archiver ce membre ?" description="Le membre sera archivé." cancelText="Annuler">
+                    <AppAlertDialog
+                        v-if="!member.deleted_at"
+                        title="Archiver ce membre ?"
+                        description="Le membre sera archivé. Les bons utilisés ne sont jamais supprimés."
+                        cancelText="Annuler"
+                    >
                         <template #trigger>
                             <Button variant="destructive"><Archive class="mr-2 h-4 w-4" /> Archiver</Button>
                         </template>
+                        <div class="flex items-center gap-2">
+                            <Checkbox id="delete_vouchers" v-model="deleteVouchers" />
+                            <Label for="delete_vouchers">Supprimer aussi les bons inutilisés</Label>
+                        </div>
                         <template #action>
                             <Button variant="destructive" @click="handleArchive">Archiver</Button>
                         </template>
@@ -146,7 +160,7 @@ const handleRemoveUnused = () => {
                 <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                         <Label>Email</Label>
-                        <Muted>{{ member.email_masked || '—' }}</Muted>
+                        <Muted>{{ member.email || member.email_masked || '—' }}</Muted>
                     </div>
                     <div>
                         <Label>Téléphone</Label>
@@ -168,7 +182,7 @@ const handleRemoveUnused = () => {
                     </div>
                     <div>
                         <Label>Citoyen suisse</Label>
-                        <Muted>{{ member.is_swiss_citizen ? 'Oui' : 'Non' }}</Muted>
+                        <Muted>{{ member.is_swiss_citizen === null || member.is_swiss_citizen === undefined ? '—' : member.is_swiss_citizen ? 'Oui' : 'Non' }}</Muted>
                     </div>
                     <div>
                         <Label>Adresse</Label>
@@ -232,6 +246,17 @@ const handleRemoveUnused = () => {
                             <Button variant="destructive" @click="handleRemoveUnused">Supprimer</Button>
                         </template>
                     </AppAlertDialog>
+                </div>
+
+                <div class="mt-6">
+                    <H3>Tickets</H3>
+                    <div v-if="member.tickets?.length" class="mt-2 flex flex-col gap-2">
+                        <div v-for="ticket in member.tickets" :key="ticket.id" class="rounded-lg border p-4">
+                            <p class="font-medium">Ticket #{{ ticket.id }}</p>
+                            <p class="text-muted-foreground text-sm">{{ formatDate(ticket.created_at, 'DD.MM.YYYY HH:mm') }}</p>
+                        </div>
+                    </div>
+                    <Muted v-else class="mt-2">Aucun ticket.</Muted>
                 </div>
 
                 <div class="mt-6">

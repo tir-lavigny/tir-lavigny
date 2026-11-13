@@ -12,7 +12,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Member, PaginatedMembers, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Eye, Plus, RefreshCw, Undo2 } from '@lucide/vue';
+import { Eye, Plus, RefreshCw, Search, Undo2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 

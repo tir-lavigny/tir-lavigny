@@ -32,6 +32,7 @@ defineProps<{
                     {{ description }}
                 </AlertDialogDescription>
             </AlertDialogHeader>
+            <slot />
             <AlertDialogFooter>
                 <AlertDialogCancel>
                     {{ cancelText }}
