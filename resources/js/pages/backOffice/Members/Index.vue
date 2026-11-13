@@ -117,7 +117,7 @@ const handleSync = (member: Member) => {
                             </span>
                             <span v-if="member.deleted_at" class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">Archivé</span>
                         </div>
-                        <Muted>{{ member.email_masked || '—' }}</Muted>
+                        <Muted>{{ member.email || '—' }}</Muted>
                         <Muted v-if="member.dav_sync_error" class="text-red-600">Synchronisation DAV en erreur</Muted>
                     </div>
                     <div class="flex items-center gap-2">

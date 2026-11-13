@@ -97,7 +97,7 @@ class MemberController extends Controller implements HasMiddleware
     public function show(Member $member): Response
     {
         if ($this->canViewSensitiveData()) {
-            $member->makeVisible(['email', 'avs']);
+            $member->makeVisible(['avs']);
         }
 
         $member->load(['vouchers.ticketItems', 'registration', 'tickets']);
@@ -120,7 +120,7 @@ class MemberController extends Controller implements HasMiddleware
         }
 
         if ($this->canViewSensitiveData()) {
-            $member->makeVisible(['email', 'avs']);
+            $member->makeVisible(['avs']);
         }
 
         return Inertia::render('backOffice/Members/Edit', [
@@ -261,7 +261,7 @@ class MemberController extends Controller implements HasMiddleware
             return $data;
         }
 
-        unset($data['email'], $data['avs']);
+        unset($data['avs']);
 
         return $data;
     }

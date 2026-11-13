@@ -294,7 +294,6 @@ export interface Member {
     first_name: string;
     last_name: string;
     email?: string | null;
-    email_masked?: string | null;
     tel?: string | null;
     avs?: string | null;
     avs_masked?: string | null;

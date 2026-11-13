@@ -160,7 +160,7 @@ const handleRemoveUnused = () => {
                 <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                         <Label>Email</Label>
-                        <Muted>{{ member.email || member.email_masked || '—' }}</Muted>
+                        <Muted>{{ member.email || '—' }}</Muted>
                     </div>
                     <div>
                         <Label>Téléphone</Label>

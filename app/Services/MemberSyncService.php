@@ -5,7 +5,6 @@ namespace App\Services;
 use App\DavGroupLabels;
 use App\MemberStatus;
 use App\Models\Member;
-use App\Support\PiiMasker;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -175,7 +174,7 @@ class MemberSyncService
             return [
                 'uid' => $contact['uid'],
                 'name' => $this->contactName($contact),
-                'email' => PiiMasker::email($contact['email'] ?? null),
+                'email' => $contact['email'] ?? null,
                 'tel' => $contact['tel'] ?? null,
                 'category' => $contact['category'] ?? '',
                 'suggested_status' => $this->statusFromCategory($contact['category'] ?? ''),
@@ -193,7 +192,7 @@ class MemberSyncService
             return [
                 'member_id' => $member->id,
                 'member_name' => $this->memberName($member),
-                'email' => $member->email_masked,
+                'email' => $member->email,
                 'status' => $member->trashed() ? 'archived' : $member->status->value,
                 'suggested_contact_uid' => $suggested['uid'] ?? null,
                 'suggested_contact_name' => $suggested ? $this->contactName($suggested) : null,

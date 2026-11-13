@@ -110,7 +110,7 @@ const handleSubmit = () => {
                         <Input id="last_name" v-model="form.last_name" type="text" placeholder="Nom" maxlength="255" required />
                         <InputError :message="form.errors.last_name" />
                     </div>
-                    <div v-if="canViewSensitiveData" class="grid gap-2">
+                    <div class="grid gap-2">
                         <Label for="email">Email</Label>
                         <Input id="email" v-model="form.email" type="email" placeholder="Email" maxlength="255" />
                         <InputError :message="form.errors.email" />

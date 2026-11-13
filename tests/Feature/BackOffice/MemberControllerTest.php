@@ -560,14 +560,13 @@ class MemberControllerTest extends TestCase
         $response = $this->get(route('bo.members.show', $member));
 
         $response->assertInertia(fn (Assert $page) => $page
-            ->missing('member.email')
+            ->where('member.email', 'jean.dupont@example.com')
             ->missing('member.avs')
-            ->where('member.email_masked', 'j***@example.com')
             ->where('member.avs_masked', '756.***.***.90')
         );
     }
 
-    public function test_edit_does_not_expose_sensitive_data_without_permission(): void
+    public function test_edit_shows_email_but_hides_avs_without_permission(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('access backoffice');
@@ -582,12 +581,12 @@ class MemberControllerTest extends TestCase
         $response = $this->get(route('bo.members.edit', $member));
 
         $response->assertInertia(fn (Assert $page) => $page
-            ->missing('member.email')
+            ->where('member.email', 'jean.dupont@example.com')
             ->missing('member.avs')
         );
     }
 
-    public function test_update_does_not_change_sensitive_data_without_permission(): void
+    public function test_update_changes_email_but_not_avs_without_permission(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('access backoffice');
@@ -609,7 +608,7 @@ class MemberControllerTest extends TestCase
         $this->assertDatabaseHas('members', [
             'id' => $member->id,
             'first_name' => 'Pierre',
-            'email' => 'jean.dupont@example.com',
+            'email' => 'pierre@example.com',
         ]);
         $this->assertSame('756.1234.5678.90', $member->fresh()->avs);
     }
@@ -696,7 +695,7 @@ class MemberControllerTest extends TestCase
 
         $response->assertInertia(fn (Assert $page) => $page
             ->has('members.data', 1)
-            ->where('members.data.0.email_masked', 'j***@example.com')
+            ->where('members.data.0.email', 'jean.dupont@example.com')
         );
     }
 

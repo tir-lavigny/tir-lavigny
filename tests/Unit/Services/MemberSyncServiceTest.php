@@ -95,7 +95,7 @@ class MemberSyncServiceTest extends TestCase
         $this->assertTrue($preview['members'][0]['fields']['email']['conflict']);
     }
 
-    public function test_preview_masks_email_for_unlinked_contacts(): void
+    public function test_preview_returns_email_for_unlinked_contacts(): void
     {
         $service = new MemberSyncService($this->mockDav([
             $this->contact(['uid' => 'unknown', 'email' => 'john.doe@example.com']),
@@ -104,7 +104,7 @@ class MemberSyncServiceTest extends TestCase
         $preview = $service->preview();
 
         $this->assertCount(1, $preview['unlinked_contacts']);
-        $this->assertSame('j***@example.com', $preview['unlinked_contacts'][0]['email']);
+        $this->assertSame('john.doe@example.com', $preview['unlinked_contacts'][0]['email']);
         $this->assertSame('active', $preview['unlinked_contacts'][0]['suggested_status']);
     }
 

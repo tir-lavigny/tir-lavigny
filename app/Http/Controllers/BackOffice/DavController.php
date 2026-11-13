@@ -7,11 +7,9 @@ use App\Models\Member;
 use App\Services\DavServiceInterface;
 use App\Services\DavSyncService;
 use App\Services\MemberSyncService;
-use App\Support\PiiMasker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -76,19 +74,6 @@ class DavController extends Controller
             ]);
 
             return response()->json(['error' => 'Erreur lors de la récupération des contacts: '.$e->getMessage()], 500);
-        }
-
-        if (! Auth::user()?->can('view member sensitive data')) {
-            $result['members'] = array_map(function (array $member): array {
-                foreach ($member['fields'] as $field => &$row) {
-                    if ($field === 'email') {
-                        $row['member'] = PiiMasker::email($row['member']);
-                        $row['dav'] = PiiMasker::email($row['dav']);
-                    }
-                }
-
-                return $member;
-            }, $result['members']);
         }
 
         return response()->json($result);

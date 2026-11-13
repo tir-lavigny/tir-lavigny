@@ -16,7 +16,7 @@
             <p>Le membre <strong>{{ $member->first_name }} {{ $member->last_name }}</strong> a été enregistré dans l'application, mais la synchronisation avec le carnet de contacts Infomaniak a échoué.</p>
 
             <div style="background: #f3f4f6; padding: 16px; margin: 20px 0; border-left: 4px solid #b91c1c; border-radius: 0.375rem;">
-                <p style="margin: 0 0 8px;"><strong>Email :</strong> {{ $member->email_masked ?? '—' }}</p>
+                <p style="margin: 0 0 8px;"><strong>Email :</strong> {{ $member->email ?? '—' }}</p>
                 <p style="margin: 0 0 8px;"><strong>Erreur :</strong> {{ $error }}</p>
             </div>
 

@@ -89,18 +89,18 @@ class MemberTest extends TestCase
         $this->assertNull($member->fresh()->avs_hash);
     }
 
-    public function test_email_and_avs_are_masked_by_default(): void
+    public function test_email_is_visible_and_avs_is_masked_by_default(): void
     {
         $member = Member::factory()->create([
             'email' => 'john.doe@example.com',
             'avs' => '756.1234.5678.90',
         ]);
 
-        $this->assertSame('j***@example.com', $member->email_masked);
+        $this->assertSame('john.doe@example.com', $member->email);
         $this->assertSame('756.***.***.90', $member->avs_masked);
     }
 
-    public function test_sensitive_attributes_are_hidden_from_serialization(): void
+    public function test_avs_is_hidden_from_serialization_but_email_is_visible(): void
     {
         $member = Member::factory()->create([
             'email' => 'john.doe@example.com',
@@ -109,8 +109,8 @@ class MemberTest extends TestCase
 
         $array = $member->toArray();
 
-        $this->assertArrayNotHasKey('email', $array);
-        $this->assertSame('j***@example.com', $array['email_masked']);
+        $this->assertSame('john.doe@example.com', $array['email']);
+        $this->assertArrayNotHasKey('email_masked', $array);
         $this->assertArrayNotHasKey('avs', $array);
         $this->assertSame('756.***.***.90', $array['avs_masked']);
     }

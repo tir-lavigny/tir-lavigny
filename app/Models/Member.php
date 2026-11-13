@@ -21,7 +21,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $email
  * @property string|null $avs
  * @property array<string, mixed>|null $dav_synced_snapshot
- * @property-read string|null $email_masked
  * @property-read string|null $avs_masked
  */
 class Member extends Model
@@ -53,12 +52,10 @@ class Member extends Model
     protected $hidden = [
         'avs',
         'avs_hash',
-        'email',
         'dav_synced_snapshot',
     ];
 
     protected $appends = [
-        'email_masked',
         'avs_masked',
     ];
 
@@ -129,11 +126,6 @@ class Member extends Model
     public function isAnonymized(): bool
     {
         return $this->anonymized_at !== null;
-    }
-
-    public function getEmailMaskedAttribute(): ?string
-    {
-        return PiiMasker::email($this->email);
     }
 
     public function getAvsMaskedAttribute(): ?string
