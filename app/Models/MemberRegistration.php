@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EncryptedMemberFormData;
 use App\LogsActivity;
 use App\MemberRegistrationStatus;
 use Illuminate\Database\Eloquent\Model;
@@ -33,7 +34,7 @@ class MemberRegistration extends Model
 
     protected $casts = [
         'status' => MemberRegistrationStatus::class,
-        'form_data' => 'array',
+        'form_data' => EncryptedMemberFormData::class,
         'form_submitted_at' => 'datetime',
         'failed_at' => 'datetime',
     ];
