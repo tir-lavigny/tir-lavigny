@@ -106,4 +106,55 @@ class UpdateMemberRequestTest extends TestCase
             'canton' => 'XX',
         ]));
     }
+
+    public function test_passes_with_valid_avs(): void
+    {
+        $this->assertTrue($this->passes([
+            'is_swiss_citizen' => true,
+            'avs' => '756.1234.5678.90',
+        ]));
+    }
+
+    public function test_fails_with_invalid_avs(): void
+    {
+        $this->assertFalse($this->passes([
+            'avs' => '1234',
+        ]));
+    }
+
+    public function test_fails_with_empty_avs_for_swiss_citizen(): void
+    {
+        $this->assertFalse($this->passes([
+            'is_swiss_citizen' => true,
+            'avs' => '',
+        ]));
+    }
+
+    public function test_passes_without_avs_when_not_swiss_citizen(): void
+    {
+        $this->assertTrue($this->passes([
+            'is_swiss_citizen' => false,
+        ]));
+    }
+
+    public function test_fails_with_too_long_tel(): void
+    {
+        $this->assertFalse($this->passes([
+            'tel' => str_repeat('1', 21),
+        ]));
+    }
+
+    public function test_fails_with_too_long_npa(): void
+    {
+        $this->assertFalse($this->passes([
+            'npa' => str_repeat('1', 11),
+        ]));
+    }
+
+    public function test_fails_with_too_long_country(): void
+    {
+        $this->assertFalse($this->passes([
+            'country' => str_repeat('a', 101),
+        ]));
+    }
 }

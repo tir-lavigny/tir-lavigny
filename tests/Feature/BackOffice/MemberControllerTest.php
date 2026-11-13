@@ -194,6 +194,32 @@ class MemberControllerTest extends TestCase
         $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
     }
 
+    public function test_store_rejects_invalid_avs(): void
+    {
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'avs' => '1234',
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
+    }
+
+    public function test_store_requires_avs_for_swiss_citizen(): void
+    {
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'is_swiss_citizen' => true,
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
+    }
+
     public function test_edit_returns_form(): void
     {
         $member = Member::factory()->create();
@@ -263,6 +289,31 @@ class MemberControllerTest extends TestCase
 
         $response->assertSessionHasErrors('canton');
         $this->assertDatabaseHas('members', ['id' => $member->id, 'canton' => 'VD']);
+    }
+
+    public function test_update_rejects_invalid_avs(): void
+    {
+        $member = Member::factory()->create(['avs' => '756.1234.5678.90']);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'avs' => '1234',
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertSame('756.1234.5678.90', $member->fresh()->avs);
+    }
+
+    public function test_update_requires_avs_for_swiss_citizen(): void
+    {
+        $member = Member::factory()->create(['avs' => null]);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'is_swiss_citizen' => true,
+            'avs' => '',
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertNull($member->fresh()->avs);
     }
 
     public function test_update_does_not_change_canton_when_only_tel_is_sent(): void
