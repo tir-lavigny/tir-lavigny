@@ -117,12 +117,12 @@ const handleSubmit = () => {
                     </div>
                     <div class="grid gap-2">
                         <Label for="tel">Téléphone</Label>
-                        <Input id="tel" v-model="form.tel" type="tel" placeholder="Téléphone" maxlength="255" />
+                        <Input id="tel" v-model="form.tel" type="tel" placeholder="Téléphone" maxlength="20" />
                         <InputError :message="form.errors.tel" />
                     </div>
                     <div v-if="canViewSensitiveData" class="grid gap-2">
                         <Label for="avs">AVS</Label>
-                        <Input id="avs" v-model="form.avs" type="text" placeholder="756.1234.5678.90" maxlength="255" />
+                        <Input id="avs" v-model="form.avs" type="text" placeholder="756.1234.5678.90" maxlength="20" pattern="756\.[0-9]{4}\.[0-9]{4}\.[0-9]{2}" />
                         <InputError :message="form.errors.avs" />
                     </div>
                     <div class="grid gap-2">
@@ -144,7 +144,7 @@ const handleSubmit = () => {
                     </div>
                     <div class="grid gap-2">
                         <Label for="npa">NPA</Label>
-                        <Input id="npa" v-model="form.npa" type="text" placeholder="NPA" maxlength="255" />
+                        <Input id="npa" v-model="form.npa" type="text" placeholder="NPA" maxlength="10" />
                         <InputError :message="form.errors.npa" />
                     </div>
                     <div class="grid gap-2">
@@ -169,7 +169,7 @@ const handleSubmit = () => {
                     </div>
                     <div class="grid gap-2">
                         <Label for="country">Pays</Label>
-                        <Input id="country" v-model="form.country" type="text" placeholder="Pays" maxlength="255" />
+                        <Input id="country" v-model="form.country" type="text" placeholder="Pays" maxlength="100" />
                         <InputError :message="form.errors.country" />
                     </div>
                     <div class="grid gap-2">
