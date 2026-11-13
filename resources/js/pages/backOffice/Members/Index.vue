@@ -4,14 +4,17 @@ import AppPagination from '@/components/AppPagination.vue';
 import { H3 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useListFilters } from '@/composables/useListFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Member, PaginatedMembers, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Pencil, Plus, RefreshCw, Search, Undo2 } from '@lucide/vue';
+import { Archive, Eye, Pencil, Plus, RefreshCw, Undo2 } from '@lucide/vue';
+import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
 const page = usePage<SharedData>();
@@ -31,6 +34,20 @@ const { filters, visit } = useListFilters('bo.members.index', {
     search: props.filters.search || '',
     status: props.filters.status || '',
     archived: props.filters.archived ? '1' : '',
+});
+
+const statusFilter = computed({
+    get: () => filters.value.status || 'all',
+    set: (value: string) => {
+        filters.value.status = value === 'all' ? '' : value;
+    },
+});
+
+const archivedFilter = computed({
+    get: () => filters.value.archived === '1',
+    set: (value: boolean) => {
+        filters.value.archived = value ? '1' : '';
+    },
 });
 
 const handleArchive = (member: Member) => {
@@ -67,13 +84,18 @@ const handleSync = (member: Member) => {
                     </span>
                 </div>
                 <div class="flex w-full items-center gap-2 lg:w-auto">
-                    <select v-model="filters.status" class="border-input h-9 rounded-md border px-3 text-sm">
-                        <option value="">Tous les statuts</option>
-                        <option value="active">Actif</option>
-                        <option value="passive">Passif</option>
-                    </select>
+                    <Select v-model="statusFilter">
+                        <SelectTrigger class="w-full lg:w-48">
+                            <SelectValue placeholder="Tous les statuts" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Tous les statuts</SelectItem>
+                            <SelectItem value="active">Actif</SelectItem>
+                            <SelectItem value="passive">Passif</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <label class="flex items-center gap-2 text-sm">
-                        <input v-model="filters.archived" type="checkbox" value="1" />
+                        <Checkbox v-model="archivedFilter" />
                         Archivés
                     </label>
                     <Button v-if="hasPermissionTo(user, 'manage members')" @click="router.get(route('bo.members.create'))">
@@ -110,7 +132,7 @@ const handleSync = (member: Member) => {
                         <Tooltip>
                             <TooltipTrigger>
                                 <Link :href="route('bo.members.show', member.id)">
-                                    <Button size="icon" variant="outline"><Search /></Button>
+                                    <Button size="icon" variant="outline"><Eye /></Button>
                                 </Link>
                             </TooltipTrigger>
                             <TooltipContent><p>Voir</p></TooltipContent>
@@ -135,19 +157,23 @@ const handleSync = (member: Member) => {
                             </TooltipTrigger>
                             <TooltipContent><p>Restaurer</p></TooltipContent>
                         </Tooltip>
-                        <AppAlertDialog
-                            v-if="!member.deleted_at && hasPermissionTo(user, 'manage members')"
-                            title="Archiver ce membre ?"
-                            description="Le membre sera archivé. Vous pouvez choisir de supprimer les bons inutilisés."
-                            cancelText="Annuler"
-                        >
-                            <template #trigger>
-                                <Button size="icon" variant="destructive"><Undo2 /></Button>
-                            </template>
-                            <template #action>
-                                <Button variant="destructive" @click="handleArchive(member)">Archiver</Button>
-                            </template>
-                        </AppAlertDialog>
+                        <Tooltip v-if="!member.deleted_at && hasPermissionTo(user, 'manage members')">
+                            <TooltipTrigger>
+                                <AppAlertDialog
+                                    title="Archiver ce membre ?"
+                                    description="Le membre sera archivé. Vous pouvez choisir de supprimer les bons inutilisés."
+                                    cancelText="Annuler"
+                                >
+                                    <template #trigger>
+                                        <Button size="icon" variant="destructive"><Archive /></Button>
+                                    </template>
+                                    <template #action>
+                                        <Button variant="destructive" @click="handleArchive(member)">Archiver</Button>
+                                    </template>
+                                </AppAlertDialog>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Archiver</p></TooltipContent>
+                        </Tooltip>
                     </div>
                 </div>
                 <Muted v-if="members.data?.length" class="my-4 flex items-center justify-center"> {{ members.total }} membre(s) trouvé(s) </Muted>
