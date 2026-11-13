@@ -161,6 +161,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         $cashierManagerRole->syncPermissions([
+            $backOfficeAccessPermission,
             $registerAccessPermission,
             $viewRegisterPermission,
             $openDayPermission,
