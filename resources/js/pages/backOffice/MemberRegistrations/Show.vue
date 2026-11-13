@@ -56,7 +56,6 @@ const statusLabel = (status: string) => {
     const labels: Record<string, string> = {
         pending: 'En attente',
         form_filled: 'En attente de validation',
-        dav_created: 'DAV créé',
         member_created: 'Membre créé',
         completed: 'Terminé',
     };
@@ -67,8 +66,8 @@ const statusLabel = (status: string) => {
 const retryLabel = (status: string) => {
     const labels: Record<string, string> = {
         form_filled: "Renvoyer l'email de validation",
-        dav_created: 'Relancer la création du membre',
-        member_created: "Relancer l'envoi de l'email",
+        member_created: 'Relancer le traitement',
+        completed: 'Relancer la synchronisation DAV',
         error: 'Relancer le traitement',
     };
     return labels[status] ?? 'Réessayer';

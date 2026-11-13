@@ -206,7 +206,7 @@ class MemberRegistrationTest extends TestCase
         Mail::fake();
 
         $davMock = Mockery::mock(DavServiceInterface::class);
-        $davMock->shouldReceive('createContactFromMemberRegistration')
+        $davMock->shouldReceive('createContactFromMember')
             ->once()
             ->andReturn(['uid' => 'validated-uid-123']);
         $this->app->instance(DavServiceInterface::class, $davMock);

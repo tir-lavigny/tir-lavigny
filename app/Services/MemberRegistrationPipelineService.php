@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Mail\MemberDavSyncFailed;
 use App\Mail\MemberRegistrationCompleted as MemberRegistrationCompletedMail;
 use App\Mail\MemberRegistrationError;
 use App\Mail\MemberRegistrationValidationRequested;
 use App\MemberRegistrationStatus;
+use App\MemberStatus;
 use App\Models\Member;
 use App\Models\MemberRegistration;
 use App\Models\Product;
@@ -19,7 +21,7 @@ use Illuminate\Support\Facades\Mail;
 class MemberRegistrationPipelineService
 {
     public function __construct(
-        private readonly DavServiceInterface $dav,
+        private readonly MemberSyncService $sync,
     ) {}
 
     /**
@@ -45,39 +47,23 @@ class MemberRegistrationPipelineService
      */
     public function processFormSubmission(MemberRegistration $registration): void
     {
-        $step = 'dav_contact';
+        $step = 'member_creation';
 
         try {
-            $davResult = $this->dav->createContactFromMemberRegistration($registration);
-            $registration->dav_uid = $davResult['uid'];
-            $this->transitionStatus($registration, MemberRegistrationStatus::DAV_CREATED);
+            $member = $registration->member;
 
-            Log::info('Member registration DAV contact created', [
-                'registration_id' => $registration->id,
-                'dav_uid' => $davResult['uid'],
-            ]);
+            if (! $member) {
+                $member = $this->createMemberFromRegistration($registration);
+                $registration->member()->associate($member);
+                $this->transitionStatus($registration, MemberRegistrationStatus::MEMBER_CREATED);
 
-            $step = 'member_creation';
-            $member = $this->createMemberFromRegistration($registration);
-            $registration->member()->associate($member);
-            $this->transitionStatus($registration, MemberRegistrationStatus::MEMBER_CREATED);
+                Log::info('Member registration member created', [
+                    'registration_id' => $registration->id,
+                    'member_id' => $member->id,
+                ]);
+            }
 
-            Log::info('Member registration member created', [
-                'registration_id' => $registration->id,
-                'member_id' => $member->id,
-            ]);
-
-            $step = 'voucher_generation';
-            $this->generateBaseVouchers($member);
-
-            $step = 'completion_email';
-            $this->sendCompletionEmail($registration);
-            $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
-
-            Log::info('Member registration completed', [
-                'registration_id' => $registration->id,
-                'member_id' => $member->id,
-            ]);
+            $this->processAfterMemberCreated($registration, $member);
         } catch (\Throwable $e) {
             $this->handleFailure($registration, $e, $step);
         }
@@ -91,27 +77,34 @@ class MemberRegistrationPipelineService
         match ($registration->status) {
             MemberRegistrationStatus::FORM_FILLED => $this->sendValidationRequest($registration),
             MemberRegistrationStatus::ERROR => $this->processFormSubmission($registration),
-            MemberRegistrationStatus::DAV_CREATED => $this->processFromDavCreated($registration),
-            MemberRegistrationStatus::MEMBER_CREATED => $this->processFromMemberCreated($registration),
+            MemberRegistrationStatus::MEMBER_CREATED => $this->retryAfterMemberCreated($registration),
+            MemberRegistrationStatus::COMPLETED => $this->retryDavSync($registration),
             default => throw new \InvalidArgumentException('Aucune étape à réessayer.'),
         };
     }
 
-    private function processFromDavCreated(MemberRegistration $registration): void
+    private function retryAfterMemberCreated(MemberRegistration $registration): void
     {
-        $step = 'member_creation';
+        $member = $registration->member;
+
+        if (! $member) {
+            $this->processFormSubmission($registration);
+
+            return;
+        }
 
         try {
-            $member = $this->createMemberFromRegistration($registration);
-            $registration->member()->associate($member);
-            $this->transitionStatus($registration, MemberRegistrationStatus::MEMBER_CREATED);
+            $this->processAfterMemberCreated($registration, $member);
+        } catch (\Throwable $e) {
+            $this->handleFailure($registration, $e, 'voucher_generation');
+        }
+    }
 
-            Log::info('Member registration member created', [
-                'registration_id' => $registration->id,
-                'member_id' => $member->id,
-            ]);
+    private function processAfterMemberCreated(MemberRegistration $registration, Member $member): void
+    {
+        $step = 'voucher_generation';
 
-            $step = 'voucher_generation';
+        try {
             $this->generateBaseVouchers($member);
 
             $step = 'completion_email';
@@ -122,23 +115,50 @@ class MemberRegistrationPipelineService
                 'registration_id' => $registration->id,
                 'member_id' => $member->id,
             ]);
+
+            $this->sync->push($member);
+
+            if ($member->dav_uid) {
+                $registration->dav_uid = $member->dav_uid;
+                $registration->save();
+            }
+
+            $this->notifyDavSyncFailure($registration, $member);
         } catch (\Throwable $e) {
             $this->handleFailure($registration, $e, $step);
         }
     }
 
-    private function processFromMemberCreated(MemberRegistration $registration): void
+    private function retryDavSync(MemberRegistration $registration): void
     {
-        try {
-            $this->sendCompletionEmail($registration);
-            $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
+        $member = $registration->member;
 
-            Log::info('Member registration completed', [
-                'registration_id' => $registration->id,
-                'member_id' => $registration->member_id,
-            ]);
+        if (! $member || ! $member->dav_sync_error) {
+            throw new \InvalidArgumentException('Aucune synchronisation à réessayer.');
+        }
+
+        $this->sync->push($member);
+        $this->notifyDavSyncFailure($registration, $member);
+    }
+
+    private function notifyDavSyncFailure(MemberRegistration $registration, Member $member): void
+    {
+        if (! $member->dav_sync_error) {
+            return;
+        }
+
+        try {
+            Mail::to(User::getMemberRegistrationEmails())->send(
+                new MemberDavSyncFailed($registration, $member, $member->dav_sync_error)
+            );
         } catch (\Throwable $e) {
-            $this->handleFailure($registration, $e, 'completion_email');
+            report($e);
+
+            Log::error('Member DAV sync failure email failed', [
+                'registration_id' => $registration->id,
+                'member_id' => $member->id,
+                'exception' => $e,
+            ]);
         }
     }
 
@@ -155,12 +175,30 @@ class MemberRegistrationPipelineService
         return Member::create([
             'first_name' => $formData['first_name'],
             'last_name' => $formData['last_name'],
-            'dav_uid' => $registration->dav_uid,
+            'email' => $formData['email'] ?? null,
+            'tel' => $formData['tel'] ?? null,
+            'avs' => $formData['avs'] ?? null,
+            'is_swiss_citizen' => $formData['is_swiss_citizen'] ?? null,
+            'street' => $formData['street'] ?? null,
+            'npa' => $formData['npa'] ?? null,
+            'city' => $formData['city'] ?? null,
+            'canton' => $formData['canton'] ?? null,
+            'country' => $formData['country'] ?? null,
+            'status' => MemberStatus::ACTIVE,
         ]);
     }
 
     private function generateBaseVouchers(Member $member): void
     {
+        if ($member->status !== MemberStatus::ACTIVE) {
+            Log::info('Base vouchers skipped for non-active member', [
+                'member_id' => $member->id,
+                'status' => $member->status->value,
+            ]);
+
+            return;
+        }
+
         $season = Season::where('start_date', '<=', now())
             ->where('end_date', '>=', now())
             ->first();

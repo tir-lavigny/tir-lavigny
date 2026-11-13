@@ -30,7 +30,6 @@ const status = [
     { label: 'Toutes', value: '', displayTab: true },
     { label: 'En attente', value: 'pending', displayTab: true },
     { label: 'En attente de validation', value: 'form_filled', displayTab: true },
-    { label: 'DAV créé', value: 'dav_created', displayTab: false },
     { label: 'Membre créé', value: 'member_created', displayTab: false },
     { label: 'Terminé', value: 'completed', displayTab: true },
 ];
