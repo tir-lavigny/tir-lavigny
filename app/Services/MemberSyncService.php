@@ -223,8 +223,14 @@ class MemberSyncService
             }
 
             $davValues = null;
+            $contactMissing = $member->dav_uid !== null && ! $contactsByUid->has($member->dav_uid);
 
-            if ($member->dav_uid) {
+            if ($contactMissing) {
+                $member->forceFill([
+                    'dav_uid' => null,
+                    'dav_synced_snapshot' => null,
+                ])->saveQuietly();
+            } elseif ($member->dav_uid) {
                 $contact = $contactsByUid->get($member->dav_uid);
                 $davValues = $contact ? $this->davValues($contact) : null;
             }

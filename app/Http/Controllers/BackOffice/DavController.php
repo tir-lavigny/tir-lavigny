@@ -84,7 +84,7 @@ class DavController extends Controller
         $choices = $request->validate([
             'choices' => 'required|array|min:1',
             'choices.*.member_id' => 'required|exists:members,id',
-            'choices.*.fields' => 'required|array',
+            'choices.*.fields' => ['present', 'array'],
             'choices.*.fields.*' => 'required|in:member,dav',
         ]);
 

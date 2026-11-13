@@ -602,4 +602,33 @@ class DavControllerTest extends TestCase
 
         $this->assertNull($member->fresh()->dav_uid);
     }
+
+    public function test_sync_recreates_missing_dav_contact_with_empty_fields(): void
+    {
+        $this->actingAs($this->admin);
+
+        $member = Member::factory()->create([
+            'first_name' => 'Pierre',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'stale-uid',
+        ]);
+
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('getContacts')->andReturn([]);
+        $davMock->shouldReceive('createContactFromMember')
+            ->once()
+            ->andReturn([
+                'uid' => 'new-uid',
+                'url' => 'http://localhost/new-uid.vcf',
+                'fn' => 'Dupont Pierre',
+                'vcard_raw' => 'BEGIN:VCARD',
+            ]);
+        $this->app->instance(DavServiceInterface::class, $davMock);
+
+        $this->post(route('bo.dav.sync'), [
+            'choices' => [['member_id' => $member->id, 'fields' => []]],
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $this->assertSame('new-uid', $member->fresh()->dav_uid);
+    }
 }

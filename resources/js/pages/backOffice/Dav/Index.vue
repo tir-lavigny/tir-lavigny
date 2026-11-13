@@ -513,7 +513,9 @@ onMounted(() => {
                     <div class="max-h-96 space-y-4 overflow-y-auto">
                         <div v-for="member in syncMembers" :key="member.member_id" class="rounded-lg border p-3">
                             <p class="font-medium">{{ member.member_name }}</p>
-                            <p v-if="member.missing_contact" class="text-muted-foreground text-sm">Contact DAV introuvable.</p>
+                            <p v-if="member.missing_contact" class="text-muted-foreground text-sm">
+                                Contact DAV introuvable. Il sera recréé lors de la synchronisation.
+                            </p>
                             <Table v-else>
                                 <TableHeader>
                                     <TableRow>

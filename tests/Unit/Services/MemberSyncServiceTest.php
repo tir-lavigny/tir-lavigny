@@ -204,6 +204,25 @@ class MemberSyncServiceTest extends TestCase
         ]));
     }
 
+    public function test_apply_recreates_missing_dav_contact(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'stale-uid']);
+
+        $dav = Mockery::mock(DavServiceInterface::class);
+        $dav->shouldReceive('getContacts')->once()->andReturn([]);
+        $dav->shouldReceive('createContactFromMember')
+            ->once()
+            ->andReturn(['uid' => 'new-uid']);
+
+        $service = new MemberSyncService($dav);
+        $result = $service->apply([
+            ['member_id' => $member->id, 'fields' => []],
+        ]);
+
+        $this->assertSame(['updated' => 1], $result);
+        $this->assertSame('new-uid', $member->fresh()->dav_uid);
+    }
+
     public function test_push_creates_contact_when_dav_uid_missing(): void
     {
         $member = Member::factory()->create(['dav_uid' => null]);
