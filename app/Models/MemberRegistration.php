@@ -54,4 +54,15 @@ class MemberRegistration extends Model
             }
         });
     }
+
+    /**
+     * @param  array<string, mixed>  $changes
+     * @return array<string, mixed>
+     */
+    protected function prepareActivityLog(array $changes): array
+    {
+        unset($changes['form_data']);
+
+        return $changes;
+    }
 }

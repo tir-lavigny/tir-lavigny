@@ -64,6 +64,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $manageVouchersPermission = Permission::firstOrCreate(['name' => 'manage vouchers']);
         $manageSeasonsPermission = Permission::firstOrCreate(['name' => 'manage seasons']);
         $manageMembersPermission = Permission::firstOrCreate(['name' => 'manage members']);
+        $viewMemberSensitiveDataPermission = Permission::firstOrCreate(['name' => 'view member sensitive data']);
         $manageOperatingDaysPermission = Permission::firstOrCreate(['name' => 'manage operating days']);
         $manageCashMovementsPermission = Permission::firstOrCreate(['name' => 'manage cash movements']);
         $viewReportsPermission = Permission::firstOrCreate(['name' => 'view reports']);
@@ -116,6 +117,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $manageVouchersPermission,
             $manageSeasonsPermission,
             $manageMembersPermission,
+            $viewMemberSensitiveDataPermission,
             $manageOperatingDaysPermission,
             $manageCashMovementsPermission,
             $viewReportsPermission,
