@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
 import { Save, Undo2 } from '@lucide/vue';
+import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
 defineProps<{ statuses: Record<string, string> }>();
@@ -55,9 +56,16 @@ const form = useForm({
     street: '',
     npa: '',
     city: '',
-    canton: 'VD',
+    canton: '',
     country: 'Suisse',
     status: 'active',
+});
+
+const cantonFilter = computed({
+    get: () => form.canton || 'none',
+    set: (value: string) => {
+        form.canton = value === 'none' ? '' : value;
+    },
 });
 
 const handleSubmit = () => {
@@ -136,11 +144,12 @@ const handleSubmit = () => {
                     </div>
                     <div class="grid gap-2">
                         <Label for="canton">Canton</Label>
-                        <Select v-model="form.canton">
+                        <Select v-model="cantonFilter">
                             <SelectTrigger>
                                 <SelectValue placeholder="Sélectionner un canton" />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="none">Aucun</SelectItem>
                                 <SelectItem v-for="canton in swissCantons" :key="canton.value" :value="canton.value">
                                     {{ canton.label }}
                                 </SelectItem>

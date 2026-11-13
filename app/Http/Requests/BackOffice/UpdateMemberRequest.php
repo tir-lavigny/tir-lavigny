@@ -28,7 +28,7 @@ class UpdateMemberRequest extends FormRequest
             'street' => ['sometimes', 'nullable', 'string', 'max:255'],
             'npa' => ['sometimes', 'nullable', 'string', 'max:255'],
             'city' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'canton' => ['sometimes', 'nullable', Rule::in(SwissCanton::validationRule())],
+            'canton' => ['sometimes', 'nullable', Rule::enum(SwissCanton::class)],
             'country' => ['sometimes', 'nullable', 'string', 'max:255'],
             'status' => ['sometimes', Rule::in(['active', 'passive'])],
         ];

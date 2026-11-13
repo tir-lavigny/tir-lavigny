@@ -168,6 +168,32 @@ class MemberControllerTest extends TestCase
         $this->assertDatabaseHas('members', ['first_name' => 'Jean', 'last_name' => 'Dupont']);
     }
 
+    public function test_store_accepts_valid_canton(): void
+    {
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'canton' => 'VS',
+            'status' => 'active',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', ['first_name' => 'Jean', 'canton' => 'VS']);
+    }
+
+    public function test_store_rejects_invalid_canton(): void
+    {
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'canton' => 'XX',
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors('canton');
+        $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
+    }
+
     public function test_edit_returns_form(): void
     {
         $member = Member::factory()->create();
@@ -209,6 +235,50 @@ class MemberControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('error');
         $this->assertDatabaseHas('members', ['id' => $member->id, 'first_name' => 'Pierre']);
+    }
+
+    public function test_update_accepts_valid_canton(): void
+    {
+        $member = Member::factory()->create(['canton' => 'VD']);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'canton' => 'VS',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', ['id' => $member->id, 'canton' => 'VS']);
+    }
+
+    public function test_update_rejects_invalid_canton(): void
+    {
+        $member = Member::factory()->create(['canton' => 'VD']);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'canton' => 'XX',
+        ]);
+
+        $response->assertSessionHasErrors('canton');
+        $this->assertDatabaseHas('members', ['id' => $member->id, 'canton' => 'VD']);
+    }
+
+    public function test_update_does_not_change_canton_when_only_tel_is_sent(): void
+    {
+        $member = Member::factory()->create(['canton' => 'VD']);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'tel' => '+41 21 123 45 67',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'id' => $member->id,
+            'canton' => 'VD',
+            'tel' => '+41 21 123 45 67',
+        ]);
     }
 
     public function test_destroy_archives_member(): void

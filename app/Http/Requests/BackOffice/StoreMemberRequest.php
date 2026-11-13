@@ -28,7 +28,7 @@ class StoreMemberRequest extends FormRequest
             'street' => ['nullable', 'string', 'max:255'],
             'npa' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
-            'canton' => ['nullable', Rule::in(SwissCanton::validationRule())],
+            'canton' => ['nullable', Rule::enum(SwissCanton::class)],
             'country' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::in(['active', 'passive'])],
         ];
