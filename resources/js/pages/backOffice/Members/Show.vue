@@ -20,7 +20,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Member, MemberRegistration, SharedData, Voucher } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Pencil, RefreshCw, Trash2, Undo2 } from '@lucide/vue';
+import { Archive, Pencil, RefreshCw, Trash2, Undo2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -66,6 +66,13 @@ const handleRestore = () => {
     useForm({}).post(route('bo.members.restore', member.value.id), {
         onSuccess: () => toast.success('Membre restauré.'),
         onError: () => toast.error('Erreur lors de la restauration.'),
+    });
+};
+
+const handleArchive = () => {
+    useForm({}).delete(route('bo.members.destroy', member.value.id), {
+        onSuccess: () => toast.success('Membre archivé.'),
+        onError: () => toast.error("Erreur lors de l'archivage."),
     });
 };
 
@@ -124,6 +131,14 @@ const handleRemoveUnused = () => {
                     </Link>
                     <Button variant="outline" @click="handleSync"><RefreshCw class="mr-2 h-4 w-4" /> Synchroniser</Button>
                     <Button v-if="member.deleted_at" variant="outline" @click="handleRestore"><Undo2 class="mr-2 h-4 w-4" /> Restaurer</Button>
+                    <AppAlertDialog v-if="!member.deleted_at" title="Archiver ce membre ?" description="Le membre sera archivé." cancelText="Annuler">
+                        <template #trigger>
+                            <Button variant="destructive"><Archive class="mr-2 h-4 w-4" /> Archiver</Button>
+                        </template>
+                        <template #action>
+                            <Button variant="destructive" @click="handleArchive">Archiver</Button>
+                        </template>
+                    </AppAlertDialog>
                 </div>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border relative flex-1 rounded-xl border p-4">

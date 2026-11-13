@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import AppPagination from '@/components/AppPagination.vue';
 import { H3 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
@@ -13,7 +12,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Member, PaginatedMembers, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Archive, Eye, Plus, RefreshCw, Undo2 } from '@lucide/vue';
+import { Eye, Plus, RefreshCw, Undo2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -49,13 +48,6 @@ const archivedFilter = computed({
         filters.value.archived = value ? '1' : '';
     },
 });
-
-const handleArchive = (member: Member) => {
-    useForm({}).delete(route('bo.members.destroy', member.id), {
-        onSuccess: () => toast.success('Membre archivé.'),
-        onError: () => toast.error("Erreur lors de l'archivage."),
-    });
-};
 
 const handleRestore = (member: Member) => {
     useForm({}).post(route('bo.members.restore', member.id), {
@@ -148,23 +140,6 @@ const handleSync = (member: Member) => {
                                 <Button size="icon" variant="outline" @click="handleRestore(member)"><Undo2 /></Button>
                             </TooltipTrigger>
                             <TooltipContent><p>Restaurer</p></TooltipContent>
-                        </Tooltip>
-                        <Tooltip v-if="!member.deleted_at && hasPermissionTo(user, 'manage members')">
-                            <TooltipTrigger>
-                                <AppAlertDialog
-                                    title="Archiver ce membre ?"
-                                    description="Le membre sera archivé. Vous pouvez choisir de supprimer les bons inutilisés."
-                                    cancelText="Annuler"
-                                >
-                                    <template #trigger>
-                                        <Button size="icon" variant="destructive"><Archive /></Button>
-                                    </template>
-                                    <template #action>
-                                        <Button variant="destructive" @click="handleArchive(member)">Archiver</Button>
-                                    </template>
-                                </AppAlertDialog>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Archiver</p></TooltipContent>
                         </Tooltip>
                     </div>
                 </div>
