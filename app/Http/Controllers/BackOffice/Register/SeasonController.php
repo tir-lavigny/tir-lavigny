@@ -130,7 +130,7 @@ class SeasonController extends Controller implements HasMiddleware
         $basePackage = $service->getBasePackage();
         $products = $service->resolveProducts($basePackage);
         $plan = $service->computePlan($season, $basePackage, $products);
-        $totalMembers = Member::count();
+        $totalMembers = Member::active()->count();
 
         return response()->json([
             'plan' => $plan,

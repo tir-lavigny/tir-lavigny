@@ -195,4 +195,13 @@ class MemberControllerTest extends TestCase
         $this->assertArrayHasKey('product', $data['data'][0]);
         $this->assertEquals($product->id, $data['data'][0]['product']['id']);
     }
+
+    public function test_vouchers_rejects_passive_member(): void
+    {
+        $member = Member::factory()->passive()->create();
+
+        $response = $this->controller->vouchers($member);
+
+        $this->assertEquals(404, $response->status());
+    }
 }

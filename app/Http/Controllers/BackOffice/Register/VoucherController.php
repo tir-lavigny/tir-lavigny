@@ -40,7 +40,7 @@ class VoucherController extends Controller implements HasMiddleware
         return Inertia::render('backOffice/Register/Vouchers/Create', [
             'products' => Product::orderBy('name')->get(),
             'seasons' => Season::orderBy('name')->get(),
-            'members' => Member::query()->orderByName()->get(),
+            'members' => Member::query()->active()->orderByName()->get(),
         ]);
     }
 
@@ -59,7 +59,7 @@ class VoucherController extends Controller implements HasMiddleware
             'voucher' => $voucher,
             'products' => Product::orderBy('name')->get(),
             'seasons' => Season::orderBy('name')->get(),
-            'members' => Member::query()->orderByName()->get(),
+            'members' => Member::query()->active()->orderByName()->get(),
         ]);
     }
 

@@ -86,7 +86,7 @@ class SeasonVoucherServiceTest extends TestCase
         $this->assertEmpty($plan);
     }
 
-    public function test_compute_plan_includes_all_members(): void
+    public function test_compute_plan_includes_active_members(): void
     {
         $season = Season::factory()->create();
         $products = $this->createBasePackageProducts();
@@ -95,6 +95,17 @@ class SeasonVoucherServiceTest extends TestCase
         $plan = $this->service->computePlan($season, $this->service->getBasePackage(), $products);
 
         $this->assertCount(3, $plan);
+    }
+
+    public function test_compute_plan_excludes_passive_members(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        Member::factory()->passive()->create();
+
+        $plan = $this->service->computePlan($season, $this->service->getBasePackage(), $products);
+
+        $this->assertEmpty($plan);
     }
 
     public function test_compute_plan_excludes_members_with_all_vouchers(): void
