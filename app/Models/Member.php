@@ -16,6 +16,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property MemberStatus $status
+ * @property string|null $email
+ * @property string|null $avs
+ * @property array<string, mixed>|null $dav_synced_snapshot
+ * @property-read string|null $email_masked
+ * @property-read string|null $avs_masked
+ */
 class Member extends Model
 {
     /** @use HasFactory<MemberFactory> */

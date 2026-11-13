@@ -18,6 +18,9 @@ interface DavServiceInterface
     /** @return array<string, mixed> */
     public function createContactFromMemberRegistration(MemberRegistration $registration): array;
 
+    /** @return array<string, mixed> */
+    public function createContactFromMember(Member $member): array;
+
     public function softDeleteMember(Member $member): bool;
 
     public function restoreMember(Member $member): bool;

@@ -128,6 +128,7 @@ class InfomaniakDavService implements DavServiceInterface
                                 'email' => $this->extractProperty($vcard, 'EMAIL'),
                                 'tel' => $this->extractProperty($vcard, 'TEL'),
                                 'org' => (string) ($vcard->ORG ?? ''),
+                                'adr' => $this->extractProperty($vcard, 'ADR'),
                                 'category' => $this->extractProperty($vcard, 'CATEGORIES'),
                                 'vcard_raw' => $currentVcard,
                             ];
@@ -183,6 +184,8 @@ class InfomaniakDavService implements DavServiceInterface
                 'email' => $this->extractProperty($vcard, 'EMAIL'),
                 'tel' => $this->extractProperty($vcard, 'TEL'),
                 'org' => (string) ($vcard->ORG ?? ''),
+                'adr' => $this->extractProperty($vcard, 'ADR'),
+                'category' => $this->extractProperty($vcard, 'CATEGORIES'),
                 'vcard_raw' => $vcardRaw,
             ];
         } catch (\Exception $e) {
@@ -220,6 +223,10 @@ class InfomaniakDavService implements DavServiceInterface
 
         if (! empty($data['category'])) {
             $vcard .= 'CATEGORIES:'.$this->escapeVcardValue($data['category'])."\r\n";
+        }
+
+        if ($address = $this->buildAddress($data)) {
+            $vcard .= 'ADR;TYPE=HOME:;;'.$address."\r\n";
         }
 
         $vcard .= "END:VCARD\r\n";
@@ -280,44 +287,30 @@ class InfomaniakDavService implements DavServiceInterface
             throw new \RuntimeException('Contact not found for update: '.$contactUrl);
         }
 
-        $lines = preg_split('/\r?\n/', $existingContact['vcard_raw']);
-        assert(is_array($lines));
-
-        $replacements = [];
+        $vcard = Reader::read(trim($existingContact['vcard_raw']));
 
         if (isset($data['fn'])) {
-            $replacements['FN'] = 'FN:'.$this->escapeVcardValue($data['fn']);
+            $vcard->remove('FN');
+            $vcard->add('FN', $data['fn']);
         }
 
-        if (isset($data['n_first']) && isset($data['n_last'])) {
-            $replacements['N'] = 'N:'.$this->escapeVcardValue($data['n_last']).';'.$this->escapeVcardValue($data['n_first']).';;;';
+        if (isset($data['n_first'], $data['n_last'])) {
+            $vcard->remove('N');
+            $vcard->add('N', [$data['n_last'], $data['n_first'], '', '', '']);
         }
 
-        if (isset($data['email'])) {
-            $replacements['EMAIL'] = 'EMAIL;TYPE=INTERNET:'.$this->escapeVcardValue($data['email']);
+        $this->replaceTextProperty($vcard, 'EMAIL', $data['email'] ?? null, ['TYPE' => 'INTERNET']);
+        $this->replaceTextProperty($vcard, 'TEL', $data['tel'] ?? null, ['TYPE' => 'CELL']);
+        $this->replaceTextProperty($vcard, 'CATEGORIES', $data['category'] ?? null);
+
+        if ($address = $this->buildAddress($data)) {
+            $vcard->remove('ADR');
+            $vcard->add('ADR', ['', '', $data['street'] ?? '', $data['city'] ?? '', $data['canton'] ?? '', $data['npa'] ?? '', $data['country'] ?? ''], ['TYPE' => 'HOME']);
+        } else {
+            $vcard->remove('ADR');
         }
 
-        if (isset($data['tel'])) {
-            $replacements['TEL'] = 'TEL;TYPE=CELL:'.$this->escapeVcardValue($data['tel']);
-        }
-
-        if (isset($data['category'])) {
-            $replacements['CATEGORIES'] = 'CATEGORIES:'.$this->escapeVcardValue($data['category']);
-        }
-
-        foreach ($lines as &$line) {
-            foreach ($replacements as $propName => $replacement) {
-                if (preg_match('/^'.$propName.'/i', $line)) {
-                    $line = $replacement;
-                    break;
-                }
-            }
-        }
-        unset($line);
-
-        $vcard = implode("\r\n", $lines);
-
-        $response = $this->client->request('PUT', $contactUrl, $vcard, [
+        $response = $this->client->request('PUT', $contactUrl, $vcard->serialize(), [
             'Content-Type' => 'text/vcard; charset=utf-8',
         ]);
 
@@ -335,14 +328,76 @@ class InfomaniakDavService implements DavServiceInterface
     /** @return array<string, string> */
     public function createContactFromMemberRegistration(MemberRegistration $registration): array
     {
+        $formData = $registration->form_data;
+
         return $this->createContact([
-            'fn' => $registration->form_data['last_name'].' '.$registration->form_data['first_name'],
-            'n_first' => $registration->form_data['first_name'],
-            'n_last' => $registration->form_data['last_name'],
-            'email' => $registration->form_data['email'],
-            'tel' => $registration->form_data['tel'] ?? '',
+            'fn' => $formData['last_name'].' '.$formData['first_name'],
+            'n_first' => $formData['first_name'],
+            'n_last' => $formData['last_name'],
+            'email' => $formData['email'] ?? '',
+            'tel' => $formData['tel'] ?? '',
+            'street' => $formData['street'] ?? '',
+            'npa' => $formData['npa'] ?? '',
+            'city' => $formData['city'] ?? '',
+            'canton' => $formData['canton'] ?? '',
+            'country' => $formData['country'] ?? '',
             'category' => GroupLabels::ACTIVE_MEMBERS->value,
         ]);
+    }
+
+    /** @return array<string, mixed> */
+    public function createContactFromMember(Member $member): array
+    {
+        return $this->createContact($this->contactDataFromMember($member));
+    }
+
+    /** @return array<string, string> */
+    private function contactDataFromMember(Member $member): array
+    {
+        return [
+            'fn' => $member->last_name.' '.$member->first_name,
+            'n_first' => $member->first_name,
+            'n_last' => $member->last_name,
+            'email' => $member->email ?? '',
+            'tel' => $member->tel ?? '',
+            'street' => $member->street ?? '',
+            'npa' => $member->npa ?? '',
+            'city' => $member->city ?? '',
+            'canton' => $member->canton ?? '',
+            'country' => $member->country ?? '',
+            'category' => $this->categoryForMember($member),
+        ];
+    }
+
+    private function categoryForMember(Member $member): string
+    {
+        if ($member->trashed()) {
+            return GroupLabels::SOFT_DELETED_MEMBERS->value;
+        }
+
+        return $member->status->davGroup()->value;
+    }
+
+    /** @param array<string, string> $data */
+    private function buildAddress(array $data): string
+    {
+        return implode(';', [
+            $this->escapeVcardValue($data['street'] ?? ''),
+            $this->escapeVcardValue($data['city'] ?? ''),
+            $this->escapeVcardValue($data['canton'] ?? ''),
+            $this->escapeVcardValue($data['npa'] ?? ''),
+            $this->escapeVcardValue($data['country'] ?? ''),
+        ]);
+    }
+
+    /** @param array<string, string> $parameters */
+    private function replaceTextProperty(Component $vcard, string $name, ?string $value, array $parameters = []): void
+    {
+        $vcard->remove($name);
+
+        if ($value !== null && $value !== '') {
+            $vcard->add($name, $value, $parameters);
+        }
     }
 
     public function softDeleteMember(Member $member): bool
@@ -360,12 +415,7 @@ class InfomaniakDavService implements DavServiceInterface
         ]);
 
         try {
-            $this->updateContact($contactUrl, [
-                'fn' => $member->first_name.' '.$member->last_name,
-                'n_first' => $member->first_name,
-                'n_last' => $member->last_name,
-                'category' => GroupLabels::SOFT_DELETED_MEMBERS->value,
-            ]);
+            $this->updateContact($contactUrl, $this->contactDataFromMember($member));
         } catch (\Exception $e) {
             Log::warning('Failed to soft delete contact in Infomaniak DAV', [
                 'member_id' => $member->id,
@@ -388,12 +438,7 @@ class InfomaniakDavService implements DavServiceInterface
         $contactUrl = rtrim($this->getAddressbookUrl(), '/').'/'.$member->dav_uid.'.vcf';
 
         try {
-            $this->updateContact($contactUrl, [
-                'fn' => $member->first_name.' '.$member->last_name,
-                'n_first' => $member->first_name,
-                'n_last' => $member->last_name,
-                'category' => GroupLabels::ACTIVE_MEMBERS->value,
-            ]);
+            $this->updateContact($contactUrl, $this->contactDataFromMember($member));
         } catch (\Exception $e) {
             Log::warning('Failed to restore contact in Infomaniak DAV', [
                 'member_id' => $member->id,
@@ -440,11 +485,7 @@ class InfomaniakDavService implements DavServiceInterface
         $contactUrl = rtrim($this->getAddressbookUrl(), '/').'/'.$member->dav_uid.'.vcf';
 
         try {
-            $this->updateContact($contactUrl, [
-                'fn' => $member->first_name.' '.$member->last_name,
-                'n_first' => $member->first_name,
-                'n_last' => $member->last_name,
-            ]);
+            $this->updateContact($contactUrl, $this->contactDataFromMember($member));
         } catch (\Exception $e) {
             Log::warning('Failed to update contact in Infomaniak DAV', [
                 'member_id' => $member->id,

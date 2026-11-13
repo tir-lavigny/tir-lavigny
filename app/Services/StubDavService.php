@@ -48,6 +48,24 @@ class StubDavService implements DavServiceInterface
         ];
     }
 
+    /** @return array<string, string> */
+    public function createContactFromMember(Member $member): array
+    {
+        $uid = Str::uuid7();
+
+        Log::info('StubDavService: createContactFromMember called', [
+            'member_id' => $member->id,
+            'uid' => $uid,
+        ]);
+
+        return [
+            'url' => $this->getAddressbookUrl().$uid.'.vcf',
+            'uid' => $uid,
+            'fn' => $member->last_name.' '.$member->first_name,
+            'vcard_raw' => 'BEGIN:VCARD'.$uid.'END:VCARD',
+        ];
+    }
+
     public function softDeleteMember(Member $member): bool
     {
         Log::info('StubDavService: softDeleteMember called', [
