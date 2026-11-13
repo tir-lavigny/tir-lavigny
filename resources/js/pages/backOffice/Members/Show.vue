@@ -2,6 +2,16 @@
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
@@ -10,7 +20,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Member, MemberRegistration, SharedData, Voucher } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
-import { RefreshCw, Trash2, Undo2 } from '@lucide/vue';
+import { Archive, RefreshCw, Trash2, Undo2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -42,7 +52,8 @@ const filteredVouchers = computed(() => props.vouchers.filter((v) => v.season_id
 const unusedVouchers = computed(() => filteredVouchers.value.filter((v) => !props.usedVouchers.some((uv) => uv.id === v.id)));
 
 const showAvs = ref(false);
-const confirmation = ref('');
+const showDeleteDialog = ref(false);
+const deleteForm = useForm({ confirmation: '' });
 
 const handleSync = () => {
     useForm({}).post(route('bo.members.sync', member.value.id), {
@@ -66,8 +77,11 @@ const handleRestore = () => {
 };
 
 const handleForceDelete = () => {
-    useForm({ confirmation: confirmation.value }).delete(route('bo.members.force-delete', member.value.id), {
-        onSuccess: () => toast.success('Membre supprimé.'),
+    deleteForm.delete(route('bo.members.force-delete', member.value.id), {
+        onSuccess: () => {
+            showDeleteDialog.value = false;
+            toast.success('Membre supprimé.');
+        },
         onError: () => toast.error('La confirmation est incorrecte.'),
     });
 };
@@ -116,7 +130,7 @@ const handleRemoveUnused = () => {
                     <Button v-if="member.deleted_at" variant="outline" @click="handleRestore"><Undo2 class="mr-2 h-4 w-4" /> Restaurer</Button>
                     <AppAlertDialog v-if="!member.deleted_at" title="Archiver ce membre ?" description="Le membre sera archivé." cancelText="Annuler">
                         <template #trigger>
-                            <Button variant="destructive"><Trash2 class="mr-2 h-4 w-4" /> Archiver</Button>
+                            <Button variant="destructive"><Archive class="mr-2 h-4 w-4" /> Archiver</Button>
                         </template>
                         <template #action>
                             <Button variant="destructive" @click="handleArchive">Archiver</Button>
@@ -223,22 +237,28 @@ const handleRemoveUnused = () => {
                         Cette action est irréversible. Si le membre possède des bons ou des tickets, ses données personnelles seront supprimées et le
                         membre sera anonymisé.
                     </Muted>
-                    <div class="mt-4 grid max-w-md gap-2">
-                        <Label for="confirmation">Saisissez le nom complet du membre pour confirmer</Label>
-                        <Input id="confirmation" v-model="confirmation" type="text" :placeholder="member.first_name + ' ' + member.last_name" />
-                        <AppAlertDialog
-                            title="Supprimer définitivement ce membre ?"
-                            description="Cette action est irréversible."
-                            cancelText="Annuler"
-                        >
-                            <template #trigger>
-                                <Button variant="destructive" class="w-fit">Supprimer définitivement</Button>
-                            </template>
-                            <template #action>
-                                <Button variant="destructive" @click="handleForceDelete">Supprimer</Button>
-                            </template>
-                        </AppAlertDialog>
-                    </div>
+                    <AlertDialog v-model:open="showDeleteDialog">
+                        <AlertDialogTrigger as-child>
+                            <Button variant="destructive" class="mt-4">Supprimer définitivement</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Supprimer définitivement ce membre ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Cette action est irréversible. Si le membre possède des bons ou des tickets, ses données personnelles seront
+                                    supprimées et le membre sera anonymisé.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div class="grid gap-2">
+                                <Label for="confirmation">Saisissez le nom complet du membre pour confirmer</Label>
+                                <Input id="confirmation" v-model="deleteForm.confirmation" type="text" />
+                            </div>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel @click="deleteForm.reset()">Annuler</AlertDialogCancel>
+                                <Button variant="destructive" :disabled="deleteForm.processing" @click="handleForceDelete">Supprimer</Button>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </div>
         </div>
