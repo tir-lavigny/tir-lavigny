@@ -12,6 +12,7 @@ use App\Http\Controllers\BackOffice\Stock\StockLocationController;
 use App\Http\Controllers\BackOffice\Stock\StockLossController;
 use App\Http\Controllers\BackOffice\Stock\StockTransferController;
 use App\Http\Controllers\BackOffice\UserController as BackOfficeUserController;
+use App\Http\Controllers\BecomeMemberController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
@@ -22,6 +23,8 @@ use App\Http\Controllers\ShootingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::get('/become-member', BecomeMemberController::class)->name('become-member');
 
 Route::get('/events', [EventController::class, 'index'])->name('events');
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
