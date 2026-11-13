@@ -4,6 +4,7 @@ use App\Http\Controllers\BackOffice\DashboardController;
 use App\Http\Controllers\BackOffice\DavController;
 use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
+use App\Http\Controllers\BackOffice\MemberController;
 use App\Http\Controllers\BackOffice\MemberRegistrationController as BackOfficeMemberRegistrationController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
 use App\Http\Controllers\BackOffice\Register;
@@ -216,16 +217,21 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
             ->name('bo.register.operating-days.corrections.store');
     });
 
-    Route::middleware('permission:manage members')->prefix('register')->group(function () {
-        Route::resource('members', Register\MemberController::class)->only([
-            'index', 'show', 'edit', 'update', 'destroy',
-        ])->names([
-            'index' => 'bo.register.members.index',
-            'show' => 'bo.register.members.show',
-            'edit' => 'bo.register.members.edit',
-            'update' => 'bo.register.members.update',
-            'destroy' => 'bo.register.members.destroy',
+    Route::middleware('permission:manage members')->group(function () {
+        Route::resource('members', MemberController::class)->only([
+            'index', 'create', 'store', 'show', 'edit', 'update',
+        ])->withTrashed()->names([
+            'index' => 'bo.members.index',
+            'create' => 'bo.members.create',
+            'store' => 'bo.members.store',
+            'show' => 'bo.members.show',
+            'edit' => 'bo.members.edit',
+            'update' => 'bo.members.update',
         ]);
+        Route::delete('members/{member}', [MemberController::class, 'destroy'])->withTrashed()->name('bo.members.destroy');
+        Route::post('members/{member}/restore', [MemberController::class, 'restore'])->withTrashed()->name('bo.members.restore');
+        Route::delete('members/{member}/force-delete', [MemberController::class, 'forceDelete'])->withTrashed()->name('bo.members.force-delete');
+        Route::post('members/{member}/sync', [MemberController::class, 'sync'])->withTrashed()->name('bo.members.sync');
     });
 
     Route::middleware('permission:manage operating days')->prefix('register')->group(function () {

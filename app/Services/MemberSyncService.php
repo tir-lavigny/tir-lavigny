@@ -51,6 +51,28 @@ class MemberSyncService
         }
     }
 
+    /** @return array{success: bool, error: string|null} */
+    public function delete(Member $member): array
+    {
+        try {
+            if ($member->dav_uid && ! $this->dav->deleteMember($member)) {
+                throw new \RuntimeException('Impossible de supprimer le contact DAV.');
+            }
+
+            return ['success' => true, 'error' => null];
+        } catch (Throwable $e) {
+            report($e);
+
+            Log::warning('Member DAV delete failed', [
+                'member_id' => $member->id,
+                'dav_uid' => $member->dav_uid,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
     /**
      * @return array{
      *     members: array<int, array<string, mixed>>,

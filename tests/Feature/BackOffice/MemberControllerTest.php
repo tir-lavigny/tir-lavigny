@@ -1,0 +1,395 @@
+<?php
+
+namespace Tests\Feature\BackOffice;
+
+use App\Models\Member;
+use App\Models\MemberRegistration;
+use App\Models\Ticket;
+use App\Models\TicketItem;
+use App\Models\User;
+use App\Models\Voucher;
+use App\Services\DavServiceInterface;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
+use Mockery;
+use Tests\TestCase;
+
+class MemberControllerTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $this->admin = User::factory()->create();
+        $this->admin->assignRole('admin');
+        $this->actingAs($this->admin);
+
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('updateMember')->andReturn(true);
+        $davMock->shouldReceive('createContactFromMember')->andReturn(['uid' => 'uid-123']);
+        $davMock->shouldReceive('softDeleteMember')->andReturn(true);
+        $davMock->shouldReceive('deleteMember')->andReturn(true);
+        $this->app->instance(DavServiceInterface::class, $davMock);
+    }
+
+    public function test_index_returns_members(): void
+    {
+        Member::factory()->create(['last_name' => 'Dupont']);
+
+        $response = $this->get(route('bo.members.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('backOffice/Members/Index')
+            ->has('members.data', 1)
+        );
+    }
+
+    public function test_index_sorts_members_by_name(): void
+    {
+        Member::factory()->create(['first_name' => 'Zoe', 'last_name' => 'Bernard']);
+        Member::factory()->create(['first_name' => 'Alice', 'last_name' => 'Zurcher']);
+        Member::factory()->create(['first_name' => 'Alice', 'last_name' => 'Andre']);
+
+        $response = $this->get(route('bo.members.index'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('members.data.0.first_name', 'Alice')
+            ->where('members.data.0.last_name', 'Andre')
+            ->where('members.data.1.first_name', 'Alice')
+            ->where('members.data.1.last_name', 'Zurcher')
+            ->where('members.data.2.first_name', 'Zoe')
+        );
+    }
+
+    public function test_index_searches_members_without_accents(): void
+    {
+        Member::factory()->create(['first_name' => 'Émile', 'last_name' => 'Généreux']);
+        Member::factory()->create(['first_name' => 'Zoe', 'last_name' => 'Bernard']);
+
+        $response = $this->get(route('bo.members.index', ['search' => 'emile']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('members.data', 1)
+            ->where('members.data.0.first_name', 'Émile')
+            ->where('filters.search', 'emile')
+        );
+    }
+
+    public function test_index_filters_by_status(): void
+    {
+        Member::factory()->create(['first_name' => 'Active']);
+        Member::factory()->passive()->create(['first_name' => 'Passive']);
+
+        $response = $this->get(route('bo.members.index', ['status' => 'passive']));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('members.data', 1)
+            ->where('members.data.0.first_name', 'Passive')
+        );
+    }
+
+    public function test_index_shows_archived_members(): void
+    {
+        Member::factory()->create(['first_name' => 'Active']);
+        Member::factory()->archived()->create(['first_name' => 'Archived']);
+
+        $response = $this->get(route('bo.members.index', ['archived' => 1]));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('members.data', 1)
+            ->where('members.data.0.first_name', 'Archived')
+        );
+    }
+
+    public function test_create_returns_form(): void
+    {
+        $response = $this->get(route('bo.members.create'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('backOffice/Members/Create')
+            ->has('statuses')
+        );
+    }
+
+    public function test_store_creates_member(): void
+    {
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'email' => 'jean.dupont@example.com',
+            'status' => 'active',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'email' => 'jean.dupont@example.com',
+        ]);
+    }
+
+    public function test_store_reports_sync_failure(): void
+    {
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('createContactFromMember')->andThrow(new \RuntimeException('DAV down'));
+        $this->app->instance(DavServiceInterface::class, $davMock);
+
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'status' => 'active',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('members', ['first_name' => 'Jean', 'last_name' => 'Dupont']);
+    }
+
+    public function test_edit_returns_form(): void
+    {
+        $member = Member::factory()->create();
+
+        $response = $this->get(route('bo.members.edit', $member));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('backOffice/Members/Edit')
+            ->where('member.id', $member->id)
+        );
+    }
+
+    public function test_update_modifies_member(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Jean']);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'first_name' => 'Pierre',
+            'last_name' => $member->last_name,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', ['id' => $member->id, 'first_name' => 'Pierre']);
+    }
+
+    public function test_update_reports_sync_failure(): void
+    {
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('updateMember')->andReturn(false);
+        $this->app->instance(DavServiceInterface::class, $davMock);
+
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'first_name' => 'Pierre',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('members', ['id' => $member->id, 'first_name' => 'Pierre']);
+    }
+
+    public function test_destroy_archives_member(): void
+    {
+        $member = Member::factory()->create();
+
+        $response = $this->delete(route('bo.members.destroy', $member));
+
+        $response->assertRedirect();
+        $this->assertSoftDeleted('members', ['id' => $member->id]);
+    }
+
+    public function test_destroy_deletes_unused_vouchers_when_requested(): void
+    {
+        $member = Member::factory()->create();
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+
+        $response = $this->delete(route('bo.members.destroy', $member), ['delete_vouchers' => true]);
+
+        $response->assertRedirect();
+        $this->assertSoftDeleted('members', ['id' => $member->id]);
+        $this->assertSoftDeleted('vouchers', ['id' => $voucher->id]);
+    }
+
+    public function test_destroy_keeps_used_vouchers(): void
+    {
+        $member = Member::factory()->create();
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+        $ticket = Ticket::factory()->create();
+        TicketItem::factory()->create(['ticket_id' => $ticket->id, 'voucher_id' => $voucher->id]);
+
+        $response = $this->delete(route('bo.members.destroy', $member), ['delete_vouchers' => true]);
+
+        $response->assertRedirect();
+        $this->assertSoftDeleted('members', ['id' => $member->id]);
+        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
+    }
+
+    public function test_restore_restores_member(): void
+    {
+        $member = Member::factory()->archived()->create();
+
+        $response = $this->post(route('bo.members.restore', $member));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', ['id' => $member->id, 'deleted_at' => null]);
+    }
+
+    public function test_force_delete_requires_confirmation(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+
+        $response = $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'wrong',
+        ]);
+
+        $response->assertSessionHasErrors('confirmation');
+        $this->assertDatabaseHas('members', ['id' => $member->id]);
+    }
+
+    public function test_force_delete_hard_deletes_without_vouchers(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+
+        $response = $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'Jean Dupont',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseMissing('members', ['id' => $member->id]);
+    }
+
+    public function test_force_delete_anonymizes_when_vouchers_exist(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+        Voucher::factory()->create(['member_id' => $member->id]);
+
+        $response = $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'Jean Dupont',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'id' => $member->id,
+            'first_name' => '[Deleted]',
+            'email' => null,
+        ]);
+        $this->assertNotNull($member->fresh()->anonymized_at);
+    }
+
+    public function test_force_delete_anonymizes_when_tickets_exist(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+        Ticket::factory()->create(['member_id' => $member->id]);
+
+        $response = $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'Jean Dupont',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'id' => $member->id,
+            'first_name' => '[Deleted]',
+        ]);
+    }
+
+    public function test_force_delete_purges_activity_logs(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+        $member->update(['first_name' => 'Pierre']);
+
+        $this->assertDatabaseCount('activity_logs', 2);
+
+        $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'Pierre Dupont',
+        ]);
+
+        $this->assertDatabaseCount('activity_logs', 1);
+        $this->assertDatabaseHas('activity_logs', [
+            'model' => Member::class,
+            'model_id' => $member->id,
+            'action' => 'deleted',
+        ]);
+    }
+
+    public function test_force_delete_blocks_anonymized_member(): void
+    {
+        $member = Member::factory()->create(['anonymized_at' => now()]);
+
+        $response = $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => trim($member->first_name.' '.$member->last_name),
+        ]);
+
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('members', ['id' => $member->id]);
+    }
+
+    public function test_sync_retries_member(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+
+        $response = $this->post(route('bo.members.sync', $member));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+    }
+
+    public function test_requires_manage_members_permission(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('cashier');
+        $this->actingAs($user);
+
+        $response = $this->get(route('bo.members.index'));
+
+        $response->assertForbidden();
+    }
+
+    public function test_show_returns_member(): void
+    {
+        $member = Member::factory()->create();
+
+        $response = $this->get(route('bo.members.show', $member));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('backOffice/Members/Show')
+            ->where('member.id', $member->id)
+        );
+    }
+
+    public function test_show_does_not_expose_plain_avs(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('access backoffice');
+        $user->givePermissionTo('manage members');
+        $this->actingAs($user);
+
+        $member = Member::factory()->create(['avs' => '756.1234.5678.90']);
+
+        $response = $this->get(route('bo.members.show', $member));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('member.avs_masked', '756.***.***.90')
+            ->missing('member.avs')
+        );
+    }
+
+    public function test_show_links_registration(): void
+    {
+        $member = Member::factory()->create();
+        $registration = MemberRegistration::create(['member_id' => $member->id]);
+
+        $response = $this->get(route('bo.members.show', $member));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('member.registration.id', $registration->id)
+        );
+    }
+}

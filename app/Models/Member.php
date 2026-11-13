@@ -110,6 +110,14 @@ class Member extends Model
     }
 
     /**
+     * @return HasMany<Ticket, $this>
+     */
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    /**
      * @return HasOne<MemberRegistration, $this>
      */
     public function registration(): HasOne
@@ -141,14 +149,6 @@ class Member extends Model
                     ? null
                     : app(MemberDataCipher::class)->hash(preg_replace('/\D/', '', $avs) ?? '');
             }
-        });
-
-        static::deleted(function (Member $member) {
-            $member->vouchers()->whereDoesntHave('ticketItems')->delete();
-        });
-
-        static::restored(function (Member $member) {
-            $member->vouchers()->whereDoesntHave('ticketItems')->restore();
         });
     }
 
