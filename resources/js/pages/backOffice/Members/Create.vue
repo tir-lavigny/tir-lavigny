@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
@@ -154,7 +155,7 @@ const handleSubmit = () => {
                     </div>
                     <div class="grid gap-2">
                         <Label for="is_swiss_citizen">Citoyen suisse</Label>
-                        <input id="is_swiss_citizen" v-model="form.is_swiss_citizen" type="checkbox" />
+                        <Switch id="is_swiss_citizen" v-model="form.is_swiss_citizen" />
                         <InputError :message="form.errors.is_swiss_citizen" />
                     </div>
                 </div>
