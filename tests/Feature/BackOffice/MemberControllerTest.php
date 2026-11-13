@@ -11,6 +11,7 @@ use App\Models\Voucher;
 use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 use Mockery;
 use Tests\TestCase;
@@ -40,6 +41,21 @@ class MemberControllerTest extends TestCase
     public function test_index_returns_members(): void
     {
         Member::factory()->create(['last_name' => 'Dupont']);
+
+        $response = $this->get(route('bo.members.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('backOffice/Members/Index')
+            ->has('members.data', 1)
+        );
+    }
+
+    public function test_index_renders_members_with_legacy_plaintext_avs(): void
+    {
+        $member = Member::factory()->create();
+
+        DB::table('members')->where('id', $member->id)->update(['avs' => '756.0000.0000.00']);
 
         $response = $this->get(route('bo.members.index'));
 

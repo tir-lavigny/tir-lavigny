@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Mockery;
@@ -36,6 +37,17 @@ class MemberRegistrationTest extends TestCase
 
     public function test_can_view_registration_list(): void
     {
+        $response = $this->get(route('bo.member-registrations.index'));
+
+        $response->assertStatus(200);
+    }
+
+    public function test_registration_list_renders_with_legacy_plaintext_avs(): void
+    {
+        $member = Member::factory()->create();
+        DB::table('members')->where('id', $member->id)->update(['avs' => '756.0000.0000.00']);
+        MemberRegistration::create(['member_id' => $member->id]);
+
         $response = $this->get(route('bo.member-registrations.index'));
 
         $response->assertStatus(200);

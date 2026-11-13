@@ -57,6 +57,18 @@ class MemberTest extends TestCase
         $this->assertSame('756.1234.5678.90', $member->fresh()->avs);
     }
 
+    public function test_legacy_plaintext_avs_does_not_throw_and_is_masked(): void
+    {
+        $member = Member::factory()->create();
+
+        DB::table('members')->where('id', $member->id)->update(['avs' => '756.0000.0000.00']);
+
+        $fresh = $member->fresh();
+
+        $this->assertNull($fresh->avs);
+        $this->assertNull($fresh->avs_masked);
+    }
+
     public function test_avs_hash_is_set_and_deterministic(): void
     {
         $member = Member::factory()->create(['avs' => '756.1234.5678.90']);
