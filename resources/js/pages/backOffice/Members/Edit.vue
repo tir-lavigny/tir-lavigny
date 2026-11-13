@@ -5,15 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem, Member } from '@/types';
-import { Head, useForm } from '@inertiajs/vue3';
+import { hasPermissionTo } from '@/lib/utils';
+import type { BreadcrumbItem, Member, SharedData } from '@/types';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { Save, Undo2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{ member: Member; statuses: Record<string, string> }>();
+
+const page = usePage<SharedData>();
+const canViewSensitiveData = computed(() => hasPermissionTo(page.props.auth.user, 'view member sensitive data'));
 
 const swissCantons = [
     { value: 'AG', label: 'Argovie (AG)' },
@@ -52,7 +55,7 @@ const form = useForm({
     email: props.member.email ?? '',
     tel: props.member.tel ?? '',
     avs: props.member.avs ?? '',
-    is_swiss_citizen: props.member.is_swiss_citizen ?? true,
+    is_swiss_citizen: (props.member.is_swiss_citizen ?? null) as boolean | null,
     street: props.member.street ?? '',
     npa: props.member.npa ?? '',
     city: props.member.city ?? '',
@@ -65,6 +68,13 @@ const cantonFilter = computed({
     get: () => form.canton || 'none',
     set: (value: string) => {
         form.canton = value === 'none' ? '' : value;
+    },
+});
+
+const swissCitizenFilter = computed({
+    get: () => (form.is_swiss_citizen === null || form.is_swiss_citizen === undefined ? 'none' : form.is_swiss_citizen ? 'yes' : 'no'),
+    set: (value: string) => {
+        form.is_swiss_citizen = value === 'none' ? null : value === 'yes';
     },
 });
 
@@ -100,7 +110,7 @@ const handleSubmit = () => {
                         <Input id="last_name" v-model="form.last_name" type="text" placeholder="Nom" maxlength="255" required />
                         <InputError :message="form.errors.last_name" />
                     </div>
-                    <div class="grid gap-2">
+                    <div v-if="canViewSensitiveData" class="grid gap-2">
                         <Label for="email">Email</Label>
                         <Input id="email" v-model="form.email" type="email" placeholder="Email" maxlength="255" />
                         <InputError :message="form.errors.email" />
@@ -110,7 +120,7 @@ const handleSubmit = () => {
                         <Input id="tel" v-model="form.tel" type="tel" placeholder="Téléphone" maxlength="255" />
                         <InputError :message="form.errors.tel" />
                     </div>
-                    <div class="grid gap-2">
+                    <div v-if="canViewSensitiveData" class="grid gap-2">
                         <Label for="avs">AVS</Label>
                         <Input id="avs" v-model="form.avs" type="text" placeholder="756.1234.5678.90" maxlength="255" />
                         <InputError :message="form.errors.avs" />
@@ -164,7 +174,16 @@ const handleSubmit = () => {
                     </div>
                     <div class="grid gap-2">
                         <Label for="is_swiss_citizen">Citoyen suisse</Label>
-                        <Switch id="is_swiss_citizen" v-model="form.is_swiss_citizen" />
+                        <Select v-model="swissCitizenFilter">
+                            <SelectTrigger id="is_swiss_citizen">
+                                <SelectValue placeholder="Non renseigné" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Non renseigné</SelectItem>
+                                <SelectItem value="yes">Oui</SelectItem>
+                                <SelectItem value="no">Non</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <InputError :message="form.errors.is_swiss_citizen" />
                     </div>
                 </div>

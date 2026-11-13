@@ -17,6 +17,7 @@ import { toast } from 'vue-sonner';
 const props = defineProps<{
     registration: MemberRegistration;
     formUrl: string;
+    canViewSensitiveData: boolean;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -58,6 +59,7 @@ const statusLabel = (status: string) => {
         form_filled: 'En attente de validation',
         member_created: 'Membre créé',
         completed: 'Terminé',
+        error: 'En erreur',
     };
     const label = labels[status] ?? status;
     return hasFailed() ? `${label} — Échoué` : label;
@@ -200,6 +202,7 @@ const displayUrl = flash?.form_url ?? props.formUrl;
                     <Pre v-if="registration.form_data" class="bg-muted max-h-96 overflow-auto rounded p-4 text-xs">{{
                         JSON.stringify(registration.form_data, null, 2)
                     }}</Pre>
+                    <P v-else-if="!canViewSensitiveData" class="text-muted-foreground text-sm">Données sensibles masquées</P>
                     <P v-else class="text-muted-foreground text-sm">Aucune donnée</P>
                 </div>
             </div>

@@ -178,4 +178,25 @@ class MemberTest extends TestCase
         $this->assertFalse($member->isAnonymized());
         $this->assertTrue($anonymized->isAnonymized());
     }
+
+    public function test_avs_uses_dedicated_member_data_key(): void
+    {
+        config(['members.encryption_key' => 'base64:'.base64_encode(str_repeat('a', 32))]);
+
+        $member = Member::factory()->create(['avs' => '756.1234.5678.90']);
+
+        $raw = DB::table('members')->where('id', $member->id)->value('avs');
+
+        $this->assertNotSame('756.1234.5678.90', $raw);
+        $this->assertSame('756.1234.5678.90', $member->fresh()->avs);
+    }
+
+    public function test_dav_synced_snapshot_is_hidden_from_serialization(): void
+    {
+        $member = Member::factory()->create([
+            'dav_synced_snapshot' => ['email' => 'john.doe@example.com'],
+        ]);
+
+        $this->assertArrayNotHasKey('dav_synced_snapshot', $member->toArray());
+    }
 }

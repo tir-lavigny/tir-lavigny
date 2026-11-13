@@ -54,6 +54,7 @@ class Member extends Model
         'avs',
         'avs_hash',
         'email',
+        'dav_synced_snapshot',
     ];
 
     protected $appends = [

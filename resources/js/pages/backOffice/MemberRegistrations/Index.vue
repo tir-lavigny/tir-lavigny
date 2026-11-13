@@ -32,6 +32,7 @@ const status = [
     { label: 'En attente de validation', value: 'form_filled', displayTab: true },
     { label: 'Membre créé', value: 'member_created', displayTab: false },
     { label: 'Terminé', value: 'completed', displayTab: true },
+    { label: 'En erreur', value: 'error', displayTab: true },
 ];
 
 const handleTabClick = (status: string) => {
@@ -119,9 +120,7 @@ const statusLabel = (registration: any) => {
                                 {{
                                     registration.member
                                         ? registration.member.first_name + ' ' + registration.member.last_name
-                                        : registration.form_data?.first_name && registration.form_data?.last_name
-                                          ? registration.form_data.first_name + ' ' + registration.form_data.last_name
-                                          : '-'
+                                        : (registration.form_name ?? '-')
                                 }}
                             </p>
                             <p class="text-muted-foreground text-sm">

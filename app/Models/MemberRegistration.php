@@ -23,6 +23,14 @@ class MemberRegistration extends Model
         'error_message',
     ];
 
+    protected $hidden = [
+        'form_data',
+    ];
+
+    protected $appends = [
+        'form_name',
+    ];
+
     protected $casts = [
         'status' => MemberRegistrationStatus::class,
         'form_data' => 'array',
@@ -41,6 +49,14 @@ class MemberRegistration extends Model
     public function formUrl(): string
     {
         return rtrim(config('app.url'), '/').'/member-registration/'.$this->form_uuid;
+    }
+
+    public function getFormNameAttribute(): ?string
+    {
+        $formData = $this->form_data;
+        $name = trim(($formData['first_name'] ?? '').' '.($formData['last_name'] ?? ''));
+
+        return $name === '' ? null : $name;
     }
 
     protected static function booted(): void
