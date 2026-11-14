@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Avs;
 use App\Support\MemberDataCipher;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -115,7 +116,7 @@ class ReencryptMemberAvs extends Command
         try {
             return $oldCipher->decrypt($value);
         } catch (Throwable) {
-            if ($this->looksLikeAvs($value)) {
+            if (Avs::looksLike($value)) {
                 return $value;
             }
 
@@ -124,16 +125,5 @@ class ReencryptMemberAvs extends Command
 
             return null;
         }
-    }
-
-    private function looksLikeAvs(string $value): bool
-    {
-        if (preg_match('/^756\.\d{4}\.\d{4}\.\d{2}$/', $value) === 1) {
-            return true;
-        }
-
-        $digits = preg_replace('/\D/', '', $value) ?? '';
-
-        return strlen($digits) === 13;
     }
 }

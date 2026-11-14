@@ -14,8 +14,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::table('member_registrations')
-            ->where('status', 'member_created')
-            ->update(['status' => 'dav_created']);
+        // The status rewrite is irreversible: member_created is a valid state.
     }
 };

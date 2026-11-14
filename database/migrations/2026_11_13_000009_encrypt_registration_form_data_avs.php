@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Avs;
 use App\Support\MemberDataCipher;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,7 @@ return new class extends Migration
                         // Legacy plaintext value, encrypt it below.
                     }
 
-                    if (! $this->looksLikeAvs($avs)) {
+                    if (! Avs::looksLike($avs)) {
                         continue;
                     }
 
@@ -47,16 +48,5 @@ return new class extends Migration
     public function down(): void
     {
         // Encrypted values cannot be reverted to plaintext.
-    }
-
-    private function looksLikeAvs(string $value): bool
-    {
-        if (preg_match('/^756\.\d{4}\.\d{4}\.\d{2}$/', $value) === 1) {
-            return true;
-        }
-
-        $digits = preg_replace('/\D/', '', $value) ?? '';
-
-        return strlen($digits) === 13;
     }
 };

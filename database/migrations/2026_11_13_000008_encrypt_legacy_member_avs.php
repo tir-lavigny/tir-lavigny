@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Avs;
 use App\Support\MemberDataCipher;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,10 @@ return new class extends Migration
                         continue;
                     } catch (Throwable) {
                         // Legacy plaintext value, encrypt it below.
+                    }
+
+                    if (! Avs::looksLike($plaintext)) {
+                        continue;
                     }
 
                     DB::table('members')->where('id', $member->id)->update([

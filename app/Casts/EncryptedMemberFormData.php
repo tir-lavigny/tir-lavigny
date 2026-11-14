@@ -2,6 +2,7 @@
 
 namespace App\Casts;
 
+use App\Support\Avs;
 use App\Support\MemberDataCipher;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Contracts\Encryption\DecryptException;
@@ -32,7 +33,7 @@ class EncryptedMemberFormData implements CastsAttributes
         try {
             $data['avs'] = app(MemberDataCipher::class)->decrypt((string) $data['avs']);
         } catch (DecryptException) {
-            if (! $this->looksLikeAvs($data['avs'])) {
+            if (! Avs::looksLike($data['avs'])) {
                 Log::warning('Unable to decrypt member registration AVS.', [
                     'model' => $model::class,
                     'id' => $model->getKey(),
@@ -60,20 +61,5 @@ class EncryptedMemberFormData implements CastsAttributes
         }
 
         return json_encode($value);
-    }
-
-    private function looksLikeAvs(mixed $value): bool
-    {
-        if (! is_string($value)) {
-            return false;
-        }
-
-        if (preg_match('/^756\.\d{4}\.\d{4}\.\d{2}$/', $value) === 1) {
-            return true;
-        }
-
-        $digits = preg_replace('/\D/', '', $value) ?? '';
-
-        return strlen($digits) === 13;
     }
 }
