@@ -57,6 +57,19 @@ class VoucherControllerTest extends TestCase
         );
     }
 
+    public function test_index_includes_archived_member_name(): void
+    {
+        $member = Member::factory()->archived()->create(['first_name' => 'Archivé', 'last_name' => 'Membre']);
+        Voucher::factory()->percent()->create(['member_id' => $member->id]);
+
+        $response = $this->get(route('bo.register.vouchers.index'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('vouchers.data.0.member.first_name', 'Archivé')
+            ->where('vouchers.data.0.member.last_name', 'Membre')
+        );
+    }
+
     public function test_create_sorts_members_by_first_name(): void
     {
         Member::factory()->create(['first_name' => 'Zoe', 'last_name' => 'Bernard']);

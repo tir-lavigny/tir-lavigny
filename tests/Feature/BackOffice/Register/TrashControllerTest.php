@@ -14,6 +14,7 @@ use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia as Assert;
 use Mockery;
 use Tests\TestCase;
 
@@ -82,6 +83,19 @@ class TrashControllerTest extends TestCase
         $response = $this->get(route('bo.register.trash.index'));
 
         $response->assertOk();
+    }
+
+    public function test_index_includes_archived_member_name_for_tickets(): void
+    {
+        $member = Member::factory()->archived()->create(['first_name' => 'Archivé', 'last_name' => 'Membre']);
+        $ticket = Ticket::factory()->create(['member_id' => $member->id]);
+        $ticket->delete();
+
+        $response = $this->get(route('bo.register.trash.index'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('tickets.data.0.member.first_name', 'Archivé')
+        );
     }
 
     public function test_index_shows_trashed_vouchers(): void
