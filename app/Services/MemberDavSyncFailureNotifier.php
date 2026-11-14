@@ -20,8 +20,18 @@ class MemberDavSyncFailureNotifier
         }
 
         try {
+            Log::warning('Member DAV sync failure notification', [
+                'member_id' => $member->id,
+                'registration_id' => $registration?->id,
+                'error' => $error,
+            ]);
+
             Mail::to(User::getMemberRegistrationEmails())->send(
-                new MemberDavSyncFailed($registration, $member, $error)
+                new MemberDavSyncFailed(
+                    $registration,
+                    $member,
+                    'La synchronisation du contact a échoué. Consultez les journaux pour le détail.',
+                )
             );
         } catch (\Throwable $e) {
             report($e);
