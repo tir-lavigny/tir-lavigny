@@ -23,7 +23,7 @@ class UpdateMemberRequest extends FormRequest
             'last_name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'tel' => ['sometimes', 'nullable', 'string', 'max:20'],
-            'avs' => ['sometimes', 'required_if:is_swiss_citizen,true', 'nullable', 'string', 'max:20', 'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/'],
+            'avs' => $this->avsRules(),
             'is_swiss_citizen' => ['sometimes', 'nullable', 'boolean'],
             'street' => ['sometimes', 'nullable', 'string', 'max:255'],
             'npa' => ['sometimes', 'nullable', 'string', 'max:10'],
@@ -32,6 +32,16 @@ class UpdateMemberRequest extends FormRequest
             'country' => ['sometimes', 'nullable', 'string', 'max:100'],
             'status' => ['sometimes', Rule::in(['active', 'passive'])],
         ];
+    }
+
+    /** @return array<int, string> */
+    private function avsRules(): array
+    {
+        if (! $this->user()?->can('view member sensitive data')) {
+            return ['sometimes', 'prohibited'];
+        }
+
+        return ['sometimes', 'required_if:is_swiss_citizen,true', 'nullable', 'string', 'max:20', 'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/'];
     }
 
     /** @return array<string, string> */

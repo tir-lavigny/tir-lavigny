@@ -39,6 +39,22 @@ class StoreMemberRequestTest extends TestCase
         return Validator::make($data, $request->rules())->fails();
     }
 
+    private function failsFor(User $user, array $data): bool
+    {
+        $request = new StoreMemberRequest;
+        $request->setUserResolver(fn () => $user);
+
+        return Validator::make($data, $request->rules())->fails();
+    }
+
+    private function memberManagerWithoutSensitivePermission(): User
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('manage members');
+
+        return $user;
+    }
+
     private function validData(array $overrides = []): array
     {
         return array_merge([
@@ -89,6 +105,26 @@ class StoreMemberRequestTest extends TestCase
         $this->assertTrue($this->fails($this->validData([
             'is_swiss_citizen' => true,
         ])));
+    }
+
+    public function test_passes_without_avs_for_swiss_citizen_without_sensitive_permission(): void
+    {
+        $this->assertFalse($this->failsFor($this->memberManagerWithoutSensitivePermission(), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'is_swiss_citizen' => true,
+            'status' => 'active',
+        ]));
+    }
+
+    public function test_fails_with_avs_without_sensitive_permission(): void
+    {
+        $this->assertTrue($this->failsFor($this->memberManagerWithoutSensitivePermission(), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'avs' => '756.1234.5678.90',
+            'status' => 'active',
+        ]));
     }
 
     public function test_passes_without_avs_when_not_swiss_citizen(): void

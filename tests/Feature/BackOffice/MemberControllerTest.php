@@ -207,6 +207,77 @@ class MemberControllerTest extends TestCase
         $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
     }
 
+    public function test_member_manager_can_create_swiss_citizen_without_avs(): void
+    {
+        $this->actingAs($this->memberManagerWithoutSensitivePermission());
+
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'is_swiss_citizen' => true,
+            'status' => 'active',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'first_name' => 'Jean',
+            'is_swiss_citizen' => true,
+            'avs' => null,
+        ]);
+    }
+
+    public function test_member_manager_can_update_swiss_citizen_member(): void
+    {
+        $this->actingAs($this->memberManagerWithoutSensitivePermission());
+
+        $member = Member::factory()->create([
+            'first_name' => 'Jean',
+            'is_swiss_citizen' => true,
+            'avs' => null,
+        ]);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'first_name' => 'Pierre',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'id' => $member->id,
+            'first_name' => 'Pierre',
+            'is_swiss_citizen' => true,
+            'avs' => null,
+        ]);
+    }
+
+    public function test_member_manager_cannot_submit_avs_on_create(): void
+    {
+        $this->actingAs($this->memberManagerWithoutSensitivePermission());
+
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'avs' => '756.1234.5678.90',
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
+    }
+
+    public function test_member_manager_cannot_submit_avs_on_update(): void
+    {
+        $this->actingAs($this->memberManagerWithoutSensitivePermission());
+
+        $member = Member::factory()->create(['avs' => '756.1234.5678.90']);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'avs' => '756.0000.0000.00',
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertSame('756.1234.5678.90', $member->fresh()->avs);
+    }
+
     public function test_store_requires_avs_for_swiss_citizen(): void
     {
         $response = $this->post(route('bo.members.store'), [
@@ -601,7 +672,6 @@ class MemberControllerTest extends TestCase
         $response = $this->put(route('bo.members.update', $member), [
             'first_name' => 'Pierre',
             'email' => 'pierre@example.com',
-            'avs' => '756.0000.0000.00',
         ]);
 
         $response->assertRedirect();
@@ -740,5 +810,13 @@ class MemberControllerTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page
             ->missing('member.registration.form_data')
         );
+    }
+
+    private function memberManagerWithoutSensitivePermission(): User
+    {
+        $user = User::factory()->create();
+        $user->assignRole('member manager');
+
+        return $user;
     }
 }

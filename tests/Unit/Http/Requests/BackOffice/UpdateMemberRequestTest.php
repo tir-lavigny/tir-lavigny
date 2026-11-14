@@ -54,6 +54,23 @@ class UpdateMemberRequestTest extends TestCase
         return $validator->fails();
     }
 
+    private function failsFor(User $user, array $data): bool
+    {
+        $request = $this->makeRequest($data);
+        $request->setUserResolver(fn () => $user);
+        $validator = Validator::make($request->all(), $request->rules());
+
+        return $validator->fails();
+    }
+
+    private function memberManagerWithoutSensitivePermission(): User
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('manage members');
+
+        return $user;
+    }
+
     public function test_authorize_passes_with_permission(): void
     {
         $request = new UpdateMemberRequest;
@@ -127,6 +144,20 @@ class UpdateMemberRequestTest extends TestCase
         $this->assertFalse($this->passes([
             'is_swiss_citizen' => true,
             'avs' => '',
+        ]));
+    }
+
+    public function test_passes_without_avs_for_swiss_citizen_without_sensitive_permission(): void
+    {
+        $this->assertFalse($this->failsFor($this->memberManagerWithoutSensitivePermission(), [
+            'is_swiss_citizen' => true,
+        ]));
+    }
+
+    public function test_fails_with_avs_without_sensitive_permission(): void
+    {
+        $this->assertTrue($this->failsFor($this->memberManagerWithoutSensitivePermission(), [
+            'avs' => '756.1234.5678.90',
         ]));
     }
 

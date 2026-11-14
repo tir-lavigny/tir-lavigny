@@ -23,7 +23,7 @@ class StoreMemberRequest extends FormRequest
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'tel' => ['nullable', 'string', 'max:20'],
-            'avs' => ['required_if:is_swiss_citizen,true', 'nullable', 'string', 'max:20', 'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/'],
+            'avs' => $this->avsRules(),
             'is_swiss_citizen' => ['nullable', 'boolean'],
             'street' => ['nullable', 'string', 'max:255'],
             'npa' => ['nullable', 'string', 'max:10'],
@@ -32,6 +32,16 @@ class StoreMemberRequest extends FormRequest
             'country' => ['nullable', 'string', 'max:100'],
             'status' => ['required', Rule::in(['active', 'passive'])],
         ];
+    }
+
+    /** @return array<int, string> */
+    private function avsRules(): array
+    {
+        if (! $this->user()?->can('view member sensitive data')) {
+            return ['prohibited'];
+        }
+
+        return ['required_if:is_swiss_citizen,true', 'nullable', 'string', 'max:20', 'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/'];
     }
 
     /** @return array<string, string> */
