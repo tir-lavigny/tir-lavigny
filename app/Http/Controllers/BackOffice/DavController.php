@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\BackOffice;
 
+use App\DavGroupLabels;
 use App\Http\Controllers\Controller;
 use App\Models\Member;
 use App\Services\DavServiceInterface;
@@ -32,6 +33,8 @@ class DavController extends Controller
             return Inertia::render('backOffice/Dav/Index', [
                 'contacts' => [],
                 'existingDavUids' => [],
+                'activeCategory' => DavGroupLabels::ACTIVE_MEMBERS->value,
+                'passiveCategory' => DavGroupLabels::PASSIVE_MEMBERS->value,
                 'error' => 'Erreur lors de la récupération des contacts: '.$e->getMessage(),
             ]);
         }
@@ -41,6 +44,8 @@ class DavController extends Controller
         return Inertia::render('backOffice/Dav/Index', [
             'contacts' => $contacts,
             'existingDavUids' => $existingDavUids,
+            'activeCategory' => DavGroupLabels::ACTIVE_MEMBERS->value,
+            'passiveCategory' => DavGroupLabels::PASSIVE_MEMBERS->value,
         ]);
     }
 

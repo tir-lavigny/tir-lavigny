@@ -71,6 +71,8 @@ interface UnlinkedMember {
 const props = defineProps<{
     contacts: Contact[];
     existingDavUids: string[];
+    activeCategory: string;
+    passiveCategory: string;
 }>();
 
 const page = usePage<SharedData>();
@@ -102,7 +104,12 @@ const hasCategory = (category: string, value: string): boolean =>
         .map((part) => part.trim())
         .includes(value);
 
-const contactsToImport = computed(() => props.contacts.filter((c) => hasCategory(c.category, 'Actifs') && !existingDavUidSet.value.has(c.uid)));
+const contactsToImport = computed(() =>
+    props.contacts.filter(
+        (c) =>
+            (hasCategory(c.category, props.activeCategory) || hasCategory(c.category, props.passiveCategory)) && !existingDavUidSet.value.has(c.uid),
+    ),
+);
 
 const toggleExpand = (url: string) => {
     expandedContact.value = expandedContact.value === url ? null : url;
@@ -138,9 +145,7 @@ async function fetchSyncPreview() {
             },
         });
         const data = await response.json();
-        syncMembers.value = [...data.members].sort((a: SyncMember, b: SyncMember) =>
-            a.member_name.localeCompare(b.member_name, 'fr'),
-        );
+        syncMembers.value = [...data.members].sort((a: SyncMember, b: SyncMember) => a.member_name.localeCompare(b.member_name, 'fr'));
         syncChoices.value = {};
         for (const member of data.members) {
             const row: Record<string, 'member' | 'dav'> = {};
@@ -213,7 +218,7 @@ async function fetchLinkPreview() {
         }
         showLinkDialog.value = true;
     } catch {
-        toast.error("Erreur lors du chargement des contacts non liés.");
+        toast.error('Erreur lors du chargement des contacts non liés.');
     } finally {
         loadingLinks.value = false;
     }
@@ -359,7 +364,7 @@ onMounted(() => {
                     <DialogTitle>Aperçu des membres à créer</DialogTitle>
                     <DialogDescription>
                         <template v-if="contactsToImport.length > 0">
-                            {{ contactsToImport.length }} membre(s) seront créé(s) à partir des contacts de catégorie "Actifs".
+                            {{ contactsToImport.length }} membre(s) seront créé(s) à partir des contacts de catégorie "Actifs" et "Passifs".
                         </template>
                         <template v-else> Aucun contact à importer. </template>
                     </DialogDescription>
@@ -421,7 +426,10 @@ onMounted(() => {
                                     <TableCell>{{ contact.email || '—' }}</TableCell>
                                     <TableCell>{{ contact.category || '—' }}</TableCell>
                                     <TableCell>
-                                        <select v-model="linkChoices[contact.uid]" class="border-input bg-background h-9 rounded-md border px-2 text-sm">
+                                        <select
+                                            v-model="linkChoices[contact.uid]"
+                                            class="border-input bg-background h-9 rounded-md border px-2 text-sm"
+                                        >
                                             <option value="">Choisir…</option>
                                             <option v-for="member in unlinkedMembers" :key="member.member_id" :value="String(member.member_id)">
                                                 {{ member.member_name }}
@@ -430,7 +438,12 @@ onMounted(() => {
                                         </select>
                                     </TableCell>
                                     <TableCell class="text-right">
-                                        <Button size="sm" variant="outline" :disabled="linking || !linkChoices[contact.uid]" @click="linkContact(contact)">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            :disabled="linking || !linkChoices[contact.uid]"
+                                            @click="linkContact(contact)"
+                                        >
                                             Lier
                                         </Button>
                                     </TableCell>
@@ -529,12 +542,18 @@ onMounted(() => {
                                     <TableRow v-for="(field, name) in member.fields" :key="name">
                                         <TableCell class="font-medium">{{ name }}</TableCell>
                                         <TableCell>
-                                            <span :class="syncChoices[member.member_id]?.[name] === 'member' ? 'font-semibold' : 'text-muted-foreground'">
+                                            <span
+                                                :class="
+                                                    syncChoices[member.member_id]?.[name] === 'member' ? 'font-semibold' : 'text-muted-foreground'
+                                                "
+                                            >
                                                 {{ field.member ?? '—' }}
                                             </span>
                                         </TableCell>
                                         <TableCell>
-                                            <span :class="syncChoices[member.member_id]?.[name] === 'dav' ? 'font-semibold' : 'text-muted-foreground'">
+                                            <span
+                                                :class="syncChoices[member.member_id]?.[name] === 'dav' ? 'font-semibold' : 'text-muted-foreground'"
+                                            >
                                                 {{ field.dav ?? '—' }}
                                             </span>
                                         </TableCell>

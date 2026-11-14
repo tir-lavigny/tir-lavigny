@@ -96,6 +96,18 @@ class DavControllerTest extends TestCase
             );
     }
 
+    public function test_index_passes_active_category(): void
+    {
+        $this->actingAs($this->admin);
+        $this->mockDavService([]);
+
+        $response = $this->get(route('bo.dav.index'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('activeCategory', 'Actifs')
+        );
+    }
+
     public function test_index_passes_existing_dav_uids(): void
     {
         $this->actingAs($this->admin);
