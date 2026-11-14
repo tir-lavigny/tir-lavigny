@@ -441,6 +441,21 @@ class MemberControllerTest extends TestCase
         $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
     }
 
+    public function test_destroy_keeps_voucher_with_trashed_ticket_item(): void
+    {
+        $member = Member::factory()->create();
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+        $ticket = Ticket::factory()->create();
+        $item = TicketItem::factory()->create(['ticket_id' => $ticket->id, 'voucher_id' => $voucher->id]);
+        $item->delete();
+
+        $response = $this->delete(route('bo.members.destroy', $member), ['delete_vouchers' => true]);
+
+        $response->assertRedirect();
+        $this->assertSoftDeleted('members', ['id' => $member->id]);
+        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
+    }
+
     public function test_restore_restores_member(): void
     {
         $member = Member::factory()->archived()->create();

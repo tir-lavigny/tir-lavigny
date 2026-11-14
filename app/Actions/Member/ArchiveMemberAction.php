@@ -18,7 +18,7 @@ class ArchiveMemberAction
         DB::transaction(function () use ($member, $deleteUnusedVouchers): void {
             if ($deleteUnusedVouchers) {
                 $member->vouchers()
-                    ->whereDoesntHave('ticketItems')
+                    ->whereDoesntHave('ticketItems', fn ($query) => $query->withTrashed())
                     ->delete();
             }
 
