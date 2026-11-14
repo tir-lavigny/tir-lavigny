@@ -12,6 +12,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -122,13 +123,16 @@ const handleRemoveUnused = () => {
             <div class="flex w-full flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div class="flex items-center gap-2">
                     <H1>{{ member.first_name }} {{ member.last_name }}</H1>
-                    <span
-                        class="rounded-full px-2 py-0.5 text-xs"
-                        :class="member.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'"
+                    <Badge
+                        :class="
+                            member.status === 'active'
+                                ? 'border-emerald-200 bg-emerald-100 text-emerald-800'
+                                : 'border-amber-200 bg-amber-100 text-amber-800'
+                        "
                     >
                         {{ member.status === 'active' ? 'Actif' : 'Passif' }}
-                    </span>
-                    <span v-if="member.deleted_at" class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">Archivé</span>
+                    </Badge>
+                    <Badge v-if="member.deleted_at" variant="outline" class="bg-gray-100 text-gray-700">Archivé</Badge>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <Link v-if="hasPermissionTo(user, 'manage members')" :href="route('bo.members.edit', member.id)">

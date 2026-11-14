@@ -2,6 +2,7 @@
 import AppPagination from '@/components/AppPagination.vue';
 import { H3 } from '@/components/typography/headings';
 import { Muted } from '@/components/typography/texts';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -109,13 +110,16 @@ const handleSync = (member: Member) => {
                     <div class="flex flex-col gap-1">
                         <div class="flex items-center gap-2">
                             <span class="font-medium">{{ member.first_name }} {{ member.last_name }}</span>
-                            <span
-                                class="rounded-full px-2 py-0.5 text-xs"
-                                :class="member.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'"
+                            <Badge
+                                :class="
+                                    member.status === 'active'
+                                        ? 'border-emerald-200 bg-emerald-100 text-emerald-800'
+                                        : 'border-amber-200 bg-amber-100 text-amber-800'
+                                "
                             >
                                 {{ member.status === 'active' ? 'Actif' : 'Passif' }}
-                            </span>
-                            <span v-if="member.deleted_at" class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">Archivé</span>
+                            </Badge>
+                            <Badge v-if="member.deleted_at" variant="outline" class="bg-gray-100 text-gray-700">Archivé</Badge>
                         </div>
                         <Muted>{{ member.email || '—' }}</Muted>
                         <Muted v-if="member.dav_sync_error" class="text-red-600">Synchronisation DAV en erreur</Muted>
