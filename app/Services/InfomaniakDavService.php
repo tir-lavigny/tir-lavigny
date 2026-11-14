@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\DavGroupLabels as GroupLabels;
 use App\Models\Member;
-use App\Models\MemberRegistration;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Sabre\DAV\Client;
@@ -325,26 +324,6 @@ class InfomaniakDavService implements DavServiceInterface
         return true;
     }
 
-    /** @return array<string, string> */
-    public function createContactFromMemberRegistration(MemberRegistration $registration): array
-    {
-        $formData = $registration->form_data;
-
-        return $this->createContact([
-            'fn' => $formData['last_name'].' '.$formData['first_name'],
-            'n_first' => $formData['first_name'],
-            'n_last' => $formData['last_name'],
-            'email' => $formData['email'] ?? '',
-            'tel' => $formData['tel'] ?? '',
-            'street' => $formData['street'] ?? '',
-            'npa' => $formData['npa'] ?? '',
-            'city' => $formData['city'] ?? '',
-            'canton' => $formData['canton'] ?? '',
-            'country' => $formData['country'] ?? '',
-            'category' => GroupLabels::ACTIVE_MEMBERS->value,
-        ]);
-    }
-
     /** @return array<string, mixed> */
     public function createContactFromMember(Member $member): array
     {
@@ -404,58 +383,6 @@ class InfomaniakDavService implements DavServiceInterface
         if ($value !== null && $value !== '') {
             $vcard->add($name, $value, $parameters);
         }
-    }
-
-    public function softDeleteMember(Member $member): bool
-    {
-        if (! $member->dav_uid) {
-            return true; // No DAV UID, nothing to delete
-        }
-
-        $contactUrl = rtrim($this->getAddressbookUrl(), '/').'/'.$member->dav_uid.'.vcf';
-
-        Log::info('Soft deleting contact in Infomaniak DAV', [
-            'member_id' => $member->id,
-            'dav_uid' => $member->dav_uid,
-            'contact_url' => $contactUrl,
-        ]);
-
-        try {
-            $this->updateContact($contactUrl, $this->contactDataFromMember($member));
-        } catch (\Exception $e) {
-            Log::warning('Failed to soft delete contact in Infomaniak DAV', [
-                'member_id' => $member->id,
-                'dav_uid' => $member->dav_uid,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
-
-        return true;
-    }
-
-    public function restoreMember(Member $member): bool
-    {
-        if (! $member->dav_uid) {
-            return true; // No DAV UID, nothing to restore
-        }
-
-        $contactUrl = rtrim($this->getAddressbookUrl(), '/').'/'.$member->dav_uid.'.vcf';
-
-        try {
-            $this->updateContact($contactUrl, $this->contactDataFromMember($member));
-        } catch (\Exception $e) {
-            Log::warning('Failed to restore contact in Infomaniak DAV', [
-                'member_id' => $member->id,
-                'dav_uid' => $member->dav_uid,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
-
-        return true;
     }
 
     public function deleteMember(Member $member): bool

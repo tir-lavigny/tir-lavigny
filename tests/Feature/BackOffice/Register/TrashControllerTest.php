@@ -32,7 +32,6 @@ class TrashControllerTest extends TestCase
         $this->actingAs($this->admin);
 
         $davMock = Mockery::mock(DavServiceInterface::class);
-        $davMock->shouldReceive('restoreMember')->andReturn(true);
         $davMock->shouldReceive('deleteMember')->andReturn(true);
         $this->app->instance(DavServiceInterface::class, $davMock);
     }

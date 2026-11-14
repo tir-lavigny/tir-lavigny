@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Member;
-use App\Models\MemberRegistration;
 
 interface DavServiceInterface
 {
@@ -16,14 +15,7 @@ interface DavServiceInterface
     public function getContact(string $contactUrl): ?array;
 
     /** @return array<string, mixed> */
-    public function createContactFromMemberRegistration(MemberRegistration $registration): array;
-
-    /** @return array<string, mixed> */
     public function createContactFromMember(Member $member): array;
-
-    public function softDeleteMember(Member $member): bool;
-
-    public function restoreMember(Member $member): bool;
 
     public function deleteMember(Member $member): bool;
 

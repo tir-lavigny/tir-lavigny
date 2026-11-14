@@ -35,7 +35,6 @@ class MemberControllerTest extends TestCase
         $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('updateMember')->andReturn(true);
         $davMock->shouldReceive('createContactFromMember')->andReturn(['uid' => 'uid-123']);
-        $davMock->shouldReceive('softDeleteMember')->andReturn(true);
         $davMock->shouldReceive('deleteMember')->andReturn(true);
         $this->app->instance(DavServiceInterface::class, $davMock);
     }
