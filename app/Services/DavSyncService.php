@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DavGroupLabels;
 use App\Models\Member;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DavSyncService
 {
@@ -14,33 +15,53 @@ class DavSyncService
     ) {}
 
     /**
-     * Import members from DAV contacts that don't already exist.
+     * Import unknown DAV contacts as members.
+     *
+     * @return array{created: int, skipped: array<int, string>}
      */
-    /** @return array{created: int} */
     public function importFromDav(): array
     {
         $contacts = $this->dav->getContacts();
-        $existingDavUids = Member::withTrashed()->whereNotNull('dav_uid')->pluck('dav_uid')->flip()->toArray();
+        $existingDavUids = Member::withTrashed()->whereNotNull('dav_uid')->pluck('dav_uid')->flip();
 
-        $activeContacts = collect($contacts)->filter(fn (array $contact): bool => $this->hasCategory($contact, DavGroupLabels::ACTIVE_MEMBERS->value));
+        $unlinkedMemberEmails = Member::withTrashed()
+            ->whereNull('dav_uid')
+            ->whereNotNull('email')
+            ->pluck('email')
+            ->filter()
+            ->map(fn (string $email): string => Str::lower(trim($email)))
+            ->unique()
+            ->flip();
 
-        $toImport = $activeContacts->filter(fn (array $contact): bool => ! isset($existingDavUids[$contact['uid']]));
+        $toImport = collect($contacts)
+            ->filter(fn (array $contact): bool => ($contact['uid'] ?? '') !== '')
+            ->reject(fn (array $contact): bool => $existingDavUids->has($contact['uid']))
+            ->filter(fn (array $contact): bool => $this->hasCategory($contact, DavGroupLabels::ACTIVE_MEMBERS->value)
+                || $this->hasCategory($contact, DavGroupLabels::PASSIVE_MEMBERS->value));
 
         $created = 0;
+        $skipped = [];
 
         foreach ($toImport as $contact) {
-            $this->memberSync->createFromContact($contact);
+            $email = Str::lower(trim((string) ($contact['email'] ?? '')));
 
+            if ($email !== '' && $unlinkedMemberEmails->has($email)) {
+                $skipped[] = $contact['uid'];
+
+                continue;
+            }
+
+            $this->memberSync->createFromContact($contact);
             $created++;
         }
 
         Log::info('Imported members from DAV contacts', [
-            'count' => $created,
+            'created' => $created,
+            'skipped' => count($skipped),
             'contacts' => count($contacts),
-            'skipped' => count($contacts) - count($toImport),
         ]);
 
-        return ['created' => $created];
+        return ['created' => $created, 'skipped' => $skipped];
     }
 
     private function hasCategory(array $contact, string $category): bool

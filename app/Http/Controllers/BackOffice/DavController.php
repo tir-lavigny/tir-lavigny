@@ -44,8 +44,12 @@ class DavController extends Controller
         ]);
     }
 
-    public function importFromDav(DavSyncService $service): RedirectResponse
+    public function importFromDav(DavSyncService $service, Request $request): RedirectResponse
     {
+        $request->validate([
+            'confirm' => ['required', 'accepted'],
+        ]);
+
         try {
             $result = $service->importFromDav();
         } catch (\Exception $e) {
@@ -59,7 +63,13 @@ class DavController extends Controller
             return back()->withErrors(['error' => 'Erreur lors de la récupération des contacts: '.$e->getMessage()]);
         }
 
-        return back()->with('success', "$result[created] membre(s) créé(s) avec succès.");
+        $message = "$result[created] membre(s) créé(s) avec succès.";
+
+        if ($result['skipped'] !== []) {
+            $message .= ' '.count($result['skipped']).' contact(s) ignoré(s) : un membre non lié utilise le même email.';
+        }
+
+        return back()->with('success', $message);
     }
 
     public function syncPreview(MemberSyncService $service): JsonResponse

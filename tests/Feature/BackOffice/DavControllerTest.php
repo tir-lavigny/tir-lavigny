@@ -129,13 +129,95 @@ class DavControllerTest extends TestCase
 
     public function test_import_requires_authentication(): void
     {
-        $this->post(route('bo.dav.import'))->assertRedirect();
+        $this->post(route('bo.dav.import'), ['confirm' => true])->assertRedirect();
     }
 
     public function test_import_requires_manage_members_permission(): void
     {
         $this->actingAs($this->user);
         $this->post(route('bo.dav.import'))->assertForbidden();
+    }
+
+    public function test_import_requires_confirmation(): void
+    {
+        $this->actingAs($this->admin);
+        $this->mockDavService([
+            [
+                'url' => 'http://example.com/john.vcf',
+                'etag' => '"1"',
+                'uid' => 'uid-001',
+                'fn' => 'Doe John',
+                'n' => 'Doe;John;;;',
+                'email' => 'john@example.com',
+                'tel' => '',
+                'org' => '',
+                'category' => 'Actifs',
+                'vcard_raw' => "BEGIN:VCARD\r\nCATEGORIES:Actifs\r\nEND:VCARD",
+            ],
+        ]);
+
+        $this->post(route('bo.dav.import'))
+            ->assertSessionHasErrors('confirm');
+
+        $this->assertDatabaseCount('members', 0);
+    }
+
+    public function test_import_skips_email_matched_unlinked_member(): void
+    {
+        $this->actingAs($this->admin);
+
+        Member::factory()->create([
+            'email' => 'john@example.com',
+            'dav_uid' => null,
+        ]);
+
+        $this->mockDavService([
+            [
+                'url' => 'http://example.com/john.vcf',
+                'etag' => '"1"',
+                'uid' => 'uid-001',
+                'fn' => 'Doe John',
+                'n' => 'Doe;John;;;',
+                'email' => 'john@example.com',
+                'tel' => '',
+                'org' => '',
+                'category' => 'Actifs',
+                'vcard_raw' => "BEGIN:VCARD\r\nCATEGORIES:Actifs\r\nEND:VCARD",
+            ],
+        ]);
+
+        $this->post(route('bo.dav.import'), ['confirm' => true])
+            ->assertRedirect()
+            ->assertSessionHas('success', fn (string $message) => str_contains($message, 'ignoré'));
+
+        $this->assertDatabaseCount('members', 1);
+        $this->assertDatabaseMissing('members', ['dav_uid' => 'uid-001']);
+    }
+
+    public function test_import_creates_passive_members_from_passifs_contacts(): void
+    {
+        $this->actingAs($this->admin);
+        $this->mockDavService([
+            [
+                'url' => 'http://example.com/passive.vcf',
+                'etag' => '"1"',
+                'uid' => 'uid-passive',
+                'fn' => 'Passive Member',
+                'n' => 'Member;Passive;;;',
+                'email' => 'passive@example.com',
+                'tel' => '',
+                'org' => '',
+                'category' => 'Passifs',
+                'vcard_raw' => "BEGIN:VCARD\r\nCATEGORIES:Passifs\r\nEND:VCARD",
+            ],
+        ]);
+
+        $this->post(route('bo.dav.import'), ['confirm' => true])->assertRedirect();
+
+        $this->assertDatabaseHas('members', [
+            'dav_uid' => 'uid-passive',
+            'status' => 'passive',
+        ]);
     }
 
     public function test_import_creates_members_from_actifs_contacts(): void
@@ -168,7 +250,7 @@ class DavControllerTest extends TestCase
             ],
         ]);
 
-        $this->post(route('bo.dav.import'))->assertRedirect();
+        $this->post(route('bo.dav.import'), ['confirm' => true])->assertRedirect();
 
         $this->assertDatabaseHas('members', ['first_name' => 'John', 'last_name' => 'Doe', 'dav_uid' => 'uid-001']);
         $this->assertDatabaseHas('members', ['first_name' => 'Jane', 'last_name' => 'Smith', 'dav_uid' => 'uid-002']);
@@ -207,7 +289,7 @@ class DavControllerTest extends TestCase
             ],
         ]);
 
-        $this->post(route('bo.dav.import'))->assertRedirect();
+        $this->post(route('bo.dav.import'), ['confirm' => true])->assertRedirect();
 
         $this->assertDatabaseCount('members', 2);
         $this->assertDatabaseHas('members', ['first_name' => 'Jane', 'last_name' => 'Smith', 'dav_uid' => 'uid-002']);
@@ -255,7 +337,7 @@ class DavControllerTest extends TestCase
             ],
         ]);
 
-        $this->post(route('bo.dav.import'))->assertRedirect();
+        $this->post(route('bo.dav.import'), ['confirm' => true])->assertRedirect();
 
         $this->assertDatabaseCount('members', 1);
         $this->assertDatabaseHas('members', ['first_name' => 'Member', 'last_name' => 'Active', 'dav_uid' => 'uid-003']);
@@ -266,7 +348,7 @@ class DavControllerTest extends TestCase
         $this->actingAs($this->admin);
         $this->mockDavServiceThrows('Connection timeout');
 
-        $this->post(route('bo.dav.import'))->assertRedirect();
+        $this->post(route('bo.dav.import'), ['confirm' => true])->assertRedirect();
         $this->assertDatabaseCount('members', 0);
     }
 
@@ -288,7 +370,7 @@ class DavControllerTest extends TestCase
             ],
         ]);
 
-        $this->post(route('bo.dav.import'))->assertRedirect();
+        $this->post(route('bo.dav.import'), ['confirm' => true])->assertRedirect();
 
         $this->assertDatabaseHas('members', [
             'first_name' => 'Marie-Claire',
@@ -315,7 +397,7 @@ class DavControllerTest extends TestCase
             ],
         ]);
 
-        $this->post(route('bo.dav.import'))
+        $this->post(route('bo.dav.import'), ['confirm' => true])
             ->assertRedirect()
             ->assertSessionHas('success', '1 membre(s) créé(s) avec succès.');
     }

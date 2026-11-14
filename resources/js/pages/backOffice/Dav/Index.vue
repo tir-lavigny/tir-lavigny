@@ -108,7 +108,7 @@ const toggleExpand = (url: string) => {
     expandedContact.value = expandedContact.value === url ? null : url;
 };
 
-const form = useForm({});
+const form = useForm({ confirm: true });
 
 function confirmImport() {
     generating.value = true;
