@@ -24,9 +24,9 @@ setup-dev:	install
 	@echo "Setting up development environment..."
 	[ ! -f .env ] && cp .env.example .env || true
 	touch database/telescope.sqlite
-	php artisan migrate
 	php artisan key:generate
 	php artisan members:key
+	php artisan migrate
 	@echo "Development environment setup complete"
 
 delete-dependencies: ## Delete project dependencies
