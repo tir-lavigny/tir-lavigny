@@ -64,17 +64,25 @@ const deleteForm = useForm({ confirmation: '' });
 const archiveForm = useForm({ delete_vouchers: false });
 
 const handleSync = () => {
-    useForm({}).post(route('bo.members.sync', member.value.id), {
-        onSuccess: () => toast.success('Synchronisation effectuée.'),
-        onError: () => toast.error('Erreur lors de la synchronisation.'),
-    });
+    router.post(
+        route('bo.members.sync', member.value.id),
+        {},
+        {
+            onSuccess: () => toast.success('Synchronisation effectuée.'),
+            onError: () => toast.error('Erreur lors de la synchronisation.'),
+        },
+    );
 };
 
 const handleRestore = () => {
-    useForm({}).post(route('bo.members.restore', member.value.id), {
-        onSuccess: () => toast.success('Membre restauré.'),
-        onError: () => toast.error('Erreur lors de la restauration.'),
-    });
+    router.post(
+        route('bo.members.restore', member.value.id),
+        {},
+        {
+            onSuccess: () => toast.success('Membre restauré.'),
+            onError: () => toast.error('Erreur lors de la restauration.'),
+        },
+    );
 };
 
 const handleArchive = () => {
@@ -101,7 +109,7 @@ const handleRemoveUnused = () => {
 
     let completed = 0;
     vouchers.forEach((voucher) => {
-        useForm({}).delete(route('bo.register.vouchers.destroy', voucher.id), {
+        router.delete(route('bo.register.vouchers.destroy', voucher.id), {
             onSuccess: () => {
                 toast.success('Bon supprimé.');
             },
@@ -111,7 +119,7 @@ const handleRemoveUnused = () => {
             onFinish: () => {
                 completed++;
                 if (completed === vouchers.length) {
-                    router.reload({ only: ['vouchers', 'usedVouchers'] });
+                    router.reload({ only: ['vouchers', 'usedVouchers', 'unusedVouchers'] });
                 }
             },
         });
@@ -156,9 +164,7 @@ const handleRemoveUnused = () => {
                             <Checkbox id="delete_vouchers" v-model="deleteVouchers" />
                             <Label for="delete_vouchers">Supprimer aussi les bons inutilisés (toutes saisons)</Label>
                         </div>
-                        <Muted v-else class="text-sm">
-                            Les bons inutilisés seront conservés. Vous n'avez pas la permission de les supprimer.
-                        </Muted>
+                        <Muted v-else class="text-sm"> Les bons inutilisés seront conservés. Vous n'avez pas la permission de les supprimer. </Muted>
                         <template #action>
                             <Button variant="destructive" @click="handleArchive">Archiver</Button>
                         </template>
@@ -192,7 +198,9 @@ const handleRemoveUnused = () => {
                     </div>
                     <div>
                         <Label>Citoyen suisse</Label>
-                        <Muted>{{ member.is_swiss_citizen === null || member.is_swiss_citizen === undefined ? '—' : member.is_swiss_citizen ? 'Oui' : 'Non' }}</Muted>
+                        <Muted>{{
+                            member.is_swiss_citizen === null || member.is_swiss_citizen === undefined ? '—' : member.is_swiss_citizen ? 'Oui' : 'Non'
+                        }}</Muted>
                     </div>
                     <div>
                         <Label>Adresse</Label>
@@ -205,7 +213,9 @@ const handleRemoveUnused = () => {
                     <div>
                         <Label>DAV</Label>
                         <Muted>{{ member.dav_uid || 'Non lié' }}</Muted>
-                        <Muted v-if="member.dav_synced_at">Dernière synchronisation : {{ formatDate(member.dav_synced_at, 'DD.MM.YYYY HH:mm') }}</Muted>
+                        <Muted v-if="member.dav_synced_at"
+                            >Dernière synchronisation : {{ formatDate(member.dav_synced_at, 'DD.MM.YYYY HH:mm') }}</Muted
+                        >
                         <Muted v-if="member.dav_sync_error" class="text-red-600">Erreur : {{ member.dav_sync_error }}</Muted>
                     </div>
                 </div>

@@ -12,7 +12,7 @@ import { useListFilters } from '@/composables/useListFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Member, PaginatedMembers, SharedData } from '@/types';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Eye, Plus, RefreshCw, Search, Undo2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
@@ -51,17 +51,25 @@ const archivedFilter = computed({
 });
 
 const handleRestore = (member: Member) => {
-    useForm({}).post(route('bo.members.restore', member.id), {
-        onSuccess: () => toast.success('Membre restauré.'),
-        onError: () => toast.error('Erreur lors de la restauration.'),
-    });
+    router.post(
+        route('bo.members.restore', member.id),
+        {},
+        {
+            onSuccess: () => toast.success('Membre restauré.'),
+            onError: () => toast.error('Erreur lors de la restauration.'),
+        },
+    );
 };
 
 const handleSync = (member: Member) => {
-    useForm({}).post(route('bo.members.sync', member.id), {
-        onSuccess: () => toast.success('Synchronisation effectuée.'),
-        onError: () => toast.error('Erreur lors de la synchronisation.'),
-    });
+    router.post(
+        route('bo.members.sync', member.id),
+        {},
+        {
+            onSuccess: () => toast.success('Synchronisation effectuée.'),
+            onError: () => toast.error('Erreur lors de la synchronisation.'),
+        },
+    );
 };
 </script>
 
