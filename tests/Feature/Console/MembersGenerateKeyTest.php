@@ -49,7 +49,7 @@ class MembersGenerateKeyTest extends TestCase
 
     private function temporaryEnvFile(string $contents): string
     {
-        $path = tempnam('/tmp/opencode', 'member-key-test-');
+        $path = tempnam(sys_get_temp_dir(), 'member-key-test-');
 
         file_put_contents($path, $contents);
 
