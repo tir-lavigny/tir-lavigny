@@ -615,6 +615,22 @@ class MemberControllerTest extends TestCase
         ]);
     }
 
+    public function test_force_delete_anonymize_writes_anonymized_audit_action(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+        Voucher::factory()->create(['member_id' => $member->id]);
+
+        $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'Jean Dupont',
+        ]);
+
+        $this->assertDatabaseHas('activity_logs', [
+            'model' => Member::class,
+            'model_id' => $member->id,
+            'action' => 'anonymized',
+        ]);
+    }
+
     public function test_force_delete_blocks_anonymized_member(): void
     {
         $member = Member::factory()->create(['anonymized_at' => now()]);

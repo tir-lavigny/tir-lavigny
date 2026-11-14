@@ -34,7 +34,7 @@ class DeleteMemberAction
                 $member->forceDelete();
             }
 
-            $this->purgeActivityLogs($member, $registrationId);
+            $this->purgeActivityLogs($member, $registrationId, $anonymized ? 'anonymized' : 'deleted');
         });
 
         $syncResult = $this->sync->delete($member);
@@ -70,7 +70,7 @@ class DeleteMemberAction
         $member->delete();
     }
 
-    private function purgeActivityLogs(Member $member, ?int $registrationId): void
+    private function purgeActivityLogs(Member $member, ?int $registrationId, string $action): void
     {
         ActivityLog::where('model', Member::class)
             ->where('model_id', $member->id)
@@ -85,7 +85,7 @@ class DeleteMemberAction
         ActivityLog::create([
             'model' => Member::class,
             'model_id' => $member->id,
-            'action' => 'deleted',
+            'action' => $action,
             'changes' => json_encode([]),
             'user_id' => Auth::id(),
         ]);
