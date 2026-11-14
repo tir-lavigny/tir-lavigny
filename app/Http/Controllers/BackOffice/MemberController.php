@@ -210,7 +210,7 @@ class MemberController extends Controller implements HasMiddleware
         $result = $action->execute($member);
 
         if (! $result['dav_success']) {
-            $notifier->notify($member);
+            $notifier->notify($member, error: $result['dav_error']);
 
             return redirect()->route('bo.members.index')
                 ->with('error', $result['anonymized']

@@ -60,7 +60,12 @@ class MemberSyncService
             }
 
             if ($member->exists) {
-                $member->forceFill(['dav_sync_error' => null])->saveQuietly();
+                $member->forceFill([
+                    'dav_uid' => null,
+                    'dav_synced_at' => null,
+                    'dav_synced_snapshot' => null,
+                    'dav_sync_error' => null,
+                ])->saveQuietly();
             }
 
             return ['success' => true, 'error' => null];

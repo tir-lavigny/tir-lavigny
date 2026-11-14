@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Mail;
 
 class MemberDavSyncFailureNotifier
 {
-    public function notify(Member $member, ?MemberRegistration $registration = null): void
+    public function notify(Member $member, ?MemberRegistration $registration = null, ?string $error = null): void
     {
-        $error = $member->dav_sync_error;
+        $error ??= $member->dav_sync_error;
 
         if ($error === null) {
             return;

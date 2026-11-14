@@ -15,7 +15,7 @@ class DeleteMemberAction
         private readonly MemberSyncService $sync,
     ) {}
 
-    /** @return array{anonymized: bool, dav_success: bool} */
+    /** @return array{anonymized: bool, dav_success: bool, dav_error: string|null} */
     public function execute(Member $member): array
     {
         $hasVouchers = $member->vouchers()->withTrashed()->exists();
@@ -42,6 +42,7 @@ class DeleteMemberAction
         return [
             'anonymized' => $anonymized,
             'dav_success' => $syncResult['success'],
+            'dav_error' => $syncResult['error'],
         ];
     }
 

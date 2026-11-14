@@ -336,6 +336,43 @@ class MemberSyncServiceTest extends TestCase
         $this->assertSame('DAV down', $result['error']);
     }
 
+    public function test_delete_clears_dav_uid_and_snapshot_on_success(): void
+    {
+        $member = Member::factory()->create([
+            'dav_uid' => 'uid-1',
+            'dav_synced_at' => now(),
+            'dav_synced_snapshot' => ['email' => 'old@example.com'],
+        ]);
+
+        $dav = Mockery::mock(DavServiceInterface::class);
+        $dav->shouldReceive('deleteMember')->once()->andReturn(true);
+
+        $service = new MemberSyncService($dav);
+        $result = $service->delete($member);
+
+        $member->refresh();
+
+        $this->assertTrue($result['success']);
+        $this->assertNull($member->dav_uid);
+        $this->assertNull($member->dav_synced_at);
+        $this->assertNull($member->dav_synced_snapshot);
+    }
+
+    public function test_delete_keeps_dav_uid_when_contact_delete_fails(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+
+        $dav = Mockery::mock(DavServiceInterface::class);
+        $dav->shouldReceive('deleteMember')->once()->andReturn(false);
+
+        $service = new MemberSyncService($dav);
+        $result = $service->delete($member);
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('uid-1', $member->fresh()->dav_uid);
+        $this->assertNotNull($member->fresh()->dav_sync_error);
+    }
+
     public function test_link_sets_dav_uid_and_clears_sync_state(): void
     {
         $member = Member::factory()->create([

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\BackOffice;
 
+use App\Mail\MemberDavSyncFailed;
 use App\Models\Member;
 use App\Models\MemberRegistration;
 use App\Models\Ticket;
@@ -12,6 +13,7 @@ use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Testing\AssertableInertia as Assert;
 use Mockery;
 use Tests\TestCase;
@@ -700,6 +702,52 @@ class MemberControllerTest extends TestCase
         $member->refresh();
         $this->assertNull($member->dav_synced_snapshot);
         $this->assertNull($member->dav_sync_error);
+    }
+
+    public function test_force_delete_sends_dav_failure_mail(): void
+    {
+        Mail::fake();
+
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('deleteMember')->once()->andReturn(false);
+        $this->app->instance(DavServiceInterface::class, $davMock);
+
+        $member = Member::factory()->create([
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-1',
+        ]);
+
+        $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'Jean Dupont',
+        ])->assertRedirect()->assertSessionHas('error');
+
+        Mail::assertSent(MemberDavSyncFailed::class);
+    }
+
+    public function test_force_delete_anonymize_clears_dav_link_after_contact_delete(): void
+    {
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('deleteMember')->once()->andReturn(true);
+        $this->app->instance(DavServiceInterface::class, $davMock);
+
+        $member = Member::factory()->create([
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'dav_uid' => 'uid-1',
+            'dav_synced_snapshot' => ['email' => 'jean.dupont@example.com'],
+        ]);
+        Voucher::factory()->create(['member_id' => $member->id]);
+
+        $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'Jean Dupont',
+        ])->assertRedirect();
+
+        $member->refresh();
+
+        $this->assertNotNull($member->anonymized_at);
+        $this->assertNull($member->dav_uid);
+        $this->assertNull($member->dav_synced_snapshot);
     }
 
     public function test_destroy_keeps_vouchers_by_default(): void
