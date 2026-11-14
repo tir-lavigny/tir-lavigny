@@ -12,7 +12,10 @@ class UpdateMemberAction
         private readonly MemberSyncService $sync,
     ) {}
 
-    /** @return array{member: Member, success: bool, error: string|null} */
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{member: Member, success: bool, error: string|null}
+     */
     public function execute(Member $member, array $data): array
     {
         DB::transaction(fn () => $member->update($data));

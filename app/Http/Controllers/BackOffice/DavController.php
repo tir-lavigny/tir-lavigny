@@ -134,7 +134,7 @@ class DavController extends Controller
             'dav_uid' => ['required', 'string'],
         ]);
 
-        $member = Member::withTrashed()->findOrFail($data['member_id']);
+        $member = Member::withTrashed()->whereKey($data['member_id'])->firstOrFail();
         $result = $service->link($member, $data['dav_uid']);
 
         if (! $result['success']) {

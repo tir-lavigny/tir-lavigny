@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
 /**
- * @implements CastsAttributes<array<string, mixed>|null, array<string, mixed>|null>
+ * @implements CastsAttributes<array<string, mixed>|null, mixed>
  */
 class EncryptedMemberFormData implements CastsAttributes
 {
@@ -26,7 +26,7 @@ class EncryptedMemberFormData implements CastsAttributes
             return null;
         }
 
-        if (! isset($data['avs']) || $data['avs'] === null || $data['avs'] === '') {
+        if (! isset($data['avs']) || $data['avs'] === '') {
             return $data;
         }
 
@@ -48,7 +48,7 @@ class EncryptedMemberFormData implements CastsAttributes
 
     public function set(Model $model, string $key, mixed $value, array $attributes): ?string
     {
-        if ($value === null || $value === '') {
+        if ($value === null) {
             return null;
         }
 
@@ -56,10 +56,10 @@ class EncryptedMemberFormData implements CastsAttributes
             return null;
         }
 
-        if (isset($value['avs']) && $value['avs'] !== null && $value['avs'] !== '') {
+        if (isset($value['avs']) && $value['avs'] !== '') {
             $value['avs'] = app(MemberDataCipher::class)->encrypt((string) $value['avs']);
         }
 
-        return json_encode($value);
+        return json_encode($value, JSON_THROW_ON_ERROR);
     }
 }

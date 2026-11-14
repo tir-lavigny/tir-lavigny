@@ -12,7 +12,10 @@ class CreateMemberAction
         private readonly MemberSyncService $sync,
     ) {}
 
-    /** @return array{member: Member, success: bool, error: string|null} */
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{member: Member, success: bool, error: string|null}
+     */
     public function execute(array $data): array
     {
         $member = DB::transaction(fn (): Member => Member::create($data));

@@ -64,6 +64,7 @@ class DavSyncService
         return ['created' => $created, 'skipped' => $skipped];
     }
 
+    /** @param array<string, mixed> $contact */
     private function hasCategory(array $contact, string $category): bool
     {
         return collect(explode(',', (string) ($contact['category'] ?? '')))

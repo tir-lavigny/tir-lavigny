@@ -36,7 +36,7 @@ class UpdateMemberRequest extends FormRequest
         ];
     }
 
-    /** @return array<int, string> */
+    /** @return array<int, mixed> */
     private function avsRules(): array
     {
         if (! $this->user()?->can('view member sensitive data')) {

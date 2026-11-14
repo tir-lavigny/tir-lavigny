@@ -63,7 +63,7 @@ class ReencryptMemberAvs extends Command
                 foreach ($rows as $registration) {
                     $data = json_decode((string) $registration->form_data, true);
 
-                    if (! is_array($data) || ! isset($data['avs']) || $data['avs'] === null || $data['avs'] === '') {
+                    if (! is_array($data) || ! isset($data['avs']) || $data['avs'] === '') {
                         continue;
                     }
 
