@@ -40,6 +40,8 @@ const props = defineProps<{
     seasons: import('@/types').Season[];
     vouchers: Voucher[];
     usedVouchers: Voucher[];
+    unusedVouchers: Voucher[];
+    registrationSnapshot: Record<string, string | number | boolean | null> | null;
     canDeleteVouchers: boolean;
 }>();
 
@@ -53,7 +55,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const selectedSeasonId = ref<number | null>(props.seasons[0]?.id ?? null);
 const selectedSeason = computed(() => props.seasons.find((s) => s.id === selectedSeasonId.value) || null);
 const filteredVouchers = computed(() => props.vouchers.filter((v) => v.season_id === selectedSeasonId.value));
-const unusedVouchers = computed(() => filteredVouchers.value.filter((v) => !props.usedVouchers.some((uv) => uv.id === v.id)));
+const unusedVouchers = computed(() => props.unusedVouchers);
 
 const showAvs = ref(false);
 const showDeleteDialog = ref(false);
@@ -203,6 +205,7 @@ const handleRemoveUnused = () => {
                     <div>
                         <Label>DAV</Label>
                         <Muted>{{ member.dav_uid || 'Non lié' }}</Muted>
+                        <Muted v-if="member.dav_synced_at">Dernière synchronisation : {{ formatDate(member.dav_synced_at, 'DD.MM.YYYY HH:mm') }}</Muted>
                         <Muted v-if="member.dav_sync_error" class="text-red-600">Erreur : {{ member.dav_sync_error }}</Muted>
                     </div>
                 </div>
@@ -211,6 +214,12 @@ const handleRemoveUnused = () => {
                     <H3>Inscription</H3>
                     <div class="mt-2">
                         <Muted>{{ member.registration.form_submitted_at || '—' }}</Muted>
+                    </div>
+                    <div v-if="registrationSnapshot" class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+                        <div v-for="(value, key) in registrationSnapshot" :key="key">
+                            <Label>{{ key }}</Label>
+                            <Muted>{{ value ?? '—' }}</Muted>
+                        </div>
                     </div>
                 </div>
 

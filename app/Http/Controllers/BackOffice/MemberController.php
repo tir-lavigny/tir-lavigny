@@ -100,16 +100,25 @@ class MemberController extends Controller implements HasMiddleware
             $member->makeVisible(['avs']);
         }
 
-        $member->load(['vouchers.ticketItems', 'registration', 'tickets']);
+        $member->load([
+            'registration',
+            'tickets',
+            'vouchers.ticketItems' => fn ($query) => $query->withTrashed(),
+            'vouchers.product',
+        ]);
+
         $seasons = Season::orderBy('id', 'desc')->get();
-        $vouchers = $member->vouchers->load('product');
-        $usedVouchers = $vouchers->filter(fn ($voucher) => $voucher->isUsed())->values();
+        $vouchers = $member->vouchers;
+        $usedVouchers = $vouchers->filter(fn ($voucher) => $voucher->ticketItems->isNotEmpty())->values();
+        $unusedVouchers = $vouchers->reject(fn ($voucher) => $voucher->ticketItems->isNotEmpty())->values();
 
         return Inertia::render('backOffice/Members/Show', [
             'member' => $member,
             'seasons' => $seasons,
             'vouchers' => $vouchers,
             'usedVouchers' => $usedVouchers,
+            'unusedVouchers' => $unusedVouchers,
+            'registrationSnapshot' => $this->canViewSensitiveData() ? $member->registration?->form_data : null,
             'canDeleteVouchers' => Auth::user()?->can('manage vouchers') ?? false,
         ]);
     }

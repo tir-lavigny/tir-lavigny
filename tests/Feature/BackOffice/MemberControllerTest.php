@@ -948,6 +948,66 @@ class MemberControllerTest extends TestCase
         );
     }
 
+    public function test_show_passes_registration_snapshot_with_permission(): void
+    {
+        $member = Member::factory()->create();
+        MemberRegistration::create([
+            'member_id' => $member->id,
+            'form_data' => [
+                'first_name' => 'Jean',
+                'email' => 'jean.dupont@example.com',
+                'avs' => '756.1234.5678.90',
+            ],
+        ]);
+
+        $response = $this->get(route('bo.members.show', $member));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('registrationSnapshot.email', 'jean.dupont@example.com')
+            ->where('registrationSnapshot.avs', '756.1234.5678.90')
+        );
+    }
+
+    public function test_show_hides_registration_snapshot_without_permission(): void
+    {
+        $this->actingAs($this->memberManagerWithoutSensitivePermission());
+
+        $member = Member::factory()->create();
+        MemberRegistration::create([
+            'member_id' => $member->id,
+            'form_data' => ['email' => 'jean.dupont@example.com'],
+        ]);
+
+        $response = $this->get(route('bo.members.show', $member));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('registrationSnapshot', null)
+        );
+    }
+
+    public function test_show_passes_dav_synced_at(): void
+    {
+        $member = Member::factory()->create(['dav_synced_at' => now()]);
+
+        $response = $this->get(route('bo.members.show', $member));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('member.dav_synced_at', fn ($value) => $value !== null)
+        );
+    }
+
+    public function test_show_passes_unused_vouchers_for_all_seasons(): void
+    {
+        $member = Member::factory()->create();
+        Voucher::factory()->count(2)->create(['member_id' => $member->id]);
+
+        $response = $this->get(route('bo.members.show', $member));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('unusedVouchers', 2)
+        );
+    }
+
     public function test_show_does_not_expose_registration_form_data(): void
     {
         $member = Member::factory()->create();

@@ -122,7 +122,9 @@ const handleSync = (member: Member) => {
                             <Badge v-if="member.deleted_at" variant="outline" class="bg-gray-100 text-gray-700">Archivé</Badge>
                         </div>
                         <Muted>{{ member.email || '—' }}</Muted>
-                        <Muted v-if="member.dav_sync_error" class="text-red-600">Synchronisation DAV en erreur</Muted>
+                        <Badge v-if="member.dav_sync_error" variant="outline" class="w-fit border-red-200 bg-red-100 text-red-800">
+                            Synchronisation DAV en erreur
+                        </Badge>
                     </div>
                     <div class="flex items-center gap-2">
                         <Tooltip>
