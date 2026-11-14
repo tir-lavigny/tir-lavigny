@@ -4,6 +4,7 @@ namespace Tests\Unit\Support;
 
 use App\Support\MemberDataCipher;
 use Illuminate\Contracts\Encryption\DecryptException;
+use RuntimeException;
 use Tests\TestCase;
 
 class MemberDataCipherTest extends TestCase
@@ -11,6 +12,36 @@ class MemberDataCipherTest extends TestCase
     private function key(string $char): string
     {
         return 'base64:'.base64_encode(str_repeat($char, 32));
+    }
+
+    public function test_throws_when_key_config_missing(): void
+    {
+        config(['members.encryption_key' => null]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('MEMBER_DATA_KEY is not configured.');
+
+        new MemberDataCipher;
+    }
+
+    public function test_throws_when_key_config_empty(): void
+    {
+        config(['members.encryption_key' => '']);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('MEMBER_DATA_KEY is not configured.');
+
+        new MemberDataCipher;
+    }
+
+    public function test_uses_configured_key(): void
+    {
+        config(['members.encryption_key' => $this->key('c')]);
+
+        $cipher = new MemberDataCipher;
+        $encrypted = $cipher->encrypt('756.1234.5678.90');
+
+        $this->assertSame('756.1234.5678.90', $cipher->decrypt($encrypted));
     }
 
     public function test_encrypts_and_decrypts_with_explicit_key(): void

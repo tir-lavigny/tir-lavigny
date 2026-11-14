@@ -26,6 +26,7 @@ setup-dev:	install
 	touch database/telescope.sqlite
 	php artisan migrate
 	php artisan key:generate
+	php artisan members:key
 	@echo "Development environment setup complete"
 
 delete-dependencies: ## Delete project dependencies
@@ -51,6 +52,7 @@ docker-dev-setup: ## First-time dev setup: build, start, generate key, migrate &
 	[ ! -f .env ] && cp .env.example .env || true
 	docker compose up -d --build
 	docker compose exec app php artisan key:generate
+	docker compose exec app php artisan members:key
 	docker compose exec app php artisan migrate --seed
 	@echo "Dev environment ready → http://localhost:8000"
 

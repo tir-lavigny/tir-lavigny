@@ -12,15 +12,7 @@ class MemberDataCipher
 
     public function __construct(?string $key = null)
     {
-        if ($key === null) {
-            $key = config('members.encryption_key');
-
-            if ((! is_string($key) || $key === '') && app()->environment('production')) {
-                throw new RuntimeException('MEMBER_DATA_KEY is not configured.');
-            }
-
-            $key = $key ?: config('app.key');
-        }
+        $key ??= config('members.encryption_key');
 
         if (! is_string($key) || $key === '') {
             throw new RuntimeException('MEMBER_DATA_KEY is not configured.');
