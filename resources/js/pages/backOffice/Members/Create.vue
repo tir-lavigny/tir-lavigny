@@ -20,6 +20,8 @@ const canViewSensitiveData = computed(() => hasPermissionTo(page.props.auth.user
 
 const swissCantons = [
     { value: 'AG', label: 'Argovie (AG)' },
+    { value: 'AI', label: 'Appenzell Rhodes-Intérieures (AI)' },
+    { value: 'AR', label: 'Appenzell Rhodes-Extérieures (AR)' },
     { value: 'BL', label: 'Bâle-Campagne (BL)' },
     { value: 'BS', label: 'Bâle-Ville (BS)' },
     { value: 'BE', label: 'Berne (BE)' },
@@ -35,6 +37,7 @@ const swissCantons = [
     { value: 'SG', label: 'Saint-Gall (SG)' },
     { value: 'SH', label: 'Schaffhouse (SH)' },
     { value: 'SO', label: 'Soleure (SO)' },
+    { value: 'SZ', label: 'Schwytz (SZ)' },
     { value: 'TI', label: 'Tessin (TI)' },
     { value: 'TG', label: 'Thurgovie (TG)' },
     { value: 'UR', label: 'Uri (UR)' },
@@ -122,7 +125,14 @@ const handleSubmit = () => {
                     </div>
                     <div v-if="canViewSensitiveData" class="grid gap-2">
                         <Label for="avs">AVS</Label>
-                        <Input id="avs" v-model="form.avs" type="text" placeholder="756.1234.5678.90" maxlength="20" pattern="756\.[0-9]{4}\.[0-9]{4}\.[0-9]{2}" />
+                        <Input
+                            id="avs"
+                            v-model="form.avs"
+                            type="text"
+                            placeholder="756.1234.5678.90"
+                            maxlength="20"
+                            pattern="756\.[0-9]{4}\.[0-9]{4}\.[0-9]{2}"
+                        />
                         <InputError :message="form.errors.avs" />
                     </div>
                     <div class="grid gap-2">
