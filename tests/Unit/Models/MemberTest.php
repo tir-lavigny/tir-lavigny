@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Member;
 use App\Models\MemberRegistration;
 use App\Support\MemberDataCipher;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -189,6 +190,15 @@ class MemberTest extends TestCase
 
         $this->assertNotSame('756.1234.5678.90', $raw);
         $this->assertSame('756.1234.5678.90', $member->fresh()->avs);
+    }
+
+    public function test_dav_uid_must_be_unique(): void
+    {
+        Member::factory()->create(['dav_uid' => 'uid-1']);
+
+        $this->expectException(QueryException::class);
+
+        Member::factory()->create(['dav_uid' => 'uid-1']);
     }
 
     public function test_dav_synced_snapshot_is_hidden_from_serialization(): void

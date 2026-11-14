@@ -395,6 +395,33 @@ class MemberSyncServiceTest extends TestCase
         $this->assertNull($member->dav_sync_error);
     }
 
+    public function test_link_rejects_member_already_linked(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'existing-uid']);
+
+        $service = new MemberSyncService($this->mockDav([
+            $this->contact(['uid' => 'new-uid']),
+        ]));
+        $result = $service->link($member, 'new-uid');
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('existing-uid', $member->fresh()->dav_uid);
+    }
+
+    public function test_link_rejects_contact_already_linked(): void
+    {
+        Member::factory()->create(['dav_uid' => 'uid-linked']);
+        $member = Member::factory()->create(['dav_uid' => null]);
+
+        $service = new MemberSyncService($this->mockDav([
+            $this->contact(['uid' => 'uid-linked']),
+        ]));
+        $result = $service->link($member, 'uid-linked');
+
+        $this->assertFalse($result['success']);
+        $this->assertNull($member->fresh()->dav_uid);
+    }
+
     public function test_link_rejects_unknown_contact(): void
     {
         $member = Member::factory()->create(['dav_uid' => null]);

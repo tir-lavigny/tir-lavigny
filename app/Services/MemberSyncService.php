@@ -290,6 +290,10 @@ class MemberSyncService
             return ['success' => false, 'error' => 'Ce membre a été anonymisé et ne peut plus être lié.'];
         }
 
+        if ($member->dav_uid) {
+            return ['success' => false, 'error' => 'Ce membre est déjà lié à un contact DAV.'];
+        }
+
         try {
             $contact = collect($this->dav->getContacts())->firstWhere('uid', $davUid);
         } catch (Throwable $e) {
@@ -300,6 +304,15 @@ class MemberSyncService
 
         if (! $contact) {
             return ['success' => false, 'error' => 'Contact DAV introuvable.'];
+        }
+
+        $contactAlreadyLinked = Member::withTrashed()
+            ->where('dav_uid', $davUid)
+            ->whereKeyNot($member->getKey())
+            ->exists();
+
+        if ($contactAlreadyLinked) {
+            return ['success' => false, 'error' => 'Ce contact DAV est déjà lié à un autre membre.'];
         }
 
         $member->forceFill([
