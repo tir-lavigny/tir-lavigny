@@ -407,7 +407,6 @@ export interface MemberRegistration {
     id: number;
     form_uuid: string;
     status: string;
-    dav_uid: string | null;
     member_id: number | null;
     form_data: Record<string, any> | null;
     form_name?: string | null;

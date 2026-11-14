@@ -16,7 +16,6 @@ class MemberRegistration extends Model
     protected $fillable = [
         'form_uuid',
         'status',
-        'dav_uid',
         'member_id',
         'form_data',
         'form_submitted_at',

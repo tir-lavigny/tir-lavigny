@@ -701,7 +701,6 @@ class MemberRegistrationFormTest extends TestCase
 
         $registration->refresh();
         $this->assertEquals('form_filled', $registration->status->value);
-        $this->assertNull($registration->dav_uid);
         $this->assertNull($registration->member_id);
         $this->assertNull($registration->failed_at);
 

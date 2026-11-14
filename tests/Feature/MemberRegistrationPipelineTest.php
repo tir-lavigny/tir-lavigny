@@ -105,7 +105,6 @@ class MemberRegistrationPipelineTest extends TestCase
         $registration->refresh();
         $this->assertEquals(MemberRegistrationStatus::FORM_FILLED, $registration->status);
         $this->assertNull($registration->failed_at);
-        $this->assertNull($registration->dav_uid);
         $this->assertNull($registration->member_id);
 
         Mail::assertSent(MemberRegistrationValidationRequested::class, function ($mail) {
@@ -149,7 +148,7 @@ class MemberRegistrationPipelineTest extends TestCase
 
         $registration->refresh();
         $this->assertEquals(MemberRegistrationStatus::COMPLETED, $registration->status);
-        $this->assertEquals('test-uid-123', $registration->dav_uid);
+        $this->assertEquals('test-uid-123', $registration->member->dav_uid);
         $this->assertNotNull($registration->member_id);
 
         $member = $registration->member;
@@ -169,6 +168,20 @@ class MemberRegistrationPipelineTest extends TestCase
             return $mail->hasTo($this->admin->email);
         });
         Mail::assertNotSent(MemberDavSyncFailed::class);
+    }
+
+    public function test_pipeline_does_not_write_registration_dav_uid(): void
+    {
+        $registration = $this->createRegistrationWithData();
+        $pipeline = $this->pipelineWithSuccessfulDav();
+
+        $pipeline->processFormSubmission($registration);
+
+        $registration->refresh();
+
+        $this->assertEquals(MemberRegistrationStatus::COMPLETED, $registration->status);
+        $this->assertArrayNotHasKey('dav_uid', $registration->getAttributes());
+        $this->assertSame('test-uid-123', $registration->member->dav_uid);
     }
 
     public function test_process_form_submission_without_season(): void
@@ -244,7 +257,6 @@ class MemberRegistrationPipelineTest extends TestCase
 
         $registration->refresh();
         $this->assertEquals(MemberRegistrationStatus::FORM_FILLED, $registration->status);
-        $this->assertNull($registration->dav_uid);
         $this->assertNull($registration->member_id);
 
         Mail::assertSent(MemberRegistrationValidationRequested::class, function ($mail) {

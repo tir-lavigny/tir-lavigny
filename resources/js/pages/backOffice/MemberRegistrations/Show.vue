@@ -174,13 +174,6 @@ const displayUrl = flash?.form_url ?? props.formUrl;
                         <P v-else class="text-muted-foreground text-sm">Aucun membre associé</P>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader class="pb-2"><CardTitle class="text-sm">DAV UID</CardTitle></CardHeader>
-                    <CardContent>
-                        <P v-if="registration.dav_uid" class="font-mono text-sm">{{ registration.dav_uid }}</P>
-                        <P v-else class="text-muted-foreground text-sm">-</P>
-                    </CardContent>
-                </Card>
             </div>
 
             <Card v-if="hasFailed()" class="border-destructive/50 bg-destructive/5">

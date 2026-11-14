@@ -135,6 +135,17 @@ class MemberRegistrationTest extends TestCase
         $response->assertSee('john@example.com');
     }
 
+    public function test_show_does_not_expose_dav_uid(): void
+    {
+        $registration = MemberRegistration::create();
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn ($page) => $page
+            ->missing('registration.dav_uid')
+        );
+    }
+
     public function test_show_displays_error_message_when_present(): void
     {
         $registration = MemberRegistration::create([
@@ -243,7 +254,7 @@ class MemberRegistrationTest extends TestCase
 
         $registration->refresh();
         $this->assertEquals(MemberRegistrationStatus::COMPLETED, $registration->status);
-        $this->assertEquals('validated-uid-123', $registration->dav_uid);
+        $this->assertSame('validated-uid-123', $registration->member->dav_uid);
         $this->assertNotNull($registration->member_id);
         $this->assertNull($registration->failed_at);
         $this->assertNull($registration->error_message);

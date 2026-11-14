@@ -128,11 +128,6 @@ class MemberRegistrationPipelineService
             $step = 'dav_sync';
             $this->sync->push($member);
 
-            if ($member->dav_uid && $registration->dav_uid !== $member->dav_uid) {
-                $registration->dav_uid = $member->dav_uid;
-                $registration->save();
-            }
-
             $this->notifyDavSyncFailure($registration, $member);
         } catch (\Throwable $e) {
             $this->handleFailure($registration, $e, $step);
@@ -148,11 +143,6 @@ class MemberRegistrationPipelineService
         }
 
         $this->sync->push($member);
-
-        if ($member->dav_uid && $registration->dav_uid !== $member->dav_uid) {
-            $registration->dav_uid = $member->dav_uid;
-            $registration->save();
-        }
 
         $this->notifyDavSyncFailure($registration, $member);
     }
@@ -299,7 +289,6 @@ class MemberRegistrationPipelineService
             'registration_id' => $registration->id,
             'status' => $registration->status->value,
             'step' => $step,
-            'dav_uid' => $registration->dav_uid,
             'member_id' => $registration->member_id,
             'exception' => $e,
         ]);

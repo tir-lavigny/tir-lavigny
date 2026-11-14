@@ -26,11 +26,20 @@ class MemberRegistrationTest extends TestCase
             'id' => $memberRegistration->id,
             'form_uuid' => $memberRegistration->form_uuid,
             'status' => MemberRegistrationStatus::PENDING->value,
-            'dav_uid' => null,
             'member_id' => null,
             'form_data' => null,
             'error_message' => null,
         ]);
+    }
+
+    public function test_fillable_excludes_dav_uid(): void
+    {
+        $this->assertNotContains('dav_uid', (new MemberRegistration)->getFillable());
+    }
+
+    public function test_table_has_no_dav_uid_column(): void
+    {
+        $this->assertFalse(DB::getSchemaBuilder()->hasColumn('member_registrations', 'dav_uid'));
     }
 
     public function test_can_associate_member_with_registration(): void
