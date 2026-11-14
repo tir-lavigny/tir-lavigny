@@ -8,7 +8,15 @@ class ArchiveMemberRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('manage members') ?? false;
+        if (! $this->user()?->can('manage members')) {
+            return false;
+        }
+
+        if ($this->boolean('delete_vouchers') && ! $this->user()->can('manage vouchers')) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

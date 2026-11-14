@@ -110,6 +110,7 @@ class MemberController extends Controller implements HasMiddleware
             'seasons' => $seasons,
             'vouchers' => $vouchers,
             'usedVouchers' => $usedVouchers,
+            'canDeleteVouchers' => Auth::user()?->can('manage vouchers') ?? false,
         ]);
     }
 

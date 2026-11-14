@@ -19,7 +19,8 @@ class ArchiveMemberAction
             if ($deleteUnusedVouchers) {
                 $member->vouchers()
                     ->whereDoesntHave('ticketItems', fn ($query) => $query->withTrashed())
-                    ->delete();
+                    ->get()
+                    ->each(fn ($voucher) => $voucher->delete());
             }
 
             $member->delete();

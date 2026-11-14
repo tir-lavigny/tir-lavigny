@@ -456,6 +456,33 @@ class MemberControllerTest extends TestCase
         $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
     }
 
+    public function test_destroy_with_delete_vouchers_requires_manage_vouchers(): void
+    {
+        $this->actingAs($this->memberManagerWithoutSensitivePermission());
+
+        $member = Member::factory()->create();
+        Voucher::factory()->create(['member_id' => $member->id]);
+
+        $response = $this->delete(route('bo.members.destroy', $member), ['delete_vouchers' => true]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('members', ['id' => $member->id, 'deleted_at' => null]);
+    }
+
+    public function test_show_passes_can_delete_vouchers_flag(): void
+    {
+        $adminResponse = $this->get(route('bo.members.show', Member::factory()->create()));
+        $adminResponse->assertInertia(fn (Assert $page) => $page
+            ->where('canDeleteVouchers', true)
+        );
+
+        $this->actingAs($this->memberManagerWithoutSensitivePermission());
+        $managerResponse = $this->get(route('bo.members.show', Member::factory()->create()));
+        $managerResponse->assertInertia(fn (Assert $page) => $page
+            ->where('canDeleteVouchers', false)
+        );
+    }
+
     public function test_restore_restores_member(): void
     {
         $member = Member::factory()->archived()->create();
