@@ -7,6 +7,7 @@ use App\Models\Member;
 use App\Services\InfomaniakDavService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use ReflectionClass;
+use Sabre\VObject\Reader;
 use Tests\TestCase;
 
 class InfomaniakDavServiceTest extends TestCase
@@ -31,6 +32,30 @@ class InfomaniakDavServiceTest extends TestCase
         $method->setAccessible(true);
 
         return $method->invoke($service, $member);
+    }
+
+    private function callExtractFirstProperty(string $vcard, string $property): string
+    {
+        $service = new InfomaniakDavService;
+        $reflection = new ReflectionClass($service);
+        $method = $reflection->getMethod('extractFirstProperty');
+        $method->setAccessible(true);
+
+        return $method->invoke($service, Reader::read(trim($vcard)), $property);
+    }
+
+    public function test_contact_with_multiple_emails_uses_first(): void
+    {
+        $vcard = "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:1\r\nFN:Jean Dupont\r\nN:Dupont;Jean;;;\r\nEMAIL:first@example.com\r\nEMAIL:second@example.com\r\nEND:VCARD\r\n";
+
+        $this->assertSame('first@example.com', $this->callExtractFirstProperty($vcard, 'EMAIL'));
+    }
+
+    public function test_contact_with_multiple_tels_uses_first(): void
+    {
+        $vcard = "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:1\r\nFN:Jean Dupont\r\nN:Dupont;Jean;;;\r\nTEL:+41 79 000 00 00\r\nTEL:+41 79 111 11 11\r\nEND:VCARD\r\n";
+
+        $this->assertSame('+41 79 000 00 00', $this->callExtractFirstProperty($vcard, 'TEL'));
     }
 
     public function test_build_address_returns_empty_string_without_address(): void

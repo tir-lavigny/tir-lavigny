@@ -125,8 +125,8 @@ class InfomaniakDavService implements DavServiceInterface
                                 'uid' => (string) ($vcard->UID ?? ''),
                                 'fn' => (string) ($vcard->FN ?? ''),
                                 'n' => (string) ($vcard->N ?? ''),
-                                'email' => $this->extractProperty($vcard, 'EMAIL'),
-                                'tel' => $this->extractProperty($vcard, 'TEL'),
+                                'email' => $this->extractFirstProperty($vcard, 'EMAIL'),
+                                'tel' => $this->extractFirstProperty($vcard, 'TEL'),
                                 'org' => (string) ($vcard->ORG ?? ''),
                                 'adr' => $this->extractProperty($vcard, 'ADR'),
                                 'category' => $this->extractProperty($vcard, 'CATEGORIES'),
@@ -181,8 +181,8 @@ class InfomaniakDavService implements DavServiceInterface
                 'uid' => (string) ($vcard->UID ?? ''),
                 'fn' => (string) ($vcard->FN ?? ''),
                 'n' => (string) ($vcard->N ?? ''),
-                'email' => $this->extractProperty($vcard, 'EMAIL'),
-                'tel' => $this->extractProperty($vcard, 'TEL'),
+                'email' => $this->extractFirstProperty($vcard, 'EMAIL'),
+                'tel' => $this->extractFirstProperty($vcard, 'TEL'),
                 'org' => (string) ($vcard->ORG ?? ''),
                 'adr' => $this->extractProperty($vcard, 'ADR'),
                 'category' => $this->extractProperty($vcard, 'CATEGORIES'),
@@ -512,6 +512,24 @@ class InfomaniakDavService implements DavServiceInterface
             ['\\\\', '\\,', '\\;', '\\n'],
             $value,
         );
+    }
+
+    /** @param Component $vcard */
+    private function extractFirstProperty($vcard, string $propertyName): string
+    {
+        if (! isset($vcard->$propertyName)) {
+            return '';
+        }
+
+        foreach ($vcard->$propertyName as $property) {
+            $value = (string) $property;
+
+            if (trim($value) !== '') {
+                return $value;
+            }
+        }
+
+        return '';
     }
 
     /** @param Component $vcard */
