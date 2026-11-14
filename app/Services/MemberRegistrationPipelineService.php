@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\Season;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Support\MemberDataCipher;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -172,6 +173,8 @@ class MemberRegistrationPipelineService
     {
         $formData = $registration->form_data;
 
+        $this->assertAvsIsUnique($formData['avs'] ?? null);
+
         return Member::create([
             'first_name' => $formData['first_name'],
             'last_name' => $formData['last_name'],
@@ -186,6 +189,27 @@ class MemberRegistrationPipelineService
             'country' => $formData['country'] ?? null,
             'status' => MemberStatus::ACTIVE,
         ]);
+    }
+
+    private function assertAvsIsUnique(mixed $avs): void
+    {
+        if (! is_string($avs) || trim($avs) === '') {
+            return;
+        }
+
+        $normalized = preg_replace('/\D/', '', $avs) ?? '';
+
+        if ($normalized === '') {
+            return;
+        }
+
+        $exists = Member::withTrashed()
+            ->where('avs_hash', app(MemberDataCipher::class)->hash($normalized))
+            ->exists();
+
+        if ($exists) {
+            throw new \RuntimeException('Ce numéro AVS est déjà utilisé par un autre membre.');
+        }
     }
 
     private function generateBaseVouchers(Member $member): void

@@ -280,6 +280,51 @@ class MemberControllerTest extends TestCase
         $this->assertSame('756.1234.5678.90', $member->fresh()->avs);
     }
 
+    public function test_store_rejects_duplicate_avs(): void
+    {
+        Member::factory()->create(['avs' => '756.1234.5678.90']);
+
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'avs' => '756.1234.5678.90',
+            'status' => 'active',
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
+    }
+
+    public function test_update_rejects_duplicate_avs(): void
+    {
+        Member::factory()->create(['avs' => '756.1234.5678.90']);
+        $member = Member::factory()->create(['avs' => '756.0000.0000.00']);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'avs' => '756.1234.5678.90',
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertSame('756.0000.0000.00', $member->fresh()->avs);
+    }
+
+    public function test_update_accepts_unchanged_own_avs(): void
+    {
+        $member = Member::factory()->create(['avs' => '756.1234.5678.90']);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'avs' => '756.1234.5678.90',
+            'first_name' => 'Pierre',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('members', [
+            'id' => $member->id,
+            'first_name' => 'Pierre',
+        ]);
+        $this->assertSame('756.1234.5678.90', $member->fresh()->avs);
+    }
+
     public function test_store_requires_avs_for_swiss_citizen(): void
     {
         $response = $this->post(route('bo.members.store'), [

@@ -212,6 +212,23 @@ class MemberRegistrationPipelineTest extends TestCase
         Mail::assertNotSent(MemberRegistrationError::class);
     }
 
+    public function test_pipeline_reports_duplicate_avs_as_registration_error(): void
+    {
+        Member::factory()->create(['avs' => '756.1234.5678.90']);
+
+        $registration = $this->createRegistrationWithData();
+        $pipeline = new MemberRegistrationPipelineService(Mockery::mock(MemberSyncService::class));
+
+        $pipeline->processFormSubmission($registration);
+
+        $registration->refresh();
+
+        $this->assertEquals(MemberRegistrationStatus::ERROR, $registration->status);
+        $this->assertStringContainsString('AVS', (string) $registration->error_message);
+        $this->assertNull($registration->member_id);
+        $this->assertSame(1, Member::count());
+    }
+
     public function test_retry_from_form_filled_resends_validation_email(): void
     {
         Mail::fake();

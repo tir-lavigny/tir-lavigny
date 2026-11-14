@@ -73,12 +73,19 @@ class MemberTest extends TestCase
     public function test_avs_hash_is_set_and_deterministic(): void
     {
         $member = Member::factory()->create(['avs' => '756.1234.5678.90']);
-        $other = Member::factory()->create(['avs' => '756.12.34.567.890']);
 
         $cipher = app(MemberDataCipher::class);
 
         $this->assertSame($cipher->hash('7561234567890'), $member->avs_hash);
-        $this->assertSame($member->avs_hash, $other->avs_hash);
+    }
+
+    public function test_avs_hash_must_be_unique(): void
+    {
+        Member::factory()->create(['avs' => '756.1234.5678.90']);
+
+        $this->expectException(QueryException::class);
+
+        Member::factory()->create(['avs' => '756 1234 5678 90']);
     }
 
     public function test_avs_hash_is_cleared_when_avs_is_removed(): void

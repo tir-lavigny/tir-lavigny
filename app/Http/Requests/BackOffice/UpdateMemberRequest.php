@@ -3,6 +3,8 @@
 namespace App\Http\Requests\BackOffice;
 
 use App\Enums\SwissCanton;
+use App\Models\Member;
+use App\Rules\UniqueMemberAvs;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -41,7 +43,26 @@ class UpdateMemberRequest extends FormRequest
             return ['sometimes', 'prohibited'];
         }
 
-        return ['sometimes', 'required_if:is_swiss_citizen,true', 'nullable', 'string', 'max:20', 'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/'];
+        return [
+            'sometimes',
+            'required_if:is_swiss_citizen,true',
+            'nullable',
+            'string',
+            'max:20',
+            'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/',
+            new UniqueMemberAvs($this->memberId()),
+        ];
+    }
+
+    private function memberId(): ?int
+    {
+        $member = $this->route('member');
+
+        if ($member instanceof Member) {
+            return $member->getKey();
+        }
+
+        return is_numeric($member) ? (int) $member : null;
     }
 
     /** @return array<string, string> */

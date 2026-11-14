@@ -75,8 +75,8 @@ return new class extends Migration
         });
 
         Schema::table('members', function (Blueprint $table) {
-            if (! Schema::hasIndex('members', 'members_avs_hash_index')) {
-                $table->index('avs_hash');
+            if (! Schema::hasIndex('members', 'members_avs_hash_unique')) {
+                $table->unique('avs_hash');
             }
         });
     }
@@ -90,8 +90,8 @@ return new class extends Migration
         });
 
         Schema::table('members', function (Blueprint $table) {
-            if (Schema::hasIndex('members', 'members_avs_hash_index')) {
-                $table->dropIndex(['avs_hash']);
+            if (Schema::hasIndex('members', 'members_avs_hash_unique')) {
+                $table->dropUnique(['avs_hash']);
             }
         });
 

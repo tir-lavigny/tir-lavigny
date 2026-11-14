@@ -3,6 +3,7 @@
 namespace App\Http\Requests\BackOffice;
 
 use App\Enums\SwissCanton;
+use App\Rules\UniqueMemberAvs;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -41,7 +42,14 @@ class StoreMemberRequest extends FormRequest
             return ['prohibited'];
         }
 
-        return ['required_if:is_swiss_citizen,true', 'nullable', 'string', 'max:20', 'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/'];
+        return [
+            'required_if:is_swiss_citizen,true',
+            'nullable',
+            'string',
+            'max:20',
+            'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/',
+            new UniqueMemberAvs,
+        ];
     }
 
     /** @return array<string, string> */

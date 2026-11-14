@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Events\MemberRegistrationFormSubmitted;
 use App\Mail\MemberRegistrationValidationRequested;
+use App\Models\Member;
 use App\Models\MemberRegistration;
 use App\Models\User;
 use Carbon\Carbon;
@@ -343,6 +344,34 @@ class MemberRegistrationFormTest extends TestCase
         $response = $this->post(route('member-registration.store'), $data);
 
         $response->assertSessionHasErrors(['avs']);
+    }
+
+    public function test_avs_already_used_by_a_member_is_rejected(): void
+    {
+        Member::factory()->create(['avs' => '756.1234.5678.90']);
+
+        $registration = MemberRegistration::create();
+
+        $response = $this->post(route('member-registration.store'), [
+            'form_uuid' => (string) $registration->form_uuid,
+            'last_name' => 'Dupont',
+            'first_name' => 'Jean',
+            'email' => 'jean.dupont@example.com',
+            'is_swiss_citizen' => true,
+            'avs' => '756.1234.5678.90',
+            'tel' => '+41 21 123 45 67',
+            'street' => 'Rue du Marché 1',
+            'npa' => '1003',
+            'city' => 'Lausanne',
+            'canton' => 'VD',
+            'country' => 'Suisse',
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertDatabaseHas('member_registrations', [
+            'id' => $registration->id,
+            'status' => 'pending',
+        ]);
     }
 
     public function test_avs_valid_format_accepted(): void
