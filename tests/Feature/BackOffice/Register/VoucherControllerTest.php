@@ -109,6 +109,30 @@ class VoucherControllerTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_edit_includes_current_passive_member(): void
+    {
+        $member = Member::factory()->passive()->create();
+        $voucher = Voucher::factory()->percent()->create(['member_id' => $member->id]);
+
+        $response = $this->get(route('bo.register.vouchers.edit', $voucher));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('members', fn ($members) => collect($members)->contains('id', $member->id))
+        );
+    }
+
+    public function test_edit_includes_current_archived_member(): void
+    {
+        $member = Member::factory()->archived()->create();
+        $voucher = Voucher::factory()->percent()->create(['member_id' => $member->id]);
+
+        $response = $this->get(route('bo.register.vouchers.edit', $voucher));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('members', fn ($members) => collect($members)->contains('id', $member->id))
+        );
+    }
+
     public function test_update_modifies_voucher(): void
     {
         $voucher = Voucher::factory()->percent()->create();

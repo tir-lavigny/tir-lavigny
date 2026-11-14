@@ -53,13 +53,23 @@ class VoucherController extends Controller implements HasMiddleware
 
     public function edit(Voucher $voucher): Response
     {
-        $voucher->load(['product', 'season', 'member']);
+        $voucher->load([
+            'product',
+            'season',
+            'member' => fn ($query) => $query->withTrashed(),
+        ]);
+
+        $members = Member::query()->active()->orderByName()->get();
+
+        if ($voucher->member && ! $members->contains('id', $voucher->member_id)) {
+            $members->push($voucher->member);
+        }
 
         return Inertia::render('backOffice/Register/Vouchers/Edit', [
             'voucher' => $voucher,
             'products' => Product::orderBy('name')->get(),
             'seasons' => Season::orderBy('name')->get(),
-            'members' => Member::query()->active()->orderByName()->get(),
+            'members' => $members,
         ]);
     }
 
