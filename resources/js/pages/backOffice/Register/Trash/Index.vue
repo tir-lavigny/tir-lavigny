@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import type {
-    BreadcrumbItem,
-    PaginatedCategories,
-    PaginatedProducts,
-    PaginatedSeasons,
-    PaginatedTickets,
-    PaginatedVouchers,
-} from '@/types';
+import type { BreadcrumbItem, PaginatedCategories, PaginatedProducts, PaginatedSeasons, PaginatedTickets, PaginatedVouchers } from '@/types';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
 import { Button } from '@/components/ui/button';
