@@ -95,6 +95,72 @@ class MemberSyncServiceTest extends TestCase
         $this->assertTrue($preview['members'][0]['fields']['email']['conflict']);
     }
 
+    public function test_preview_excludes_anonymized_members(): void
+    {
+        Member::factory()->create([
+            'dav_uid' => 'uid-anonymized',
+            'anonymized_at' => now(),
+            'first_name' => '[Deleted]',
+            'last_name' => '',
+        ]);
+        Member::factory()->create([
+            'dav_uid' => null,
+            'anonymized_at' => now(),
+            'first_name' => '[Deleted]',
+            'last_name' => '',
+        ]);
+
+        $service = new MemberSyncService($this->mockDav([
+            $this->contact(['uid' => 'uid-anonymized', 'n' => 'Old;Name;;;', 'fn' => 'Old Name']),
+        ]));
+
+        $preview = $service->preview();
+
+        $this->assertSame([], $preview['members']);
+        $this->assertSame([], $preview['unlinked_members']);
+    }
+
+    public function test_apply_rejects_anonymized_member(): void
+    {
+        $member = Member::factory()->create([
+            'dav_uid' => 'uid-1',
+            'anonymized_at' => now(),
+            'first_name' => '[Deleted]',
+            'last_name' => '',
+        ]);
+
+        $dav = Mockery::mock(DavServiceInterface::class);
+        $dav->shouldReceive('getContacts')->once()->andReturn([
+            $this->contact(['uid' => 'uid-1', 'n' => 'Old;Name;;;', 'fn' => 'Old Name']),
+        ]);
+
+        $service = new MemberSyncService($dav);
+        $result = $service->apply([
+            ['member_id' => $member->id, 'fields' => ['first_name' => 'dav', 'last_name' => 'dav']],
+        ]);
+
+        $this->assertSame(0, $result['updated']);
+        $this->assertSame('[Deleted]', $member->fresh()->first_name);
+        $this->assertSame('', $member->fresh()->last_name);
+        $this->assertNotNull($member->fresh()->anonymized_at);
+    }
+
+    public function test_link_rejects_anonymized_member(): void
+    {
+        $member = Member::factory()->create([
+            'dav_uid' => null,
+            'anonymized_at' => now(),
+        ]);
+
+        $service = new MemberSyncService($this->mockDav([
+            $this->contact(['uid' => 'uid-linked']),
+        ]));
+        $result = $service->link($member, 'uid-linked');
+
+        $this->assertFalse($result['success']);
+        $this->assertNull($member->fresh()->dav_uid);
+    }
+
     public function test_preview_returns_email_for_unlinked_contacts(): void
     {
         $service = new MemberSyncService($this->mockDav([

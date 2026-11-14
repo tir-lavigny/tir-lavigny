@@ -95,6 +95,7 @@ class MemberSyncService
 
         $members = Member::withTrashed()
             ->whereNotNull('dav_uid')
+            ->whereNull('anonymized_at')
             ->orderByName()
             ->get();
 
@@ -150,6 +151,7 @@ class MemberSyncService
 
         $unlinkedMembers = Member::withTrashed()
             ->whereNull('dav_uid')
+            ->whereNull('anonymized_at')
             ->orderByName()
             ->get();
 
@@ -218,7 +220,7 @@ class MemberSyncService
         foreach ($choices as $choice) {
             $member = Member::withTrashed()->find($choice['member_id']);
 
-            if (! $member) {
+            if (! $member || $member->isAnonymized()) {
                 continue;
             }
 
@@ -279,6 +281,10 @@ class MemberSyncService
     /** @return array{success: bool, error: string|null} */
     public function link(Member $member, string $davUid): array
     {
+        if ($member->isAnonymized()) {
+            return ['success' => false, 'error' => 'Ce membre a été anonymisé et ne peut plus être lié.'];
+        }
+
         try {
             $contact = collect($this->dav->getContacts())->firstWhere('uid', $davUid);
         } catch (Throwable $e) {

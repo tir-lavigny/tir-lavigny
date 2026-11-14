@@ -548,6 +548,70 @@ class DavControllerTest extends TestCase
             ->assertSessionHas('success', '1 membre(s) synchronisé(s) avec succès.');
     }
 
+    public function test_sync_rejects_anonymized_member(): void
+    {
+        $this->actingAs($this->admin);
+
+        $member = Member::factory()->create([
+            'dav_uid' => 'uid-001',
+            'anonymized_at' => now(),
+            'first_name' => '[Deleted]',
+            'last_name' => '',
+        ]);
+
+        $this->mockDavService([
+            [
+                'url' => 'http://localhost/uid-001.vcf',
+                'uid' => 'uid-001',
+                'fn' => 'Old Name',
+                'n' => 'Old;Name;;;',
+                'email' => '',
+                'tel' => '',
+                'org' => '',
+                'category' => 'Actifs',
+                'vcard_raw' => 'BEGIN:VCARD',
+            ],
+        ]);
+
+        $this->post(route('bo.dav.sync'), [
+            'choices' => [['member_id' => $member->id, 'fields' => ['first_name' => 'dav', 'last_name' => 'dav']]],
+        ])->assertRedirect();
+
+        $this->assertSame('[Deleted]', $member->fresh()->first_name);
+        $this->assertSame('', $member->fresh()->last_name);
+    }
+
+    public function test_link_rejects_anonymized_member(): void
+    {
+        $this->actingAs($this->admin);
+
+        $member = Member::factory()->create([
+            'dav_uid' => null,
+            'anonymized_at' => now(),
+        ]);
+
+        $this->mockDavService([
+            [
+                'url' => 'http://localhost/uid-001.vcf',
+                'uid' => 'uid-001',
+                'fn' => 'John Doe',
+                'n' => 'Doe;John;;;',
+                'email' => '',
+                'tel' => '',
+                'org' => '',
+                'category' => 'Actifs',
+                'vcard_raw' => 'BEGIN:VCARD',
+            ],
+        ]);
+
+        $this->post(route('bo.dav.link'), [
+            'member_id' => $member->id,
+            'dav_uid' => 'uid-001',
+        ])->assertRedirect()->assertSessionHas('error');
+
+        $this->assertNull($member->fresh()->dav_uid);
+    }
+
     public function test_link_requires_authentication(): void
     {
         $this->post(route('bo.dav.link'), ['member_id' => 1, 'dav_uid' => 'uid-001'])->assertRedirect();
