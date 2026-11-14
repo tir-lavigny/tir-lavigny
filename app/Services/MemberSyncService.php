@@ -227,11 +227,12 @@ class MemberSyncService
 
     /**
      * @param  array<int, array{member_id: int, fields: array<string, string>}>  $choices
-     * @return array{updated: int}
+     * @return array{updated: int, failed: array<int, int>}
      */
     public function apply(array $choices): array
     {
         $updated = 0;
+        $failed = [];
         $contactsByUid = collect($this->dav->getContacts())->keyBy('uid');
 
         foreach ($choices as $choice) {
@@ -289,10 +290,12 @@ class MemberSyncService
 
             if ($this->push($member)['success']) {
                 $updated++;
+            } else {
+                $failed[] = $member->id;
             }
         }
 
-        return ['updated' => $updated];
+        return ['updated' => $updated, 'failed' => $failed];
     }
 
     /** @return array{success: bool, error: string|null} */

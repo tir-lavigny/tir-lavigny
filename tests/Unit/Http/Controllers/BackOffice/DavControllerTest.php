@@ -212,7 +212,7 @@ class DavControllerTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $this->mockMemberSyncService(['apply' => ['updated' => 1]]);
+        $this->mockMemberSyncService(['apply' => ['updated' => 1, 'failed' => []]]);
 
         $request = new Request;
         $request->merge(['choices' => [['member_id' => $member->id, 'fields' => ['first_name' => 'dav']]]]);
@@ -234,7 +234,7 @@ class DavControllerTest extends TestCase
             'dav_uid' => 'uid-001',
         ]);
 
-        $this->mockMemberSyncService(['apply' => ['updated' => 1]]);
+        $this->mockMemberSyncService(['apply' => ['updated' => 1, 'failed' => []]]);
 
         $request = new Request;
         $request->merge(['choices' => [['member_id' => $member->id, 'fields' => ['first_name' => 'member']]]]);

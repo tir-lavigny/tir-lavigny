@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\BackOffice;
 
+use App\Mail\MemberDavSyncFailed;
 use App\Models\Member;
 use App\Models\User;
 use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Testing\AssertableInertia as Assert;
 use Mockery;
 use Tests\TestCase;
@@ -610,6 +612,34 @@ class DavControllerTest extends TestCase
         ])->assertRedirect()->assertSessionHas('error');
 
         $this->assertNull($member->fresh()->dav_uid);
+    }
+
+    public function test_sync_flashes_partial_failure_and_notifies_failed_member(): void
+    {
+        Mail::fake();
+        $this->actingAs($this->admin);
+
+        $successful = Member::factory()->create(['dav_uid' => 'uid-ok']);
+        $failing = Member::factory()->create(['dav_uid' => 'uid-fail']);
+
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('getContacts')->andReturn([
+            ['uid' => 'uid-ok', 'n' => 'Ok;Member;;;', 'fn' => 'Member Ok', 'email' => '', 'tel' => '', 'category' => 'Actifs', 'vcard_raw' => 'BEGIN:VCARD'],
+            ['uid' => 'uid-fail', 'n' => 'Fail;Member;;;', 'fn' => 'Member Fail', 'email' => '', 'tel' => '', 'category' => 'Actifs', 'vcard_raw' => 'BEGIN:VCARD'],
+        ]);
+        $davMock->shouldReceive('updateMember')
+            ->andReturnUsing(fn (Member $member) => $member->id !== $failing->id);
+        $this->app->instance(DavServiceInterface::class, $davMock);
+
+        $this->post(route('bo.dav.sync'), [
+            'choices' => [
+                ['member_id' => $successful->id, 'fields' => []],
+                ['member_id' => $failing->id, 'fields' => []],
+            ],
+        ])->assertRedirect()->assertSessionHas('error');
+
+        Mail::assertSent(MemberDavSyncFailed::class, 1);
+        $this->assertNotNull($failing->fresh()->dav_sync_error);
     }
 
     public function test_link_requires_authentication(): void

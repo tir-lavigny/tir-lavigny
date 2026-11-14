@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Member;
 use App\Services\DavServiceInterface;
 use App\Services\DavSyncService;
+use App\Services\MemberDavSyncFailureNotifier;
 use App\Services\MemberSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -79,8 +80,11 @@ class DavController extends Controller
         return response()->json($result);
     }
 
-    public function sync(MemberSyncService $service, Request $request): RedirectResponse
-    {
+    public function sync(
+        MemberSyncService $service,
+        Request $request,
+        ?MemberDavSyncFailureNotifier $notifier = null,
+    ): RedirectResponse {
         $choices = $request->validate([
             'choices' => 'required|array|min:1',
             'choices.*.member_id' => 'required|exists:members,id',
@@ -89,6 +93,21 @@ class DavController extends Controller
         ]);
 
         $result = $service->apply($choices['choices']);
+
+        if ($result['failed'] !== []) {
+            $notifier ??= app(MemberDavSyncFailureNotifier::class);
+
+            Member::withTrashed()
+                ->whereIn('id', $result['failed'])
+                ->get()
+                ->each(fn (Member $member) => $notifier->notify($member));
+
+            return back()->with('error', sprintf(
+                '%d membre(s) synchronisé(s), %d en échec.',
+                $result['updated'],
+                count($result['failed']),
+            ));
+        }
 
         return back()->with('success', "$result[updated] membre(s) synchronisé(s) avec succès.");
     }

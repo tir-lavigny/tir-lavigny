@@ -289,7 +289,7 @@ class MemberSyncServiceTest extends TestCase
 
         $service = new MemberSyncService($dav);
 
-        $this->assertSame(['updated' => 0], $service->apply([
+        $this->assertSame(['updated' => 0, 'failed' => []], $service->apply([
             ['member_id' => 999999, 'fields' => ['email' => 'dav']],
         ]));
     }
@@ -309,8 +309,25 @@ class MemberSyncServiceTest extends TestCase
             ['member_id' => $member->id, 'fields' => []],
         ]);
 
-        $this->assertSame(['updated' => 1], $result);
+        $this->assertSame(['updated' => 1, 'failed' => []], $result);
         $this->assertSame('new-uid', $member->fresh()->dav_uid);
+    }
+
+    public function test_apply_returns_failed_member_ids(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+
+        $dav = Mockery::mock(DavServiceInterface::class);
+        $dav->shouldReceive('getContacts')->andReturn([$this->contact(['uid' => 'uid-1'])]);
+        $dav->shouldReceive('updateMember')->once()->andReturn(false);
+
+        $service = new MemberSyncService($dav);
+        $result = $service->apply([
+            ['member_id' => $member->id, 'fields' => ['email' => 'member']],
+        ]);
+
+        $this->assertSame(0, $result['updated']);
+        $this->assertSame([$member->id], $result['failed']);
     }
 
     public function test_push_creates_contact_when_dav_uid_missing(): void
