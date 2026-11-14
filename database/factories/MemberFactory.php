@@ -19,7 +19,7 @@ class MemberFactory extends Factory
             'email' => fake()->safeEmail(),
             'tel' => fake()->phoneNumber(),
             'avs' => null,
-            'is_swiss_citizen' => true,
+            'is_swiss_citizen' => false,
             'street' => fake()->streetAddress(),
             'npa' => fake()->numerify('####'),
             'city' => fake()->city(),
@@ -33,6 +33,14 @@ class MemberFactory extends Factory
     public function passive(): static
     {
         return $this->state(fn () => ['status' => MemberStatus::PASSIVE]);
+    }
+
+    public function withAvs(string $avs = '756.1234.5678.90'): static
+    {
+        return $this->state(fn () => [
+            'avs' => $avs,
+            'is_swiss_citizen' => true,
+        ]);
     }
 
     public function archived(): static
