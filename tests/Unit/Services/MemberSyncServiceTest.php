@@ -4,6 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\MemberStatus;
 use App\Models\Member;
+use App\Models\Voucher;
 use App\Services\DavServiceInterface;
 use App\Services\MemberSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -281,6 +282,26 @@ class MemberSyncServiceTest extends TestCase
         ]);
 
         $this->assertSoftDeleted($member);
+    }
+
+    public function test_apply_archives_member_and_keeps_vouchers(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+
+        $dav = Mockery::mock(DavServiceInterface::class);
+        $dav->shouldReceive('getContacts')->once()->andReturn([
+            $this->contact(['category' => 'Archives']),
+        ]);
+        $dav->shouldReceive('updateMember')->once()->andReturn(true);
+
+        $service = new MemberSyncService($dav);
+        $service->apply([
+            ['member_id' => $member->id, 'fields' => ['archived' => 'dav']],
+        ]);
+
+        $this->assertSoftDeleted($member);
+        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
     }
 
     public function test_apply_skips_unknown_member(): void
