@@ -307,12 +307,48 @@ class MemberSyncServiceTest extends TestCase
         $this->assertNull($member->fresh()->dav_sync_error);
     }
 
+    public function test_push_recreates_contact_when_dav_contact_is_missing(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'stale-uid']);
+
+        $dav = Mockery::mock(DavServiceInterface::class);
+        $dav->shouldReceive('updateMember')->once()->andReturn(false);
+        $dav->shouldReceive('getContacts')->once()->andReturn([]);
+        $dav->shouldReceive('createContactFromMember')
+            ->once()
+            ->andReturn(['uid' => 'new-uid', 'url' => 'https://dav.example.com/new-uid.vcf']);
+
+        $service = new MemberSyncService($dav);
+        $result = $service->push($member);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('new-uid', $member->fresh()->dav_uid);
+        $this->assertNull($member->fresh()->dav_sync_error);
+    }
+
+    public function test_push_fails_when_contact_exists_but_update_fails(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+
+        $dav = Mockery::mock(DavServiceInterface::class);
+        $dav->shouldReceive('updateMember')->once()->andReturn(false);
+        $dav->shouldReceive('getContacts')->once()->andReturn([$this->contact(['uid' => 'uid-1'])]);
+
+        $service = new MemberSyncService($dav);
+        $result = $service->push($member);
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('Impossible de mettre à jour le contact DAV.', $result['error']);
+        $this->assertSame('uid-1', $member->fresh()->dav_uid);
+    }
+
     public function test_push_returns_failure_and_stores_error(): void
     {
         $member = Member::factory()->create(['dav_uid' => 'uid-1']);
 
         $dav = Mockery::mock(DavServiceInterface::class);
         $dav->shouldReceive('updateMember')->once()->andReturn(false);
+        $dav->shouldReceive('getContacts')->once()->andReturn([$this->contact(['uid' => 'uid-1'])]);
 
         $service = new MemberSyncService($dav);
         $result = $service->push($member);

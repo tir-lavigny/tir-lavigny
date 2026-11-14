@@ -24,7 +24,16 @@ class MemberSyncService
 
                 $member->forceFill(['dav_uid' => $result['uid']])->saveQuietly();
             } elseif (! $this->dav->updateMember($member)) {
-                throw new \RuntimeException('Impossible de mettre à jour le contact DAV.');
+                $contactExists = collect($this->dav->getContacts())
+                    ->contains(fn (array $contact): bool => ($contact['uid'] ?? '') === $member->dav_uid);
+
+                if ($contactExists) {
+                    throw new \RuntimeException('Impossible de mettre à jour le contact DAV.');
+                }
+
+                $result = $this->dav->createContactFromMember($member);
+
+                $member->forceFill(['dav_uid' => $result['uid']])->saveQuietly();
             }
 
             $member->forceFill([
