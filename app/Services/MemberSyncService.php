@@ -139,10 +139,13 @@ class MemberSyncService
             $fields = [];
 
             foreach (['first_name', 'last_name', 'email', 'tel', 'status', 'archived'] as $field) {
+                $hasBase = array_key_exists($field, $base);
+
                 $fields[$field] = $this->fieldRow(
                     $memberValues[$field],
                     $davValues[$field],
-                    array_key_exists($field, $base) ? $base[$field] : null,
+                    $hasBase ? $base[$field] : null,
+                    $hasBase,
                 );
             }
 
@@ -480,13 +483,13 @@ class MemberSyncService
     }
 
     /** @return array{member: mixed, dav: mixed, base: mixed, conflict: bool} */
-    private function fieldRow(mixed $memberValue, mixed $davValue, mixed $baseValue): array
+    private function fieldRow(mixed $memberValue, mixed $davValue, mixed $baseValue, bool $hasBase): array
     {
         $memberValue = $this->normalize($memberValue);
         $davValue = $this->normalize($davValue);
         $baseValue = $this->normalize($baseValue);
 
-        $conflict = $baseValue !== null
+        $conflict = $hasBase
             && $memberValue !== $baseValue
             && $davValue !== $baseValue
             && $memberValue !== $davValue;

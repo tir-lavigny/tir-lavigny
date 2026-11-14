@@ -161,6 +161,30 @@ class MemberSyncServiceTest extends TestCase
         $this->assertNull($member->fresh()->dav_uid);
     }
 
+    public function test_preview_flags_conflict_when_snapshot_value_was_null(): void
+    {
+        Member::factory()->create([
+            'email' => 'member@example.com',
+            'dav_uid' => 'uid-1',
+            'dav_synced_snapshot' => [
+                'first_name' => 'Jean',
+                'last_name' => 'Dupont',
+                'email' => null,
+                'tel' => null,
+                'status' => 'active',
+                'archived' => false,
+            ],
+        ]);
+
+        $service = new MemberSyncService($this->mockDav([
+            $this->contact(['email' => 'dav@example.com']),
+        ]));
+
+        $preview = $service->preview();
+
+        $this->assertTrue($preview['members'][0]['fields']['email']['conflict']);
+    }
+
     public function test_preview_returns_email_for_unlinked_contacts(): void
     {
         $service = new MemberSyncService($this->mockDav([
