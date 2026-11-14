@@ -123,7 +123,7 @@ class MemberTest extends TestCase
         $this->assertSame('756.***.***.90', $array['avs_masked']);
     }
 
-    public function test_activity_log_hides_avs_and_masks_email_on_create(): void
+    public function test_activity_log_hides_avs_and_stores_full_email_on_create(): void
     {
         $member = Member::factory()->create([
             'email' => 'john.doe@example.com',
@@ -139,10 +139,10 @@ class MemberTest extends TestCase
 
         $this->assertArrayNotHasKey('avs', $changes);
         $this->assertArrayNotHasKey('avs_hash', $changes);
-        $this->assertSame('j***@example.com', $changes['email']);
+        $this->assertSame('john.doe@example.com', $changes['email']);
     }
 
-    public function test_activity_log_masks_email_on_update(): void
+    public function test_activity_log_stores_full_email_on_update(): void
     {
         $member = Member::factory()->create(['email' => 'john.doe@example.com']);
 
@@ -155,7 +155,23 @@ class MemberTest extends TestCase
 
         $changes = json_decode((string) $log->changes, true);
 
-        $this->assertSame('j***@example.com', $changes['email']);
+        $this->assertSame('jane.doe@example.com', $changes['email']);
+    }
+
+    public function test_activity_log_does_not_store_dav_snapshot(): void
+    {
+        $member = Member::factory()->create();
+
+        $member->update(['dav_synced_snapshot' => ['email' => 'john.doe@example.com']]);
+
+        $log = ActivityLog::where('model', Member::class)
+            ->where('model_id', (string) $member->id)
+            ->where('action', 'updated')
+            ->sole();
+
+        $changes = json_decode((string) $log->changes, true);
+
+        $this->assertArrayNotHasKey('dav_synced_snapshot', $changes);
     }
 
     public function test_registration_activity_log_hides_form_data(): void

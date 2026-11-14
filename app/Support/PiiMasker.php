@@ -6,22 +6,6 @@ use Illuminate\Support\Str;
 
 class PiiMasker
 {
-    public static function email(?string $email): ?string
-    {
-        if ($email === null || $email === '') {
-            return null;
-        }
-
-        $local = Str::before($email, '@');
-        $domain = Str::after($email, '@');
-
-        if ($domain === '' || $domain === $email) {
-            return self::generic($email);
-        }
-
-        return Str::substr($local, 0, 1).'***@'.$domain;
-    }
-
     public static function avs(?string $avs): ?string
     {
         if ($avs === null || $avs === '') {

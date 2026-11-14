@@ -151,11 +151,7 @@ class Member extends Model
      */
     protected function prepareActivityLog(array $changes): array
     {
-        unset($changes['avs'], $changes['avs_hash']);
-
-        if (array_key_exists('email', $changes)) {
-            $changes['email'] = PiiMasker::email($changes['email'] === null ? null : (string) $changes['email']);
-        }
+        unset($changes['avs'], $changes['avs_hash'], $changes['dav_synced_snapshot']);
 
         return $changes;
     }
