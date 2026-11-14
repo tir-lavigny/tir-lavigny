@@ -184,6 +184,24 @@ class MemberRegistrationPipelineTest extends TestCase
         $this->assertSame('test-uid-123', $registration->member->dav_uid);
     }
 
+    public function test_pipeline_reports_missing_base_product(): void
+    {
+        Season::factory()->create([
+            'start_date' => now()->subMonth(),
+            'end_date' => now()->addMonth(),
+        ]);
+
+        $registration = $this->createRegistrationWithData();
+        $pipeline = new MemberRegistrationPipelineService(Mockery::mock(MemberSyncService::class));
+
+        $pipeline->processFormSubmission($registration);
+
+        $registration->refresh();
+
+        $this->assertEquals(MemberRegistrationStatus::ERROR, $registration->status);
+        $this->assertStringContainsString('introuvable', (string) $registration->error_message);
+    }
+
     public function test_process_form_submission_without_season(): void
     {
         Mail::fake();

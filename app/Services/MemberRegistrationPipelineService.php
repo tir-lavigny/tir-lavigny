@@ -9,7 +9,6 @@ use App\MemberRegistrationStatus;
 use App\MemberStatus;
 use App\Models\Member;
 use App\Models\MemberRegistration;
-use App\Models\Product;
 use App\Models\Season;
 use App\Models\User;
 use App\Models\Voucher;
@@ -24,6 +23,7 @@ class MemberRegistrationPipelineService
     public function __construct(
         private readonly MemberSyncService $sync,
         private readonly ?MemberDavSyncFailureNotifier $davFailureNotifier = null,
+        private readonly ?SeasonVoucherService $seasonVoucherService = null,
     ) {}
 
     /**
@@ -225,26 +225,14 @@ class MemberRegistrationPipelineService
             return;
         }
 
-        $basePackage = [
-            'Tir du jeudi' => 3,
-            'Ouverture' => 1,
-            'Clôture' => 1,
-        ];
+        $voucherService = $this->seasonVoucherService ?? app(SeasonVoucherService::class);
+        $basePackage = $voucherService->getBasePackage();
+        $products = $voucherService->resolveProducts($basePackage);
 
         $created = 0;
 
         foreach ($basePackage as $productName => $count) {
-            $product = Product::whereRaw('LOWER(name) = ?', [strtolower($productName)])->first();
-
-            if (! $product) {
-                Log::warning('Base voucher product not found', [
-                    'member_id' => $member->id,
-                    'season_id' => $season->id,
-                    'product_name' => $productName,
-                ]);
-
-                continue;
-            }
+            $product = $products[$productName];
 
             $existingCount = Voucher::where('member_id', $member->id)
                 ->where('season_id', $season->id)
