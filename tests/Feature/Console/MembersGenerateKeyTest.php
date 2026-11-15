@@ -27,6 +27,32 @@ class MembersGenerateKeyTest extends TestCase
         unlink($path);
     }
 
+    public function test_refuses_to_overwrite_existing_key_without_force(): void
+    {
+        $original = 'base64:'.base64_encode(str_repeat('a', 32));
+        $path = $this->temporaryEnvFile("APP_NAME=test\nMEMBER_DATA_KEY={$original}\n");
+
+        $this->artisan('members:key', ['--path' => $path])
+            ->assertFailed();
+
+        $this->assertStringContainsString("MEMBER_DATA_KEY={$original}", (string) file_get_contents($path));
+
+        unlink($path);
+    }
+
+    public function test_overwrites_existing_key_with_force(): void
+    {
+        $original = 'base64:'.base64_encode(str_repeat('a', 32));
+        $path = $this->temporaryEnvFile("APP_NAME=test\nMEMBER_DATA_KEY={$original}\n");
+
+        $this->artisan('members:key', ['--path' => $path, '--force' => true])
+            ->assertSuccessful();
+
+        $this->assertStringNotContainsString("MEMBER_DATA_KEY={$original}", (string) file_get_contents($path));
+
+        unlink($path);
+    }
+
     public function test_appends_key_when_missing(): void
     {
         $path = $this->temporaryEnvFile("APP_NAME=test\n");
