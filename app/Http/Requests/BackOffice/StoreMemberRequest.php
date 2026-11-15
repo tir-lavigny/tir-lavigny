@@ -39,7 +39,7 @@ class StoreMemberRequest extends FormRequest
     private function avsRules(): array
     {
         if (! $this->user()?->can('view member sensitive data')) {
-            return ['prohibited'];
+            return ['sometimes'];
         }
 
         return [

@@ -208,7 +208,7 @@ class MemberControllerTest extends TestCase
         $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
     }
 
-    public function test_member_manager_can_create_swiss_citizen_without_avs(): void
+    public function test_member_manager_create_ignores_swiss_citizen_and_avs(): void
     {
         $this->actingAs($this->memberManagerWithoutSensitivePermission());
 
@@ -216,13 +216,14 @@ class MemberControllerTest extends TestCase
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
             'is_swiss_citizen' => true,
+            'avs' => '756.1234.5678.90',
             'status' => 'active',
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('members', [
             'first_name' => 'Jean',
-            'is_swiss_citizen' => true,
+            'is_swiss_citizen' => null,
             'avs' => null,
         ]);
     }
@@ -250,33 +251,49 @@ class MemberControllerTest extends TestCase
         ]);
     }
 
-    public function test_member_manager_cannot_submit_avs_on_create(): void
+    public function test_member_manager_update_ignores_avs_and_swiss_citizen(): void
     {
         $this->actingAs($this->memberManagerWithoutSensitivePermission());
 
-        $response = $this->post(route('bo.members.store'), [
+        $member = Member::factory()->create([
             'first_name' => 'Jean',
-            'last_name' => 'Dupont',
             'avs' => '756.1234.5678.90',
-            'status' => 'active',
+            'is_swiss_citizen' => false,
         ]);
-
-        $response->assertSessionHasErrors('avs');
-        $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
-    }
-
-    public function test_member_manager_cannot_submit_avs_on_update(): void
-    {
-        $this->actingAs($this->memberManagerWithoutSensitivePermission());
-
-        $member = Member::factory()->create(['avs' => '756.1234.5678.90']);
 
         $response = $this->put(route('bo.members.update', $member), [
+            'first_name' => 'Pierre',
             'avs' => '756.0000.0000.00',
+            'is_swiss_citizen' => true,
         ]);
 
-        $response->assertSessionHasErrors('avs');
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $member->refresh();
+
+        $this->assertSame('Pierre', $member->first_name);
+        $this->assertSame('756.1234.5678.90', $member->avs);
+        $this->assertFalse($member->is_swiss_citizen);
+    }
+
+    public function test_member_manager_update_with_empty_avs_does_not_clear_it(): void
+    {
+        $this->actingAs($this->memberManagerWithoutSensitivePermission());
+
+        $member = Member::factory()->create([
+            'avs' => '756.1234.5678.90',
+            'is_swiss_citizen' => true,
+        ]);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'first_name' => 'Pierre',
+            'avs' => '',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
         $this->assertSame('756.1234.5678.90', $member->fresh()->avs);
+        $this->assertTrue($member->fresh()->is_swiss_citizen);
     }
 
     public function test_store_rejects_duplicate_avs(): void

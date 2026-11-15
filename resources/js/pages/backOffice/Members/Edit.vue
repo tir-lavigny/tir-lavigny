@@ -182,7 +182,7 @@ const handleSubmit = () => {
                         <Input id="country" v-model="form.country" type="text" placeholder="Pays" maxlength="100" />
                         <InputError :message="form.errors.country" />
                     </div>
-                    <div class="grid gap-2">
+                    <div v-if="canViewSensitiveData" class="grid gap-2">
                         <Label for="is_swiss_citizen">Citoyen suisse</Label>
                         <Select v-model="swissCitizenFilter">
                             <SelectTrigger id="is_swiss_citizen">

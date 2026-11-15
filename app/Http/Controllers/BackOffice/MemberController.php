@@ -81,7 +81,7 @@ class MemberController extends Controller implements HasMiddleware
         CreateMemberAction $action,
         MemberDavSyncFailureNotifier $notifier,
     ): RedirectResponse {
-        $result = $action->execute($request->validated());
+        $result = $action->execute($this->filterSensitiveFields($request->validated()));
 
         if (! $result['success']) {
             $notifier->notify($result['member']);
@@ -149,7 +149,7 @@ class MemberController extends Controller implements HasMiddleware
             return back()->with('error', 'Ce membre a été anonymisé et ne peut plus être modifié.');
         }
 
-        $result = $action->execute($member, $request->validated());
+        $result = $action->execute($member, $this->filterSensitiveFields($request->validated()));
 
         if (! $result['success']) {
             $notifier->notify($result['member']);
@@ -259,5 +259,20 @@ class MemberController extends Controller implements HasMiddleware
     private function canViewSensitiveData(): bool
     {
         return Auth::user()?->can('view member sensitive data') ?? false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function filterSensitiveFields(array $data): array
+    {
+        if ($this->canViewSensitiveData()) {
+            return $data;
+        }
+
+        unset($data['avs'], $data['is_swiss_citizen']);
+
+        return $data;
     }
 }

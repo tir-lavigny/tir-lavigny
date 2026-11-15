@@ -40,7 +40,7 @@ class UpdateMemberRequest extends FormRequest
     private function avsRules(): array
     {
         if (! $this->user()?->can('view member sensitive data')) {
-            return ['sometimes', 'prohibited'];
+            return ['sometimes'];
         }
 
         return [

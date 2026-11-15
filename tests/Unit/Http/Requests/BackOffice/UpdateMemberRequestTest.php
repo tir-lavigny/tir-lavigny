@@ -154,9 +154,9 @@ class UpdateMemberRequestTest extends TestCase
         ]));
     }
 
-    public function test_fails_with_avs_without_sensitive_permission(): void
+    public function test_accepts_avs_without_sensitive_permission_for_controller_filtering(): void
     {
-        $this->assertTrue($this->failsFor($this->memberManagerWithoutSensitivePermission(), [
+        $this->assertFalse($this->failsFor($this->memberManagerWithoutSensitivePermission(), [
             'avs' => '756.1234.5678.90',
         ]));
     }
