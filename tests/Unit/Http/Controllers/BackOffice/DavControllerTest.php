@@ -149,7 +149,7 @@ class DavControllerTest extends TestCase
 
     public function test_import_creates_members_from_actifs_contacts(): void
     {
-        $this->mockDavSyncService(['importFromDav' => ['created' => 1, 'skipped' => []]]);
+        $this->mockDavSyncService(['importFromDav' => ['created' => 1, 'skipped' => [], 'failed' => []]]);
 
         $this->controller->importFromDav(app(DavSyncService::class), Request::create('/', 'POST', ['confirm' => true]));
 
