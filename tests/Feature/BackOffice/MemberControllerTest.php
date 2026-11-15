@@ -502,7 +502,7 @@ class MemberControllerTest extends TestCase
         $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
     }
 
-    public function test_destroy_keeps_voucher_with_trashed_ticket_item(): void
+    public function test_destroy_deletes_voucher_with_only_refunded_item(): void
     {
         $member = Member::factory()->create();
         $voucher = Voucher::factory()->create(['member_id' => $member->id]);
@@ -514,7 +514,23 @@ class MemberControllerTest extends TestCase
 
         $response->assertRedirect();
         $this->assertSoftDeleted('members', ['id' => $member->id]);
-        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
+        $this->assertSoftDeleted('vouchers', ['id' => $voucher->id]);
+    }
+
+    public function test_show_marks_refunded_voucher_as_unused(): void
+    {
+        $member = Member::factory()->create();
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+        $ticket = Ticket::factory()->create();
+        $item = TicketItem::factory()->create(['ticket_id' => $ticket->id, 'voucher_id' => $voucher->id]);
+        $item->delete();
+
+        $response = $this->get(route('bo.members.show', $member));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('usedVouchers', 0)
+            ->has('unusedVouchers', 1)
+        );
     }
 
     public function test_destroy_with_delete_vouchers_requires_manage_vouchers(): void

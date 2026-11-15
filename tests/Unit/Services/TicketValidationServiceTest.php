@@ -372,6 +372,59 @@ class TicketValidationServiceTest extends TestCase
         );
     }
 
+    public function test_refunded_voucher_can_be_reused(): void
+    {
+        $season = Season::factory()->create();
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $day = OperatingDay::factory()->create(['season_id' => $season->id]);
+        $voucher = Voucher::factory()->percent()->create([
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+        $ticket = Ticket::factory()->cash()->create(['operating_day_id' => $day->id]);
+        $item = TicketItem::factory()->create([
+            'ticket_id' => $ticket->id,
+            'product_id' => $product->id,
+            'voucher_id' => $voucher->id,
+        ]);
+        $item->delete();
+
+        $validator = $this->makeValidator();
+        $this->service->validateItems(
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
+            $day->id,
+            null,
+            $validator
+        );
+
+        $this->assertFalse($this->hasError($validator, 'items.0.voucher_ids.0'));
+    }
+
+    public function test_rejects_voucher_without_active_member(): void
+    {
+        $season = Season::factory()->create();
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $day = OperatingDay::factory()->create(['season_id' => $season->id]);
+        $member = Member::factory()->passive()->create();
+        $voucher = Voucher::factory()->percent()->create([
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+            'member_id' => $member->id,
+        ]);
+
+        $validator = $this->makeValidator();
+        $this->service->validateItems(
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
+            $day->id,
+            null,
+            $validator
+        );
+
+        $this->assertTrue($this->hasError($validator, 'items.0.voucher_ids.0'));
+    }
+
     public function test_allows_unused_voucher(): void
     {
         $season = Season::factory()->create();

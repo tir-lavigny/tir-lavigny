@@ -103,7 +103,7 @@ class MemberController extends Controller implements HasMiddleware
         $member->load([
             'registration',
             'tickets',
-            'vouchers.ticketItems' => fn ($query) => $query->withTrashed(),
+            'vouchers.ticketItems',
             'vouchers.product',
         ]);
 

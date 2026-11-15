@@ -31,7 +31,7 @@ class VoucherTest extends TestCase
         $this->assertTrue($voucher->isUsed());
     }
 
-    public function test_is_used_returns_true_when_ticket_item_is_soft_deleted(): void
+    public function test_refunded_ticket_item_does_not_count_as_used(): void
     {
         $voucher = Voucher::factory()->create();
         $item = TicketItem::factory()->withVoucher()->create([
@@ -40,7 +40,7 @@ class VoucherTest extends TestCase
 
         $item->delete();
 
-        $this->assertTrue($voucher->fresh()->isUsed());
+        $this->assertFalse($voucher->fresh()->isUsed());
     }
 
     public function test_is_used_returns_true_with_multiple_ticket_items(): void

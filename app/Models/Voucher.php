@@ -62,7 +62,7 @@ class Voucher extends Model
 
     public function isUsed(): bool
     {
-        return $this->ticketItems()->withTrashed()->exists();
+        return $this->ticketItems()->exists();
     }
 
     protected static function booted(): void

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\MemberStatus;
 use App\Models\OperatingDay;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Validator;
@@ -134,6 +135,17 @@ class TicketValidationService
                 $errorKey,
                 'The voucher has already been used.'
             );
+        }
+
+        if ($voucher->member_id !== null) {
+            $memberStatus = DB::table('members')->where('id', $voucher->member_id)->value('status');
+
+            if ($memberStatus !== MemberStatus::ACTIVE->value) {
+                $validator->errors()->add(
+                    $errorKey,
+                    'The voucher belongs to an inactive member.'
+                );
+            }
         }
 
         if ($memberId && $voucher->member_id != $memberId) {
