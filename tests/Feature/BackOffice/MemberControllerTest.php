@@ -450,6 +450,34 @@ class MemberControllerTest extends TestCase
         $this->assertNull($member->fresh()->avs);
     }
 
+    public function test_update_rejects_swiss_citizen_without_avs(): void
+    {
+        $member = Member::factory()->create(['avs' => null, 'is_swiss_citizen' => false]);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'is_swiss_citizen' => true,
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertFalse($member->fresh()->is_swiss_citizen);
+    }
+
+    public function test_update_allows_swiss_citizen_with_existing_avs(): void
+    {
+        $member = Member::factory()->create([
+            'avs' => '756.1234.5678.90',
+            'is_swiss_citizen' => false,
+        ]);
+
+        $response = $this->put(route('bo.members.update', $member), [
+            'is_swiss_citizen' => true,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $this->assertTrue($member->fresh()->is_swiss_citizen);
+    }
+
     public function test_update_does_not_change_canton_when_only_tel_is_sent(): void
     {
         $member = Member::factory()->create(['canton' => 'VD']);

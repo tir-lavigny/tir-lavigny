@@ -7,6 +7,7 @@ use App\Models\Member;
 use App\Rules\UniqueMemberAvs;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateMemberRequest extends FormRequest
 {
@@ -52,6 +53,31 @@ class UpdateMemberRequest extends FormRequest
             'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/',
             new UniqueMemberAvs($this->memberId()),
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            if (! $this->user()?->can('view member sensitive data')) {
+                return;
+            }
+
+            if (! $this->has('is_swiss_citizen') || ! $this->boolean('is_swiss_citizen')) {
+                return;
+            }
+
+            $member = $this->route('member');
+
+            if (! $member instanceof Member) {
+                return;
+            }
+
+            $avs = $this->has('avs') ? $this->input('avs') : $member->avs;
+
+            if ($avs === null || $avs === '') {
+                $validator->errors()->add('avs', 'Le numéro AVS est requis pour les citoyens suisses.');
+            }
+        });
     }
 
     private function memberId(): ?int
