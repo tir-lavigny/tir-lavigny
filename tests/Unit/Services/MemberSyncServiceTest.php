@@ -418,7 +418,7 @@ class MemberSyncServiceTest extends TestCase
 
         $this->assertFalse($result['success']);
         $this->assertSame('Impossible de mettre à jour le contact DAV.', $result['error']);
-        $this->assertSame($result['error'], $member->fresh()->dav_sync_error);
+        $this->assertSame('La synchronisation du contact DAV a échoué.', $member->fresh()->dav_sync_error);
     }
 
     public function test_push_does_not_recreate_when_contact_lookup_fails(): void
@@ -438,18 +438,19 @@ class MemberSyncServiceTest extends TestCase
         $this->assertSame('uid-1', $member->fresh()->dav_uid);
     }
 
-    public function test_push_catches_dav_exception(): void
+    public function test_push_catches_dav_exception_and_stores_generic_error(): void
     {
         $member = Member::factory()->create(['dav_uid' => 'uid-1']);
 
         $dav = Mockery::mock(DavServiceInterface::class);
-        $dav->shouldReceive('updateMember')->once()->andThrow(new \RuntimeException('DAV down'));
+        $dav->shouldReceive('updateMember')->once()->andThrow(new \RuntimeException('DAV PUT failed: <html>secret</html>'));
 
         $service = new MemberSyncService($dav);
         $result = $service->push($member);
 
         $this->assertFalse($result['success']);
-        $this->assertSame('DAV down', $result['error']);
+        $this->assertStringContainsString('secret', $result['error']);
+        $this->assertSame('La synchronisation du contact DAV a échoué.', $member->fresh()->dav_sync_error);
     }
 
     public function test_delete_clears_dav_uid_and_snapshot_on_success(): void

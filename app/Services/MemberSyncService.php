@@ -44,7 +44,7 @@ class MemberSyncService
             report($e);
 
             $member->forceFill([
-                'dav_sync_error' => $e->getMessage(),
+                'dav_sync_error' => 'La synchronisation du contact DAV a échoué.',
             ])->saveQuietly();
 
             Log::warning('Member DAV sync failed', [
@@ -85,7 +85,7 @@ class MemberSyncService
             ]);
 
             if ($member->exists) {
-                $member->forceFill(['dav_sync_error' => $e->getMessage()])->saveQuietly();
+                $member->forceFill(['dav_sync_error' => 'La suppression du contact DAV a échoué.'])->saveQuietly();
             }
 
             return ['success' => false, 'error' => $e->getMessage()];
