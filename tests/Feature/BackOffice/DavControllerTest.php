@@ -831,6 +831,8 @@ class DavControllerTest extends TestCase
 
         $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andReturn([]);
+        $davMock->shouldReceive('updateMember')->andReturn(false);
+        $davMock->shouldReceive('findContact')->andReturn(null);
         $davMock->shouldReceive('createContactFromMember')
             ->once()
             ->andReturn([

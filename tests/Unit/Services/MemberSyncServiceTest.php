@@ -323,6 +323,8 @@ class MemberSyncServiceTest extends TestCase
 
         $dav = Mockery::mock(DavServiceInterface::class);
         $dav->shouldReceive('getContacts')->once()->andReturn([]);
+        $dav->shouldReceive('updateMember')->once()->andReturn(false);
+        $dav->shouldReceive('findContact')->once()->andReturn(null);
         $dav->shouldReceive('createContactFromMember')
             ->once()
             ->andReturn(['uid' => 'new-uid']);
@@ -334,6 +336,28 @@ class MemberSyncServiceTest extends TestCase
 
         $this->assertSame(['updated' => 1, 'failed' => []], $result);
         $this->assertSame('new-uid', $member->fresh()->dav_uid);
+    }
+
+    public function test_apply_preserves_snapshot_when_recreate_fails(): void
+    {
+        $member = Member::factory()->create([
+            'dav_uid' => 'stale-uid',
+            'dav_synced_snapshot' => ['email' => 'old@example.com'],
+        ]);
+
+        $dav = Mockery::mock(DavServiceInterface::class);
+        $dav->shouldReceive('getContacts')->once()->andReturn([]);
+        $dav->shouldReceive('updateMember')->once()->andReturn(false);
+        $dav->shouldReceive('findContact')->once()->andThrow(new \RuntimeException('Malformed vCard'));
+
+        $service = new MemberSyncService($dav);
+        $result = $service->apply([
+            ['member_id' => $member->id, 'fields' => []],
+        ]);
+
+        $this->assertSame([$member->id], $result['failed']);
+        $this->assertSame(['email' => 'old@example.com'], $member->fresh()->dav_synced_snapshot);
+        $this->assertSame('stale-uid', $member->fresh()->dav_uid);
     }
 
     public function test_apply_returns_failed_member_ids(): void
