@@ -74,6 +74,10 @@ class DavController extends Controller
             $message .= ' '.count($result['skipped']).' contact(s) ignoré(s) : un membre non lié utilise le même email.';
         }
 
+        if (($result['failed'] ?? []) !== []) {
+            $message .= ' '.count($result['failed']).' contact(s) en échec.';
+        }
+
         return back()->with('success', $message);
     }
 

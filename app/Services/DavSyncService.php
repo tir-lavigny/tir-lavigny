@@ -17,7 +17,7 @@ class DavSyncService
     /**
      * Import unknown DAV contacts as members.
      *
-     * @return array{created: int, skipped: array<int, string>}
+     * @return array{created: int, skipped: array<int, string>, failed: array<int, string>}
      */
     public function importFromDav(): array
     {
@@ -41,27 +41,44 @@ class DavSyncService
 
         $created = 0;
         $skipped = [];
+        $failed = [];
+        $knownEmails = $unlinkedMemberEmails;
 
         foreach ($toImport as $contact) {
             $email = Str::lower(trim((string) ($contact['email'] ?? '')));
 
-            if ($email !== '' && $unlinkedMemberEmails->has($email)) {
+            if ($email !== '' && $knownEmails->has($email)) {
                 $skipped[] = $contact['uid'];
 
                 continue;
             }
 
-            $this->memberSync->createFromContact($contact);
-            $created++;
+            try {
+                $this->memberSync->createFromContact($contact);
+                $created++;
+
+                if ($email !== '') {
+                    $knownEmails->put($email, true);
+                }
+            } catch (\Throwable $e) {
+                report($e);
+                $failed[] = $contact['uid'];
+
+                Log::warning('Failed to import DAV contact', [
+                    'uid' => $contact['uid'],
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         Log::info('Imported members from DAV contacts', [
             'created' => $created,
             'skipped' => count($skipped),
+            'failed' => count($failed),
             'contacts' => count($contacts),
         ]);
 
-        return ['created' => $created, 'skipped' => $skipped];
+        return ['created' => $created, 'skipped' => $skipped, 'failed' => $failed];
     }
 
     /** @param array<string, mixed> $contact */

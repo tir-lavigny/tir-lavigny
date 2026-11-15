@@ -85,6 +85,40 @@ class DavSyncServiceTest extends TestCase
         $this->assertDatabaseCount('members', 3);
     }
 
+    public function test_import_skips_duplicate_email_contacts(): void
+    {
+        $service = $this->mockDav([
+            array_merge($this->makeContact('uid-001', 'Doe;John;;;'), ['email' => 'same@example.com']),
+            array_merge($this->makeContact('uid-002', 'Smith;Jane;;;'), ['email' => 'same@example.com']),
+        ]);
+
+        $result = $service->importFromDav();
+
+        $this->assertSame(1, $result['created']);
+        $this->assertSame(['uid-002'], $result['skipped']);
+        $this->assertDatabaseCount('members', 1);
+    }
+
+    public function test_import_continues_after_one_contact_fails(): void
+    {
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('getContacts')->andReturn([
+            $this->makeContact('uid-001', 'Doe;John;;;'),
+            $this->makeContact('uid-002', 'Smith;Jane;;;'),
+        ]);
+
+        $memberSync = Mockery::mock(MemberSyncService::class);
+        $memberSync->shouldReceive('createFromContact')
+            ->once()
+            ->andThrow(new \RuntimeException('Bad contact'));
+        $memberSync->shouldReceive('createFromContact')->once();
+
+        $result = (new DavSyncService($davMock, $memberSync))->importFromDav();
+
+        $this->assertSame(1, $result['created']);
+        $this->assertSame(['uid-001'], $result['failed']);
+    }
+
     public function test_import_skips_non_active_contacts(): void
     {
         $service = $this->mockDav([
