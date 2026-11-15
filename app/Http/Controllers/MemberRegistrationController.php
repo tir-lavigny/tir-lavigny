@@ -24,6 +24,10 @@ class MemberRegistrationController extends Controller
 
         $submitted = $registration->form_submitted_at !== null;
 
+        if ($submitted) {
+            $registration->makeHidden(['form_name']);
+        }
+
         return Inertia::render('MemberRegistration', [
             'registration' => $registration,
             'formUrl' => $registration->formUrl(),

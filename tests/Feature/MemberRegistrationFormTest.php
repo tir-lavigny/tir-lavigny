@@ -555,6 +555,7 @@ class MemberRegistrationFormTest extends TestCase
             ->where('submitted', true)
             ->has('registration')
             ->missing('registration.form_data')
+            ->missing('registration.form_name')
         );
     }
 
