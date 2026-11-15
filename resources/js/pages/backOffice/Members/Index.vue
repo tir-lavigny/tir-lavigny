@@ -144,7 +144,7 @@ const handleSync = (member: Member) => {
                             </TooltipTrigger>
                             <TooltipContent><p>Voir</p></TooltipContent>
                         </Tooltip>
-                        <Tooltip v-if="hasPermissionTo(user, 'manage members')">
+                        <Tooltip v-if="!member.anonymized_at && hasPermissionTo(user, 'manage members')">
                             <TooltipTrigger>
                                 <Button size="icon" variant="outline" @click="handleSync(member)"><RefreshCw /></Button>
                             </TooltipTrigger>
