@@ -4,6 +4,7 @@ use App\Support\Avs;
 use App\Support\MemberDataCipher;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 return new class extends Migration
 {
@@ -28,6 +29,10 @@ return new class extends Migration
                     }
 
                     if (! Avs::looksLike($plaintext)) {
+                        Log::warning('Skipped member AVS encryption: value is not a legacy AVS.', [
+                            'member_id' => $member->id,
+                        ]);
+
                         continue;
                     }
 
