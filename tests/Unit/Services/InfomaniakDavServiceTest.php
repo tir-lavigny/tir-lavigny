@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services;
 
+use App\DavGroupLabels;
 use App\MemberStatus;
 use App\Models\Member;
 use App\Services\InfomaniakDavService;
@@ -42,6 +43,45 @@ class InfomaniakDavServiceTest extends TestCase
         $method->setAccessible(true);
 
         return $method->invoke($service, Reader::read(trim($vcard)), $property);
+    }
+
+    private function callMergeCategories(array $existing, ?string $desired): array
+    {
+        $service = new InfomaniakDavService;
+        $reflection = new ReflectionClass($service);
+        $method = $reflection->getMethod('mergeCategories');
+        $method->setAccessible(true);
+
+        return $method->invoke($service, $existing, $desired);
+    }
+
+    public function test_managed_categories_are_defined_once(): void
+    {
+        $this->assertSame(['Actifs', 'Passifs', 'Archives'], DavGroupLabels::managedValues());
+    }
+
+    public function test_update_keeps_unknown_categories(): void
+    {
+        $this->assertSame(
+            ['Amis', 'Passifs'],
+            $this->callMergeCategories(['Amis', 'Actifs'], 'Passifs'),
+        );
+    }
+
+    public function test_update_removes_stale_managed_category(): void
+    {
+        $this->assertSame(
+            ['Amis'],
+            $this->callMergeCategories(['Amis', 'Actifs', 'Archives'], null),
+        );
+    }
+
+    public function test_update_does_not_duplicate_managed_category(): void
+    {
+        $this->assertSame(
+            ['Amis', 'Actifs'],
+            $this->callMergeCategories(['Amis', 'Actifs'], 'Actifs'),
+        );
     }
 
     public function test_contact_with_multiple_emails_uses_first(): void

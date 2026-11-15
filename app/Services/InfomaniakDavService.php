@@ -332,7 +332,19 @@ class InfomaniakDavService implements DavServiceInterface
 
         $this->replaceTextProperty($vcard, 'EMAIL', $data['email'] ?? null, ['TYPE' => 'INTERNET']);
         $this->replaceTextProperty($vcard, 'TEL', $data['tel'] ?? null, ['TYPE' => 'CELL']);
-        $this->replaceTextProperty($vcard, 'CATEGORIES', $data['category'] ?? null);
+        $existingCategories = [];
+
+        if (isset($vcard->CATEGORIES)) {
+            foreach ($vcard->CATEGORIES as $property) {
+                foreach (explode(',', (string) $property) as $category) {
+                    $existingCategories[] = $category;
+                }
+            }
+        }
+
+        $categories = $this->mergeCategories($existingCategories, $data['category'] ?? null);
+
+        $this->replaceTextProperty($vcard, 'CATEGORIES', $categories === [] ? null : implode(',', $categories));
 
         if ($address = $this->buildAddress($data)) {
             $vcard->remove('ADR');
@@ -387,6 +399,26 @@ class InfomaniakDavService implements DavServiceInterface
         }
 
         return $member->status->davGroup()->value;
+    }
+
+    /**
+     * @param  array<int, string>  $existing
+     * @return array<int, string>
+     */
+    private function mergeCategories(array $existing, ?string $desired): array
+    {
+        $managed = GroupLabels::managedValues();
+
+        $kept = array_values(array_filter(
+            array_map(fn (string $value): string => trim($value), $existing),
+            fn (string $value): bool => $value !== '' && ! in_array($value, $managed, true),
+        ));
+
+        if ($desired !== null && $desired !== '' && ! in_array($desired, $kept, true)) {
+            $kept[] = $desired;
+        }
+
+        return array_values(array_unique($kept));
     }
 
     /** @param array<string, string> $data */
