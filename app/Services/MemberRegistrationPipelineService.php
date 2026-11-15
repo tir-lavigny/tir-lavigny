@@ -12,7 +12,7 @@ use App\Models\MemberRegistration;
 use App\Models\Season;
 use App\Models\User;
 use App\Models\Voucher;
-use App\Support\MemberDataCipher;
+use App\Rules\UniqueMemberAvs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -187,17 +187,7 @@ class MemberRegistrationPipelineService
             return;
         }
 
-        $normalized = preg_replace('/\D/', '', $avs) ?? '';
-
-        if ($normalized === '') {
-            return;
-        }
-
-        $exists = Member::withTrashed()
-            ->where('avs_hash', app(MemberDataCipher::class)->hash($normalized))
-            ->exists();
-
-        if ($exists) {
+        if (UniqueMemberAvs::exists($avs)) {
             throw new \RuntimeException('Ce numéro AVS est déjà utilisé par un autre membre.');
         }
     }

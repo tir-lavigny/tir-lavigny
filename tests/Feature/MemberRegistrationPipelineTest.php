@@ -249,7 +249,7 @@ class MemberRegistrationPipelineTest extends TestCase
         $this->assertNull($registration->failed_at);
 
         $member = $registration->member;
-        $this->assertSame('DAV connection failed', $member->dav_sync_error);
+        $this->assertSame('La synchronisation du contact DAV a échoué.', $member->dav_sync_error);
         $this->assertNull($member->dav_uid);
 
         Mail::assertSent(MemberDavSyncFailed::class);

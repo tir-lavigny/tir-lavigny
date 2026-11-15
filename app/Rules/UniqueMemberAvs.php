@@ -15,23 +15,26 @@ class UniqueMemberAvs implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        if (self::exists($value, $this->ignoreMemberId)) {
+            $fail('Ce numéro AVS est déjà utilisé par un autre membre.');
+        }
+    }
+
+    public static function exists(mixed $value, ?int $ignoreMemberId = null): bool
+    {
         if (! is_string($value) || trim($value) === '') {
-            return;
+            return false;
         }
 
         $normalized = preg_replace('/\D/', '', $value) ?? '';
 
         if ($normalized === '') {
-            return;
+            return false;
         }
 
-        $exists = Member::withTrashed()
+        return Member::withTrashed()
             ->where('avs_hash', app(MemberDataCipher::class)->hash($normalized))
-            ->when($this->ignoreMemberId !== null, fn ($query) => $query->whereKeyNot($this->ignoreMemberId))
+            ->when($ignoreMemberId !== null, fn ($query) => $query->whereKeyNot($ignoreMemberId))
             ->exists();
-
-        if ($exists) {
-            $fail('Ce numéro AVS est déjà utilisé par un autre membre.');
-        }
     }
 }
