@@ -155,6 +155,7 @@ const handleRemoveUnused = () => {
                         {{ member.status === 'active' ? 'Actif' : 'Passif' }}
                     </Badge>
                     <Badge v-if="member.deleted_at" variant="outline" class="bg-gray-100 text-gray-700">Archivé</Badge>
+                    <Badge v-if="member.anonymized_at" variant="outline" class="bg-gray-100 text-gray-700">Anonymisé</Badge>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <Link v-if="hasPermissionTo(user, 'manage members') && !member.anonymized_at" :href="route('bo.members.edit', member.id)">

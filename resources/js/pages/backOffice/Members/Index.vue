@@ -128,6 +128,7 @@ const handleSync = (member: Member) => {
                                 {{ member.status === 'active' ? 'Actif' : 'Passif' }}
                             </Badge>
                             <Badge v-if="member.deleted_at" variant="outline" class="bg-gray-100 text-gray-700">Archivé</Badge>
+                            <Badge v-if="member.anonymized_at" variant="outline" class="bg-gray-100 text-gray-700">Anonymisé</Badge>
                         </div>
                         <Muted>{{ member.email || '—' }}</Muted>
                         <Badge v-if="member.dav_sync_error" variant="outline" class="w-fit border-red-200 bg-red-100 text-red-800">
