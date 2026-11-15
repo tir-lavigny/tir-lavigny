@@ -146,6 +146,44 @@ class VoucherControllerTest extends TestCase
         );
     }
 
+    public function test_update_accepts_archived_current_member(): void
+    {
+        $member = Member::factory()->archived()->create();
+        $voucher = Voucher::factory()->percent()->create(['member_id' => $member->id]);
+
+        $response = $this->put(route('bo.register.vouchers.update', $voucher), [
+            'discount_percent' => 25.00,
+            'product_id' => $voucher->product_id,
+            'season_id' => $voucher->season_id,
+            'member_id' => $member->id,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('vouchers', [
+            'id' => $voucher->id,
+            'discount_percent' => 25.00,
+            'member_id' => $member->id,
+        ]);
+    }
+
+    public function test_update_rejects_changing_to_archived_member(): void
+    {
+        $current = Member::factory()->create();
+        $archived = Member::factory()->archived()->create();
+        $voucher = Voucher::factory()->percent()->create(['member_id' => $current->id]);
+
+        $response = $this->put(route('bo.register.vouchers.update', $voucher), [
+            'discount_percent' => 25.00,
+            'product_id' => $voucher->product_id,
+            'season_id' => $voucher->season_id,
+            'member_id' => $archived->id,
+        ]);
+
+        $response->assertSessionHasErrors('member_id');
+        $this->assertSame($current->id, $voucher->fresh()->member_id);
+    }
+
     public function test_update_modifies_voucher(): void
     {
         $voucher = Voucher::factory()->percent()->create();
