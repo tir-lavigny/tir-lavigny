@@ -55,7 +55,6 @@ const handleRestore = (member: Member) => {
         route('bo.members.restore', member.id),
         {},
         {
-            onSuccess: () => toast.success('Membre restauré.'),
             onError: () => toast.error('Erreur lors de la restauration.'),
         },
     );
@@ -66,7 +65,6 @@ const handleSync = (member: Member) => {
         route('bo.members.sync', member.id),
         {},
         {
-            onSuccess: () => toast.success('Synchronisation effectuée.'),
             onError: () => toast.error('Erreur lors de la synchronisation.'),
         },
     );

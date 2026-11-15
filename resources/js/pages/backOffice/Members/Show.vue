@@ -68,7 +68,6 @@ const handleSync = () => {
         route('bo.members.sync', member.value.id),
         {},
         {
-            onSuccess: () => toast.success('Synchronisation effectuée.'),
             onError: () => toast.error('Erreur lors de la synchronisation.'),
         },
     );
@@ -79,7 +78,6 @@ const handleRestore = () => {
         route('bo.members.restore', member.value.id),
         {},
         {
-            onSuccess: () => toast.success('Membre restauré.'),
             onError: () => toast.error('Erreur lors de la restauration.'),
         },
     );
@@ -90,7 +88,6 @@ const handleRetryDavDelete = () => {
         route('bo.members.retry-dav-delete', member.value.id),
         {},
         {
-            onSuccess: () => toast.success('Suppression du contact DAV effectuée.'),
             onError: () => toast.error('Erreur lors de la suppression du contact DAV.'),
         },
     );
@@ -99,7 +96,6 @@ const handleRetryDavDelete = () => {
 const handleArchive = () => {
     archiveForm.delete_vouchers = deleteVouchers.value;
     archiveForm.delete(route('bo.members.destroy', member.value.id), {
-        onSuccess: () => toast.success('Membre archivé.'),
         onError: () => toast.error("Erreur lors de l'archivage."),
     });
 };
@@ -108,7 +104,6 @@ const handleForceDelete = () => {
     deleteForm.delete(route('bo.members.force-delete', member.value.id), {
         onSuccess: () => {
             showDeleteDialog.value = false;
-            toast.success('Membre supprimé.');
         },
         onError: () => toast.error('La confirmation est incorrecte.'),
     });

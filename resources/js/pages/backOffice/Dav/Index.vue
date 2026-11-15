@@ -9,7 +9,7 @@ import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { ChevronDown, ChevronUp, RefreshCw, UserPlus } from '@lucide/vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -121,7 +121,6 @@ function confirmImport() {
     generating.value = true;
     form.post(route('bo.dav.import'), {
         onSuccess: () => {
-            toast.success('Membres créés avec succès.');
             showPreviewDialog.value = false;
         },
         onError: () => {
@@ -182,7 +181,6 @@ function confirmSync() {
     }));
     syncForm.post(route('bo.dav.sync'), {
         onSuccess: () => {
-            toast.success('Synchronisation effectuée avec succès.');
             showSyncDialog.value = false;
             syncMembers.value = [];
             syncChoices.value = {};
@@ -231,7 +229,6 @@ function sendLink(memberId: number, davUid: string) {
     linkForm.post(route('bo.dav.link'), {
         preserveScroll: true,
         onSuccess: () => {
-            toast.success('Contact lié avec succès.');
             fetchLinkPreview();
         },
         onError: () => toast.error('Erreur lors de la liaison.'),
@@ -264,16 +261,6 @@ function linkMember(member: UnlinkedMember) {
 
     sendLink(member.member_id, davUid);
 }
-
-onMounted(() => {
-    const flash = page.props.flash as Record<string, string | undefined>;
-    if (flash?.success) {
-        toast.success(flash.success);
-    }
-    if (flash?.error) {
-        toast.error(flash.error);
-    }
-});
 </script>
 
 <template>

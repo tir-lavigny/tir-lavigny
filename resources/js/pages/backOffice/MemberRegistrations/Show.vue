@@ -83,7 +83,6 @@ const handleValidate = () => {
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('Inscription validée, traitement lancé.'),
             onError: () => toast.error("Impossible de valider l'inscription."),
         },
     );
@@ -95,7 +94,6 @@ const handleRetry = () => {
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('Traitement relancé.'),
             onError: () => toast.error('Impossible de relancer le traitement.'),
         },
     );
@@ -104,7 +102,6 @@ const handleRetry = () => {
 const handleDelete = () => {
     router.delete(route('bo.member-registrations.destroy', props.registration.id), {
         onSuccess: () => {
-            toast.success('Lien supprimé avec succès.');
             router.get(route('bo.member-registrations.index'));
         },
         onError: () => toast.error('Impossible de supprimer le lien.'),
