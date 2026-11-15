@@ -529,7 +529,7 @@ class MemberRegistrationFormTest extends TestCase
         $response->assertSessionHasErrors(['country']);
     }
 
-    public function test_after_submission_form_shows_filled_data(): void
+    public function test_after_submission_page_shows_thank_you_without_form_data(): void
     {
         $registration = MemberRegistration::create([
             'form_data' => [
@@ -554,6 +554,7 @@ class MemberRegistrationFormTest extends TestCase
             ->component('MemberRegistration')
             ->where('submitted', true)
             ->has('registration')
+            ->missing('registration.form_data')
         );
     }
 
