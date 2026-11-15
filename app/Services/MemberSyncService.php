@@ -110,7 +110,11 @@ class MemberSyncService
             ->orderByName()
             ->get();
 
-        $memberUids = $members->pluck('dav_uid')->filter()->all();
+        $linkedUids = Member::withTrashed()
+            ->whereNotNull('dav_uid')
+            ->pluck('dav_uid')
+            ->filter()
+            ->all();
 
         $memberRows = [];
 
@@ -171,7 +175,7 @@ class MemberSyncService
 
         $unlinkedContacts = $contacts
             ->filter(fn (array $contact) => ($contact['uid'] ?? '') !== '')
-            ->reject(fn (array $contact) => in_array($contact['uid'], $memberUids, true))
+            ->reject(fn (array $contact) => in_array($contact['uid'], $linkedUids, true))
             ->values();
 
         $membersByEmail = $unlinkedMembers

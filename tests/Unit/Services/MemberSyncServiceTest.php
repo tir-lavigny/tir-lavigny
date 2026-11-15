@@ -119,6 +119,7 @@ class MemberSyncServiceTest extends TestCase
 
         $this->assertSame([], $preview['members']);
         $this->assertSame([], $preview['unlinked_members']);
+        $this->assertSame([], $preview['unlinked_contacts']);
     }
 
     public function test_apply_rejects_anonymized_member(): void
