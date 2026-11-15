@@ -233,6 +233,9 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
         Route::post('members/{member}/restore', [MemberController::class, 'restore'])->withTrashed()->name('bo.members.restore');
         Route::delete('members/{member}/force-delete', [MemberController::class, 'forceDelete'])->withTrashed()->name('bo.members.force-delete');
         Route::post('members/{member}/sync', [MemberController::class, 'sync'])->withTrashed()->name('bo.members.sync');
+        Route::post('members/{member}/retry-dav-delete', [MemberController::class, 'retryDavDelete'])
+            ->withTrashed()
+            ->name('bo.members.retry-dav-delete');
     });
 
     Route::middleware('permission:manage operating days')->prefix('register')->group(function () {

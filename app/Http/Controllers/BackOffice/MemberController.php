@@ -6,6 +6,7 @@ use App\Actions\Member\ArchiveMemberAction;
 use App\Actions\Member\CreateMemberAction;
 use App\Actions\Member\DeleteMemberAction;
 use App\Actions\Member\RestoreMemberAction;
+use App\Actions\Member\RetryDavDeleteAction;
 use App\Actions\Member\SyncMemberAction;
 use App\Actions\Member\UpdateMemberAction;
 use App\Http\Controllers\Controller;
@@ -232,6 +233,24 @@ class MemberController extends Controller implements HasMiddleware
             ->with('success', $result['anonymized']
                 ? 'Membre anonymisé avec succès. Les données personnelles ont été supprimées.'
                 : 'Membre supprimé définitivement.');
+    }
+
+    public function retryDavDelete(
+        Member $member,
+        RetryDavDeleteAction $action,
+        MemberDavSyncFailureNotifier $notifier,
+    ): RedirectResponse {
+        $result = $action->execute($member);
+
+        if (! $result['success']) {
+            $notifier->notify($member, error: $result['error']);
+
+            return redirect()->route('bo.members.show', $member)
+                ->with('error', 'La suppression du contact DAV a échoué.');
+        }
+
+        return redirect()->route('bo.members.show', $member)
+            ->with('success', 'Contact DAV supprimé avec succès.');
     }
 
     public function sync(

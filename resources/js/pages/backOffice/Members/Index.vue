@@ -149,7 +149,7 @@ const handleSync = (member: Member) => {
                             </TooltipTrigger>
                             <TooltipContent><p>Synchroniser</p></TooltipContent>
                         </Tooltip>
-                        <Tooltip v-if="member.deleted_at && hasPermissionTo(user, 'manage members')">
+                        <Tooltip v-if="member.deleted_at && !member.anonymized_at && hasPermissionTo(user, 'manage members')">
                             <TooltipTrigger>
                                 <Button size="icon" variant="outline" @click="handleRestore(member)"><Undo2 /></Button>
                             </TooltipTrigger>

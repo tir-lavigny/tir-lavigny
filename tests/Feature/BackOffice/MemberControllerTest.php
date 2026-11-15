@@ -663,6 +663,59 @@ class MemberControllerTest extends TestCase
         ]);
     }
 
+    public function test_retry_dav_delete_clears_uid_for_anonymized_member(): void
+    {
+        $member = Member::factory()->create([
+            'anonymized_at' => now(),
+            'dav_uid' => 'uid-1',
+            'dav_synced_snapshot' => ['email' => 'jean@example.com'],
+            'dav_sync_error' => 'DAV down',
+        ]);
+
+        $response = $this->post(route('bo.members.retry-dav-delete', $member));
+
+        $response->assertRedirect(route('bo.members.show', $member));
+        $response->assertSessionHas('success');
+
+        $member->refresh();
+        $this->assertNull($member->dav_uid);
+        $this->assertNull($member->dav_synced_snapshot);
+        $this->assertNull($member->dav_sync_error);
+    }
+
+    public function test_retry_dav_delete_reports_failure(): void
+    {
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('deleteMember')->once()->andReturn(false);
+        $this->app->instance(DavServiceInterface::class, $davMock);
+
+        $member = Member::factory()->create([
+            'anonymized_at' => now(),
+            'dav_uid' => 'uid-1',
+        ]);
+
+        $response = $this->post(route('bo.members.retry-dav-delete', $member));
+
+        $response->assertRedirect(route('bo.members.show', $member));
+        $response->assertSessionHas('error');
+        $this->assertSame('uid-1', $member->fresh()->dav_uid);
+    }
+
+    public function test_retry_dav_delete_is_forbidden_for_non_anonymized_member(): void
+    {
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldNotReceive('deleteMember');
+        $this->app->instance(DavServiceInterface::class, $davMock);
+
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+
+        $response = $this->post(route('bo.members.retry-dav-delete', $member));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertSame('uid-1', $member->fresh()->dav_uid);
+    }
+
     public function test_force_delete_blocks_anonymized_member(): void
     {
         $member = Member::factory()->create(['anonymized_at' => now()]);

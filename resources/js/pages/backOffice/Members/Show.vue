@@ -85,6 +85,17 @@ const handleRestore = () => {
     );
 };
 
+const handleRetryDavDelete = () => {
+    router.post(
+        route('bo.members.retry-dav-delete', member.value.id),
+        {},
+        {
+            onSuccess: () => toast.success('Suppression du contact DAV effectuée.'),
+            onError: () => toast.error('Erreur lors de la suppression du contact DAV.'),
+        },
+    );
+};
+
 const handleArchive = () => {
     archiveForm.delete_vouchers = deleteVouchers.value;
     archiveForm.delete(route('bo.members.destroy', member.value.id), {
@@ -146,11 +157,18 @@ const handleRemoveUnused = () => {
                     <Badge v-if="member.deleted_at" variant="outline" class="bg-gray-100 text-gray-700">Archivé</Badge>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <Link v-if="hasPermissionTo(user, 'manage members')" :href="route('bo.members.edit', member.id)">
+                    <Link v-if="hasPermissionTo(user, 'manage members') && !member.anonymized_at" :href="route('bo.members.edit', member.id)">
                         <Button variant="outline"><Pencil class="mr-2 h-4 w-4" /> Modifier</Button>
                     </Link>
-                    <Button variant="outline" @click="handleSync"><RefreshCw class="mr-2 h-4 w-4" /> Synchroniser</Button>
-                    <Button v-if="member.deleted_at" variant="outline" @click="handleRestore"><Undo2 class="mr-2 h-4 w-4" /> Restaurer</Button>
+                    <Button v-if="!member.anonymized_at" variant="outline" @click="handleSync">
+                        <RefreshCw class="mr-2 h-4 w-4" /> Synchroniser
+                    </Button>
+                    <Button v-if="member.anonymized_at && (member.dav_uid || member.dav_sync_error)" variant="outline" @click="handleRetryDavDelete">
+                        <Trash2 class="mr-2 h-4 w-4" /> Supprimer le contact DAV
+                    </Button>
+                    <Button v-if="member.deleted_at && !member.anonymized_at" variant="outline" @click="handleRestore">
+                        <Undo2 class="mr-2 h-4 w-4" /> Restaurer
+                    </Button>
                     <AppAlertDialog
                         v-if="!member.deleted_at"
                         title="Archiver ce membre ?"
@@ -286,7 +304,7 @@ const handleRemoveUnused = () => {
                     <Muted v-else class="mt-2">Aucun ticket.</Muted>
                 </div>
 
-                <div class="mt-6">
+                <div v-if="!member.anonymized_at" class="mt-6">
                     <H3>Suppression définitive</H3>
                     <Muted class="mt-2">
                         Cette action est irréversible. Si le membre possède des bons ou des tickets, ses données personnelles seront supprimées et le
