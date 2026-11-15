@@ -75,6 +75,27 @@ class ReencryptMemberAvsTest extends TestCase
             ->assertSuccessful();
     }
 
+    public function test_recomputes_missing_hash_for_value_already_on_new_key(): void
+    {
+        $newCipher = new MemberDataCipher($this->newKey);
+
+        $member = Member::factory()->create();
+        DB::table('members')->where('id', $member->id)->update([
+            'avs' => $newCipher->encrypt('756.1234.5678.90'),
+            'avs_hash' => null,
+        ]);
+
+        $this->artisan('members:reencrypt-avs', [
+            '--old-key' => $this->oldKey,
+            '--new-key' => $this->newKey,
+        ])->assertSuccessful();
+
+        $this->assertSame(
+            $newCipher->hash('7561234567890'),
+            DB::table('members')->where('id', $member->id)->value('avs_hash')
+        );
+    }
+
     public function test_fails_when_old_key_cannot_decrypt(): void
     {
         $oldCipher = new MemberDataCipher($this->oldKey);

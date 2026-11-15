@@ -105,10 +105,10 @@ class ReencryptMemberAvs extends Command
         int $id,
     ): ?string {
         try {
-            $newCipher->decrypt($value);
+            $plaintext = $newCipher->decrypt($value);
             $skipped++;
 
-            return null;
+            return $plaintext;
         } catch (Throwable) {
             // Value still uses the old key or is legacy plaintext.
         }

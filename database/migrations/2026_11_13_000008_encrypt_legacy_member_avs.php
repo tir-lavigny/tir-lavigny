@@ -21,7 +21,13 @@ return new class extends Migration
                     $plaintext = (string) $member->avs;
 
                     try {
-                        $cipher->decrypt($plaintext);
+                        $decrypted = $cipher->decrypt($plaintext);
+
+                        if (Avs::looksLike($decrypted)) {
+                            DB::table('members')->where('id', $member->id)->update([
+                                'avs_hash' => $cipher->hash(preg_replace('/\D/', '', $decrypted) ?? ''),
+                            ]);
+                        }
 
                         continue;
                     } catch (Throwable) {
