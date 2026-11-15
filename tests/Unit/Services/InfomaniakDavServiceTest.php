@@ -8,6 +8,7 @@ use App\Models\Member;
 use App\Services\InfomaniakDavService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use ReflectionClass;
+use Sabre\DAV\Client;
 use Sabre\VObject\Reader;
 use Tests\TestCase;
 
@@ -53,6 +54,37 @@ class InfomaniakDavServiceTest extends TestCase
         $method->setAccessible(true);
 
         return $method->invoke($service, $existing, $desired);
+    }
+
+    private function serviceWithDeleteStatus(int $statusCode): InfomaniakDavService
+    {
+        $service = new InfomaniakDavService;
+        $client = \Mockery::mock(Client::class);
+        $client->shouldReceive('request')
+            ->once()
+            ->with('DELETE', 'http://localhost/uid-1.vcf')
+            ->andReturn(['statusCode' => $statusCode, 'body' => '']);
+
+        $reflection = new ReflectionClass($service);
+        $property = $reflection->getProperty('client');
+        $property->setAccessible(true);
+        $property->setValue($service, $client);
+
+        return $service;
+    }
+
+    public function test_delete_member_treats_missing_contact_as_success(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+
+        $this->assertTrue($this->serviceWithDeleteStatus(404)->deleteMember($member));
+    }
+
+    public function test_delete_member_treats_gone_contact_as_success(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+
+        $this->assertTrue($this->serviceWithDeleteStatus(410)->deleteMember($member));
     }
 
     public function test_managed_categories_are_defined_once(): void

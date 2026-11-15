@@ -293,6 +293,10 @@ class InfomaniakDavService implements DavServiceInterface
     {
         $response = $this->client->request('DELETE', $contactUrl);
 
+        if (in_array($response['statusCode'], [404, 410], true)) {
+            return true;
+        }
+
         if ($response['statusCode'] >= 400) {
             Log::error('Failed to delete contact from Infomaniak DAV', [
                 'contact_url' => $contactUrl,
