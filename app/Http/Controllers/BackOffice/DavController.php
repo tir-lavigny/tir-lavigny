@@ -35,7 +35,7 @@ class DavController extends Controller
                 'existingDavUids' => [],
                 'activeCategory' => DavGroupLabels::ACTIVE_MEMBERS->value,
                 'passiveCategory' => DavGroupLabels::PASSIVE_MEMBERS->value,
-                'error' => 'Erreur lors de la récupération des contacts: '.$e->getMessage(),
+                'error' => 'Erreur lors de la récupération des contacts.',
             ]);
         }
 
@@ -65,7 +65,7 @@ class DavController extends Controller
                 'exception' => $e,
             ]);
 
-            return back()->withErrors(['error' => 'Erreur lors de la récupération des contacts: '.$e->getMessage()]);
+            return back()->withErrors(['error' => 'Erreur lors de la récupération des contacts.']);
         }
 
         $message = "$result[created] membre(s) créé(s) avec succès.";
@@ -89,7 +89,7 @@ class DavController extends Controller
                 'exception' => $e,
             ]);
 
-            return response()->json(['error' => 'Erreur lors de la récupération des contacts: '.$e->getMessage()], 500);
+            return response()->json(['error' => 'Erreur lors de la récupération des contacts.'], 500);
         }
 
         return response()->json($result);
@@ -117,7 +117,7 @@ class DavController extends Controller
                 'exception' => $e,
             ]);
 
-            return back()->with('error', 'Erreur lors de la synchronisation: '.$e->getMessage());
+            return back()->with('error', 'Erreur lors de la synchronisation.');
         }
 
         if ($result['failed'] !== []) {
