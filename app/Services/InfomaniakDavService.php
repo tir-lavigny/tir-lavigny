@@ -173,20 +173,7 @@ class InfomaniakDavService implements DavServiceInterface
         }
 
         try {
-            $vcard = Reader::read(trim($vcardRaw));
-
-            return [
-                'url' => $contactUrl,
-                'uid' => (string) ($vcard->UID ?? ''),
-                'fn' => (string) ($vcard->FN ?? ''),
-                'n' => (string) ($vcard->N ?? ''),
-                'email' => $this->extractFirstProperty($vcard, 'EMAIL'),
-                'tel' => $this->extractFirstProperty($vcard, 'TEL'),
-                'org' => (string) ($vcard->ORG ?? ''),
-                'adr' => $this->extractProperty($vcard, 'ADR'),
-                'category' => $this->extractProperty($vcard, 'CATEGORIES'),
-                'vcard_raw' => $vcardRaw,
-            ];
+            return $this->readContact($contactUrl, $vcardRaw);
         } catch (\Exception $e) {
             Log::warning('Failed to parse vCard', [
                 'url' => $contactUrl,
@@ -195,6 +182,51 @@ class InfomaniakDavService implements DavServiceInterface
 
             return null;
         }
+    }
+
+    /** @return array<string, string>|null */
+    public function findContact(string $uid): ?array
+    {
+        $contactUrl = rtrim($this->getAddressbookUrl(), '/').'/'.$uid.'.vcf';
+        $response = $this->client->request('GET', $contactUrl);
+
+        if ($response['statusCode'] === 404) {
+            return null;
+        }
+
+        if ($response['statusCode'] >= 400) {
+            throw new \RuntimeException(sprintf(
+                'DAV GET failed with status %d',
+                $response['statusCode'],
+            ));
+        }
+
+        $vcardRaw = (string) $response['body'];
+
+        if ($vcardRaw === '') {
+            return null;
+        }
+
+        return $this->readContact($contactUrl, $vcardRaw);
+    }
+
+    /** @return array<string, string> */
+    private function readContact(string $contactUrl, string $vcardRaw): array
+    {
+        $vcard = Reader::read(trim($vcardRaw));
+
+        return [
+            'url' => $contactUrl,
+            'uid' => (string) ($vcard->UID ?? ''),
+            'fn' => (string) ($vcard->FN ?? ''),
+            'n' => (string) ($vcard->N ?? ''),
+            'email' => $this->extractFirstProperty($vcard, 'EMAIL'),
+            'tel' => $this->extractFirstProperty($vcard, 'TEL'),
+            'org' => (string) ($vcard->ORG ?? ''),
+            'adr' => $this->extractProperty($vcard, 'ADR'),
+            'category' => $this->extractProperty($vcard, 'CATEGORIES'),
+            'vcard_raw' => $vcardRaw,
+        ];
     }
 
     /** @param array<string, string> $data

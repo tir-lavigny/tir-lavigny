@@ -29,6 +29,14 @@ class StubDavService implements DavServiceInterface
         return null;
     }
 
+    /** @return array<string, string>|null */
+    public function findContact(string $uid): ?array
+    {
+        Log::info('StubDavService: findContact called', ['uid' => $uid]);
+
+        return null;
+    }
+
     /** @return array<string, string> */
     public function createContactFromMember(Member $member): array
     {

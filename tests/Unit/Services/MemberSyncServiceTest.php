@@ -376,7 +376,7 @@ class MemberSyncServiceTest extends TestCase
 
         $dav = Mockery::mock(DavServiceInterface::class);
         $dav->shouldReceive('updateMember')->once()->andReturn(false);
-        $dav->shouldReceive('getContacts')->once()->andReturn([]);
+        $dav->shouldReceive('findContact')->once()->andReturn(null);
         $dav->shouldReceive('createContactFromMember')
             ->once()
             ->andReturn(['uid' => 'new-uid', 'url' => 'https://dav.example.com/new-uid.vcf']);
@@ -395,7 +395,7 @@ class MemberSyncServiceTest extends TestCase
 
         $dav = Mockery::mock(DavServiceInterface::class);
         $dav->shouldReceive('updateMember')->once()->andReturn(false);
-        $dav->shouldReceive('getContacts')->once()->andReturn([$this->contact(['uid' => 'uid-1'])]);
+        $dav->shouldReceive('findContact')->once()->andReturn($this->contact(['uid' => 'uid-1']));
 
         $service = new MemberSyncService($dav);
         $result = $service->push($member);
@@ -411,7 +411,7 @@ class MemberSyncServiceTest extends TestCase
 
         $dav = Mockery::mock(DavServiceInterface::class);
         $dav->shouldReceive('updateMember')->once()->andReturn(false);
-        $dav->shouldReceive('getContacts')->once()->andReturn([$this->contact(['uid' => 'uid-1'])]);
+        $dav->shouldReceive('findContact')->once()->andReturn($this->contact(['uid' => 'uid-1']));
 
         $service = new MemberSyncService($dav);
         $result = $service->push($member);
@@ -419,6 +419,23 @@ class MemberSyncServiceTest extends TestCase
         $this->assertFalse($result['success']);
         $this->assertSame('Impossible de mettre à jour le contact DAV.', $result['error']);
         $this->assertSame($result['error'], $member->fresh()->dav_sync_error);
+    }
+
+    public function test_push_does_not_recreate_when_contact_lookup_fails(): void
+    {
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+
+        $dav = Mockery::mock(DavServiceInterface::class);
+        $dav->shouldReceive('updateMember')->once()->andReturn(false);
+        $dav->shouldReceive('findContact')->once()->andThrow(new \RuntimeException('Malformed vCard'));
+        $dav->shouldNotReceive('createContactFromMember');
+
+        $service = new MemberSyncService($dav);
+        $result = $service->push($member);
+
+        $this->assertFalse($result['success']);
+        $this->assertSame('Malformed vCard', $result['error']);
+        $this->assertSame('uid-1', $member->fresh()->dav_uid);
     }
 
     public function test_push_catches_dav_exception(): void
