@@ -138,9 +138,9 @@ class TicketValidationService
         }
 
         if ($voucher->member_id !== null) {
-            $memberStatus = DB::table('members')->where('id', $voucher->member_id)->value('status');
+            $member = DB::table('members')->where('id', $voucher->member_id)->first();
 
-            if ($memberStatus !== MemberStatus::ACTIVE->value) {
+            if (! $member || $member->status !== MemberStatus::ACTIVE->value || $member->deleted_at !== null) {
                 $validator->errors()->add(
                     $errorKey,
                     'The voucher belongs to an inactive member.'

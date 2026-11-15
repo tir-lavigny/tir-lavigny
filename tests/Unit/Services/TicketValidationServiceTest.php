@@ -121,6 +121,30 @@ class TicketValidationServiceTest extends TestCase
 
     // ── Voucher uniqueness ──────────────────────────────────────────────────
 
+    public function test_rejects_voucher_without_archived_member(): void
+    {
+        $season = Season::factory()->create();
+        $category = Category::factory()->create(['is_restricted' => false]);
+        $product = Product::factory()->create(['category_id' => $category->id]);
+        $day = OperatingDay::factory()->create(['season_id' => $season->id]);
+        $member = Member::factory()->archived()->create();
+        $voucher = Voucher::factory()->percent()->create([
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+            'member_id' => $member->id,
+        ]);
+
+        $validator = $this->makeValidator();
+        $this->service->validateItems(
+            [['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]]],
+            $day->id,
+            null,
+            $validator
+        );
+
+        $this->assertTrue($this->hasError($validator, 'items.0.voucher_ids.0'));
+    }
+
     public function test_rejects_duplicate_voucher_id_in_same_ticket(): void
     {
         $season = Season::factory()->create();
