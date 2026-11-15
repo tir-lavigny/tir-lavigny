@@ -556,6 +556,8 @@ class MemberRegistrationFormTest extends TestCase
             ->has('registration')
             ->missing('registration.form_data')
             ->missing('registration.form_name')
+            ->missing('registration.error_message')
+            ->missing('registration.failed_at')
         );
     }
 

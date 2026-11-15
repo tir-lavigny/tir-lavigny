@@ -25,7 +25,7 @@ class MemberRegistrationController extends Controller
         $submitted = $registration->form_submitted_at !== null;
 
         if ($submitted) {
-            $registration->makeHidden(['form_name']);
+            $registration->makeHidden(['form_name', 'error_message', 'failed_at']);
         }
 
         return Inertia::render('MemberRegistration', [
