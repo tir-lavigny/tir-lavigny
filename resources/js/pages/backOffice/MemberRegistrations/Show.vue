@@ -37,7 +37,9 @@ const copyToClipboard = async () => {
     }
 };
 
-const hasFailed = () => props.registration.failed_at !== null;
+const hasFailed = () => props.registration.failed_at !== null || hasDavSyncError();
+
+const hasDavSyncError = () => props.registration.status === 'completed' && Boolean(props.registration.member?.dav_sync_error);
 
 const canValidate = () => props.registration.status === 'form_filled';
 
@@ -179,7 +181,7 @@ const displayUrl = flash?.form_url ?? props.formUrl;
             <Card v-if="hasFailed()" class="border-destructive/50 bg-destructive/5">
                 <CardHeader class="pb-2"><CardTitle class="text-destructive text-sm">Erreur</CardTitle></CardHeader>
                 <CardContent>
-                    <P class="text-sm">{{ registration.error_message }}</P>
+                    <P class="text-sm">{{ registration.error_message ?? 'Synchronisation DAV échouée.' }}</P>
                     <Button size="sm" variant="outline" class="mt-3" @click="handleRetry">
                         <RotateCcw class="mr-2 size-4" />
                         {{ retryLabel(registration.status) }}
