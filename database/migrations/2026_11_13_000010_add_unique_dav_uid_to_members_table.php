@@ -24,7 +24,7 @@ return new class extends Migration
 
                 DB::table('members')
                     ->whereIn('id', $duplicateIds)
-                    ->update(['dav_uid' => null]);
+                    ->update(['dav_uid' => null, 'dav_synced_snapshot' => null]);
             });
 
         Schema::table('members', function (Blueprint $table) {
