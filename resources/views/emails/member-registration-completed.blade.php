@@ -106,7 +106,7 @@
                     {{ $registration->form_data['last_name'] }}</p>
                 <p><strong>Email :</strong> {{ $registration->form_data['email'] }}</p>
                 <p><strong>DAV :</strong>
-                    {{ $registration->member?->dav_sync_error ? 'Synchronisation à relancer' : 'Synchronisé' }}
+                    {{ $registration->member?->dav_sync_error ? 'Synchronisation à relancer' : 'Synchronisation en cours' }}
                 </p>
                 <p><strong>Membre créé :</strong> Oui</p>
                 <p><strong>Bons de base :</strong>

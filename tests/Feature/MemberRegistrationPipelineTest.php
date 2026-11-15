@@ -170,6 +170,19 @@ class MemberRegistrationPipelineTest extends TestCase
         Mail::assertNotSent(MemberDavSyncFailed::class);
     }
 
+    public function test_completion_mail_does_not_claim_dav_success_before_push(): void
+    {
+        $registration = $this->createRegistrationWithData();
+        $member = Member::factory()->create(['dav_sync_error' => null]);
+        $registration->member()->associate($member);
+        $registration->save();
+
+        $html = (new MemberRegistrationCompleted($registration))->render();
+
+        $this->assertStringNotContainsString('Synchronisé', $html);
+        $this->assertStringContainsString('Synchronisation en cours', $html);
+    }
+
     public function test_pipeline_does_not_write_registration_dav_uid(): void
     {
         $registration = $this->createRegistrationWithData();
