@@ -299,6 +299,7 @@ const handleRemoveUnused = () => {
                         <div v-for="ticket in member.tickets" :key="ticket.id" class="rounded-lg border p-4">
                             <p class="font-medium">Ticket #{{ ticket.id }}</p>
                             <p class="text-muted-foreground text-sm">{{ formatDate(ticket.created_at, 'DD.MM.YYYY HH:mm') }}</p>
+                            <Badge v-if="ticket.deleted_at" variant="outline" class="bg-gray-100 text-gray-700">Remboursé</Badge>
                         </div>
                     </div>
                     <Muted v-else class="mt-2">Aucun ticket.</Muted>

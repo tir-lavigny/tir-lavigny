@@ -1070,6 +1070,20 @@ class MemberControllerTest extends TestCase
         );
     }
 
+    public function test_show_includes_refunded_tickets(): void
+    {
+        $member = Member::factory()->create();
+        $ticket = Ticket::factory()->create(['member_id' => $member->id]);
+        $ticket->delete();
+
+        $response = $this->get(route('bo.members.show', $member));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->has('member.tickets', 1)
+            ->where('member.tickets.0.id', $ticket->id)
+        );
+    }
+
     public function test_show_passes_dav_synced_at(): void
     {
         $member = Member::factory()->create(['dav_synced_at' => now()]);
