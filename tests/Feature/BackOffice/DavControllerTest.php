@@ -600,15 +600,31 @@ class DavControllerTest extends TestCase
         ]);
 
         $davMock = Mockery::mock(DavServiceInterface::class);
-        $davMock->shouldReceive('getContacts')->andReturn([]);
+        $davMock->shouldReceive('getContacts')->andReturn([
+            [
+                'url' => 'http://localhost/uid-001.vcf',
+                'uid' => 'uid-001',
+                'fn' => 'Dupont Pierre',
+                'n' => 'Dupont;Pierre;;;',
+                'email' => '',
+                'tel' => '',
+                'org' => '',
+                'category' => 'Actifs',
+                'vcard_raw' => 'BEGIN:VCARD',
+            ],
+        ]);
         $davMock->shouldReceive('updateMember')
+            ->once()
             ->with(Mockery::on(fn ($m) => $m->id === $member->id))
             ->andReturn(true);
+        $davMock->shouldNotReceive('createContactFromMember');
         $this->app->instance(DavServiceInterface::class, $davMock);
 
         $this->post(route('bo.dav.sync'), [
             'choices' => [['member_id' => $member->id, 'fields' => ['first_name' => 'member', 'last_name' => 'member', 'email' => 'member', 'tel' => 'member', 'status' => 'member', 'archived' => 'member']]],
-        ])->assertRedirect();
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $this->assertSame('uid-001', $member->fresh()->dav_uid);
     }
 
     public function test_sync_redirects_with_success_flash(): void
