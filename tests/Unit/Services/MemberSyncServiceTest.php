@@ -141,6 +141,7 @@ class MemberSyncServiceTest extends TestCase
         ]);
 
         $this->assertSame(0, $result['updated']);
+        $this->assertSame([$member->id], $result['failed']);
         $this->assertSame('[Deleted]', $member->fresh()->first_name);
         $this->assertSame('', $member->fresh()->last_name);
         $this->assertNotNull($member->fresh()->anonymized_at);

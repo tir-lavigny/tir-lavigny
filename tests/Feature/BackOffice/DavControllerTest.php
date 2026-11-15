@@ -671,7 +671,7 @@ class DavControllerTest extends TestCase
 
         $this->post(route('bo.dav.sync'), [
             'choices' => [['member_id' => $member->id, 'fields' => ['first_name' => 'dav', 'last_name' => 'dav']]],
-        ])->assertRedirect();
+        ])->assertRedirect()->assertSessionHas('error');
 
         $this->assertSame('[Deleted]', $member->fresh()->first_name);
         $this->assertSame('', $member->fresh()->last_name);
@@ -706,6 +706,18 @@ class DavControllerTest extends TestCase
         ])->assertRedirect()->assertSessionHas('error');
 
         $this->assertNull($member->fresh()->dav_uid);
+    }
+
+    public function test_sync_flashes_error_when_dav_is_unreachable(): void
+    {
+        $this->actingAs($this->admin);
+
+        $member = Member::factory()->create(['dav_uid' => 'uid-1']);
+        $this->mockDavServiceThrows('Connection refused');
+
+        $this->post(route('bo.dav.sync'), [
+            'choices' => [['member_id' => $member->id, 'fields' => ['first_name' => 'member']]],
+        ])->assertRedirect()->assertSessionHas('error');
     }
 
     public function test_sync_flashes_partial_failure_and_notifies_failed_member(): void

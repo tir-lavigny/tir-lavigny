@@ -107,7 +107,18 @@ class DavController extends Controller
             'choices.*.fields.*' => 'required|in:member,dav',
         ]);
 
-        $result = $service->apply($choices['choices']);
+        try {
+            $result = $service->apply($choices['choices']);
+        } catch (\Exception $e) {
+            report($e);
+
+            Log::error('DAV sync failed', [
+                'operation' => 'sync',
+                'exception' => $e,
+            ]);
+
+            return back()->with('error', 'Erreur lors de la synchronisation: '.$e->getMessage());
+        }
 
         if ($result['failed'] !== []) {
             $notifier ??= app(MemberDavSyncFailureNotifier::class);

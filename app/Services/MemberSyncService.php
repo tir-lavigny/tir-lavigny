@@ -238,7 +238,13 @@ class MemberSyncService
         foreach ($choices as $choice) {
             $member = Member::withTrashed()->find($choice['member_id']);
 
-            if (! $member || $member->isAnonymized()) {
+            if (! $member) {
+                continue;
+            }
+
+            if ($member->isAnonymized()) {
+                $failed[] = $member->id;
+
                 continue;
             }
 
