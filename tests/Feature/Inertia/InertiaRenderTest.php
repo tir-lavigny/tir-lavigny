@@ -84,6 +84,16 @@ class InertiaRenderTest extends TestCase
             );
     }
 
+    public function test_become_member_page_renders_correct_component(): void
+    {
+        $this->get('/become-member')
+            ->assertInertia(fn ($page) => $page
+                ->component('BecomeMember')
+                ->has('og')
+                ->where('og.title', 'Devenir membre - Société de tir de Lavigny')
+            );
+    }
+
     // ─── auth pages ──────────────────────────────────────────────────────────
 
     public function test_login_renders_auth_login_component(): void
