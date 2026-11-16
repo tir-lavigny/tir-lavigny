@@ -108,6 +108,36 @@ class TrashControllerTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_index_hides_vouchers_of_anonymized_members(): void
+    {
+        $member = Member::factory()->archived()->create(['anonymized_at' => now()]);
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+        $voucher->delete();
+
+        $response = $this->get(route('bo.register.trash.index'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('vouchers.data', fn ($data) => ! collect($data)->pluck('id')->contains($voucher->id))
+        );
+    }
+
+    public function test_cannot_restore_voucher_of_anonymized_member(): void
+    {
+        $member = Member::factory()->archived()->create(['anonymized_at' => now()]);
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+        $voucher->delete();
+
+        $response = $this->postJson(route('bo.register.trash.restore', [
+            'type' => 'voucher',
+            'id' => $voucher->id,
+            'confirm' => true,
+        ]));
+
+        $response->assertStatus(302);
+        $response->assertSessionHas('error');
+        $this->assertSoftDeleted('vouchers', ['id' => $voucher->id]);
+    }
+
     public function test_index_filters_vouchers_by_member(): void
     {
         $member = Member::factory()->create();

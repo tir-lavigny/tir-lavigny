@@ -640,6 +640,48 @@ class MemberControllerTest extends TestCase
         $this->assertNotNull($member->fresh()->anonymized_at);
     }
 
+    public function test_force_delete_anonymize_force_deletes_trashed_vouchers(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+        $voucher->delete();
+
+        $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'Jean Dupont',
+        ])->assertRedirect();
+
+        $this->assertNotNull($member->fresh()->anonymized_at);
+        $this->assertDatabaseMissing('vouchers', ['id' => $voucher->id]);
+    }
+
+    public function test_force_delete_anonymize_keeps_live_unused_vouchers(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+
+        $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'Jean Dupont',
+        ])->assertRedirect();
+
+        $this->assertNotNull($member->fresh()->anonymized_at);
+        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
+    }
+
+    public function test_force_delete_anonymize_keeps_used_vouchers(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+        $ticket = Ticket::factory()->create();
+        TicketItem::factory()->create(['ticket_id' => $ticket->id, 'voucher_id' => $voucher->id]);
+
+        $this->delete(route('bo.members.force-delete', $member), [
+            'confirmation' => 'Jean Dupont',
+        ])->assertRedirect();
+
+        $this->assertNotNull($member->fresh()->anonymized_at);
+        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
+    }
+
     public function test_force_delete_anonymizes_when_tickets_exist(): void
     {
         $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);

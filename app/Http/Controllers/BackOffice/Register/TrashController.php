@@ -47,6 +47,7 @@ class TrashController extends Controller implements HasMiddleware
         $vouchersQuery = Voucher::with(['product', 'season', 'member'])
             ->onlyTrashed()
             ->whereDoesntHave('ticketItems')
+            ->whereDoesntHave('member', fn ($query) => $query->whereNotNull('anonymized_at'))
             ->orderBy('deleted_at', 'desc');
         if ($memberId = $request->input('member_id')) {
             $vouchersQuery->where('member_id', $memberId);
@@ -73,6 +74,10 @@ class TrashController extends Controller implements HasMiddleware
         $modelClass = $this->resolveType($type);
 
         $model = $modelClass::onlyTrashed()->findOrFail($id);
+
+        if ($model instanceof Voucher && $model->member?->isAnonymized()) {
+            return back()->with('error', 'Impossible de restaurer un bon appartenant à un membre anonymisé.');
+        }
 
         if (! $request->boolean('confirm')) {
             return response()->json([
