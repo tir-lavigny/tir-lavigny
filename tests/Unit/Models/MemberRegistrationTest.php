@@ -6,6 +6,7 @@ use App\MemberRegistrationStatus;
 use App\Models\Member;
 use App\Models\MemberRegistration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class MemberRegistrationTest extends TestCase
@@ -25,11 +26,20 @@ class MemberRegistrationTest extends TestCase
             'id' => $memberRegistration->id,
             'form_uuid' => $memberRegistration->form_uuid,
             'status' => MemberRegistrationStatus::PENDING->value,
-            'dav_uid' => null,
             'member_id' => null,
             'form_data' => null,
             'error_message' => null,
         ]);
+    }
+
+    public function test_fillable_excludes_dav_uid(): void
+    {
+        $this->assertNotContains('dav_uid', (new MemberRegistration)->getFillable());
+    }
+
+    public function test_table_has_no_dav_uid_column(): void
+    {
+        $this->assertFalse(DB::getSchemaBuilder()->hasColumn('member_registrations', 'dav_uid'));
     }
 
     public function test_can_associate_member_with_registration(): void
@@ -99,5 +109,52 @@ class MemberRegistrationTest extends TestCase
         ]);
 
         $this->assertEquals('Something went wrong', $memberRegistration->error_message);
+    }
+
+    public function test_avs_is_encrypted_at_rest_and_decrypted_on_access(): void
+    {
+        $memberRegistration = MemberRegistration::create([
+            'form_data' => ['first_name' => 'Jean', 'avs' => '756.1234.5678.90'],
+        ]);
+
+        $raw = DB::table('member_registrations')->where('id', $memberRegistration->id)->value('form_data');
+        $decoded = json_decode((string) $raw, true);
+
+        $this->assertNotSame('756.1234.5678.90', $decoded['avs']);
+        $this->assertSame('756.1234.5678.90', $memberRegistration->fresh()->form_data['avs']);
+    }
+
+    public function test_legacy_plaintext_avs_is_readable(): void
+    {
+        $memberRegistration = MemberRegistration::create();
+
+        DB::table('member_registrations')->where('id', $memberRegistration->id)->update([
+            'form_data' => json_encode(['first_name' => 'Jean', 'avs' => '756.1234.5678.90']),
+        ]);
+
+        $this->assertSame('756.1234.5678.90', $memberRegistration->fresh()->form_data['avs']);
+    }
+
+    public function test_undecryptable_avs_is_hidden(): void
+    {
+        $memberRegistration = MemberRegistration::create();
+
+        DB::table('member_registrations')->where('id', $memberRegistration->id)->update([
+            'form_data' => json_encode(['avs' => 'not-an-avs']),
+        ]);
+
+        $this->assertNull($memberRegistration->fresh()->form_data['avs']);
+    }
+
+    public function test_form_data_is_hidden_but_form_name_is_serialized(): void
+    {
+        $memberRegistration = MemberRegistration::create([
+            'form_data' => ['first_name' => 'Jean', 'last_name' => 'Dupont', 'avs' => '756.1234.5678.90'],
+        ]);
+
+        $array = $memberRegistration->toArray();
+
+        $this->assertArrayNotHasKey('form_data', $array);
+        $this->assertSame('Jean Dupont', $array['form_name']);
     }
 }

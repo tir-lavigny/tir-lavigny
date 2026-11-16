@@ -61,7 +61,7 @@ class SeasonVoucherService
      * @return array<int, array{member_id: int, member_name: string, vouchers: array<int, array{product_name: string, count: int}>}> */
     public function computePlan(Season $season, array $basePackage, array $products): array
     {
-        $members = Member::all();
+        $members = Member::active()->get();
 
         return $this->computePlanForMembers($season, $members, $basePackage, $products);
     }

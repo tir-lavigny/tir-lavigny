@@ -151,15 +151,6 @@ const registerNavItems: NavItem[] = [
               },
           ]
         : []),
-    ...(hasPermissionTo(user, 'manage members')
-        ? [
-              {
-                  title: 'Membres',
-                  href: route('bo.register.members.index'),
-                  icon: Users,
-              },
-          ]
-        : []),
     ...(hasPermissionTo(user, 'view reports')
         ? [
               {
@@ -210,6 +201,11 @@ const stockNavItems: NavItem[] = [
 const managementNavItems: NavItem[] = [
     ...(hasPermissionTo(user, 'manage members')
         ? [
+              {
+                  title: 'Membres',
+                  href: route('bo.members.index'),
+                  icon: Users,
+              },
               {
                   title: 'Contacts',
                   href: route('bo.dav.index'),

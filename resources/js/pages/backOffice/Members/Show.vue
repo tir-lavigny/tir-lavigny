@@ -1,0 +1,336 @@
+<script setup lang="ts">
+import AppAlertDialog from '@/components/AppAlertDialog.vue';
+import { H1, H3 } from '@/components/typography/headings';
+import { Muted } from '@/components/typography/texts';
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import Label from '@/components/ui/label/Label.vue';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDate, hasPermissionTo } from '@/lib/utils';
+import type { BreadcrumbItem, Member, MemberRegistration, SharedData, Voucher } from '@/types';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Archive, Pencil, RefreshCw, Trash2, Undo2 } from '@lucide/vue';
+import { computed, ref } from 'vue';
+import { toast } from 'vue-sonner';
+
+interface MemberWithDetails extends Member {
+    vouchers?: Voucher[];
+    registration?: MemberRegistration;
+    tickets?: import('@/types').Ticket[];
+}
+
+const page = usePage<SharedData>();
+const user = page.props.auth.user;
+
+const props = defineProps<{
+    member: MemberWithDetails;
+    seasons: import('@/types').Season[];
+    vouchers: Voucher[];
+    usedVouchers: Voucher[];
+    unusedVouchers: Voucher[];
+    registrationSnapshot: Record<string, string | number | boolean | null> | null;
+    canDeleteVouchers: boolean;
+}>();
+
+const member = computed(() => props.member);
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Membres', href: route('bo.members.index') },
+    { title: member.value.first_name + ' ' + member.value.last_name, href: route('bo.members.show', member.value.id) },
+];
+
+const selectedSeasonId = ref<number | null>(props.seasons[0]?.id ?? null);
+const selectedSeason = computed(() => props.seasons.find((s) => s.id === selectedSeasonId.value) || null);
+const filteredVouchers = computed(() => props.vouchers.filter((v) => v.season_id === selectedSeasonId.value));
+const unusedVouchers = computed(() => props.unusedVouchers);
+
+const showAvs = ref(false);
+const showDeleteDialog = ref(false);
+const deleteVouchers = ref(false);
+const deleteForm = useForm({ confirmation: '' });
+const archiveForm = useForm({ delete_vouchers: false });
+
+const handleSync = () => {
+    router.post(
+        route('bo.members.sync', member.value.id),
+        {},
+        {
+            onError: () => toast.error('Erreur lors de la synchronisation.'),
+        },
+    );
+};
+
+const handleRestore = () => {
+    router.post(
+        route('bo.members.restore', member.value.id),
+        {},
+        {
+            onError: () => toast.error('Erreur lors de la restauration.'),
+        },
+    );
+};
+
+const handleRetryDavDelete = () => {
+    router.post(
+        route('bo.members.retry-dav-delete', member.value.id),
+        {},
+        {
+            onError: () => toast.error('Erreur lors de la suppression du contact DAV.'),
+        },
+    );
+};
+
+const handleArchive = () => {
+    archiveForm.delete_vouchers = deleteVouchers.value;
+    archiveForm.delete(route('bo.members.destroy', member.value.id), {
+        onError: () => toast.error("Erreur lors de l'archivage."),
+    });
+};
+
+const handleForceDelete = () => {
+    deleteForm.delete(route('bo.members.force-delete', member.value.id), {
+        onSuccess: () => {
+            showDeleteDialog.value = false;
+        },
+        onError: () => toast.error('La confirmation est incorrecte.'),
+    });
+};
+
+const handleRemoveUnused = () => {
+    const vouchers = unusedVouchers.value;
+    if (vouchers.length === 0) return;
+
+    let completed = 0;
+    vouchers.forEach((voucher) => {
+        router.delete(route('bo.register.vouchers.destroy', voucher.id), {
+            onSuccess: () => {
+                toast.success('Bon supprimé.');
+            },
+            onError: () => {
+                toast.error('Erreur lors de la suppression du bon.');
+            },
+            onFinish: () => {
+                completed++;
+                if (completed === vouchers.length) {
+                    router.reload({ only: ['vouchers', 'usedVouchers', 'unusedVouchers'] });
+                }
+            },
+        });
+    });
+};
+</script>
+
+<template>
+    <Head :title="member.first_name + ' ' + member.last_name" />
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+            <div class="flex w-full flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div class="flex items-center gap-2">
+                    <H1>{{ member.first_name }} {{ member.last_name }}</H1>
+                    <Badge
+                        :class="
+                            member.status === 'active'
+                                ? 'border-emerald-200 bg-emerald-100 text-emerald-800'
+                                : 'border-amber-200 bg-amber-100 text-amber-800'
+                        "
+                    >
+                        {{ member.status === 'active' ? 'Actif' : 'Passif' }}
+                    </Badge>
+                    <Badge v-if="member.deleted_at" variant="outline" class="bg-gray-100 text-gray-700">Archivé</Badge>
+                    <Badge v-if="member.anonymized_at" variant="outline" class="bg-gray-100 text-gray-700">Anonymisé</Badge>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <Link v-if="hasPermissionTo(user, 'manage members') && !member.anonymized_at" :href="route('bo.members.edit', member.id)">
+                        <Button variant="outline"><Pencil class="mr-2 h-4 w-4" /> Modifier</Button>
+                    </Link>
+                    <Button v-if="!member.anonymized_at" variant="outline" @click="handleSync">
+                        <RefreshCw class="mr-2 h-4 w-4" /> Synchroniser
+                    </Button>
+                    <Button v-if="member.anonymized_at && (member.dav_uid || member.dav_sync_error)" variant="outline" @click="handleRetryDavDelete">
+                        <Trash2 class="mr-2 h-4 w-4" /> Supprimer le contact DAV
+                    </Button>
+                    <Button v-if="member.deleted_at && !member.anonymized_at" variant="outline" @click="handleRestore">
+                        <Undo2 class="mr-2 h-4 w-4" /> Restaurer
+                    </Button>
+                    <AppAlertDialog
+                        v-if="!member.deleted_at"
+                        title="Archiver ce membre ?"
+                        description="Le membre sera archivé. Les bons utilisés ne sont jamais supprimés."
+                        cancelText="Annuler"
+                    >
+                        <template #trigger>
+                            <Button variant="destructive"><Archive class="mr-2 h-4 w-4" /> Archiver</Button>
+                        </template>
+                        <div v-if="canDeleteVouchers" class="flex items-center gap-2">
+                            <Checkbox id="delete_vouchers" v-model="deleteVouchers" />
+                            <Label for="delete_vouchers">Supprimer aussi les bons inutilisés (toutes saisons)</Label>
+                        </div>
+                        <Muted v-else class="text-sm"> Les bons inutilisés seront conservés. Vous n'avez pas la permission de les supprimer. </Muted>
+                        <template #action>
+                            <Button variant="destructive" @click="handleArchive">Archiver</Button>
+                        </template>
+                    </AppAlertDialog>
+                </div>
+            </div>
+            <div class="border-sidebar-border/70 dark:border-sidebar-border relative flex-1 rounded-xl border p-4">
+                <H3>Informations</H3>
+                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <Label>Email</Label>
+                        <Muted>{{ member.email || '—' }}</Muted>
+                    </div>
+                    <div>
+                        <Label>Téléphone</Label>
+                        <Muted>{{ member.tel || '—' }}</Muted>
+                    </div>
+                    <div>
+                        <Label>AVS</Label>
+                        <div class="flex items-center gap-2">
+                            <Muted>{{ showAvs ? member.avs || '—' : member.avs_masked || '—' }}</Muted>
+                            <Button
+                                v-if="member.avs && hasPermissionTo(user, 'view member sensitive data')"
+                                size="sm"
+                                variant="outline"
+                                @click="showAvs = !showAvs"
+                            >
+                                {{ showAvs ? 'Masquer' : 'Afficher' }}
+                            </Button>
+                        </div>
+                    </div>
+                    <div>
+                        <Label>Citoyen suisse</Label>
+                        <Muted>{{
+                            member.is_swiss_citizen === null || member.is_swiss_citizen === undefined ? '—' : member.is_swiss_citizen ? 'Oui' : 'Non'
+                        }}</Muted>
+                    </div>
+                    <div>
+                        <Label>Adresse</Label>
+                        <Muted>{{ member.street || '—' }} {{ member.npa || '' }} {{ member.city || '' }} {{ member.canton || '' }}</Muted>
+                    </div>
+                    <div>
+                        <Label>Pays</Label>
+                        <Muted>{{ member.country || '—' }}</Muted>
+                    </div>
+                    <div>
+                        <Label>DAV</Label>
+                        <Muted>{{ member.dav_uid || 'Non lié' }}</Muted>
+                        <Muted v-if="member.dav_synced_at"
+                            >Dernière synchronisation : {{ formatDate(member.dav_synced_at, 'DD.MM.YYYY HH:mm') }}</Muted
+                        >
+                        <Muted v-if="member.dav_sync_error" class="text-red-600">Erreur : {{ member.dav_sync_error }}</Muted>
+                    </div>
+                </div>
+
+                <div v-if="member.registration" class="mt-6">
+                    <H3>Inscription</H3>
+                    <div class="mt-2">
+                        <Muted>{{ member.registration.form_submitted_at || '—' }}</Muted>
+                    </div>
+                    <div v-if="registrationSnapshot" class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+                        <div v-for="(value, key) in registrationSnapshot" :key="key">
+                            <Label>{{ key }}</Label>
+                            <Muted>{{ value ?? '—' }}</Muted>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <H3>Bons</H3>
+                    <div class="mt-2 grid max-w-sm grid-cols-4 items-center gap-4">
+                        <Label for="season" class="text-right">Saison</Label>
+                        <Select v-model="selectedSeasonId" id="season" class="col-span-3">
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner une saison" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem v-for="season in seasons" :key="season.id" :value="season.id">
+                                    {{ season.name }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div v-if="filteredVouchers.length" class="mt-2 flex flex-col gap-2">
+                        <div v-for="voucher in filteredVouchers" :key="voucher.id" class="flex items-center justify-between rounded-lg border p-4">
+                            <div>
+                                <p class="font-medium">{{ voucher.product?.name || 'Produit #' + voucher.product_id }}</p>
+                                <p v-if="usedVouchers.some((uv) => uv.id === voucher.id)" class="text-muted-foreground text-sm">Utilisé</p>
+                                <p v-else class="text-muted-foreground text-sm">Non utilisé</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p v-else class="text-muted-foreground mt-2 text-sm">Aucun bon pour cette saison.</p>
+                    <AppAlertDialog
+                        v-if="selectedSeason && unusedVouchers.length > 0 && hasPermissionTo(user, 'manage vouchers')"
+                        title="Supprimer les bons inutilisés ?"
+                        :description="unusedVouchers.length + ' bon(s) inutilisé(s). Cette action est irréversible.'"
+                        cancelText="Annuler"
+                    >
+                        <template #trigger>
+                            <Button variant="destructive" class="mt-4">
+                                <Trash2 class="mr-2 h-4 w-4" /> Supprimer les bons inutilisés ({{ unusedVouchers.length }})
+                            </Button>
+                        </template>
+                        <template #action>
+                            <Button variant="destructive" @click="handleRemoveUnused">Supprimer</Button>
+                        </template>
+                    </AppAlertDialog>
+                </div>
+
+                <div class="mt-6">
+                    <H3>Tickets</H3>
+                    <div v-if="member.tickets?.length" class="mt-2 flex flex-col gap-2">
+                        <div v-for="ticket in member.tickets" :key="ticket.id" class="rounded-lg border p-4">
+                            <p class="font-medium">Ticket #{{ ticket.id }}</p>
+                            <p class="text-muted-foreground text-sm">{{ formatDate(ticket.created_at, 'DD.MM.YYYY HH:mm') }}</p>
+                            <Badge v-if="ticket.deleted_at" variant="outline" class="bg-gray-100 text-gray-700">Remboursé</Badge>
+                        </div>
+                    </div>
+                    <Muted v-else class="mt-2">Aucun ticket.</Muted>
+                </div>
+
+                <div v-if="!member.anonymized_at" class="mt-6">
+                    <H3>Suppression définitive</H3>
+                    <Muted class="mt-2">
+                        Cette action est irréversible. Si le membre possède des bons ou des tickets, ses données personnelles seront supprimées et le
+                        membre sera anonymisé.
+                    </Muted>
+                    <AlertDialog v-model:open="showDeleteDialog">
+                        <AlertDialogTrigger as-child>
+                            <Button variant="destructive" class="mt-4">Supprimer définitivement</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Supprimer définitivement ce membre ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Cette action est irréversible. Si le membre possède des bons ou des tickets, ses données personnelles seront
+                                    supprimées et le membre sera anonymisé.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div class="grid gap-2">
+                                <Label for="confirmation">Saisissez le nom complet du membre pour confirmer</Label>
+                                <Input id="confirmation" v-model="deleteForm.confirmation" type="text" />
+                            </div>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel @click="deleteForm.reset()">Annuler</AlertDialogCancel>
+                                <Button variant="destructive" :disabled="deleteForm.processing" @click="handleForceDelete">Supprimer</Button>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+            </div>
+        </div>
+    </AppLayout>
+</template>

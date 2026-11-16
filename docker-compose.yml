@@ -11,6 +11,10 @@ services:
             APP_DEBUG: "true"
             DB_HOST: db
             DB_PORT: 3306
+            DAV_BASE_URL: http://dav:5232/
+            DAV_USERNAME: test
+            DAV_PASSWORD: test
+            DAV_ADDRESSBOOK_URL: http://dav:5232/test/contacts/
 
         volumes:
             - laravel_storage:/var/www/storage
@@ -18,6 +22,8 @@ services:
         depends_on:
             db:
                 condition: service_healthy
+            dav-init:
+                condition: service_completed_successfully
 
         networks:
             - laravel
@@ -51,6 +57,10 @@ services:
             APP_DEBUG: "true"
             DB_HOST: db
             DB_PORT: 3306
+            DAV_BASE_URL: http://dav:5232/
+            DAV_USERNAME: test
+            DAV_PASSWORD: test
+            DAV_ADDRESSBOOK_URL: http://dav:5232/test/contacts/
 
         volumes:
             - laravel_storage:/var/www/storage
@@ -58,6 +68,8 @@ services:
         depends_on:
             db:
                 condition: service_healthy
+            dav-init:
+                condition: service_completed_successfully
 
         networks:
             - laravel
@@ -97,9 +109,57 @@ services:
         ports:
             - 8025:8025
             - 1025:1025
+
+    dav:
+        image: tomsquest/docker-radicale:latest
+        restart: unless-stopped
+
+        environment:
+            RADICALE_CONFIG_SERVER_HOSTS: 0.0.0.0:5232
+            RADICALE_CONFIG_AUTH_TYPE: none
+            RADICALE_CONFIG_STORAGE_FILESYSTEM_FOLDER: /data/collections
+
+        ports:
+            - "127.0.0.1:5232:5232"
+
+        volumes:
+            - radicale_data:/data
+
+        healthcheck:
+            test: ["CMD-SHELL", "curl --fail http://localhost:5232 || exit 1"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+            start_period: 10s
+
+        networks:
+            - laravel
+
+    dav-init:
+        image: curlimages/curl:latest
+        restart: "no"
+
+        depends_on:
+            dav:
+                condition: service_healthy
+
+        entrypoint:
+            - sh
+            - -c
+            - |
+                curl -sS -o /dev/null -X MKCOL http://dav:5232/test/ || true
+                curl -sS -o /dev/null -X MKCOL \
+                    -H "Content-Type: application/xml; charset=utf-8" \
+                    --data '<mkcol xmlns="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav"><set><prop><resourcetype><collection/><card:addressbook/></resourcetype><displayname>Contacts</displayname></prop></set></mkcol>' \
+                    http://dav:5232/test/contacts/ || true
+
+        networks:
+            - laravel
+
 networks:
     laravel:
 
 volumes:
     mariadb_data:
     laravel_storage:
+    radicale_data:

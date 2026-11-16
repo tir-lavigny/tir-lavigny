@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -48,9 +49,16 @@ class MemberRegistrationController extends Controller implements HasMiddleware
     {
         $memberRegistration->load('member');
 
+        $canViewSensitiveData = Auth::user()?->can('view member sensitive data') ?? false;
+
+        if ($canViewSensitiveData) {
+            $memberRegistration->makeVisible(['form_data']);
+        }
+
         return Inertia::render('backOffice/MemberRegistrations/Show', [
             'registration' => $memberRegistration,
             'formUrl' => $memberRegistration->formUrl(),
+            'canViewSensitiveData' => $canViewSensitiveData,
         ]);
     }
 
@@ -86,7 +94,12 @@ class MemberRegistrationController extends Controller implements HasMiddleware
         $memberRegistration->failed_at = null;
         $memberRegistration->save();
 
-        $pipeline->retryFromStep($memberRegistration);
+        try {
+            $pipeline->retryFromStep($memberRegistration);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('bo.member-registrations.show', $memberRegistration)
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()->route('bo.member-registrations.show', $memberRegistration)
             ->with('success', 'Traitement relancé avec succès.');

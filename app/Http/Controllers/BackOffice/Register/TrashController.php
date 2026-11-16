@@ -11,7 +11,6 @@ use App\Models\Season;
 use App\Models\Ticket;
 use App\Models\TicketItem;
 use App\Models\Voucher;
-use App\Services\DavServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,7 +33,6 @@ class TrashController extends Controller implements HasMiddleware
         'category' => Category::class,
         'product' => Product::class,
         'season' => Season::class,
-        'member' => Member::class,
         'ticket' => Ticket::class,
         'voucher' => Voucher::class,
     ];
@@ -44,7 +42,6 @@ class TrashController extends Controller implements HasMiddleware
         $categories = Category::onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(15, ['*'], 'categories_page');
         $products = Product::with('category')->onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(15, ['*'], 'products_page');
         $seasons = Season::onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(15, ['*'], 'seasons_page');
-        $members = Member::onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(15, ['*'], 'members_page');
         $tickets = Ticket::with('operatingDay', 'member')->onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(15, ['*'], 'tickets_page');
 
         $vouchersQuery = Voucher::with(['product', 'season', 'member'])
@@ -60,7 +57,6 @@ class TrashController extends Controller implements HasMiddleware
             'categories' => $categories,
             'products' => $products,
             'seasons' => $seasons,
-            'members' => $members,
             'tickets' => $tickets,
             'vouchers' => $vouchers,
             'memberFilter' => (int) $memberId,
@@ -68,7 +64,7 @@ class TrashController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function restore(Request $request, string $type, int $id, DavServiceInterface $dav): JsonResponse|RedirectResponse
+    public function restore(Request $request, string $type, int $id): JsonResponse|RedirectResponse
     {
         if ($type === 'ticket') {
             return back()->with('error', 'Les tickets ne peuvent pas être restaurés.');
@@ -92,23 +88,10 @@ class TrashController extends Controller implements HasMiddleware
 
         $model->restore();
 
-        if ($type === 'member' && $model->dav_uid) {
-            $davRes = $dav->restoreMember($model);
-
-            if (! $davRes) {
-                Log::warning('DAV member restore failed', [
-                    'member_id' => $model->id,
-                    'dav_uid' => $model->dav_uid,
-                ]);
-
-                return back()->with('error', 'Membre restauré, mais impossible de récupérer le contact dans Infomaniak.');
-            }
-        }
-
         return back();
     }
 
-    public function forceDelete(Request $request, string $type, int $id, DavServiceInterface $dav): RedirectResponse
+    public function forceDelete(Request $request, string $type, int $id): RedirectResponse
     {
         $modelClass = $this->resolveType($type);
 
@@ -122,18 +105,6 @@ class TrashController extends Controller implements HasMiddleware
         }
 
         try {
-            if ($type === 'member' && $model->dav_uid) {
-                $davRes = $dav->deleteMember($model);
-
-                if (! $davRes) {
-                    Log::warning('DAV member deletion failed', [
-                        'member_id' => $model->id,
-                        'dav_uid' => $model->dav_uid,
-                    ]);
-
-                    return back()->with('error', 'Impossible de supprimer définitivement le membre car la suppression dans Infomaniak a échoué.');
-                }
-            }
             $model->forceDelete();
         } catch (\Exception $e) {
             report($e);
@@ -159,26 +130,24 @@ class TrashController extends Controller implements HasMiddleware
         return self::TYPE_MAP[$type];
     }
 
-    protected function getItemLabel(Category|Product|Season|Member|Ticket|Voucher $model, string $type): string
+    protected function getItemLabel(Category|Product|Season|Ticket|Voucher $model, string $type): string
     {
         return match (true) {
             $model instanceof Category => $model->name,
             $model instanceof Product => $model->name,
             $model instanceof Season => $model->name,
-            $model instanceof Member => $model->first_name.' '.$model->last_name,
             $model instanceof Ticket => 'Ticket #'.$model->id,
             default => 'Bon #'.$model->id,
         };
     }
 
     /** @return array<array<string, int|string>> */
-    protected function getChildrenCounts(Category|Product|Season|Member|Ticket|Voucher $model, string $type): array
+    protected function getChildrenCounts(Category|Product|Season|Ticket|Voucher $model, string $type): array
     {
         return match (true) {
             $model instanceof Category => $this->getChildrenForCategory($model),
             $model instanceof Product => $this->getChildrenForProduct($model),
             $model instanceof Ticket => $this->getChildrenForTicket($model),
-            $model instanceof Member => $this->getChildrenForMember($model),
             $model instanceof Season => $this->getChildrenForSeason($model),
             default => $this->getChildrenForVoucher($model),
         };
@@ -233,23 +202,6 @@ class TrashController extends Controller implements HasMiddleware
         }
         if ($activeItems > 0) {
             $children[] = ['type' => 'ticket_item', 'count' => $activeItems, 'label' => $activeItems.' article(s) actif(s)'];
-        }
-
-        return $children;
-    }
-
-    /** @return array<array<string, int|string>> */
-    protected function getChildrenForMember(Member $member): array
-    {
-        $trashedVouchers = Voucher::where('member_id', $member->id)->onlyTrashed()->count();
-        $activeVouchers = Voucher::where('member_id', $member->id)->withoutTrashed()->count();
-        $children = [];
-
-        if ($trashedVouchers > 0) {
-            $children[] = ['type' => 'voucher', 'count' => $trashedVouchers, 'label' => $trashedVouchers.' bon(s) supprimé(s)'];
-        }
-        if ($activeVouchers > 0) {
-            $children[] = ['type' => 'voucher', 'count' => $activeVouchers, 'label' => $activeVouchers.' bon(s) actif(s)'];
         }
 
         return $children;

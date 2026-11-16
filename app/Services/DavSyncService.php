@@ -5,159 +5,87 @@ namespace App\Services;
 use App\DavGroupLabels;
 use App\Models\Member;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DavSyncService
 {
     public function __construct(
-        private readonly DavServiceInterface $dav
+        private readonly DavServiceInterface $dav,
+        private readonly MemberSyncService $memberSync,
     ) {}
 
     /**
-     * Import members from DAV contacts that don't already exist.
+     * Import unknown DAV contacts as members.
+     *
+     * @return array{created: int, skipped: array<int, string>, failed: array<int, string>}
      */
-    /** @return array{created: int} */
     public function importFromDav(): array
     {
         $contacts = $this->dav->getContacts();
-        $existingDavUids = Member::whereNotNull('dav_uid')->pluck('dav_uid')->flip()->toArray();
+        $existingDavUids = Member::withTrashed()->whereNotNull('dav_uid')->pluck('dav_uid')->flip();
 
-        $activeContacts = array_filter($contacts, fn ($contact) => str_contains($contact['category'] ?? '', DavGroupLabels::ACTIVE_MEMBERS->value)
-        );
+        $unlinkedMemberEmails = Member::withTrashed()
+            ->whereNull('dav_uid')
+            ->whereNotNull('email')
+            ->pluck('email')
+            ->filter()
+            ->map(fn (string $email): string => Str::lower(trim($email)))
+            ->unique()
+            ->flip();
 
-        $toImport = array_filter($activeContacts, fn ($contact) => ! isset($existingDavUids[$contact['uid']])
-        );
+        $toImport = collect($contacts)
+            ->filter(fn (array $contact): bool => ($contact['uid'] ?? '') !== '')
+            ->reject(fn (array $contact): bool => $existingDavUids->has($contact['uid']))
+            ->filter(fn (array $contact): bool => $this->hasCategory($contact, DavGroupLabels::ACTIVE_MEMBERS->value)
+                || $this->hasCategory($contact, DavGroupLabels::PASSIVE_MEMBERS->value));
 
         $created = 0;
+        $skipped = [];
+        $failed = [];
+        $knownEmails = $unlinkedMemberEmails;
 
         foreach ($toImport as $contact) {
-            $parts = explode(';', $contact['n'] ?? '');
-            $lastName = $parts[0];
-            $firstName = $parts[1];
+            $email = Str::lower(trim((string) ($contact['email'] ?? '')));
 
-            Member::create([
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'dav_uid' => $contact['uid'],
-            ]);
-
-            $created++;
-        }
-
-        Log::info('Imported members from DAV contacts', [
-            'count' => $created,
-            'contacts' => count($contacts),
-            'skipped' => count($contacts) - count($toImport),
-        ]);
-
-        return ['created' => $created];
-    }
-
-    /**
-     * Build a diff preview of DAV contacts vs existing members.
-     *
-     * @return array{pairs: array<int, array{member_id: int, member_first_name: string, member_last_name: string, dav_first_name: string, dav_last_name: string, dav_uid: string}>}
-     */
-    public function syncPreview(): array
-    {
-        $contacts = $this->dav->getContacts();
-
-        $activeContacts = array_filter($contacts, fn ($contact) => str_contains($contact['category'] ?? '', DavGroupLabels::ACTIVE_MEMBERS->value)
-        );
-
-        $members = Member::whereNotNull('dav_uid')
-            ->whereIn('dav_uid', array_column($activeContacts, 'uid'))
-            ->get()
-            ->keyBy('dav_uid');
-
-        $pairs = [];
-
-        foreach ($activeContacts as $contact) {
-            $member = $members->get($contact['uid']);
-
-            if (! $member) {
-                continue;
-            }
-
-            $parts = explode(';', $contact['n'] ?? '');
-            $davLastName = $parts[0];
-            $davFirstName = $parts[1];
-
-            if ($davFirstName === $member->first_name && $davLastName === $member->last_name) {
-                continue;
-            }
-
-            $pairs[] = [
-                'member_id' => $member->id,
-                'member_first_name' => $member->first_name,
-                'member_last_name' => $member->last_name,
-                'dav_first_name' => $davFirstName,
-                'dav_last_name' => $davLastName,
-                'dav_uid' => $contact['uid'],
-            ];
-        }
-
-        return ['pairs' => $pairs];
-    }
-
-    /**
-     * Apply sync choices: update members from DAV or DAV from members.
-     */
-    /** @param array<string, mixed> $choices
-     * @return array{updated: int} */
-    public function sync(array $choices): array
-    {
-        $memberIds = array_column($choices, 'member_id');
-        $members = Member::whereIn('id', $memberIds)->get()->keyBy('id');
-
-        $updated = 0;
-
-        foreach ($choices as $choice) {
-            $member = $members->get($choice['member_id']);
-
-            if (! $member) {
-                Log::warning('DAV sync skipped missing member', [
-                    'member_id' => $choice['member_id'],
-                    'source' => $choice['source'],
-                ]);
+            if ($email !== '' && $knownEmails->has($email)) {
+                $skipped[] = $contact['uid'];
 
                 continue;
             }
 
             try {
-                if ($choice['source'] === 'dav') {
-                    $contact = $this->dav->getContact(
-                        rtrim($this->dav->getAddressbookUrl(), '/').'/'.$member->dav_uid.'.vcf',
-                    );
+                $this->memberSync->createFromContact($contact);
+                $created++;
 
-                    if ($contact) {
-                        $parts = explode(';', $contact['n'] ?? '');
-                        $member->update([
-                            'first_name' => $parts[1],
-                            'last_name' => $parts[0],
-                        ]);
-                        $updated++;
-                    }
-                } else {
-                    $this->dav->updateMember($member);
-                    $updated++;
+                if ($email !== '') {
+                    $knownEmails->put($email, true);
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 report($e);
+                $failed[] = $contact['uid'];
 
-                Log::warning('Failed to sync member', [
-                    'member_id' => $member->id,
-                    'dav_uid' => $member->dav_uid,
-                    'source' => $choice['source'],
-                    'exception' => $e,
+                Log::warning('Failed to import DAV contact', [
+                    'uid' => $contact['uid'],
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
 
-        Log::info('Synced members with DAV', [
-            'count' => $updated,
-            'requested' => count($choices),
+        Log::info('Imported members from DAV contacts', [
+            'created' => $created,
+            'skipped' => count($skipped),
+            'failed' => count($failed),
+            'contacts' => count($contacts),
         ]);
 
-        return ['updated' => $updated];
+        return ['created' => $created, 'skipped' => $skipped, 'failed' => $failed];
+    }
+
+    /** @param array<string, mixed> $contact */
+    private function hasCategory(array $contact, string $category): bool
+    {
+        return collect(explode(',', (string) ($contact['category'] ?? '')))
+            ->map(fn (string $value): string => trim($value))
+            ->contains($category);
     }
 }

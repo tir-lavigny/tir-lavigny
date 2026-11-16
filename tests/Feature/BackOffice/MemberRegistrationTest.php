@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Mockery;
@@ -36,6 +37,17 @@ class MemberRegistrationTest extends TestCase
 
     public function test_can_view_registration_list(): void
     {
+        $response = $this->get(route('bo.member-registrations.index'));
+
+        $response->assertStatus(200);
+    }
+
+    public function test_registration_list_renders_with_legacy_plaintext_avs(): void
+    {
+        $member = Member::factory()->create();
+        DB::table('members')->where('id', $member->id)->update(['avs' => '756.0000.0000.00']);
+        MemberRegistration::create(['member_id' => $member->id]);
+
         $response = $this->get(route('bo.member-registrations.index'));
 
         $response->assertStatus(200);
@@ -123,6 +135,17 @@ class MemberRegistrationTest extends TestCase
         $response->assertSee('john@example.com');
     }
 
+    public function test_show_does_not_expose_dav_uid(): void
+    {
+        $registration = MemberRegistration::create();
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn ($page) => $page
+            ->missing('registration.dav_uid')
+        );
+    }
+
     public function test_show_displays_error_message_when_present(): void
     {
         $registration = MemberRegistration::create([
@@ -206,7 +229,7 @@ class MemberRegistrationTest extends TestCase
         Mail::fake();
 
         $davMock = Mockery::mock(DavServiceInterface::class);
-        $davMock->shouldReceive('createContactFromMemberRegistration')
+        $davMock->shouldReceive('createContactFromMember')
             ->once()
             ->andReturn(['uid' => 'validated-uid-123']);
         $this->app->instance(DavServiceInterface::class, $davMock);
@@ -231,7 +254,7 @@ class MemberRegistrationTest extends TestCase
 
         $registration->refresh();
         $this->assertEquals(MemberRegistrationStatus::COMPLETED, $registration->status);
-        $this->assertEquals('validated-uid-123', $registration->dav_uid);
+        $this->assertSame('validated-uid-123', $registration->member->dav_uid);
         $this->assertNotNull($registration->member_id);
         $this->assertNull($registration->failed_at);
         $this->assertNull($registration->error_message);
