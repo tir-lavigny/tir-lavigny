@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
                 return new InfomaniakDavService;
             }
 
-            if (app()->environment(['local', 'testing'])) {
+            if (app()->environment(['local', 'testing', 'staging'])) {
                 return new StubDavService;
             }
 
