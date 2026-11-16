@@ -348,7 +348,11 @@ class InfomaniakDavService implements DavServiceInterface
 
         $categories = $this->mergeCategories($existingCategories, $data['category'] ?? null);
 
-        $this->replaceTextProperty($vcard, 'CATEGORIES', $categories === [] ? null : implode(',', $categories));
+        $vcard->remove('CATEGORIES');
+
+        if ($categories !== []) {
+            $vcard->add('CATEGORIES', $categories);
+        }
 
         if ($address = $this->buildAddress($data)) {
             $vcard->remove('ADR');

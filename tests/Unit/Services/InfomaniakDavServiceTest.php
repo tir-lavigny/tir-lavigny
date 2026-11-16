@@ -87,6 +87,52 @@ class InfomaniakDavServiceTest extends TestCase
         $this->assertTrue($this->serviceWithDeleteStatus(410)->deleteMember($member));
     }
 
+    public function test_update_contact_serializes_categories_as_list(): void
+    {
+        $service = new InfomaniakDavService;
+        $url = rtrim((string) config('dav.addressbook_url'), '/').'/uid-1.vcf';
+        $vcard = "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:uid-1\r\nFN:Jean Dupont\r\nN:Dupont;Jean;;;\r\nCATEGORIES:Amis,Actifs\r\nEND:VCARD\r\n";
+        $captured = '';
+
+        $client = \Mockery::mock(Client::class);
+        $client->shouldReceive('request')
+            ->once()
+            ->with('GET', $url)
+            ->andReturn(['statusCode' => 200, 'body' => $vcard]);
+        $client->shouldReceive('request')
+            ->once()
+            ->with('PUT', $url, \Mockery::on(function (string $body) use (&$captured): bool {
+                $captured = $body;
+
+                return true;
+            }), \Mockery::type('array'))
+            ->andReturn(['statusCode' => 200, 'body' => '']);
+
+        $reflection = new ReflectionClass($service);
+        $property = $reflection->getProperty('client');
+        $property->setAccessible(true);
+        $property->setValue($service, $client);
+
+        $method = $reflection->getMethod('updateContact');
+        $method->setAccessible(true);
+        $method->invoke($service, $url, [
+            'fn' => 'Dupont Jean',
+            'n_first' => 'Jean',
+            'n_last' => 'Dupont',
+            'email' => '',
+            'tel' => '',
+            'street' => '',
+            'npa' => '',
+            'city' => '',
+            'canton' => '',
+            'country' => '',
+            'category' => 'Passifs',
+        ]);
+
+        $this->assertStringContainsString('CATEGORIES:Amis,Passifs', $captured);
+        $this->assertStringNotContainsString('Amis\\,Passifs', $captured);
+    }
+
     public function test_managed_categories_are_defined_once(): void
     {
         $this->assertSame(['Actifs', 'Passifs', 'Archives'], DavGroupLabels::managedValues());
