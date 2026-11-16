@@ -5,6 +5,7 @@ namespace App\Actions\Member;
 use App\Models\ActivityLog;
 use App\Models\Member;
 use App\Models\MemberRegistration;
+use App\Models\Voucher;
 use App\Services\MemberSyncService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +67,12 @@ class DeleteMemberAction
             'dav_sync_error' => null,
             'anonymized_at' => now(),
         ])->saveQuietly();
+
+        $member->vouchers()
+            ->onlyTrashed()
+            ->whereDoesntHave('ticketItems', fn ($query) => $query->withTrashed())
+            ->get()
+            ->each(fn (Voucher $voucher) => $voucher->forceDelete());
 
         $member->delete();
     }
