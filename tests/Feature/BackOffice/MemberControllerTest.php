@@ -654,7 +654,7 @@ class MemberControllerTest extends TestCase
         $this->assertDatabaseMissing('vouchers', ['id' => $voucher->id]);
     }
 
-    public function test_force_delete_anonymize_keeps_live_unused_vouchers(): void
+    public function test_force_delete_anonymize_deletes_live_unused_vouchers(): void
     {
         $member = Member::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
         $voucher = Voucher::factory()->create(['member_id' => $member->id]);
@@ -664,7 +664,7 @@ class MemberControllerTest extends TestCase
         ])->assertRedirect();
 
         $this->assertNotNull($member->fresh()->anonymized_at);
-        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
+        $this->assertDatabaseMissing('vouchers', ['id' => $voucher->id]);
     }
 
     public function test_force_delete_anonymize_keeps_used_vouchers(): void
