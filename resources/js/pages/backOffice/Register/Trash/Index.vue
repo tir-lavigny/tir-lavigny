@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import type { BreadcrumbItem, PaginatedCategories, PaginatedProducts, PaginatedSeasons, PaginatedTickets, PaginatedVouchers } from '@/types';
 import { ref } from 'vue';
 import { toast } from 'vue-sonner';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RotateCcw, Trash2, AlertTriangle } from '@lucide/vue';
@@ -370,7 +371,25 @@ const handleMemberFilterChange = () => {
                                     <TableCell>{{ formatDate(item.deleted_at ?? '', 'DD.MM.YYYY') }}</TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex justify-end gap-2">
-                                            <Button size="sm" variant="outline" @click="openRestoreDialog('voucher', item.id, 'Bon #' + item.id)">
+                                            <Tooltip v-if="item.member?.deleted_at">
+                                                <TooltipTrigger as-child>
+                                                    <span class="inline-flex">
+                                                        <Button size="sm" variant="outline" disabled>
+                                                            <RotateCcw class="mr-1 h-4 w-4" /> Restaurer
+                                                        </Button>
+                                                    </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Restaurez d'abord le membre avant de restaurer ce bon.</p>
+                                                    <Link :href="route('bo.members.show', item.member.id)" class="underline"> Voir le membre </Link>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <Button
+                                                v-else
+                                                size="sm"
+                                                variant="outline"
+                                                @click="openRestoreDialog('voucher', item.id, 'Bon #' + item.id)"
+                                            >
                                                 <RotateCcw class="mr-1 h-4 w-4" /> Restaurer
                                             </Button>
                                             <Button

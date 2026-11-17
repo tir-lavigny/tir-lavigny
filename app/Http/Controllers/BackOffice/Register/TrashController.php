@@ -78,8 +78,14 @@ class TrashController extends Controller implements HasMiddleware
 
         $model = $modelClass::onlyTrashed()->findOrFail($id);
 
-        if ($model instanceof Voucher && $model->member?->isAnonymized()) {
-            return back()->with('error', 'Impossible de restaurer un bon appartenant à un membre anonymisé.');
+        if ($model instanceof Voucher && $model->member) {
+            if ($model->member->isAnonymized()) {
+                return back()->with('error', 'Impossible de restaurer un bon appartenant à un membre anonymisé.');
+            }
+
+            if ($model->member->trashed()) {
+                return back()->with('error', 'Restaurez d\'abord le membre avant de restaurer ce bon.');
+            }
         }
 
         if (! $request->boolean('confirm')) {

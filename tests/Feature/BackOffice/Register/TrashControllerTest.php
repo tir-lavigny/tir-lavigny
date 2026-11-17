@@ -154,6 +154,23 @@ class TrashControllerTest extends TestCase
         $this->assertSoftDeleted('vouchers', ['id' => $voucher->id]);
     }
 
+    public function test_cannot_restore_voucher_of_archived_member(): void
+    {
+        $member = Member::factory()->archived()->create();
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+        $voucher->delete();
+
+        $response = $this->postJson(route('bo.register.trash.restore', [
+            'type' => 'voucher',
+            'id' => $voucher->id,
+            'confirm' => true,
+        ]));
+
+        $response->assertStatus(302);
+        $response->assertSessionHas('error', 'Restaurez d\'abord le membre avant de restaurer ce bon.');
+        $this->assertSoftDeleted('vouchers', ['id' => $voucher->id]);
+    }
+
     public function test_index_filters_vouchers_by_member(): void
     {
         $member = Member::factory()->create();
