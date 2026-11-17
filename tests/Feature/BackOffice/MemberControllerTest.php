@@ -5,6 +5,8 @@ namespace Tests\Feature\BackOffice;
 use App\Mail\MemberDavSyncFailed;
 use App\Models\Member;
 use App\Models\MemberRegistration;
+use App\Models\Product;
+use App\Models\Season;
 use App\Models\Ticket;
 use App\Models\TicketItem;
 use App\Models\User;
@@ -150,6 +152,57 @@ class MemberControllerTest extends TestCase
             'last_name' => 'Dupont',
             'email' => 'jean.dupont@example.com',
         ]);
+    }
+
+    public function test_store_creates_base_vouchers_for_active_member(): void
+    {
+        $this->createActiveSeasonWithBaseProducts();
+
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'status' => 'active',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', fn (string $message) => str_contains($message, '5 bon(s) de base créé(s)'));
+
+        $member = Member::where('first_name', 'Jean')->sole();
+        $this->assertSame(5, $member->vouchers()->count());
+    }
+
+    public function test_store_does_not_create_vouchers_for_passive_member(): void
+    {
+        $this->createActiveSeasonWithBaseProducts();
+
+        $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'status' => 'passive',
+        ])->assertRedirect();
+
+        $member = Member::where('first_name', 'Jean')->sole();
+        $this->assertSame(0, $member->vouchers()->count());
+    }
+
+    public function test_store_warns_when_base_products_are_missing(): void
+    {
+        Season::factory()->create([
+            'start_date' => now()->subMonth(),
+            'end_date' => now()->addMonth(),
+        ]);
+
+        $response = $this->post(route('bo.members.store'), [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'status' => 'active',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('warning', fn (string $message) => str_contains($message, 'bons de base'));
+
+        $member = Member::where('first_name', 'Jean')->sole();
+        $this->assertSame(0, $member->vouchers()->count());
     }
 
     public function test_store_reports_sync_failure(): void
@@ -1252,6 +1305,18 @@ class MemberControllerTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page
             ->missing('member.registration.form_data')
         );
+    }
+
+    private function createActiveSeasonWithBaseProducts(): void
+    {
+        Season::factory()->create([
+            'start_date' => now()->subMonth(),
+            'end_date' => now()->addMonth(),
+        ]);
+
+        Product::factory()->create(['name' => 'Tir du jeudi']);
+        Product::factory()->create(['name' => 'Ouverture']);
+        Product::factory()->create(['name' => 'Clôture']);
     }
 
     private function memberManagerWithoutSensitivePermission(): User
