@@ -44,6 +44,18 @@ const mainNavItems: NavItem[] = [
         href: route('dashboard'),
         icon: LayoutGrid,
     },
+    ...(hasAnyPermission(user, ['create user', 'edit user', 'delete user'])
+        ? [
+              {
+                  title: 'Utilisateurs',
+                  href: route('bo.users.index'),
+                  icon: Users,
+              },
+          ]
+        : []),
+];
+
+const cmsNavItems: NavItem[] = [
     ...(hasAnyPermission(user, ['create event', 'edit event', 'delete event'])
         ? [
               {
@@ -68,15 +80,6 @@ const mainNavItems: NavItem[] = [
                   title: 'Communications',
                   href: route('bo.posts.index'),
                   icon: Newspaper,
-              },
-          ]
-        : []),
-    ...(hasAnyPermission(user, ['create user', 'edit user', 'delete user'])
-        ? [
-              {
-                  title: 'Utilisateurs',
-                  href: route('bo.users.index'),
-                  icon: Users,
               },
           ]
         : []),
@@ -268,6 +271,13 @@ watch(
 
         <SidebarContent>
             <NavMain :items="mainNavItems" />
+            <NavMainCollapsible
+                v-if="cmsNavItems.length"
+                @update:open="persistentMenusState.cms = $event"
+                :items="cmsNavItems"
+                label="CMS"
+                :default-open="persistentMenusState.cms"
+            />
             <NavMainCollapsible
                 v-if="registerNavItems.length"
                 @update:open="persistentMenusState.register = $event"
