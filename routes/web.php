@@ -236,6 +236,9 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
         Route::post('members/{member}/restore', [MemberController::class, 'restore'])->withTrashed()->name('bo.members.restore');
         Route::delete('members/{member}/force-delete', [MemberController::class, 'forceDelete'])->withTrashed()->name('bo.members.force-delete');
         Route::post('members/{member}/sync', [MemberController::class, 'sync'])->withTrashed()->name('bo.members.sync');
+        Route::delete('members/{member}/unused-vouchers', [MemberController::class, 'destroyUnusedVouchers'])
+            ->withTrashed()
+            ->name('bo.members.destroy-unused-vouchers');
         Route::post('members/{member}/retry-dav-delete', [MemberController::class, 'retryDavDelete'])
             ->withTrashed()
             ->name('bo.members.retry-dav-delete');

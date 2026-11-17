@@ -110,25 +110,11 @@ const handleForceDelete = () => {
 };
 
 const handleRemoveUnused = () => {
-    const vouchers = unusedVouchers.value;
-    if (vouchers.length === 0) return;
-
-    let completed = 0;
-    vouchers.forEach((voucher) => {
-        router.delete(route('bo.register.vouchers.destroy', voucher.id), {
-            onSuccess: () => {
-                toast.success('Bon supprimé.');
-            },
-            onError: () => {
-                toast.error('Erreur lors de la suppression du bon.');
-            },
-            onFinish: () => {
-                completed++;
-                if (completed === vouchers.length) {
-                    router.reload({ only: ['vouchers', 'usedVouchers', 'unusedVouchers'] });
-                }
-            },
-        });
+    router.delete(route('bo.members.destroy-unused-vouchers', member.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            router.reload({ only: ['vouchers', 'usedVouchers', 'unusedVouchers'] });
+        },
     });
 };
 </script>
@@ -273,7 +259,7 @@ const handleRemoveUnused = () => {
                     </div>
                     <p v-else class="text-muted-foreground mt-2 text-sm">Aucun bon pour cette saison.</p>
                     <AppAlertDialog
-                        v-if="selectedSeason && unusedVouchers.length > 0 && hasPermissionTo(user, 'manage vouchers')"
+                        v-if="selectedSeason && !member.anonymized_at && unusedVouchers.length > 0 && hasPermissionTo(user, 'manage vouchers')"
                         title="Supprimer les bons inutilisés ?"
                         :description="unusedVouchers.length + ' bon(s) inutilisé(s). Cette action est irréversible.'"
                         cancelText="Annuler"

@@ -545,6 +545,68 @@ class MemberControllerTest extends TestCase
         $this->assertSoftDeleted('vouchers', ['id' => $voucher->id]);
     }
 
+    public function test_destroy_unused_vouchers_deletes_all_in_one_request(): void
+    {
+        $member = Member::factory()->create();
+        $vouchers = Voucher::factory()->count(4)->create(['member_id' => $member->id]);
+
+        $response = $this->delete(route('bo.members.destroy-unused-vouchers', $member));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', '4 bon(s) inutilisé(s) supprimé(s).');
+
+        foreach ($vouchers as $voucher) {
+            $this->assertSoftDeleted('vouchers', ['id' => $voucher->id]);
+        }
+    }
+
+    public function test_destroy_unused_vouchers_keeps_used_vouchers(): void
+    {
+        $member = Member::factory()->create();
+        $used = Voucher::factory()->create(['member_id' => $member->id]);
+        $ticket = Ticket::factory()->create();
+        TicketItem::factory()->create(['ticket_id' => $ticket->id, 'voucher_id' => $used->id]);
+
+        $this->delete(route('bo.members.destroy-unused-vouchers', $member))->assertRedirect();
+
+        $this->assertDatabaseHas('vouchers', ['id' => $used->id, 'deleted_at' => null]);
+    }
+
+    public function test_destroy_unused_vouchers_does_not_touch_other_members(): void
+    {
+        $member = Member::factory()->create();
+        $other = Member::factory()->create();
+        $otherVoucher = Voucher::factory()->create(['member_id' => $other->id]);
+
+        $this->delete(route('bo.members.destroy-unused-vouchers', $member))->assertRedirect();
+
+        $this->assertDatabaseHas('vouchers', ['id' => $otherVoucher->id, 'deleted_at' => null]);
+    }
+
+    public function test_destroy_unused_vouchers_requires_manage_vouchers(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('access backoffice', 'manage members');
+        $this->actingAs($user);
+
+        $member = Member::factory()->create();
+        Voucher::factory()->create(['member_id' => $member->id]);
+
+        $this->delete(route('bo.members.destroy-unused-vouchers', $member))->assertForbidden();
+    }
+
+    public function test_destroy_unused_vouchers_rejects_anonymized_member(): void
+    {
+        $member = Member::factory()->create(['anonymized_at' => now()]);
+        $voucher = Voucher::factory()->create(['member_id' => $member->id]);
+
+        $response = $this->delete(route('bo.members.destroy-unused-vouchers', $member));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('vouchers', ['id' => $voucher->id, 'deleted_at' => null]);
+    }
+
     public function test_show_marks_refunded_voucher_as_unused(): void
     {
         $member = Member::factory()->create();

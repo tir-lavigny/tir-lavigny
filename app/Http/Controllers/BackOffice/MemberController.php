@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice;
 use App\Actions\Member\ArchiveMemberAction;
 use App\Actions\Member\CreateMemberAction;
 use App\Actions\Member\DeleteMemberAction;
+use App\Actions\Member\DeleteUnusedMemberVouchersAction;
 use App\Actions\Member\RestoreMemberAction;
 use App\Actions\Member\RetryDavDeleteAction;
 use App\Actions\Member\SyncMemberAction;
@@ -233,6 +234,23 @@ class MemberController extends Controller implements HasMiddleware
             ->with('success', $result['anonymized']
                 ? 'Membre anonymisé avec succès. Les données personnelles ont été supprimées.'
                 : 'Membre supprimé définitivement.');
+    }
+
+    public function destroyUnusedVouchers(
+        Member $member,
+        DeleteUnusedMemberVouchersAction $action,
+    ): RedirectResponse {
+        if (! Auth::user()?->can('manage vouchers')) {
+            abort(403);
+        }
+
+        if ($member->isAnonymized()) {
+            return back()->with('error', 'Impossible de supprimer les bons d\'un membre anonymisé.');
+        }
+
+        $count = $action->execute($member);
+
+        return back()->with('success', $count.' bon(s) inutilisé(s) supprimé(s).');
     }
 
     public function retryDavDelete(
