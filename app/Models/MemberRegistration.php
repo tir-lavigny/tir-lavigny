@@ -19,6 +19,7 @@ class MemberRegistration extends Model
         'member_id',
         'form_data',
         'form_submitted_at',
+        'email_verified_at',
         'failed_at',
         'error_message',
     ];

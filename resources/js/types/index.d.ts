@@ -411,6 +411,7 @@ export interface MemberRegistration {
     form_data: Record<string, any> | null;
     form_name?: string | null;
     form_submitted_at: string | null;
+    email_verified_at: string | null;
     error_message: string | null;
     failed_at: string | null;
     member?: Member;

@@ -71,6 +71,32 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('confirm-password', fn (Request $request) => [
             Limit::perMinute(6)->by($request->user()?->getAuthIdentifier() ?? $request->ip()),
         ]);
+
+        RateLimiter::for('member-registration-verify-email', fn (Request $request) => [
+            Limit::perMinute(10)
+                ->by('verify:'.$request->string('form_uuid').'|'.$request->ip())
+                ->response(fn () => back()->withErrors([
+                    'code' => 'Trop de tentatives. Réessayez dans une minute.',
+                ])),
+        ]);
+
+        RateLimiter::for('member-registration-resend-verification', fn (Request $request) => [
+            Limit::perMinute(1)
+                ->by('resend-minute:'.$request->string('form_uuid').'|'.$request->ip())
+                ->response(fn () => back()->withErrors([
+                    'code' => 'Veuillez patienter avant de demander un nouveau code.',
+                ])),
+            Limit::perHour(5)
+                ->by('resend-hour-registration:'.$request->string('form_uuid'))
+                ->response(fn () => back()->withErrors([
+                    'code' => 'Trop de codes demandés pour cette inscription. Réessayez plus tard.',
+                ])),
+            Limit::perHour(5)
+                ->by('resend-hour-ip:'.$request->ip())
+                ->response(fn () => back()->withErrors([
+                    'code' => 'Trop de codes demandés. Réessayez plus tard.',
+                ])),
+        ]);
     }
 
     private function overrideSanctumConfigurationToSupportRefreshToken(): void

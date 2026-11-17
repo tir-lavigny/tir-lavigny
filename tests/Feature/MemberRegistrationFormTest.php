@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Events\MemberRegistrationFormSubmitted;
-use App\Mail\MemberRegistrationValidationRequested;
+use App\Mail\MemberRegistrationEmailVerification;
 use App\Models\Member;
 use App\Models\MemberRegistration;
 use App\Models\User;
@@ -561,7 +561,20 @@ class MemberRegistrationFormTest extends TestCase
         );
     }
 
-    public function test_after_24h_returns_404(): void
+    public function test_after_24h_returns_404_once_email_verified(): void
+    {
+        $registration = MemberRegistration::create([
+            'form_data' => ['last_name' => 'Dupont'],
+            'form_submitted_at' => Carbon::now()->subHours(25),
+            'email_verified_at' => Carbon::now()->subHours(24),
+        ]);
+
+        $response = $this->get(route('member-registration.show', $registration->form_uuid));
+
+        $response->assertStatus(404);
+    }
+
+    public function test_after_24h_still_shows_verification_when_email_unverified(): void
     {
         $registration = MemberRegistration::create([
             'form_data' => ['last_name' => 'Dupont'],
@@ -570,7 +583,12 @@ class MemberRegistrationFormTest extends TestCase
 
         $response = $this->get(route('member-registration.show', $registration->form_uuid));
 
-        $response->assertStatus(404);
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('MemberRegistration')
+            ->where('submitted', true)
+            ->where('verified', false)
+        );
     }
 
     public function test_within_24h_shows_form(): void
@@ -678,7 +696,7 @@ class MemberRegistrationFormTest extends TestCase
         $this->assertEquals('form_filled', $registration->status->value);
     }
 
-    public function test_form_submission_sends_validation_request_without_running_pipeline(): void
+    public function test_form_submission_sends_email_verification_code_without_running_pipeline(): void
     {
         Mail::fake();
 
@@ -708,6 +726,6 @@ class MemberRegistrationFormTest extends TestCase
         $this->assertNull($registration->member_id);
         $this->assertNull($registration->failed_at);
 
-        Mail::assertSent(MemberRegistrationValidationRequested::class);
+        Mail::assertSent(MemberRegistrationEmailVerification::class);
     }
 }

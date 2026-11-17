@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\MemberDavSyncFailed;
 use App\Mail\MemberRegistrationCompleted;
+use App\Mail\MemberRegistrationEmailVerification;
 use App\Mail\MemberRegistrationError;
 use App\Mail\MemberRegistrationValidationRequested;
 use App\MemberRegistrationStatus;
@@ -273,7 +274,7 @@ class MemberRegistrationPipelineTest extends TestCase
         $this->assertSame(1, Member::count());
     }
 
-    public function test_retry_from_form_filled_resends_validation_email(): void
+    public function test_retry_from_form_filled_resends_verification_email_when_unverified(): void
     {
         Mail::fake();
 
@@ -290,10 +291,28 @@ class MemberRegistrationPipelineTest extends TestCase
         $this->assertEquals(MemberRegistrationStatus::FORM_FILLED, $registration->status);
         $this->assertNull($registration->member_id);
 
+        Mail::assertSent(MemberRegistrationEmailVerification::class, function ($mail) {
+            return $mail->hasTo('jean.dupont@example.com');
+        });
+        Mail::assertNotSent(MemberRegistrationValidationRequested::class);
+    }
+
+    public function test_retry_from_form_filled_sends_validation_email_when_email_verified(): void
+    {
+        Mail::fake();
+
+        $registration = $this->createRegistrationWithData();
+        $registration->email_verified_at = now();
+        $registration->save();
+
+        $pipeline = new MemberRegistrationPipelineService(Mockery::mock(MemberSyncService::class));
+
+        $pipeline->retryFromStep($registration);
+
         Mail::assertSent(MemberRegistrationValidationRequested::class, function ($mail) {
             return $mail->hasTo($this->admin->email);
         });
-        Mail::assertNotSent(MemberRegistrationCompleted::class);
+        Mail::assertNotSent(MemberRegistrationEmailVerification::class);
     }
 
     public function test_retry_from_member_created_skips_vouchers_for_passive_member(): void

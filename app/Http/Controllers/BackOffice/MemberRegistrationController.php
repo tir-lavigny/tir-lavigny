@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\BackOffice;
 
+use App\Exceptions\MemberRegistrationEmailVerificationException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\UpdateMemberRegistrationAvsRequest;
 use App\MemberRegistrationStatus;
@@ -125,7 +126,7 @@ class MemberRegistrationController extends Controller implements HasMiddleware
 
         try {
             $pipeline->retryFromStep($memberRegistration);
-        } catch (\InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException|MemberRegistrationEmailVerificationException $e) {
             return redirect()->route('bo.member-registrations.show', $memberRegistration)
                 ->with('error', $e->getMessage());
         }

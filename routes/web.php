@@ -41,6 +41,12 @@ Route::get('/shootings/field', [ShootingController::class, 'indexField'])->name(
 
 Route::get('/member-registration/{form_uuid}', [MemberRegistrationController::class, 'show'])->name('member-registration.show');
 Route::post('/member-registration', [MemberRegistrationController::class, 'store'])->name('member-registration.store');
+Route::post('/member-registration/verify', [MemberRegistrationController::class, 'verify'])
+    ->middleware('throttle:member-registration-verify-email')
+    ->name('member-registration.verify');
+Route::post('/member-registration/resend-verification', [MemberRegistrationController::class, 'resendVerification'])
+    ->middleware('throttle:member-registration-resend-verification')
+    ->name('member-registration.resend-verification');
 Route::get('/member-registration', function () {
     abort(404);
 });
