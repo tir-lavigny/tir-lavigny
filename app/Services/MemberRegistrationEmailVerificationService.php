@@ -89,13 +89,7 @@ class MemberRegistrationEmailVerificationService
             $registration->email_verification_attempts++;
             $registration->save();
 
-            $remaining = self::MAX_ATTEMPTS - $registration->email_verification_attempts;
-
-            throw new MemberRegistrationEmailVerificationException(
-                $remaining > 0
-                    ? "Code incorrect. Il reste {$remaining} tentative(s)."
-                    : 'Trop de tentatives. Demandez un nouveau code.'
-            );
+            throw new MemberRegistrationEmailVerificationException('Code incorrect.');
         }
 
         $registration->email_verified_at = now();
