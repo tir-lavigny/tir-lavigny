@@ -6,7 +6,11 @@ use App\Services\DavServiceInterface;
 use App\Services\InfomaniakDavService;
 use App\Services\StubDavService;
 use App\TokenAbility;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use RuntimeException;
 
@@ -36,6 +40,37 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->overrideSanctumConfigurationToSupportRefreshToken();
+        $this->defineRateLimiters();
+    }
+
+    private function defineRateLimiters(): void
+    {
+        RateLimiter::for('login', fn (Request $request) => [
+            Limit::perMinute(10)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('api-login', fn (Request $request) => [
+            Limit::perMinute(5)->by(Str::transliterate(
+                Str::lower($request->string('email')).'|'.$request->ip()
+            )),
+            Limit::perMinute(10)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('forgot-password', fn (Request $request) => [
+            Limit::perMinutes(10, 3)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('reset-password', fn (Request $request) => [
+            Limit::perMinutes(10, 5)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('register', fn (Request $request) => [
+            Limit::perHour(3)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('confirm-password', fn (Request $request) => [
+            Limit::perMinute(6)->by($request->user()?->getAuthIdentifier() ?? $request->ip()),
+        ]);
     }
 
     private function overrideSanctumConfigurationToSupportRefreshToken(): void
