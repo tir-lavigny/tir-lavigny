@@ -51,11 +51,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->respond(function ($response, Throwable $exception, Request $request) {
             if ($response instanceof Response) {
                 if ($request->is('api/*')) {
+                    $headers = $response->headers->has('Retry-After')
+                        ? ['Retry-After' => $response->headers->get('Retry-After')]
+                        : [];
+
                     return response()->json([
                         'message' => $exception->getMessage(),
-                    ], $response->getStatusCode());
+                    ], $response->getStatusCode(), $headers);
                 }
-                if (! app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [500, 503, 404, 403])) {
+                if (! app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [500, 503, 404, 403, 429])) {
                     return Inertia::render('ErrorPage', ['status' => $response->getStatusCode()])
                         ->toResponse($request)
                         ->setStatusCode($response->getStatusCode());
