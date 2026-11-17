@@ -22,19 +22,24 @@ class UniqueMemberAvs implements ValidationRule
 
     public static function exists(mixed $value, ?int $ignoreMemberId = null): bool
     {
+        return self::findMember($value, $ignoreMemberId) !== null;
+    }
+
+    public static function findMember(mixed $value, ?int $ignoreMemberId = null): ?Member
+    {
         if (! is_string($value) || trim($value) === '') {
-            return false;
+            return null;
         }
 
         $normalized = preg_replace('/\D/', '', $value) ?? '';
 
         if ($normalized === '') {
-            return false;
+            return null;
         }
 
         return Member::withTrashed()
             ->where('avs_hash', app(MemberDataCipher::class)->hash($normalized))
             ->when($ignoreMemberId !== null, fn ($query) => $query->whereKeyNot($ignoreMemberId))
-            ->exists();
+            ->first();
     }
 }

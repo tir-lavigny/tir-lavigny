@@ -115,6 +115,9 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
         ->name('bo.member-registrations.show');
     Route::post('member-registrations', [BackOfficeMemberRegistrationController::class, 'store'])
         ->name('bo.member-registrations.store');
+    Route::patch('member-registrations/{memberRegistration}/avs', [BackOfficeMemberRegistrationController::class, 'updateAvs'])
+        ->name('bo.member-registrations.update-avs')
+        ->middleware('permission:manage member registration');
     Route::post('member-registrations/{memberRegistration}/validate', [BackOfficeMemberRegistrationController::class, 'validate'])
         ->name('bo.member-registrations.validate')
         ->middleware('permission:manage member registration');
