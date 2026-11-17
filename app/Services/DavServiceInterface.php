@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Member;
-use App\Models\MemberRegistration;
 
 interface DavServiceInterface
 {
@@ -15,12 +14,15 @@ interface DavServiceInterface
     /** @return array<string, mixed>|null */
     public function getContact(string $contactUrl): ?array;
 
+    /**
+     * Find a contact by vCard UID.
+     *
+     * @return array<string, mixed>|null Null when the contact does not exist.
+     */
+    public function findContact(string $uid): ?array;
+
     /** @return array<string, mixed> */
-    public function createContactFromMemberRegistration(MemberRegistration $registration): array;
-
-    public function softDeleteMember(Member $member): bool;
-
-    public function restoreMember(Member $member): bool;
+    public function createContactFromMember(Member $member): array;
 
     public function deleteMember(Member $member): bool;
 

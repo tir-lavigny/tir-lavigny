@@ -86,7 +86,7 @@ class SeasonVoucherServiceTest extends TestCase
         $this->assertEmpty($plan);
     }
 
-    public function test_compute_plan_includes_all_members(): void
+    public function test_compute_plan_includes_active_members(): void
     {
         $season = Season::factory()->create();
         $products = $this->createBasePackageProducts();
@@ -95,6 +95,17 @@ class SeasonVoucherServiceTest extends TestCase
         $plan = $this->service->computePlan($season, $this->service->getBasePackage(), $products);
 
         $this->assertCount(3, $plan);
+    }
+
+    public function test_compute_plan_excludes_passive_members(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        Member::factory()->passive()->create();
+
+        $plan = $this->service->computePlan($season, $this->service->getBasePackage(), $products);
+
+        $this->assertEmpty($plan);
     }
 
     public function test_compute_plan_excludes_members_with_all_vouchers(): void
@@ -275,6 +286,73 @@ class SeasonVoucherServiceTest extends TestCase
         $this->service->generateBaseVouchers($season, $this->service->getBasePackage());
 
         $this->assertDatabaseCount('vouchers', 0);
+    }
+
+    public function test_generate_for_member_creates_base_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        $result = $this->service->generateBaseVouchersForMember($member, $season);
+
+        $this->assertSame(5, $result['created']);
+        $this->assertSame([], $result['missing']);
+        $this->assertSame(5, $member->vouchers()->count());
+    }
+
+    public function test_generate_for_passive_member_creates_nothing(): void
+    {
+        $season = Season::factory()->create();
+        $this->createBasePackageProducts();
+        $member = Member::factory()->passive()->create();
+
+        $result = $this->service->generateBaseVouchersForMember($member, $season);
+
+        $this->assertSame(0, $result['created']);
+        $this->assertSame(0, $member->vouchers()->count());
+    }
+
+    public function test_generate_for_member_creates_only_missing_vouchers(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        Voucher::factory()->percent()->create([
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'product_id' => $products['Ouverture']->id,
+        ]);
+
+        $result = $this->service->generateBaseVouchersForMember($member, $season);
+
+        $this->assertSame(4, $result['created']);
+        $this->assertSame(5, $member->vouchers()->count());
+    }
+
+    public function test_generate_for_member_reports_missing_products(): void
+    {
+        $season = Season::factory()->create();
+        $products = $this->createBasePackageProducts();
+        $products['Ouverture']->delete();
+        $member = Member::factory()->create();
+
+        $result = $this->service->generateBaseVouchersForMember($member, $season);
+
+        $this->assertSame(['Ouverture'], $result['missing']);
+        $this->assertSame(4, $result['created']);
+    }
+
+    public function test_generate_for_member_without_active_season_creates_nothing(): void
+    {
+        $this->createBasePackageProducts();
+        $member = Member::factory()->create();
+
+        $result = $this->service->generateBaseVouchersForMember($member);
+
+        $this->assertSame(0, $result['created']);
+        $this->assertSame(0, $member->vouchers()->count());
     }
 
     private function createBasePackageProducts(): array

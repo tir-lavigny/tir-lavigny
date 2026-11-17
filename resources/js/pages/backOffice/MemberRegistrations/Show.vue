@@ -5,19 +5,32 @@ import { Muted, P } from '@/components/typography/texts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, MemberRegistration, SharedData } from '@/types';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { Copy, ExternalLink, RotateCcw, Trash2 } from '@lucide/vue';
 import { toast } from 'vue-sonner';
+
+interface AvsConflict {
+    member_id: number;
+    member_name: string;
+    member_url: string | null;
+    avs: string | null;
+}
 
 const props = defineProps<{
     registration: MemberRegistration;
     formUrl: string;
+    canViewSensitiveData: boolean;
+    canEditAvs: boolean;
+    avsConflict: AvsConflict | null;
 }>();
+
+const avsForm = useForm({ avs: '' });
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inscriptions', href: route('bo.member-registrations.index') },
@@ -36,9 +49,13 @@ const copyToClipboard = async () => {
     }
 };
 
-const hasFailed = () => props.registration.failed_at !== null;
+const hasFailed = () => props.registration.failed_at !== null || hasDavSyncError();
 
-const canValidate = () => props.registration.status === 'form_filled';
+const hasDavSyncError = () => props.registration.status === 'completed' && Boolean(props.registration.member?.dav_sync_error);
+
+const canValidate = () => props.registration.status === 'form_filled' && !props.avsConflict;
+
+const canRetry = () => !props.avsConflict || props.registration.status === 'completed';
 
 const canDelete = () => props.registration.form_submitted_at === null;
 
@@ -56,9 +73,9 @@ const statusLabel = (status: string) => {
     const labels: Record<string, string> = {
         pending: 'En attente',
         form_filled: 'En attente de validation',
-        dav_created: 'DAV créé',
         member_created: 'Membre créé',
         completed: 'Terminé',
+        error: 'En erreur',
     };
     const label = labels[status] ?? status;
     return hasFailed() ? `${label} — Échoué` : label;
@@ -67,8 +84,8 @@ const statusLabel = (status: string) => {
 const retryLabel = (status: string) => {
     const labels: Record<string, string> = {
         form_filled: "Renvoyer l'email de validation",
-        dav_created: 'Relancer la création du membre',
-        member_created: "Relancer l'envoi de l'email",
+        member_created: 'Relancer le traitement',
+        completed: 'Relancer la synchronisation DAV',
         error: 'Relancer le traitement',
     };
     return labels[status] ?? 'Réessayer';
@@ -80,7 +97,6 @@ const handleValidate = () => {
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('Inscription validée, traitement lancé.'),
             onError: () => toast.error("Impossible de valider l'inscription."),
         },
     );
@@ -92,16 +108,21 @@ const handleRetry = () => {
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('Traitement relancé.'),
             onError: () => toast.error('Impossible de relancer le traitement.'),
         },
     );
 };
 
+const handleUpdateAvs = () => {
+    avsForm.patch(route('bo.member-registrations.update-avs', props.registration.id), {
+        preserveScroll: true,
+        onSuccess: () => avsForm.reset(),
+    });
+};
+
 const handleDelete = () => {
     router.delete(route('bo.member-registrations.destroy', props.registration.id), {
         onSuccess: () => {
-            toast.success('Lien supprimé avec succès.');
             router.get(route('bo.member-registrations.index'));
         },
         onError: () => toast.error('Impossible de supprimer le lien.'),
@@ -142,6 +163,27 @@ const displayUrl = flash?.form_url ?? props.formUrl;
             </Tooltip>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+            <Card v-if="avsConflict" class="border-amber-300 bg-amber-50">
+                <CardHeader class="pb-2"><CardTitle class="text-sm">Conflit de numéro AVS</CardTitle></CardHeader>
+                <CardContent class="space-y-3">
+                    <P class="text-sm">
+                        Le numéro AVS de cette inscription est déjà utilisé par
+                        <a v-if="avsConflict.member_url" :href="avsConflict.member_url" class="font-medium underline">
+                            {{ avsConflict.member_name }}
+                        </a>
+                        <span v-else class="font-medium">{{ avsConflict.member_name }}</span
+                        >.
+                    </P>
+                    <P class="text-sm">Numéro concerné : {{ avsConflict.avs }}</P>
+                    <P class="text-sm">Corrigez le numéro ci-dessous ou modifiez le membre concerné avant de valider l'inscription.</P>
+                    <form v-if="canEditAvs" class="flex flex-col gap-2 sm:flex-row" @submit.prevent="handleUpdateAvs">
+                        <Input v-model="avsForm.avs" placeholder="756.1234.5678.90" maxlength="20" pattern="756\.[0-9]{4}\.[0-9]{4}\.[0-9]{2}" />
+                        <Button type="submit" :disabled="avsForm.processing">Corriger l'AVS</Button>
+                    </form>
+                    <P v-else class="text-muted-foreground text-sm"> Vous n'avez pas la permission de corriger le numéro AVS. </P>
+                    <p v-if="avsForm.errors.avs" class="text-sm text-red-600">{{ avsForm.errors.avs }}</p>
+                </CardContent>
+            </Card>
             <Card v-if="displayUrl">
                 <CardHeader class="pb-2">
                     <CardTitle class="text-sm">Lien du formulaire</CardTitle>
@@ -173,20 +215,13 @@ const displayUrl = flash?.form_url ?? props.formUrl;
                         <P v-else class="text-muted-foreground text-sm">Aucun membre associé</P>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader class="pb-2"><CardTitle class="text-sm">DAV UID</CardTitle></CardHeader>
-                    <CardContent>
-                        <P v-if="registration.dav_uid" class="font-mono text-sm">{{ registration.dav_uid }}</P>
-                        <P v-else class="text-muted-foreground text-sm">-</P>
-                    </CardContent>
-                </Card>
             </div>
 
             <Card v-if="hasFailed()" class="border-destructive/50 bg-destructive/5">
                 <CardHeader class="pb-2"><CardTitle class="text-destructive text-sm">Erreur</CardTitle></CardHeader>
                 <CardContent>
-                    <P class="text-sm">{{ registration.error_message }}</P>
-                    <Button size="sm" variant="outline" class="mt-3" @click="handleRetry">
+                    <P class="text-sm">{{ registration.error_message ?? 'Synchronisation DAV échouée.' }}</P>
+                    <Button v-if="canRetry()" size="sm" variant="outline" class="mt-3" @click="handleRetry">
                         <RotateCcw class="mr-2 size-4" />
                         {{ retryLabel(registration.status) }}
                     </Button>
@@ -201,6 +236,7 @@ const displayUrl = flash?.form_url ?? props.formUrl;
                     <Pre v-if="registration.form_data" class="bg-muted max-h-96 overflow-auto rounded p-4 text-xs">{{
                         JSON.stringify(registration.form_data, null, 2)
                     }}</Pre>
+                    <P v-else-if="!canViewSensitiveData" class="text-muted-foreground text-sm">Données sensibles masquées</P>
                     <P v-else class="text-muted-foreground text-sm">Aucune donnée</P>
                 </div>
             </div>

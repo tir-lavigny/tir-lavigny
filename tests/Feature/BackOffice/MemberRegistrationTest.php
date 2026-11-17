@@ -10,8 +10,10 @@ use App\Models\User;
 use App\Services\DavServiceInterface;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 use Mockery;
 use Tests\TestCase;
 
@@ -24,7 +26,7 @@ class MemberRegistrationTest extends TestCase
         parent::setUp();
         $this->seed(RolesAndPermissionsSeeder::class);
         $admin = User::factory()->create();
-        $admin->assignRole('admin');
+        $admin->assignRole('admin', 'get member registration mails');
         $this->actingAs($admin);
     }
 
@@ -36,6 +38,17 @@ class MemberRegistrationTest extends TestCase
 
     public function test_can_view_registration_list(): void
     {
+        $response = $this->get(route('bo.member-registrations.index'));
+
+        $response->assertStatus(200);
+    }
+
+    public function test_registration_list_renders_with_legacy_plaintext_avs(): void
+    {
+        $member = Member::factory()->create();
+        DB::table('members')->where('id', $member->id)->update(['avs' => '756.0000.0000.00']);
+        MemberRegistration::create(['member_id' => $member->id]);
+
         $response = $this->get(route('bo.member-registrations.index'));
 
         $response->assertStatus(200);
@@ -123,6 +136,17 @@ class MemberRegistrationTest extends TestCase
         $response->assertSee('john@example.com');
     }
 
+    public function test_show_does_not_expose_dav_uid(): void
+    {
+        $registration = MemberRegistration::create();
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn ($page) => $page
+            ->missing('registration.dav_uid')
+        );
+    }
+
     public function test_show_displays_error_message_when_present(): void
     {
         $registration = MemberRegistration::create([
@@ -206,7 +230,7 @@ class MemberRegistrationTest extends TestCase
         Mail::fake();
 
         $davMock = Mockery::mock(DavServiceInterface::class);
-        $davMock->shouldReceive('createContactFromMemberRegistration')
+        $davMock->shouldReceive('createContactFromMember')
             ->once()
             ->andReturn(['uid' => 'validated-uid-123']);
         $this->app->instance(DavServiceInterface::class, $davMock);
@@ -231,10 +255,180 @@ class MemberRegistrationTest extends TestCase
 
         $registration->refresh();
         $this->assertEquals(MemberRegistrationStatus::COMPLETED, $registration->status);
-        $this->assertEquals('validated-uid-123', $registration->dav_uid);
+        $this->assertSame('validated-uid-123', $registration->member->dav_uid);
         $this->assertNotNull($registration->member_id);
         $this->assertNull($registration->failed_at);
         $this->assertNull($registration->error_message);
+    }
+
+    public function test_show_displays_avs_conflict(): void
+    {
+        [$member, $registration] = $this->duplicateAvsRegistration();
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('avsConflict.member_id', $member->id)
+            ->where('avsConflict.member_name', trim($member->first_name.' '.$member->last_name))
+            ->where('avsConflict.avs', '756.1234.5678.90')
+            ->where('canEditAvs', true)
+        );
+    }
+
+    public function test_show_has_no_conflict_for_unique_avs(): void
+    {
+        $registration = $this->registrationWithAvs('756.0000.0000.00');
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('avsConflict', null)
+        );
+    }
+
+    public function test_show_masks_conflict_avs_without_sensitive_permission(): void
+    {
+        [$member, $registration] = $this->duplicateAvsRegistration();
+
+        $user = User::factory()->create();
+        $user->assignRole('member manager');
+        $this->actingAs($user);
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('avsConflict.member_id', $member->id)
+            ->where('avsConflict.avs', '756.***.***.90')
+            ->where('canEditAvs', false)
+        );
+    }
+
+    public function test_completed_registration_does_not_conflict_with_itself(): void
+    {
+        $member = Member::factory()->create(['avs' => '756.1234.5678.90']);
+        $registration = $this->registrationWithAvs('756.1234.5678.90', MemberRegistrationStatus::COMPLETED);
+        $registration->member()->associate($member);
+        $registration->save();
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('avsConflict', null)
+        );
+    }
+
+    public function test_validate_is_blocked_while_avs_conflicts(): void
+    {
+        [, $registration] = $this->duplicateAvsRegistration();
+
+        $response = $this->post(route('bo.member-registrations.validate', $registration));
+
+        $response->assertRedirect(route('bo.member-registrations.show', $registration));
+        $response->assertSessionHas('error');
+        $this->assertSame(MemberRegistrationStatus::FORM_FILLED, $registration->fresh()->status);
+        $this->assertSame(1, Member::count());
+    }
+
+    public function test_retry_is_blocked_while_avs_conflicts(): void
+    {
+        [, $registration] = $this->duplicateAvsRegistration(MemberRegistrationStatus::ERROR);
+
+        $response = $this->post(route('bo.member-registrations.retry', $registration));
+
+        $response->assertRedirect(route('bo.member-registrations.show', $registration));
+        $response->assertSessionHas('error');
+        $this->assertSame(MemberRegistrationStatus::ERROR, $registration->fresh()->status);
+    }
+
+    public function test_update_avs_clears_conflict_and_preserves_form_data(): void
+    {
+        [, $registration] = $this->duplicateAvsRegistration();
+
+        $response = $this->patch(route('bo.member-registrations.update-avs', $registration), [
+            'avs' => '756.0000.0000.00',
+        ]);
+
+        $response->assertRedirect(route('bo.member-registrations.show', $registration));
+        $response->assertSessionHasNoErrors();
+
+        $registration->refresh();
+
+        $this->assertSame('756.0000.0000.00', $registration->form_data['avs']);
+        $this->assertSame('Jean', $registration->form_data['first_name']);
+        $this->assertSame('Dupont', $registration->form_data['last_name']);
+    }
+
+    public function test_validate_succeeds_after_registration_avs_is_corrected(): void
+    {
+        [, $registration] = $this->duplicateAvsRegistration();
+        $this->mockSuccessfulDav();
+
+        $this->patch(route('bo.member-registrations.update-avs', $registration), [
+            'avs' => '756.0000.0000.00',
+        ]);
+
+        $this->post(route('bo.member-registrations.validate', $registration));
+
+        $registration->refresh();
+
+        $this->assertSame(MemberRegistrationStatus::COMPLETED, $registration->status);
+        $this->assertNotNull($registration->member_id);
+    }
+
+    public function test_validate_succeeds_after_member_avs_is_corrected(): void
+    {
+        [$member, $registration] = $this->duplicateAvsRegistration();
+        $this->mockSuccessfulDav();
+
+        $member->update(['avs' => '756.0000.0000.00']);
+
+        $this->post(route('bo.member-registrations.validate', $registration));
+
+        $registration->refresh();
+
+        $this->assertSame(MemberRegistrationStatus::COMPLETED, $registration->status);
+        $this->assertNotNull($registration->member_id);
+    }
+
+    public function test_update_avs_rejects_another_duplicate(): void
+    {
+        [, $registration] = $this->duplicateAvsRegistration();
+        Member::factory()->create(['avs' => '756.0000.0000.00']);
+
+        $response = $this->patch(route('bo.member-registrations.update-avs', $registration), [
+            'avs' => '756.0000.0000.00',
+        ]);
+
+        $response->assertSessionHasErrors('avs');
+        $this->assertSame('756.1234.5678.90', $registration->fresh()->form_data['avs']);
+    }
+
+    public function test_update_avs_requires_sensitive_permission(): void
+    {
+        [, $registration] = $this->duplicateAvsRegistration();
+
+        $user = User::factory()->create();
+        $user->givePermissionTo('access backoffice', 'manage member registration');
+        $this->actingAs($user);
+
+        $response = $this->patch(route('bo.member-registrations.update-avs', $registration), [
+            'avs' => '756.0000.0000.00',
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_conflict_clears_when_member_avs_changes(): void
+    {
+        [$member, $registration] = $this->duplicateAvsRegistration();
+
+        $member->update(['avs' => '756.0000.0000.00']);
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('avsConflict', null)
+        );
     }
 
     public function test_validate_rejects_registration_not_awaiting_validation(): void
@@ -348,5 +542,52 @@ class MemberRegistrationTest extends TestCase
 
         $response->assertRedirect('/login');
         $this->assertDatabaseHas('member_registrations', ['id' => $registration->id]);
+    }
+
+    private function mockSuccessfulDav(): void
+    {
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('createContactFromMember')
+            ->once()
+            ->andReturn([
+                'uid' => 'uid-1',
+                'url' => 'http://example.com/uid-1.vcf',
+                'fn' => 'Dupont Jean',
+                'vcard_raw' => 'BEGIN:VCARD',
+            ]);
+        $this->app->instance(DavServiceInterface::class, $davMock);
+    }
+
+    /** @return array{0: Member, 1: MemberRegistration} */
+    private function duplicateAvsRegistration(
+        MemberRegistrationStatus $status = MemberRegistrationStatus::FORM_FILLED,
+    ): array {
+        $member = Member::factory()->create(['avs' => '756.1234.5678.90']);
+
+        return [$member, $this->registrationWithAvs('756.1234.5678.90', $status)];
+    }
+
+    private function registrationWithAvs(
+        string $avs,
+        MemberRegistrationStatus $status = MemberRegistrationStatus::FORM_FILLED,
+    ): MemberRegistration {
+        return MemberRegistration::create([
+            'form_uuid' => Str::uuid(),
+            'form_data' => [
+                'first_name' => 'Jean',
+                'last_name' => 'Dupont',
+                'email' => 'jean.dupont@example.com',
+                'is_swiss_citizen' => true,
+                'avs' => $avs,
+                'tel' => '+41 21 123 45 67',
+                'street' => 'Rue du Marché 1',
+                'npa' => '1003',
+                'city' => 'Lausanne',
+                'canton' => 'VD',
+                'country' => 'Suisse',
+            ],
+            'form_submitted_at' => now(),
+            'status' => $status,
+        ]);
     }
 }

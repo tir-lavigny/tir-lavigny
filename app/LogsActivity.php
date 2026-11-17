@@ -10,10 +10,10 @@ trait LogsActivity
     public static function bootLogsActivity(): void
     {
         static::created(function ($model) {
-            $model->writeActivity('created', $model->getAttributes());
+            $model->writeActivity('created', $model->prepareActivityLog($model->getAttributes()));
         });
         static::updated(function ($model) {
-            $model->writeActivity('updated', $model->getChanges());
+            $model->writeActivity('updated', $model->prepareActivityLog($model->getChanges()));
         });
         static::deleted(function ($model) {
             $model->writeActivity('deleted');
@@ -35,5 +35,14 @@ trait LogsActivity
             'changes' => json_encode($changes),
             'user_id' => Auth::id(),
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $changes
+     * @return array<string, mixed>
+     */
+    protected function prepareActivityLog(array $changes): array
+    {
+        return $changes;
     }
 }

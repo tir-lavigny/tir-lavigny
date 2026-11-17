@@ -2,24 +2,28 @@
 
 namespace App\Services;
 
+use App\Actions\Member\OnboardMemberAction;
 use App\Mail\MemberRegistrationCompleted as MemberRegistrationCompletedMail;
 use App\Mail\MemberRegistrationError;
 use App\Mail\MemberRegistrationValidationRequested;
 use App\MemberRegistrationStatus;
+use App\MemberStatus;
 use App\Models\Member;
 use App\Models\MemberRegistration;
-use App\Models\Product;
-use App\Models\Season;
 use App\Models\User;
-use App\Models\Voucher;
+use App\Rules\UniqueMemberAvs;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class MemberRegistrationPipelineService
 {
     public function __construct(
-        private readonly DavServiceInterface $dav,
+        private readonly MemberSyncService $sync,
+        private readonly ?MemberDavSyncFailureNotifier $davFailureNotifier = null,
+        private readonly ?SeasonVoucherService $seasonVoucherService = null,
+        private readonly ?OnboardMemberAction $onboard = null,
     ) {}
 
     /**
@@ -45,39 +49,28 @@ class MemberRegistrationPipelineService
      */
     public function processFormSubmission(MemberRegistration $registration): void
     {
-        $step = 'dav_contact';
+        $step = 'member_creation';
 
         try {
-            $davResult = $this->dav->createContactFromMemberRegistration($registration);
-            $registration->dav_uid = $davResult['uid'];
-            $this->transitionStatus($registration, MemberRegistrationStatus::DAV_CREATED);
+            $member = DB::transaction(function () use ($registration): Member {
+                $member = $registration->member;
 
-            Log::info('Member registration DAV contact created', [
-                'registration_id' => $registration->id,
-                'dav_uid' => $davResult['uid'],
-            ]);
+                if (! $member) {
+                    $member = $this->createMemberFromRegistration($registration);
+                    $registration->member()->associate($member);
+                    $registration->save();
+                    $this->transitionStatus($registration, MemberRegistrationStatus::MEMBER_CREATED);
 
-            $step = 'member_creation';
-            $member = $this->createMemberFromRegistration($registration);
-            $registration->member()->associate($member);
-            $this->transitionStatus($registration, MemberRegistrationStatus::MEMBER_CREATED);
+                    Log::info('Member registration member created', [
+                        'registration_id' => $registration->id,
+                        'member_id' => $member->id,
+                    ]);
+                }
 
-            Log::info('Member registration member created', [
-                'registration_id' => $registration->id,
-                'member_id' => $member->id,
-            ]);
+                return $member;
+            });
 
-            $step = 'voucher_generation';
-            $this->generateBaseVouchers($member);
-
-            $step = 'completion_email';
-            $this->sendCompletionEmail($registration);
-            $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
-
-            Log::info('Member registration completed', [
-                'registration_id' => $registration->id,
-                'member_id' => $member->id,
-            ]);
+            $this->processAfterMemberCreated($registration, $member);
         } catch (\Throwable $e) {
             $this->handleFailure($registration, $e, $step);
         }
@@ -91,55 +84,73 @@ class MemberRegistrationPipelineService
         match ($registration->status) {
             MemberRegistrationStatus::FORM_FILLED => $this->sendValidationRequest($registration),
             MemberRegistrationStatus::ERROR => $this->processFormSubmission($registration),
-            MemberRegistrationStatus::DAV_CREATED => $this->processFromDavCreated($registration),
-            MemberRegistrationStatus::MEMBER_CREATED => $this->processFromMemberCreated($registration),
+            MemberRegistrationStatus::MEMBER_CREATED => $this->retryAfterMemberCreated($registration),
+            MemberRegistrationStatus::COMPLETED => $this->retryDavSync($registration),
             default => throw new \InvalidArgumentException('Aucune étape à réessayer.'),
         };
     }
 
-    private function processFromDavCreated(MemberRegistration $registration): void
+    private function retryAfterMemberCreated(MemberRegistration $registration): void
     {
-        $step = 'member_creation';
+        $member = $registration->member;
+
+        if (! $member) {
+            $this->processFormSubmission($registration);
+
+            return;
+        }
 
         try {
-            $member = $this->createMemberFromRegistration($registration);
-            $registration->member()->associate($member);
-            $this->transitionStatus($registration, MemberRegistrationStatus::MEMBER_CREATED);
+            $this->processAfterMemberCreated($registration, $member);
+        } catch (\Throwable $e) {
+            $this->handleFailure($registration, $e, 'voucher_generation');
+        }
+    }
 
-            Log::info('Member registration member created', [
-                'registration_id' => $registration->id,
-                'member_id' => $member->id,
-            ]);
+    private function processAfterMemberCreated(MemberRegistration $registration, Member $member): void
+    {
+        $step = 'voucher_generation';
 
-            $step = 'voucher_generation';
-            $this->generateBaseVouchers($member);
+        try {
+            DB::transaction(function () use ($registration, $member): void {
+                $this->generateBaseVouchers($member);
+                $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
+            });
 
             $step = 'completion_email';
             $this->sendCompletionEmail($registration);
-            $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
 
             Log::info('Member registration completed', [
                 'registration_id' => $registration->id,
                 'member_id' => $member->id,
             ]);
+
+            $step = 'dav_sync';
+            $this->sync->push($member);
+
+            $this->notifyDavSyncFailure($registration, $member);
         } catch (\Throwable $e) {
             $this->handleFailure($registration, $e, $step);
         }
     }
 
-    private function processFromMemberCreated(MemberRegistration $registration): void
+    private function retryDavSync(MemberRegistration $registration): void
     {
-        try {
-            $this->sendCompletionEmail($registration);
-            $this->transitionStatus($registration, MemberRegistrationStatus::COMPLETED);
+        $member = $registration->member;
 
-            Log::info('Member registration completed', [
-                'registration_id' => $registration->id,
-                'member_id' => $registration->member_id,
-            ]);
-        } catch (\Throwable $e) {
-            $this->handleFailure($registration, $e, 'completion_email');
+        if (! $member || ! $member->dav_sync_error) {
+            throw new \InvalidArgumentException('Aucune synchronisation à réessayer.');
         }
+
+        $this->sync->push($member);
+
+        $this->notifyDavSyncFailure($registration, $member);
+    }
+
+    private function notifyDavSyncFailure(MemberRegistration $registration, Member $member): void
+    {
+        ($this->davFailureNotifier ?? app(MemberDavSyncFailureNotifier::class))
+            ->notify($member, $registration);
     }
 
     private function transitionStatus(MemberRegistration $registration, MemberRegistrationStatus $status): void
@@ -152,74 +163,48 @@ class MemberRegistrationPipelineService
     {
         $formData = $registration->form_data;
 
-        return Member::create([
+        $this->assertAvsIsUnique($formData['avs'] ?? null);
+
+        $onboard = $this->onboard ?? new OnboardMemberAction(
+            $this->sync,
+            $this->seasonVoucherService ?? app(SeasonVoucherService::class),
+        );
+
+        return $onboard->execute([
             'first_name' => $formData['first_name'],
             'last_name' => $formData['last_name'],
-            'dav_uid' => $registration->dav_uid,
-        ]);
+            'email' => $formData['email'] ?? null,
+            'tel' => $formData['tel'] ?? null,
+            'avs' => $formData['avs'] ?? null,
+            'is_swiss_citizen' => $formData['is_swiss_citizen'] ?? null,
+            'street' => $formData['street'] ?? null,
+            'npa' => $formData['npa'] ?? null,
+            'city' => $formData['city'] ?? null,
+            'canton' => $formData['canton'] ?? null,
+            'country' => $formData['country'] ?? null,
+            'status' => MemberStatus::ACTIVE,
+        ], generateVouchers: false, pushDav: false)['member'];
+    }
+
+    private function assertAvsIsUnique(mixed $avs): void
+    {
+        if (! is_string($avs) || trim($avs) === '') {
+            return;
+        }
+
+        if (UniqueMemberAvs::exists($avs)) {
+            throw new \RuntimeException('Ce numéro AVS est déjà utilisé par un autre membre.');
+        }
     }
 
     private function generateBaseVouchers(Member $member): void
     {
-        $season = Season::where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
-            ->first();
+        $voucherService = $this->seasonVoucherService ?? app(SeasonVoucherService::class);
+        $result = $voucherService->generateBaseVouchersForMember($member);
 
-        if (! $season) {
-            Log::warning('Base vouchers skipped because no active season exists', [
-                'member_id' => $member->id,
-            ]);
-
-            return;
+        if ($result['missing'] !== []) {
+            throw new \RuntimeException('Produits de base introuvables : '.implode(', ', $result['missing']).'.');
         }
-
-        $basePackage = [
-            'Tir du jeudi' => 3,
-            'Ouverture' => 1,
-            'Clôture' => 1,
-        ];
-
-        $created = 0;
-
-        foreach ($basePackage as $productName => $count) {
-            $product = Product::whereRaw('LOWER(name) = ?', [strtolower($productName)])->first();
-
-            if (! $product) {
-                Log::warning('Base voucher product not found', [
-                    'member_id' => $member->id,
-                    'season_id' => $season->id,
-                    'product_name' => $productName,
-                ]);
-
-                continue;
-            }
-
-            $existingCount = Voucher::where('member_id', $member->id)
-                ->where('season_id', $season->id)
-                ->where('product_id', $product->id)
-                ->withTrashed()
-                ->count();
-
-            $missing = $count - $existingCount;
-
-            for ($i = 0; $i < $missing; $i++) {
-                Voucher::create([
-                    'discount_percent' => 100.00,
-                    'discount_fixed' => null,
-                    'product_id' => $product->id,
-                    'season_id' => $season->id,
-                    'member_id' => $member->id,
-                ]);
-
-                $created++;
-            }
-        }
-
-        Log::info('Base vouchers generated for member', [
-            'member_id' => $member->id,
-            'season_id' => $season->id,
-            'count' => $created,
-        ]);
     }
 
     private function sendCompletionEmail(MemberRegistration $registration): void
@@ -237,10 +222,13 @@ class MemberRegistrationPipelineService
             'registration_id' => $registration->id,
             'status' => $registration->status->value,
             'step' => $step,
-            'dav_uid' => $registration->dav_uid,
             'member_id' => $registration->member_id,
             'exception' => $e,
         ]);
+
+        if ($step !== 'validation_email') {
+            $registration->status = MemberRegistrationStatus::ERROR;
+        }
 
         $registration->error_message = 'Erreur : '.$e->getMessage();
         $registration->failed_at = Carbon::now('Europe/Zurich')->utc();

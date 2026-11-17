@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Member;
-use App\Models\MemberRegistration;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -30,42 +29,30 @@ class StubDavService implements DavServiceInterface
         return null;
     }
 
+    /** @return array<string, string>|null */
+    public function findContact(string $uid): ?array
+    {
+        Log::info('StubDavService: findContact called', ['uid' => $uid]);
+
+        return null;
+    }
+
     /** @return array<string, string> */
-    public function createContactFromMemberRegistration(MemberRegistration $registration): array
+    public function createContactFromMember(Member $member): array
     {
         $uid = Str::uuid7();
 
-        Log::info('StubDavService: createContactFromMemberRegistration called', [
-            'registration_id' => $registration->id,
+        Log::info('StubDavService: createContactFromMember called', [
+            'member_id' => $member->id,
             'uid' => $uid,
         ]);
 
         return [
             'url' => $this->getAddressbookUrl().$uid.'.vcf',
             'uid' => $uid,
-            'fn' => $registration->form_data['last_name'].' '.$registration->form_data['first_name'],
+            'fn' => $member->last_name.' '.$member->first_name,
             'vcard_raw' => 'BEGIN:VCARD'.$uid.'END:VCARD',
         ];
-    }
-
-    public function softDeleteMember(Member $member): bool
-    {
-        Log::info('StubDavService: softDeleteMember called', [
-            'member_id' => $member->id,
-            'dav_uid' => $member->dav_uid,
-        ]);
-
-        return true;
-    }
-
-    public function restoreMember(Member $member): bool
-    {
-        Log::info('StubDavService: restoreMember called', [
-            'member_id' => $member->id,
-            'dav_uid' => $member->dav_uid,
-        ]);
-
-        return true;
     }
 
     public function deleteMember(Member $member): bool

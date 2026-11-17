@@ -5,8 +5,8 @@ namespace Tests\Unit\Services;
 use App\Models\Member;
 use App\Services\DavServiceInterface;
 use App\Services\DavSyncService;
+use App\Services\MemberSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\TestCase;
 
@@ -44,7 +44,7 @@ class DavSyncServiceTest extends TestCase
             $davMock->shouldReceive($method)->andReturn($return);
         }
 
-        return new DavSyncService($davMock);
+        return new DavSyncService($davMock, new MemberSyncService($davMock));
     }
 
     private function mockDavThrows(string $message = 'Connection failed'): DavSyncService
@@ -52,7 +52,7 @@ class DavSyncServiceTest extends TestCase
         $davMock = Mockery::mock(DavServiceInterface::class);
         $davMock->shouldReceive('getContacts')->andThrow(new \RuntimeException($message));
 
-        return new DavSyncService($davMock);
+        return new DavSyncService($davMock, new MemberSyncService($davMock));
     }
 
     // ── importFromDav ───────────────────────────────────────────────────────
@@ -83,6 +83,40 @@ class DavSyncServiceTest extends TestCase
 
         $this->assertEquals(3, $result['created']);
         $this->assertDatabaseCount('members', 3);
+    }
+
+    public function test_import_skips_duplicate_email_contacts(): void
+    {
+        $service = $this->mockDav([
+            array_merge($this->makeContact('uid-001', 'Doe;John;;;'), ['email' => 'same@example.com']),
+            array_merge($this->makeContact('uid-002', 'Smith;Jane;;;'), ['email' => 'same@example.com']),
+        ]);
+
+        $result = $service->importFromDav();
+
+        $this->assertSame(1, $result['created']);
+        $this->assertSame(['uid-002'], $result['skipped']);
+        $this->assertDatabaseCount('members', 1);
+    }
+
+    public function test_import_continues_after_one_contact_fails(): void
+    {
+        $davMock = Mockery::mock(DavServiceInterface::class);
+        $davMock->shouldReceive('getContacts')->andReturn([
+            $this->makeContact('uid-001', 'Doe;John;;;'),
+            $this->makeContact('uid-002', 'Smith;Jane;;;'),
+        ]);
+
+        $memberSync = Mockery::mock(MemberSyncService::class);
+        $memberSync->shouldReceive('createFromContact')
+            ->once()
+            ->andThrow(new \RuntimeException('Bad contact'));
+        $memberSync->shouldReceive('createFromContact')->once();
+
+        $result = (new DavSyncService($davMock, $memberSync))->importFromDav();
+
+        $this->assertSame(1, $result['created']);
+        $this->assertSame(['uid-001'], $result['failed']);
     }
 
     public function test_import_skips_non_active_contacts(): void
@@ -142,177 +176,5 @@ class DavSyncServiceTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         $service->importFromDav();
-    }
-
-    // ── syncPreview ─────────────────────────────────────────────────────────
-
-    public function test_sync_preview_returns_diff_pairs(): void
-    {
-        $member = Member::factory()->create([
-            'first_name' => 'Pierre',
-            'last_name' => 'Dupont',
-            'dav_uid' => 'uid-001',
-        ]);
-
-        $service = $this->mockDav([$this->makeContact('uid-001', 'Doe;John;;;')]);
-
-        $result = $service->syncPreview();
-
-        $this->assertCount(1, $result['pairs']);
-        $this->assertEquals($member->id, $result['pairs'][0]['member_id']);
-        $this->assertEquals('Pierre', $result['pairs'][0]['member_first_name']);
-        $this->assertEquals('Dupont', $result['pairs'][0]['member_last_name']);
-        $this->assertEquals('John', $result['pairs'][0]['dav_first_name']);
-        $this->assertEquals('Doe', $result['pairs'][0]['dav_last_name']);
-    }
-
-    public function test_sync_preview_skips_matching_names(): void
-    {
-        Member::factory()->create([
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'dav_uid' => 'uid-001',
-        ]);
-
-        $service = $this->mockDav([$this->makeContact('uid-001', 'Doe;John;;;')]);
-
-        $result = $service->syncPreview();
-
-        $this->assertEmpty($result['pairs']);
-    }
-
-    public function test_sync_preview_skips_non_active_contacts(): void
-    {
-        Member::factory()->create([
-            'first_name' => 'Pierre',
-            'last_name' => 'Dupont',
-            'dav_uid' => 'uid-001',
-        ]);
-
-        $service = $this->mockDav([$this->makeContact('uid-001', 'Doe;John;;;', 'Archives')]);
-
-        $result = $service->syncPreview();
-
-        $this->assertEmpty($result['pairs']);
-    }
-
-    public function test_sync_preview_skips_members_without_matching_dav_contact(): void
-    {
-        Member::factory()->create([
-            'first_name' => 'Pierre',
-            'last_name' => 'Dupont',
-            'dav_uid' => 'uid-999',
-        ]);
-
-        $service = $this->mockDav([$this->makeContact('uid-001', 'Doe;John;;;')]);
-
-        $result = $service->syncPreview();
-
-        $this->assertEmpty($result['pairs']);
-    }
-
-    public function test_sync_preview_throws_when_dav_throws(): void
-    {
-        $service = $this->mockDavThrows();
-
-        $this->expectException(\RuntimeException::class);
-        $service->syncPreview();
-    }
-
-    // ── sync ────────────────────────────────────────────────────────────────
-
-    public function test_sync_updates_member_from_dav_source(): void
-    {
-        $member = Member::factory()->create([
-            'first_name' => 'Pierre',
-            'last_name' => 'Dupont',
-            'dav_uid' => 'uid-001',
-        ]);
-
-        $davMock = Mockery::mock(DavServiceInterface::class);
-        $davMock->shouldReceive('getAddressbookUrl')->andReturn('http://localhost/');
-        $davMock->shouldReceive('getContact')
-            ->with('http://localhost/uid-001.vcf')
-            ->andReturn([
-                'url' => 'http://localhost/uid-001.vcf',
-                'uid' => 'uid-001',
-                'fn' => 'Doe John',
-                'n' => 'Doe;John;;;',
-                'email' => '',
-                'tel' => '',
-                'org' => '',
-                'vcard_raw' => 'BEGIN:VCARD',
-            ]);
-
-        $service = new DavSyncService($davMock);
-        $result = $service->sync([['member_id' => $member->id, 'source' => 'dav']]);
-
-        $this->assertEquals(1, $result['updated']);
-        $this->assertDatabaseHas('members', [
-            'id' => $member->id,
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-        ]);
-    }
-
-    public function test_sync_updates_dav_from_member_source(): void
-    {
-        $member = Member::factory()->create([
-            'first_name' => 'Pierre',
-            'last_name' => 'Dupont',
-            'dav_uid' => 'uid-001',
-        ]);
-
-        $davMock = Mockery::mock(DavServiceInterface::class);
-        $davMock->shouldReceive('updateMember')
-            ->with(Mockery::on(fn ($m) => $m->id === $member->id))
-            ->andReturn(true);
-
-        $service = new DavSyncService($davMock);
-        $result = $service->sync([['member_id' => $member->id, 'source' => 'member']]);
-
-        $this->assertEquals(1, $result['updated']);
-    }
-
-    public function test_sync_returns_zero_for_empty_choices(): void
-    {
-        $davMock = Mockery::mock(DavServiceInterface::class);
-        $service = new DavSyncService($davMock);
-
-        $result = $service->sync([]);
-
-        $this->assertEquals(0, $result['updated']);
-    }
-
-    public function test_sync_logs_warning_on_failure(): void
-    {
-        Log::spy();
-
-        $member = Member::factory()->create([
-            'first_name' => 'Pierre',
-            'last_name' => 'Dupont',
-            'dav_uid' => 'uid-001',
-        ]);
-
-        $davMock = Mockery::mock(DavServiceInterface::class);
-        $davMock->shouldReceive('getAddressbookUrl')->andReturn('http://localhost/');
-        $davMock->shouldReceive('getContact')
-            ->andThrow(new \RuntimeException('DAV error'));
-
-        $service = new DavSyncService($davMock);
-        $result = $service->sync([['member_id' => $member->id, 'source' => 'dav']]);
-
-        $this->assertEquals(0, $result['updated']);
-        $this->assertDatabaseHas('members', [
-            'id' => $member->id,
-            'first_name' => 'Pierre',
-        ]);
-
-        Log::shouldHaveReceived('warning')->withArgs(
-            fn (string $message, array $context): bool => $message === 'Failed to sync member'
-                && $context['member_id'] === $member->id
-                && $context['dav_uid'] === 'uid-001'
-                && $context['source'] === 'dav'
-        );
     }
 }

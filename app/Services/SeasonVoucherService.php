@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\MemberStatus;
 use App\Models\Member;
 use App\Models\Product;
 use App\Models\Season;
@@ -61,7 +62,7 @@ class SeasonVoucherService
      * @return array<int, array{member_id: int, member_name: string, vouchers: array<int, array{product_name: string, count: int}>}> */
     public function computePlan(Season $season, array $basePackage, array $products): array
     {
-        $members = Member::all();
+        $members = Member::active()->get();
 
         return $this->computePlanForMembers($season, $members, $basePackage, $products);
     }
@@ -105,6 +106,76 @@ class SeasonVoucherService
             'created' => $created,
             'members_with_plan' => count($plan),
         ]);
+    }
+
+    /**
+     * Generate the base package for one member in the current season.
+     *
+     * @return array{created: int, missing: array<int, string>}
+     */
+    public function generateBaseVouchersForMember(Member $member, ?Season $season = null): array
+    {
+        $result = ['created' => 0, 'missing' => []];
+
+        if ($member->status !== MemberStatus::ACTIVE) {
+            Log::info('Base vouchers skipped for non-active member', [
+                'member_id' => $member->id,
+                'status' => $member->status->value,
+            ]);
+
+            return $result;
+        }
+
+        $season ??= Season::where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
+
+        if (! $season) {
+            Log::warning('Base vouchers skipped because no active season exists', [
+                'member_id' => $member->id,
+            ]);
+
+            return $result;
+        }
+
+        foreach ($this->getBasePackage() as $productName => $count) {
+            $product = Product::whereRaw('LOWER(name) = ?', [strtolower($productName)])->first();
+
+            if (! $product) {
+                $result['missing'][] = $productName;
+
+                continue;
+            }
+
+            $existingCount = Voucher::where('member_id', $member->id)
+                ->where('season_id', $season->id)
+                ->where('product_id', $product->id)
+                ->withTrashed()
+                ->count();
+
+            $missing = $count - $existingCount;
+
+            for ($i = 0; $i < $missing; $i++) {
+                Voucher::create([
+                    'discount_percent' => 100.00,
+                    'discount_fixed' => null,
+                    'product_id' => $product->id,
+                    'season_id' => $season->id,
+                    'member_id' => $member->id,
+                ]);
+
+                $result['created']++;
+            }
+        }
+
+        Log::info('Base vouchers generated for member', [
+            'member_id' => $member->id,
+            'season_id' => $season->id,
+            'created' => $result['created'],
+            'missing' => $result['missing'],
+        ]);
+
+        return $result;
     }
 
     /** @param Collection<int, Member> $members

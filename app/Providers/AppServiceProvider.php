@@ -8,6 +8,7 @@ use App\Services\StubDavService;
 use App\TokenAbility;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,7 +22,11 @@ class AppServiceProvider extends ServiceProvider
                 return new InfomaniakDavService;
             }
 
-            return new StubDavService;
+            if (app()->environment(['local', 'testing', 'staging'])) {
+                return new StubDavService;
+            }
+
+            throw new RuntimeException('DAV credentials are not configured.');
         });
     }
 
