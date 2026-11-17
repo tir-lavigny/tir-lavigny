@@ -69,7 +69,7 @@ class DeleteMemberAction
         ])->saveQuietly();
 
         $member->vouchers()
-            ->onlyTrashed()
+            ->withTrashed()
             ->whereDoesntHave('ticketItems', fn ($query) => $query->withTrashed())
             ->get()
             ->each(fn (Voucher $voucher) => $voucher->forceDelete());
