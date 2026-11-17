@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\BackOffice;
 
 use App\Actions\Member\ArchiveMemberAction;
-use App\Actions\Member\CreateMemberAction;
 use App\Actions\Member\DeleteMemberAction;
 use App\Actions\Member\DeleteUnusedMemberVouchersAction;
+use App\Actions\Member\OnboardMemberAction;
 use App\Actions\Member\RestoreMemberAction;
 use App\Actions\Member\RetryDavDeleteAction;
 use App\Actions\Member\SyncMemberAction;
@@ -80,20 +80,27 @@ class MemberController extends Controller implements HasMiddleware
 
     public function store(
         StoreMemberRequest $request,
-        CreateMemberAction $action,
+        OnboardMemberAction $action,
         MemberDavSyncFailureNotifier $notifier,
     ): RedirectResponse {
         $result = $action->execute($this->filterSensitiveFields($request->validated()));
+        $redirect = redirect()->route('bo.members.show', $result['member']);
+
+        if ($result['missing_products'] !== []) {
+            $redirect->with('warning', 'Membre créé, mais les bons de base n\'ont pas pu être créés : '.implode(', ', $result['missing_products']).'.');
+        }
 
         if (! $result['success']) {
             $notifier->notify($result['member']);
 
-            return redirect()->route('bo.members.show', $result['member'])
-                ->with('error', 'Membre créé, mais la synchronisation avec les contacts a échoué.');
+            return $redirect->with('error', 'Membre créé, mais la synchronisation avec les contacts a échoué.');
         }
 
-        return redirect()->route('bo.members.show', $result['member'])
-            ->with('success', 'Membre créé avec succès.');
+        $message = $result['vouchers_created'] > 0
+            ? 'Membre créé avec succès. '.$result['vouchers_created'].' bon(s) de base créé(s).'
+            : 'Membre créé avec succès.';
+
+        return $redirect->with('success', $message);
     }
 
     public function show(Member $member): Response

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Actions\Member\OnboardMemberAction;
 use App\Mail\MemberRegistrationCompleted as MemberRegistrationCompletedMail;
 use App\Mail\MemberRegistrationError;
 use App\Mail\MemberRegistrationValidationRequested;
@@ -9,9 +10,7 @@ use App\MemberRegistrationStatus;
 use App\MemberStatus;
 use App\Models\Member;
 use App\Models\MemberRegistration;
-use App\Models\Season;
 use App\Models\User;
-use App\Models\Voucher;
 use App\Rules\UniqueMemberAvs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +23,7 @@ class MemberRegistrationPipelineService
         private readonly MemberSyncService $sync,
         private readonly ?MemberDavSyncFailureNotifier $davFailureNotifier = null,
         private readonly ?SeasonVoucherService $seasonVoucherService = null,
+        private readonly ?OnboardMemberAction $onboard = null,
     ) {}
 
     /**
@@ -165,7 +165,12 @@ class MemberRegistrationPipelineService
 
         $this->assertAvsIsUnique($formData['avs'] ?? null);
 
-        return Member::create([
+        $onboard = $this->onboard ?? new OnboardMemberAction(
+            $this->sync,
+            $this->seasonVoucherService ?? app(SeasonVoucherService::class),
+        );
+
+        return $onboard->execute([
             'first_name' => $formData['first_name'],
             'last_name' => $formData['last_name'],
             'email' => $formData['email'] ?? null,
@@ -178,7 +183,7 @@ class MemberRegistrationPipelineService
             'canton' => $formData['canton'] ?? null,
             'country' => $formData['country'] ?? null,
             'status' => MemberStatus::ACTIVE,
-        ]);
+        ], generateVouchers: false, pushDav: false)['member'];
     }
 
     private function assertAvsIsUnique(mixed $avs): void
@@ -194,62 +199,12 @@ class MemberRegistrationPipelineService
 
     private function generateBaseVouchers(Member $member): void
     {
-        if ($member->status !== MemberStatus::ACTIVE) {
-            Log::info('Base vouchers skipped for non-active member', [
-                'member_id' => $member->id,
-                'status' => $member->status->value,
-            ]);
-
-            return;
-        }
-
-        $season = Season::where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
-            ->first();
-
-        if (! $season) {
-            Log::warning('Base vouchers skipped because no active season exists', [
-                'member_id' => $member->id,
-            ]);
-
-            return;
-        }
-
         $voucherService = $this->seasonVoucherService ?? app(SeasonVoucherService::class);
-        $basePackage = $voucherService->getBasePackage();
-        $products = $voucherService->resolveProducts($basePackage);
+        $result = $voucherService->generateBaseVouchersForMember($member);
 
-        $created = 0;
-
-        foreach ($basePackage as $productName => $count) {
-            $product = $products[$productName];
-
-            $existingCount = Voucher::where('member_id', $member->id)
-                ->where('season_id', $season->id)
-                ->where('product_id', $product->id)
-                ->withTrashed()
-                ->count();
-
-            $missing = $count - $existingCount;
-
-            for ($i = 0; $i < $missing; $i++) {
-                Voucher::create([
-                    'discount_percent' => 100.00,
-                    'discount_fixed' => null,
-                    'product_id' => $product->id,
-                    'season_id' => $season->id,
-                    'member_id' => $member->id,
-                ]);
-
-                $created++;
-            }
+        if ($result['missing'] !== []) {
+            throw new \RuntimeException('Produits de base introuvables : '.implode(', ', $result['missing']).'.');
         }
-
-        Log::info('Base vouchers generated for member', [
-            'member_id' => $member->id,
-            'season_id' => $season->id,
-            'count' => $created,
-        ]);
     }
 
     private function sendCompletionEmail(MemberRegistration $registration): void
