@@ -160,11 +160,13 @@ const handleRemoveUnused = () => {
                         <template #trigger>
                             <Button variant="destructive"><Archive class="mr-2 h-4 w-4" /> Archiver</Button>
                         </template>
-                        <div v-if="canDeleteVouchers" class="flex items-center gap-2">
-                            <Checkbox id="delete_vouchers" v-model="deleteVouchers" />
+                        <div class="flex items-center gap-2">
+                            <Checkbox id="delete_vouchers" v-model="deleteVouchers" :disabled="!canDeleteVouchers" />
                             <Label for="delete_vouchers">Supprimer aussi les bons inutilisés (toutes saisons)</Label>
                         </div>
-                        <Muted v-else class="text-sm"> Les bons inutilisés seront conservés. Vous n'avez pas la permission de les supprimer. </Muted>
+                        <Muted v-if="!canDeleteVouchers" class="text-sm">
+                            Les bons inutilisés seront conservés. Vous n'avez pas la permission de les supprimer.
+                        </Muted>
                         <template #action>
                             <Button variant="destructive" @click="handleArchive">Archiver</Button>
                         </template>
