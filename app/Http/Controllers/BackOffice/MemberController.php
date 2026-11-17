@@ -83,7 +83,7 @@ class MemberController extends Controller implements HasMiddleware
         OnboardMemberAction $action,
         MemberDavSyncFailureNotifier $notifier,
     ): RedirectResponse {
-        $result = $action->execute($this->filterSensitiveFields($request->validated()));
+        $result = $action->execute($request->validated());
         $redirect = redirect()->route('bo.members.show', $result['member']);
 
         if ($result['missing_products'] !== []) {

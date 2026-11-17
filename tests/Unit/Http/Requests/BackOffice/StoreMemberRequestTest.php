@@ -60,6 +60,14 @@ class StoreMemberRequestTest extends TestCase
         return array_merge([
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
+            'email' => 'jean.dupont@example.com',
+            'is_swiss_citizen' => false,
+            'tel' => '+41 21 123 45 67',
+            'street' => 'Rue du Marché 1',
+            'npa' => '1003',
+            'city' => 'Lausanne',
+            'canton' => 'VD',
+            'country' => 'Suisse',
             'status' => 'active',
         ], $overrides);
     }
@@ -107,22 +115,26 @@ class StoreMemberRequestTest extends TestCase
         ])));
     }
 
-    public function test_passes_without_avs_for_swiss_citizen_without_sensitive_permission(): void
+    public function test_fails_without_avs_for_swiss_citizen_without_sensitive_permission(): void
     {
-        $this->assertFalse($this->failsFor($this->memberManagerWithoutSensitivePermission(), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
+        $this->assertTrue($this->failsFor($this->memberManagerWithoutSensitivePermission(), $this->validData([
             'is_swiss_citizen' => true,
-            'status' => 'active',
-        ]));
+        ])));
     }
 
-    public function test_accepts_avs_without_sensitive_permission_for_controller_filtering(): void
+    public function test_accepts_avs_without_sensitive_permission(): void
     {
-        $this->assertFalse($this->failsFor($this->memberManagerWithoutSensitivePermission(), [
+        $this->assertFalse($this->failsFor($this->memberManagerWithoutSensitivePermission(), $this->validData([
+            'is_swiss_citizen' => true,
+            'avs' => '756.1234.5678.90',
+        ])));
+    }
+
+    public function test_fails_without_required_contact_fields(): void
+    {
+        $this->assertTrue($this->fails([
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
-            'avs' => '756.1234.5678.90',
             'status' => 'active',
         ]));
     }
