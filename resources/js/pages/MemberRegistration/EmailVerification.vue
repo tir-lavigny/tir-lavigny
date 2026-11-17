@@ -125,9 +125,7 @@ const resend = () => {
 
         <div class="text-center text-sm">
             <P v-if="cooldown > 0" class="text-muted-foreground"> Nouveau code disponible dans {{ cooldown }} s. </P>
-            <Button v-else variant="link" type="button" :disabled="resending" @click="resend">
-                Renvoyer un code
-            </Button>
+            <Button v-else variant="link" type="button" :disabled="resending" @click="resend"> Renvoyer un code </Button>
         </div>
     </div>
 </template>

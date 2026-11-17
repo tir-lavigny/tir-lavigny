@@ -94,6 +94,12 @@ class MemberRegistrationController extends Controller implements HasMiddleware
             'Seules les inscriptions au statut « en attente de validation » peuvent être validées.'
         );
 
+        abort_unless(
+            $memberRegistration->isEmailVerified(),
+            403,
+            "L'email du formulaire doit être vérifié avant de valider l'inscription."
+        );
+
         if ($conflictService->find($memberRegistration)) {
             return redirect()->route('bo.member-registrations.show', $memberRegistration)
                 ->with('error', 'Impossible de valider : le numéro AVS est déjà utilisé par un autre membre.');

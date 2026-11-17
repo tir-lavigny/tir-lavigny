@@ -53,7 +53,9 @@ const hasFailed = () => props.registration.failed_at !== null || hasDavSyncError
 
 const hasDavSyncError = () => props.registration.status === 'completed' && Boolean(props.registration.member?.dav_sync_error);
 
-const canValidate = () => props.registration.status === 'form_filled' && !props.avsConflict;
+const isEmailVerified = () => props.registration.email_verified_at !== null;
+
+const canValidate = () => props.registration.status === 'form_filled' && !props.avsConflict && isEmailVerified();
 
 const canRetry = () => !props.avsConflict || props.registration.status === 'completed';
 
@@ -82,8 +84,11 @@ const statusLabel = (status: string) => {
 };
 
 const retryLabel = (status: string) => {
+    if (status === 'form_filled') {
+        return isEmailVerified() ? "Renvoyer l'email de validation" : 'Renvoyer le code de vérification';
+    }
+
     const labels: Record<string, string> = {
-        form_filled: "Renvoyer l'email de validation",
         member_created: 'Relancer le traitement',
         completed: 'Relancer la synchronisation DAV',
         error: 'Relancer le traitement',
@@ -163,6 +168,19 @@ const displayUrl = flash?.form_url ?? props.formUrl;
             </Tooltip>
         </div>
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+            <Card v-if="registration.form_submitted_at && !isEmailVerified()" class="border-amber-300 bg-amber-50">
+                <CardHeader class="pb-2"><CardTitle class="text-sm">Email non vérifié</CardTitle></CardHeader>
+                <CardContent class="space-y-3">
+                    <P class="text-sm">
+                        L'adresse email du formulaire n'a pas encore été vérifiée. La validation est bloquée tant que le demandeur n'a pas saisi le
+                        code reçu par email.
+                    </P>
+                    <Button size="sm" variant="outline" @click="handleRetry">
+                        <RotateCcw class="mr-2 size-4" />
+                        {{ retryLabel(registration.status) }}
+                    </Button>
+                </CardContent>
+            </Card>
             <Card v-if="avsConflict" class="border-amber-300 bg-amber-50">
                 <CardHeader class="pb-2"><CardTitle class="text-sm">Conflit de numéro AVS</CardTitle></CardHeader>
                 <CardContent class="space-y-3">

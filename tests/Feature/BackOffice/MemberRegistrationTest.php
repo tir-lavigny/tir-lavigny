@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\BackOffice;
 
+use App\Mail\MemberRegistrationEmailVerification;
 use App\Mail\MemberRegistrationValidationRequested;
 use App\MemberRegistrationStatus;
 use App\Models\Member;
@@ -243,6 +244,7 @@ class MemberRegistrationTest extends TestCase
                 'email' => 'jean.dupont@example.com',
             ],
             'form_submitted_at' => now(),
+            'email_verified_at' => now(),
             'status' => MemberRegistrationStatus::FORM_FILLED,
             'error_message' => 'Erreur : Mail server down',
             'failed_at' => now(),
@@ -442,6 +444,19 @@ class MemberRegistrationTest extends TestCase
         $response->assertStatus(403);
     }
 
+    public function test_validate_is_blocked_while_email_is_not_verified(): void
+    {
+        $registration = $this->registrationWithAvs('756.0000.0000.01');
+        $registration->email_verified_at = null;
+        $registration->save();
+
+        $response = $this->post(route('bo.member-registrations.validate', $registration));
+
+        $response->assertStatus(403);
+        $this->assertSame(MemberRegistrationStatus::FORM_FILLED, $registration->fresh()->status);
+        $this->assertNull($registration->fresh()->member_id);
+    }
+
     public function test_validate_requires_manage_member_registration_permission(): void
     {
         $this->post('/logout');
@@ -458,7 +473,7 @@ class MemberRegistrationTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_retry_on_form_filled_resends_validation_email(): void
+    public function test_retry_on_form_filled_resends_verification_code_when_unverified(): void
     {
         Mail::fake();
 
@@ -484,7 +499,34 @@ class MemberRegistrationTest extends TestCase
         $this->assertNull($registration->failed_at);
         $this->assertNull($registration->error_message);
 
+        Mail::assertSent(MemberRegistrationEmailVerification::class);
+        Mail::assertNotSent(MemberRegistrationValidationRequested::class);
+    }
+
+    public function test_retry_on_form_filled_resends_validation_email_when_verified(): void
+    {
+        Mail::fake();
+
+        $registration = MemberRegistration::create([
+            'form_uuid' => Str::uuid(),
+            'form_data' => [
+                'first_name' => 'Jean',
+                'last_name' => 'Dupont',
+                'email' => 'jean.dupont@example.com',
+            ],
+            'form_submitted_at' => now(),
+            'email_verified_at' => now(),
+            'status' => MemberRegistrationStatus::FORM_FILLED,
+            'error_message' => 'Erreur : Mail server down',
+            'failed_at' => now(),
+        ]);
+
+        $response = $this->post(route('bo.member-registrations.retry', $registration));
+
+        $response->assertRedirect(route('bo.member-registrations.show', $registration));
+
         Mail::assertSent(MemberRegistrationValidationRequested::class);
+        Mail::assertNotSent(MemberRegistrationEmailVerification::class);
     }
 
     public function test_destroy_deletes_unsubmitted_registration(): void
@@ -587,6 +629,7 @@ class MemberRegistrationTest extends TestCase
                 'country' => 'Suisse',
             ],
             'form_submitted_at' => now(),
+            'email_verified_at' => now(),
             'status' => $status,
         ]);
     }
