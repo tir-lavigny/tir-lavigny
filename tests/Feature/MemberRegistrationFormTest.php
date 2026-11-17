@@ -346,7 +346,7 @@ class MemberRegistrationFormTest extends TestCase
         $response->assertSessionHasErrors(['avs']);
     }
 
-    public function test_avs_already_used_by_a_member_is_rejected(): void
+    public function test_avs_already_used_by_a_member_is_accepted(): void
     {
         Member::factory()->create(['avs' => '756.1234.5678.90']);
 
@@ -367,11 +367,11 @@ class MemberRegistrationFormTest extends TestCase
             'country' => 'Suisse',
         ]);
 
-        $response->assertSessionHasErrors('avs');
-        $this->assertDatabaseHas('member_registrations', [
-            'id' => $registration->id,
-            'status' => 'pending',
-        ]);
+        $response->assertSessionHasNoErrors();
+        $registration->refresh();
+
+        $this->assertSame('form_filled', $registration->status->value);
+        $this->assertSame('756.1234.5678.90', $registration->form_data['avs']);
     }
 
     public function test_avs_valid_format_accepted(): void

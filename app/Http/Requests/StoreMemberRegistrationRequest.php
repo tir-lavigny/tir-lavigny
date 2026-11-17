@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\SwissCanton;
-use App\Rules\UniqueMemberAvs;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreMemberRegistrationRequest extends FormRequest
@@ -28,7 +27,6 @@ class StoreMemberRegistrationRequest extends FormRequest
                 'string',
                 'max:20',
                 'regex:/^756\.\d{4}\.\d{4}\.\d{2}$/',
-                new UniqueMemberAvs,
             ],
             'tel' => ['required', 'string', 'max:20'],
             'street' => ['required', 'string', 'max:255'],
