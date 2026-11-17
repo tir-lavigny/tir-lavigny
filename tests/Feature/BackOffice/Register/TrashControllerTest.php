@@ -108,6 +108,22 @@ class TrashControllerTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_index_excludes_anonymized_members_from_filter(): void
+    {
+        $anonymized = Member::factory()->archived()->create(['anonymized_at' => now()]);
+        $archived = Member::factory()->archived()->create();
+
+        $response = $this->get(route('bo.register.trash.index'));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('allMembers', function ($members) use ($anonymized, $archived) {
+                $ids = collect($members)->pluck('id');
+
+                return ! $ids->contains($anonymized->id) && $ids->contains($archived->id);
+            })
+        );
+    }
+
     public function test_index_hides_vouchers_of_anonymized_members(): void
     {
         $member = Member::factory()->archived()->create(['anonymized_at' => now()]);

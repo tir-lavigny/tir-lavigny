@@ -139,12 +139,7 @@ class MemberControllerTest extends TestCase
 
     public function test_store_creates_member(): void
     {
-        $response = $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-            'email' => 'jean.dupont@example.com',
-            'status' => 'active',
-        ]);
+        $response = $this->post(route('bo.members.store'), $this->validStoreData());
 
         $response->assertRedirect();
         $this->assertDatabaseHas('members', [
@@ -158,11 +153,7 @@ class MemberControllerTest extends TestCase
     {
         $this->createActiveSeasonWithBaseProducts();
 
-        $response = $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-            'status' => 'active',
-        ]);
+        $response = $this->post(route('bo.members.store'), $this->validStoreData());
 
         $response->assertRedirect();
         $response->assertSessionHas('success', fn (string $message) => str_contains($message, '5 bon(s) de base créé(s)'));
@@ -175,11 +166,7 @@ class MemberControllerTest extends TestCase
     {
         $this->createActiveSeasonWithBaseProducts();
 
-        $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-            'status' => 'passive',
-        ])->assertRedirect();
+        $this->post(route('bo.members.store'), $this->validStoreData(['status' => 'passive']))->assertRedirect();
 
         $member = Member::where('first_name', 'Jean')->sole();
         $this->assertSame(0, $member->vouchers()->count());
@@ -192,11 +179,7 @@ class MemberControllerTest extends TestCase
             'end_date' => now()->addMonth(),
         ]);
 
-        $response = $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-            'status' => 'active',
-        ]);
+        $response = $this->post(route('bo.members.store'), $this->validStoreData());
 
         $response->assertRedirect();
         $response->assertSessionHas('warning', fn (string $message) => str_contains($message, 'bons de base'));
@@ -211,11 +194,7 @@ class MemberControllerTest extends TestCase
         $davMock->shouldReceive('createContactFromMember')->andThrow(new \RuntimeException('DAV down'));
         $this->app->instance(DavServiceInterface::class, $davMock);
 
-        $response = $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-            'status' => 'active',
-        ]);
+        $response = $this->post(route('bo.members.store'), $this->validStoreData());
 
         $response->assertRedirect();
         $response->assertSessionHas('error');
@@ -224,12 +203,7 @@ class MemberControllerTest extends TestCase
 
     public function test_store_accepts_valid_canton(): void
     {
-        $response = $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-            'canton' => 'VS',
-            'status' => 'active',
-        ]);
+        $response = $this->post(route('bo.members.store'), $this->validStoreData(['canton' => 'VS']));
 
         $response->assertRedirect();
         $this->assertDatabaseHas('members', ['first_name' => 'Jean', 'canton' => 'VS']);
@@ -237,12 +211,7 @@ class MemberControllerTest extends TestCase
 
     public function test_store_rejects_invalid_canton(): void
     {
-        $response = $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-            'canton' => 'XX',
-            'status' => 'active',
-        ]);
+        $response = $this->post(route('bo.members.store'), $this->validStoreData(['canton' => 'XX']));
 
         $response->assertSessionHasErrors('canton');
         $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
@@ -250,35 +219,26 @@ class MemberControllerTest extends TestCase
 
     public function test_store_rejects_invalid_avs(): void
     {
-        $response = $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-            'avs' => '1234',
-            'status' => 'active',
-        ]);
+        $response = $this->post(route('bo.members.store'), $this->validStoreData(['avs' => '1234']));
 
         $response->assertSessionHasErrors('avs');
         $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
     }
 
-    public function test_member_manager_create_ignores_swiss_citizen_and_avs(): void
+    public function test_member_manager_can_create_swiss_citizen_with_avs(): void
     {
         $this->actingAs($this->memberManagerWithoutSensitivePermission());
 
-        $response = $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
+        $response = $this->post(route('bo.members.store'), $this->validStoreData([
             'is_swiss_citizen' => true,
             'avs' => '756.1234.5678.90',
-            'status' => 'active',
-        ]);
+        ]));
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('members', [
-            'first_name' => 'Jean',
-            'is_swiss_citizen' => null,
-            'avs' => null,
-        ]);
+        $member = Member::where('first_name', 'Jean')->sole();
+
+        $this->assertTrue($member->is_swiss_citizen);
+        $this->assertSame('756.1234.5678.90', $member->avs);
     }
 
     public function test_member_manager_can_update_swiss_citizen_member(): void
@@ -353,12 +313,7 @@ class MemberControllerTest extends TestCase
     {
         Member::factory()->create(['avs' => '756.1234.5678.90']);
 
-        $response = $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-            'avs' => '756.1234.5678.90',
-            'status' => 'active',
-        ]);
+        $response = $this->post(route('bo.members.store'), $this->validStoreData(['avs' => '756.1234.5678.90']));
 
         $response->assertSessionHasErrors('avs');
         $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
@@ -396,12 +351,7 @@ class MemberControllerTest extends TestCase
 
     public function test_store_requires_avs_for_swiss_citizen(): void
     {
-        $response = $this->post(route('bo.members.store'), [
-            'first_name' => 'Jean',
-            'last_name' => 'Dupont',
-            'is_swiss_citizen' => true,
-            'status' => 'active',
-        ]);
+        $response = $this->post(route('bo.members.store'), $this->validStoreData(['is_swiss_citizen' => true]));
 
         $response->assertSessionHasErrors('avs');
         $this->assertDatabaseMissing('members', ['first_name' => 'Jean']);
@@ -1305,6 +1255,24 @@ class MemberControllerTest extends TestCase
         $response->assertInertia(fn (Assert $page) => $page
             ->missing('member.registration.form_data')
         );
+    }
+
+    /** @return array<string, mixed> */
+    private function validStoreData(array $overrides = []): array
+    {
+        return array_merge([
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'email' => 'jean.dupont@example.com',
+            'is_swiss_citizen' => false,
+            'tel' => '+41 21 123 45 67',
+            'street' => 'Rue du Marché 1',
+            'npa' => '1003',
+            'city' => 'Lausanne',
+            'canton' => 'VD',
+            'country' => 'Suisse',
+            'status' => 'active',
+        ], $overrides);
     }
 
     private function createActiveSeasonWithBaseProducts(): void

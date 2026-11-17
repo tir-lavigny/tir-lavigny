@@ -6,17 +6,13 @@ import { Input } from '@/components/ui/input';
 import Label from '@/components/ui/label/Label.vue';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { hasPermissionTo } from '@/lib/utils';
-import type { BreadcrumbItem, SharedData } from '@/types';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import type { BreadcrumbItem } from '@/types';
+import { Head, useForm } from '@inertiajs/vue3';
 import { Save, Undo2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
 defineProps<{ statuses: Record<string, string> }>();
-
-const page = usePage<SharedData>();
-const canViewSensitiveData = computed(() => hasPermissionTo(page.props.auth.user, 'view member sensitive data'));
 
 const swissCantons = [
     { value: 'AG', label: 'Argovie (AG)' },
@@ -58,7 +54,7 @@ const form = useForm({
     email: '',
     tel: '',
     avs: '',
-    is_swiss_citizen: null as boolean | null,
+    is_swiss_citizen: true,
     street: '',
     npa: '',
     city: '',
@@ -75,9 +71,9 @@ const cantonFilter = computed({
 });
 
 const swissCitizenFilter = computed({
-    get: () => (form.is_swiss_citizen === null || form.is_swiss_citizen === undefined ? 'none' : form.is_swiss_citizen ? 'yes' : 'no'),
+    get: () => (form.is_swiss_citizen ? 'yes' : 'no'),
     set: (value: string) => {
-        form.is_swiss_citizen = value === 'none' ? null : value === 'yes';
+        form.is_swiss_citizen = value === 'yes';
     },
 });
 
@@ -123,7 +119,7 @@ const handleSubmit = () => {
                         <Input id="tel" v-model="form.tel" type="tel" placeholder="Téléphone" maxlength="20" />
                         <InputError :message="form.errors.tel" />
                     </div>
-                    <div v-if="canViewSensitiveData" class="grid gap-2">
+                    <div class="grid gap-2">
                         <Label for="avs">AVS</Label>
                         <Input
                             id="avs"
@@ -182,14 +178,13 @@ const handleSubmit = () => {
                         <Input id="country" v-model="form.country" type="text" placeholder="Pays" maxlength="100" />
                         <InputError :message="form.errors.country" />
                     </div>
-                    <div v-if="canViewSensitiveData" class="grid gap-2">
+                    <div class="grid gap-2">
                         <Label for="is_swiss_citizen">Citoyen suisse</Label>
                         <Select v-model="swissCitizenFilter">
                             <SelectTrigger id="is_swiss_citizen">
-                                <SelectValue placeholder="Non renseigné" />
+                                <SelectValue placeholder="Non" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="none">Non renseigné</SelectItem>
                                 <SelectItem value="yes">Oui</SelectItem>
                                 <SelectItem value="no">Non</SelectItem>
                             </SelectContent>
