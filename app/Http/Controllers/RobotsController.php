@@ -20,6 +20,10 @@ class RobotsController extends Controller
                 'Disallow: /reset-password',
                 'Disallow: /verify-email',
                 'Disallow: /confirm-password',
+                'Disallow: /api/',
+                'Disallow: /docs/',
+                'Disallow: /_scramble/',
+                'Disallow: /_boost/',
                 '',
                 'Sitemap: '.route('sitemap'),
             ]
@@ -30,6 +34,7 @@ class RobotsController extends Controller
 
         return response(implode("\n", $lines)."\n", 200, [
             'Content-Type' => 'text/plain; charset=UTF-8',
+            'Cache-Control' => 'public, max-age=3600',
         ]);
     }
 }
