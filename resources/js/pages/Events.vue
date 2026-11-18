@@ -10,9 +10,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import WebLayout from '@/layouts/WebLayout.vue';
 import { Event } from '@/types';
 import { ListFilter } from '@lucide/vue';
-import { createReusableTemplate, formatDate, useMediaQuery } from '@vueuse/core';
+import { createReusableTemplate, useMediaQuery } from '@vueuse/core';
 import { computed, ref } from 'vue';
-import { parseDateOnly } from '@/lib/utils';
+import { formatDate, parseDateOnly } from '@/lib/utils';
 
 const isMobile = useMediaQuery('(max-width: 768px)');
 
