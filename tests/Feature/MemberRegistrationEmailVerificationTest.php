@@ -89,6 +89,18 @@ class MemberRegistrationEmailVerificationTest extends TestCase
         $this->assertStringNotContainsString($this->sentCode(), $registration->email_verification_code_hash);
     }
 
+    public function test_verification_email_contains_code_in_html_and_text_parts(): void
+    {
+        $this->submittedRegistration();
+
+        Mail::assertSent(MemberRegistrationEmailVerification::class, function (MemberRegistrationEmailVerification $mail): bool {
+            $mail->assertSeeInHtml($mail->code);
+            $mail->assertSeeInText($mail->code);
+
+            return true;
+        });
+    }
+
     public function test_correct_code_verifies_email_and_notifies_admins(): void
     {
         $registration = $this->submittedRegistration();

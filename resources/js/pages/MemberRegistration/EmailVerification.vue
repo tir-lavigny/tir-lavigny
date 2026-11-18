@@ -104,10 +104,15 @@ const resend = () => {
                 <Label for="code">Code de vérification *</Label>
                 <Input
                     id="code"
+                    name="code"
                     v-model="form.code"
                     type="text"
                     inputmode="numeric"
                     autocomplete="one-time-code"
+                    autocapitalize="none"
+                    autocorrect="off"
+                    spellcheck="false"
+                    enterkeyhint="done"
                     maxlength="6"
                     pattern="[0-9]{6}"
                     class="text-center text-2xl tracking-[0.5em]"

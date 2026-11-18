@@ -29,6 +29,7 @@ class MemberRegistrationEmailVerification extends Mailable
     {
         return new Content(
             view: 'emails.member-registration-email-verification',
+            text: 'emails.member-registration-email-verification-text',
         );
     }
 
