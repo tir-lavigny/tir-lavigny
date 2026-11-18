@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { MemberRegistration } from '@/types';
 import { useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from '@lucide/vue';
-import { ref, onMounted, watch } from 'vue';
+import { nextTick, ref, onMounted, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
+import { stepForRegistrationError } from '@/lib/memberRegistrationForm';
 import type { AcceptableValue } from 'reka-ui';
 import { H1 } from '@/components/typography/headings';
 import { P } from '@/components/typography/texts';
@@ -155,10 +156,34 @@ const prevStep = () => {
     currentStep.value = Math.max(currentStep.value - 1, 1);
 };
 
+const focusFirstServerError = async (errors: Record<string, string>) => {
+    const field = Object.keys(errors).find((key) => key !== 'form_uuid');
+
+    if (!field) {
+        return;
+    }
+
+    const step = stepForRegistrationError(field);
+
+    if (step !== null) {
+        currentStep.value = step;
+    }
+
+    await nextTick();
+
+    const element = document.getElementById(field);
+    element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element?.focus({ preventScroll: true });
+};
+
 const submit = () => {
     form.post(route('member-registration.store'), {
+        preserveScroll: true,
         onSuccess: () => {
             localStorage.removeItem(STORAGE_KEY);
+        },
+        onError: (errors) => {
+            void focusFirstServerError(errors as Record<string, string>);
         },
     });
 };
@@ -240,9 +265,9 @@ const submit = () => {
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <Label>Canton *</Label>
+                        <Label for="canton">Canton *</Label>
                         <Select :model-value="form.canton" @update:model-value="handleCantonChange">
-                            <SelectTrigger class="w-full">
+                            <SelectTrigger id="canton" class="w-full">
                                 <SelectValue placeholder="Sélectionner un canton" />
                             </SelectTrigger>
                             <SelectContent>
@@ -255,9 +280,9 @@ const submit = () => {
                     </div>
 
                     <div class="space-y-2">
-                        <Label>Pays *</Label>
+                        <Label for="country">Pays *</Label>
                         <Select :model-value="form.country" @update:model-value="handleCountryChange">
-                            <SelectTrigger class="w-full">
+                            <SelectTrigger id="country" class="w-full">
                                 <SelectValue placeholder="Sélectionner un pays" />
                             </SelectTrigger>
                             <SelectContent>
