@@ -31,7 +31,7 @@ defineProps<{
                             Notre société organise chaque année des séances de tir afin d'offrir la possibilité aux tireurs astreints et non
                             astreints, d'effectuer le programme obligatoire à 300 mètres au stand de Lavigny.
                         </P>
-                        <P> Le tir est gratuit, sauf la munition d'exercice, CHF 2.00 pour 3 coups. </P>
+                        <P> Le tir est gratuit, sauf la munition d'exercice, CHF 0.50 par coup. </P>
                         <P class="font-bold"> Important: La munition non tirée, doit être rendue à la fin du tir. </P>
                         <img
                             src="/images/tirMilitaire.jpg"
