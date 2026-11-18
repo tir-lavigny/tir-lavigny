@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue';
 import AppEventCalendar from '@/components/AppEventCalendar.vue';
 import AppEventCalendarCard from '@/components/AppEventCalendarCard.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
@@ -86,8 +87,9 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
         <AppHeroSection title="Événements" image="/images/hero.webp">
             <template #description> <Large> Prochains événements, tirs, etc. </Large> </template>
         </AppHeroSection>
+        <AppBreadcrumbs class="mt-96 pt-6" />
 
-        <section v-if="isMobile" class="mt-96 flex flex-col gap-8 py-12">
+        <section v-if="isMobile" class="flex flex-col gap-8 pb-12">
             <div class="flex flex-row items-center justify-between">
                 <ReuseTemplate />
             </div>
@@ -106,7 +108,7 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
             </template>
         </section>
 
-        <section v-else class="mt-96 pt-12">
+        <section v-else>
             <div class="mb-6 flex flex-row items-center gap-6">
                 <ReuseTemplate />
             </div>

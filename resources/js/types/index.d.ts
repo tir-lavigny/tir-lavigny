@@ -25,6 +25,7 @@ export interface SharedData extends PageProps {
     auth: Auth;
     ziggy: Config & { location: string };
     sidebarOpen: boolean;
+    breadcrumbs?: BreadcrumbItem[];
 }
 
 export interface User {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue';
 import AppEventCard from '@/components/AppEventCard.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -18,7 +19,8 @@ defineProps<{
 
     <WebLayout>
         <AppHeroSection title="Tirs militaires" image="/images/hero.webp"></AppHeroSection>
-        <section class="mt-96 gap-8 py-12">
+        <AppBreadcrumbs class="mt-96 pt-6" />
+        <section class="gap-8 pb-12">
             <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
                 <div class="flex flex-col gap-4 md:col-span-2">
                     <div class="text-pretty">

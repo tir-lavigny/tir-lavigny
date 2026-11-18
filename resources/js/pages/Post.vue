@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
 import { P } from '@/components/typography/texts';
 import WebLayout from '@/layouts/WebLayout.vue';
@@ -23,7 +24,7 @@ watchEffect(async () => {
 </script>
 
 <template>
-    <Head title="Communication" />
+    <Head :title="post.title" />
 
     <WebLayout>
         <AppHeroSection :title="post.title" image="/images/hero.webp">
@@ -38,7 +39,8 @@ watchEffect(async () => {
                 </div>
             </template>
         </AppHeroSection>
-        <section class="mt-96 flex flex-col gap-8 py-12">
+        <AppBreadcrumbs class="mt-96 pt-6" />
+        <section class="flex flex-col gap-8 pb-12">
             <div v-html="cleanContent" class="prose dark:prose-invert xl:prose-xl max-w-full"></div>
         </section>
     </WebLayout>

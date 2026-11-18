@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue';
 import AppEventAdress from '@/components/AppEventAdress.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
 import { Muted, P } from '@/components/typography/texts';
@@ -16,7 +17,7 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Événement" />
+    <Head :title="event.title" />
 
     <WebLayout>
         <AppHeroSection :title="event.title" image="/images/hero.webp">
@@ -60,7 +61,8 @@ defineProps<{
                 </div>
             </template>
         </AppHeroSection>
-        <section class="mt-96 flex flex-col gap-8 py-12">
+        <AppBreadcrumbs class="mt-96 pt-6" />
+        <section class="flex flex-col gap-8 pb-12">
             <div data-testid="event-content" v-if="content" v-html="marked(content)" class="prose dark:prose-invert xl:prose-xl max-w-full"></div>
             <div v-else>
                 <P data-testid="event-no-content">Pas de contenu à afficher</P>
