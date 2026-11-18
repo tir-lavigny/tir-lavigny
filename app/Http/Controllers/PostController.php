@@ -23,7 +23,7 @@ class PostController extends Controller
             'og' => [
                 'title' => $post->title,
                 'description' => $this->cleanOgDescription($post->content),
-                'image' => asset('/images/hero.jpg'),
+                'image' => asset('/images/hero.webp'),
                 'type' => 'article',
             ],
         ]);

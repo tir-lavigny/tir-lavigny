@@ -24,7 +24,7 @@ const hasEvents = computed(() => props.events.length > 0);
     <Head title="Accueil" />
 
     <WebLayout>
-        <AppHeroSection title="Société de tir de lavigny" image="/images/hero.jpg">
+        <AppHeroSection title="Société de tir de lavigny" image="/images/hero.webp">
             <template #description> <Large> Tirs militaire, campagne et sportif </Large> </template>
         </AppHeroSection>
         <section class="mt-96 flex flex-col gap-8 pt-12" v-if="hasPosts">

@@ -54,7 +54,7 @@ const appointments = [
     <Head title="Devenir membre" />
 
     <WebLayout>
-        <AppHeroSection title="Devenir membre" image="/images/hero.jpg">
+        <AppHeroSection title="Devenir membre" image="/images/hero.webp">
             <template #description>
                 <Large>Le plaisir du tir, sans contraintes !</Large>
             </template>

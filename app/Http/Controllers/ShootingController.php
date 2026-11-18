@@ -28,7 +28,7 @@ class ShootingController extends Controller
             'og' => [
                 'title' => 'Tirs militaires - '.config('app.name'),
                 'description' => 'Venez effectuer vos tirs obligatoires au stand de Lavigny.',
-                'image' => asset('/images/tirMilitaire.jpg'),
+                'image' => asset('/images/tirMilitaire.webp'),
                 'type' => 'website',
             ],
         ]);

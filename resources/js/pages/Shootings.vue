@@ -17,7 +17,7 @@ defineProps<{
     <Head title="Tirs militaires" />
 
     <WebLayout>
-        <AppHeroSection title="Tirs militaires" image="/images/hero.jpg"></AppHeroSection>
+        <AppHeroSection title="Tirs militaires" image="/images/hero.webp"></AppHeroSection>
         <section class="mt-96 gap-8 py-12">
             <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
                 <div class="flex flex-col gap-4 md:col-span-2">
@@ -34,7 +34,7 @@ defineProps<{
                         <P> Le tir est gratuit, sauf la munition d'exercice, CHF 0.50 par coup. </P>
                         <P class="font-bold"> Important: La munition non tirée, doit être rendue à la fin du tir. </P>
                         <img
-                            src="/images/tirMilitaire.jpg"
+                            src="/images/tirMilitaire.webp"
                             alt="Tirs militaires"
                             class="mt-4 h-96 w-full rounded-lg object-cover object-center md:col-span-2 md:row-span-2"
                         />

@@ -83,7 +83,7 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
     </DefineTemplate>
 
     <WebLayout>
-        <AppHeroSection title="Événements" image="/images/hero.jpg">
+        <AppHeroSection title="Événements" image="/images/hero.webp">
             <template #description> <Large> Prochains événements, tirs, etc. </Large> </template>
         </AppHeroSection>
 

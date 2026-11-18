@@ -17,7 +17,7 @@ defineProps<{
     <Head title="Tir fédéral en campagne" />
 
     <WebLayout>
-        <AppHeroSection title="Tir fédéral en campagne" image="/images/hero.jpg"></AppHeroSection>
+        <AppHeroSection title="Tir fédéral en campagne" image="/images/hero.webp"></AppHeroSection>
         <section class="mt-96 gap-8 py-12">
             <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
                 <div class="flex flex-col gap-4 md:col-span-2">
@@ -63,7 +63,7 @@ defineProps<{
                                 <li>Six coups sont tirés en 60 secondes. Affichage a lieu à la fin.</li>
                             </OrderedList>
                             <img
-                                src="/images/cibleB.png"
+                                src="/images/cibleB.webp"
                                 alt="Cible B"
                                 class="mt-4 h-96 w-full rounded-lg object-cover object-center md:col-span-2 md:row-span-2"
                             />

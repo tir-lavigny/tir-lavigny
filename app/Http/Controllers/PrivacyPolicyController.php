@@ -13,7 +13,7 @@ class PrivacyPolicyController extends Controller
             'og' => [
                 'title' => 'Déclaration de protection des données - Société de tir de Lavigny',
                 'description' => 'Déclaration de protection des données de la Société de tir de Lavigny.',
-                'image' => asset('/images/hero.jpg'),
+                'image' => asset('/images/hero.webp'),
                 'type' => 'website',
             ],
         ]);

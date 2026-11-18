@@ -50,7 +50,7 @@ class MemberRegistrationController extends Controller
             'og' => [
                 'title' => config('app.name'),
                 'description' => 'Formulaire d\'inscription pour devenir membre de la Société de tir de Lavigny.',
-                'image' => asset('/images/hero.jpg'),
+                'image' => asset('/images/hero.webp'),
                 'type' => 'website',
             ],
         ]);

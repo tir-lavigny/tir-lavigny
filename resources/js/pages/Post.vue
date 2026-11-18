@@ -26,7 +26,7 @@ watchEffect(async () => {
     <Head title="Communication" />
 
     <WebLayout>
-        <AppHeroSection :title="post.title" image="/images/hero.jpg">
+        <AppHeroSection :title="post.title" image="/images/hero.webp">
             <template #description>
                 <div class="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
                     <div class="flex flex-row items-center gap-2">

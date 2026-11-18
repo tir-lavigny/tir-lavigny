@@ -25,7 +25,7 @@ class HomeController extends Controller
             'og' => [
                 'title' => config('app.name'),
                 'description' => 'Société de tir de Lavigny - Tirs militaire, campagne et sportif',
-                'image' => asset('/images/hero.jpg'),
+                'image' => asset('/images/hero.webp'),
                 'type' => 'website',
             ],
         ]);

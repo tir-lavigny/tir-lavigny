@@ -13,7 +13,7 @@ class BecomeMemberController extends Controller
             'og' => [
                 'title' => 'Devenir membre - Société de tir de Lavigny',
                 'description' => 'Rejoignez la Société de tir de Lavigny : le plaisir du tir, sans contraintes.',
-                'image' => asset('/images/hero.jpg'),
+                'image' => asset('/images/hero.webp'),
                 'type' => 'website',
             ],
         ]);

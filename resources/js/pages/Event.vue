@@ -19,7 +19,7 @@ defineProps<{
     <Head title="Événement" />
 
     <WebLayout>
-        <AppHeroSection :title="event.title" image="/images/hero.jpg">
+        <AppHeroSection :title="event.title" image="/images/hero.webp">
             <template #description>
                 <div class="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
                     <div class="flex flex-row items-center gap-2">

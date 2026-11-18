@@ -42,7 +42,7 @@
     @if(isset($page['props']['og']))
         <meta property="og:title" content="{{ $page['props']['og']['title'] ?? config('app.name') }}" />
         <meta property="og:description" content="{{ $page['props']['og']['description'] ?? '' }}" />
-        <meta property="og:image" content="{{ $page['props']['og']['image'] ?? asset('/images/hero.jpg') }}" />
+        <meta property="og:image" content="{{ $page['props']['og']['image'] ?? asset('/images/hero.webp') }}" />
         <meta property="og:type" content="{{ $page['props']['og']['type'] ?? 'website' }}" />
     @endif
     <meta property="og:url" content="{{ url()->current() }}" />

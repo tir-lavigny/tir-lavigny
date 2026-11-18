@@ -22,7 +22,7 @@ class EventController extends Controller
             'og' => [
                 'title' => 'Événements - '.config('app.name'),
                 'description' => 'Consultez le calendrier des événements de la Société de tir de Lavigny: tirs obligatoires, compétitions et activités.',
-                'image' => asset('/images/hero.jpg'),
+                'image' => asset('/images/hero.webp'),
                 'type' => 'website',
             ],
         ]);
@@ -39,7 +39,7 @@ class EventController extends Controller
             'og' => [
                 'title' => $event->title,
                 'description' => $this->cleanOgDescription($content),
-                'image' => asset('/images/hero.jpg'),
+                'image' => asset('/images/hero.webp'),
                 'type' => 'event',
             ],
         ]);
