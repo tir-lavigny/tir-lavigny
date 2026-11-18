@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         then: function () {
             Route::middleware([Sample::never()])
                 ->group(base_path('routes/health.php'));
+            Route::group([], base_path('routes/static.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware) {

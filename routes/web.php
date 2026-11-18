@@ -21,15 +21,10 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PrivacyPolicyController;
-use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\ShootingController;
-use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
-
-Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
-Route::get('/robots.txt', RobotsController::class)->name('robots');
 
 Route::get('/become-member', BecomeMemberController::class)->name('become-member');
 
