@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue';
 import AppEventAdress from '@/components/AppEventAdress.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
 import { Muted, P } from '@/components/typography/texts';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
-import { Head } from '@inertiajs/vue3';
 import { Calendar, Clock, MapPin } from '@lucide/vue';
 import { marked } from 'marked';
 
@@ -16,10 +16,8 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Événement" />
-
     <WebLayout>
-        <AppHeroSection :title="event.title" image="/images/hero.jpg">
+        <AppHeroSection :title="event.title" image="/images/hero.webp">
             <template #description>
                 <div class="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
                     <div class="flex flex-row items-center gap-2">
@@ -60,7 +58,8 @@ defineProps<{
                 </div>
             </template>
         </AppHeroSection>
-        <section class="mt-96 flex flex-col gap-8 py-12">
+        <AppBreadcrumbs class="mt-96 pt-6" />
+        <section class="flex flex-col gap-8 pb-12">
             <div data-testid="event-content" v-if="content" v-html="marked(content)" class="prose dark:prose-invert xl:prose-xl max-w-full"></div>
             <div v-else>
                 <P data-testid="event-no-content">Pas de contenu à afficher</P>

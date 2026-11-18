@@ -15,7 +15,6 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class MemberRegistrationController extends Controller
@@ -38,7 +37,7 @@ class MemberRegistrationController extends Controller
             $registration->makeHidden(['form_name', 'error_message', 'failed_at']);
         }
 
-        return Inertia::render('MemberRegistration', [
+        return $this->renderInertia('MemberRegistration', [
             'registration' => $registration,
             'formUrl' => $registration->formUrl(),
             'submitted' => $submitted,
@@ -50,7 +49,7 @@ class MemberRegistrationController extends Controller
             'og' => [
                 'title' => config('app.name'),
                 'description' => 'Formulaire d\'inscription pour devenir membre de la Société de tir de Lavigny.',
-                'image' => asset('/images/hero.jpg'),
+                'image' => asset('/images/hero.webp'),
                 'type' => 'website',
             ],
         ]);

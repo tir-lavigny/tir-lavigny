@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import WebLayout from '@/layouts/WebLayout.vue';
 import type { MemberRegistration } from '@/types';
-import { Head } from '@inertiajs/vue3';
 import EmailVerification from './MemberRegistration/EmailVerification.vue';
 import MemberRegistrationForm from './MemberRegistration/MemberRegistrationForm.vue';
 
@@ -15,7 +14,6 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Inscription" />
     <WebLayout>
         <div class="mx-auto mt-16 w-full max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
             <div v-if="submitted && verified" class="space-y-4 text-center">

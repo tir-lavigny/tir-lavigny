@@ -3,43 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
-use Illuminate\Support\Str;
-use Inertia\Inertia;
+use App\Support\MarkdownText;
+use App\Support\Seo;
 use Inertia\Response;
 
 class PostController extends Controller
 {
     public function show(string $public_id): Response
     {
-        $post = Post::where('public_id', $public_id)
-            ->where('publish_at', '<=', now())
-            ->where(function ($query) {
-                $query->whereNull('expire_at')->orWhere('expire_at', '>', now());
-            })
-            ->firstOrFail();
+        $post = Post::published()->where('public_id', $public_id)->firstOrFail();
+        $description = MarkdownText::toPlainText($post->content);
 
-        return Inertia::render('Post', [
+        return $this->renderInertia('Post', [
             'post' => $post,
             'og' => [
                 'title' => $post->title,
-                'description' => $this->cleanOgDescription($post->content),
-                'image' => asset('/images/hero.jpg'),
+                'description' => $description,
+                'image' => asset('/images/hero.webp'),
                 'type' => 'article',
             ],
+            'json_ld' => [
+                Seo::post($post, $description),
+            ],
+            'breadcrumbs' => [
+                ['title' => 'Accueil', 'href' => route('home')],
+                ['title' => $post->title, 'href' => route('posts.show', $post->public_id)],
+            ],
         ]);
-    }
-
-    private function cleanOgDescription(?string $html): string
-    {
-        $text = strip_tags($html ?? '');
-        $text = preg_replace('/#{1,6}\s/', '', $text);
-        $text = preg_replace('/\*\*|__/', '', $text);
-        $text = preg_replace('/\*|_/', '', $text);
-        $text = preg_replace('/\[(.+?)\]\(.+?\)/', '$1', $text);
-        $text = preg_replace('/!\[.*?\]\(.+?\)/', '', $text);
-        $text = preg_replace('/`{1,3}[^`]*`{1,3}/', '', $text);
-        $text = preg_replace('/\s+/', ' ', $text);
-
-        return Str::limit(trim($text), 160, '...');
     }
 }
