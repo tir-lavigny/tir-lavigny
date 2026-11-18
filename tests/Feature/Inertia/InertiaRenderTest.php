@@ -94,6 +94,16 @@ class InertiaRenderTest extends TestCase
             );
     }
 
+    public function test_privacy_policy_page_renders_correct_component(): void
+    {
+        $this->get('/privacy-policy')
+            ->assertInertia(fn ($page) => $page
+                ->component('PrivacyPolicy')
+                ->has('og')
+                ->where('og.title', 'Déclaration de protection des données - Société de tir de Lavigny')
+            );
+    }
+
     // ─── auth pages ──────────────────────────────────────────────────────────
 
     public function test_login_renders_auth_login_component(): void

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { MemberRegistration } from '@/types';
-import { useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from '@lucide/vue';
 import { nextTick, ref, onMounted, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
@@ -293,6 +293,11 @@ const submit = () => {
                     </div>
                 </div>
             </div>
+
+            <P v-if="currentStep === totalSteps" class="text-muted-foreground text-xs">
+                En soumettant ce formulaire, vous confirmez avoir pris connaissance de notre
+                <Link :href="route('privacy-policy')" class="underline">déclaration de protection des données</Link>.
+            </P>
 
             <div class="flex justify-between">
                 <Button type="button" variant="outline" @click="prevStep" :disabled="currentStep === 1">Précédent</Button>

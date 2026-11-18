@@ -20,12 +20,15 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\ShootingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/become-member', BecomeMemberController::class)->name('become-member');
+
+Route::get('/privacy-policy', PrivacyPolicyController::class)->name('privacy-policy');
 
 Route::get('/events', [EventController::class, 'index'])->name('events');
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
