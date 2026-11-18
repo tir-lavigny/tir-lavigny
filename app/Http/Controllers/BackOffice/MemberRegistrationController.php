@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\BackOffice;
 
+use App\Exceptions\MemberRegistrationEmailVerificationException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\UpdateMemberRegistrationAvsRequest;
 use App\MemberRegistrationStatus;
 use App\Models\Member;
 use App\Models\MemberRegistration;
 use App\Services\MemberRegistrationAvsConflictService;
+use App\Services\MemberRegistrationEmailVerificationService;
 use App\Services\MemberRegistrationPipelineService;
 use App\Support\PiiMasker;
 use Illuminate\Http\RedirectResponse;
@@ -52,6 +54,7 @@ class MemberRegistrationController extends Controller implements HasMiddleware
     public function show(
         MemberRegistration $memberRegistration,
         MemberRegistrationAvsConflictService $conflictService,
+        MemberRegistrationEmailVerificationService $emailVerification,
     ): Response {
         $memberRegistration->load('member');
 
@@ -66,6 +69,10 @@ class MemberRegistrationController extends Controller implements HasMiddleware
             'formUrl' => $memberRegistration->formUrl(),
             'canViewSensitiveData' => $canViewSensitiveData,
             'canEditAvs' => $canViewSensitiveData,
+            'resendAvailableIn' => $memberRegistration->isEmailVerified()
+                ? 0
+                : $emailVerification->secondsUntilResendAllowed($memberRegistration),
+            'emailVerificationSentAt' => $memberRegistration->email_verification_sent_at,
             'avsConflict' => $this->avsConflictPayload(
                 $conflictService->find($memberRegistration),
                 $memberRegistration,
@@ -91,6 +98,12 @@ class MemberRegistrationController extends Controller implements HasMiddleware
             $memberRegistration->status === MemberRegistrationStatus::FORM_FILLED,
             403,
             'Seules les inscriptions au statut « en attente de validation » peuvent être validées.'
+        );
+
+        abort_unless(
+            $memberRegistration->isEmailVerified(),
+            403,
+            "L'email du formulaire doit être vérifié avant de valider l'inscription."
         );
 
         if ($conflictService->find($memberRegistration)) {
@@ -125,7 +138,7 @@ class MemberRegistrationController extends Controller implements HasMiddleware
 
         try {
             $pipeline->retryFromStep($memberRegistration);
-        } catch (\InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException|MemberRegistrationEmailVerificationException $e) {
             return redirect()->route('bo.member-registrations.show', $memberRegistration)
                 ->with('error', $e->getMessage());
         }

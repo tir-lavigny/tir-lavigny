@@ -6,43 +6,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { MemberRegistration } from '@/types';
-import { useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from '@lucide/vue';
-import { ref, onMounted, watch } from 'vue';
+import { nextTick, ref, onMounted, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
+import { stepForRegistrationError } from '@/lib/memberRegistrationForm';
 import type { AcceptableValue } from 'reka-ui';
 import { H1 } from '@/components/typography/headings';
-import { P } from '@/components/typography/texts';
+import { P, Muted } from '@/components/typography/texts';
+import { SWISS_CANTONS } from '@/lib/helpers';
 
 const props = defineProps<{
     registration: MemberRegistration;
 }>();
-
-const swissCantons = [
-    { value: 'AG', label: 'Argovie (AG)' },
-    { value: 'BL', label: 'Bâle-Campagne (BL)' },
-    { value: 'BS', label: 'Bâle-Ville (BS)' },
-    { value: 'BE', label: 'Berne (BE)' },
-    { value: 'FR', label: 'Fribourg (FR)' },
-    { value: 'GE', label: 'Genève (GE)' },
-    { value: 'GL', label: 'Glaris (GL)' },
-    { value: 'GR', label: 'Grisons (GR)' },
-    { value: 'JU', label: 'Jura (JU)' },
-    { value: 'LU', label: 'Lucerne (LU)' },
-    { value: 'NE', label: 'Neuchâtel (NE)' },
-    { value: 'NW', label: 'Nidwald (NW)' },
-    { value: 'OW', label: 'Obwald (OW)' },
-    { value: 'SG', label: 'Saint-Gall (SG)' },
-    { value: 'SH', label: 'Schaffhouse (SH)' },
-    { value: 'SO', label: 'Soleure (SO)' },
-    { value: 'TI', label: 'Tessin (TI)' },
-    { value: 'TG', label: 'Thurgovie (TG)' },
-    { value: 'UR', label: 'Uri (UR)' },
-    { value: 'VD', label: 'Vaud (VD)' },
-    { value: 'VS', label: 'Valais (VS)' },
-    { value: 'ZG', label: 'Zoug (ZG)' },
-    { value: 'ZH', label: 'Zurich (ZH)' },
-];
 
 const STORAGE_KEY = `member-registration-form:${props.registration.form_uuid}`;
 
@@ -180,10 +156,34 @@ const prevStep = () => {
     currentStep.value = Math.max(currentStep.value - 1, 1);
 };
 
+const focusFirstServerError = async (errors: Record<string, string>) => {
+    const field = Object.keys(errors).find((key) => key !== 'form_uuid');
+
+    if (!field) {
+        return;
+    }
+
+    const step = stepForRegistrationError(field);
+
+    if (step !== null) {
+        currentStep.value = step;
+    }
+
+    await nextTick();
+
+    const element = document.getElementById(field);
+    element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element?.focus({ preventScroll: true });
+};
+
 const submit = () => {
     form.post(route('member-registration.store'), {
+        preserveScroll: true,
         onSuccess: () => {
             localStorage.removeItem(STORAGE_KEY);
+        },
+        onError: (errors) => {
+            void focusFirstServerError(errors as Record<string, string>);
         },
     });
 };
@@ -265,13 +265,13 @@ const submit = () => {
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <Label>Canton *</Label>
+                        <Label for="canton">Canton *</Label>
                         <Select :model-value="form.canton" @update:model-value="handleCantonChange">
-                            <SelectTrigger class="w-full">
+                            <SelectTrigger id="canton" class="w-full">
                                 <SelectValue placeholder="Sélectionner un canton" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem v-for="canton in swissCantons" :key="canton.value" :value="canton.value">
+                                <SelectItem v-for="canton in SWISS_CANTONS" :key="canton.value" :value="canton.value">
                                     {{ canton.label }}
                                 </SelectItem>
                             </SelectContent>
@@ -280,9 +280,9 @@ const submit = () => {
                     </div>
 
                     <div class="space-y-2">
-                        <Label>Pays *</Label>
+                        <Label for="country">Pays *</Label>
                         <Select :model-value="form.country" @update:model-value="handleCountryChange">
-                            <SelectTrigger class="w-full">
+                            <SelectTrigger id="country" class="w-full">
                                 <SelectValue placeholder="Sélectionner un pays" />
                             </SelectTrigger>
                             <SelectContent>
@@ -293,6 +293,11 @@ const submit = () => {
                     </div>
                 </div>
             </div>
+
+            <Muted v-if="currentStep === totalSteps" class="text-muted-foreground text-xs">
+                En soumettant ce formulaire, vous confirmez avoir pris connaissance de notre
+                <Link :href="route('privacy-policy')" class="underline">déclaration de protection des données</Link>.
+            </Muted>
 
             <div class="flex justify-between">
                 <Button type="button" variant="outline" @click="prevStep" :disabled="currentStep === 1">Précédent</Button>
