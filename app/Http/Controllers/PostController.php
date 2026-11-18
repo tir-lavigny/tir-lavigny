@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Support\MarkdownText;
 use App\Support\Seo;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class PostController extends Controller
@@ -15,7 +14,7 @@ class PostController extends Controller
         $post = Post::published()->where('public_id', $public_id)->firstOrFail();
         $description = MarkdownText::toPlainText($post->content);
 
-        return Inertia::render('Post', [
+        return $this->renderInertia('Post', [
             'post' => $post,
             'og' => [
                 'title' => $post->title,

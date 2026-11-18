@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use Illuminate\Database\Eloquent\Collection;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class ShootingController extends Controller
@@ -23,7 +22,7 @@ class ShootingController extends Controller
     {
         $events = $this->getShootingEvents('Tir militaire');
 
-        return Inertia::render('Shootings', [
+        return $this->renderInertia('Shootings', [
             'events' => $events,
             'og' => [
                 'title' => 'Tirs militaires - '.config('app.name'),
@@ -42,7 +41,7 @@ class ShootingController extends Controller
     {
         $events = $this->getShootingEvents('Tir fédéral en campagne');
 
-        return Inertia::render('ShootingsField', [
+        return $this->renderInertia('ShootingsField', [
             'events' => $events,
             'og' => [
                 'title' => 'Tir fédéral en campagne - '.config('app.name'),

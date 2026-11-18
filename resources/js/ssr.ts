@@ -8,6 +8,7 @@ import { createSSRApp, h } from 'vue';
 import { route as ziggyRoute } from 'ziggy-js';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const brandNames = [appName, 'Société de tir de Lavigny'];
 
 createServer((page) =>
     createInertiaApp({
@@ -18,8 +19,9 @@ createServer((page) =>
                 return appName;
             }
 
-            return title.includes(appName) ? title : `${title} - ${appName}`;
+            return brandNames.some((brand) => title.includes(brand)) ? title : `${title} - ${appName}`;
         },
+        serverHead: true,
         resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
         setup({ App, props, plugin }) {
             const app = createSSRApp({ render: () => h(App, props) });

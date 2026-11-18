@@ -6,7 +6,6 @@ import { Muted, P } from '@/components/typography/texts';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { formatDate } from '@/lib/utils';
 import { Event } from '@/types';
-import { Head } from '@inertiajs/vue3';
 import { Calendar, Clock, MapPin } from '@lucide/vue';
 import { marked } from 'marked';
 
@@ -17,8 +16,6 @@ defineProps<{
 </script>
 
 <template>
-    <Head :title="event.title" />
-
     <WebLayout>
         <AppHeroSection :title="event.title" image="/images/hero.webp">
             <template #description>

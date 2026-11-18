@@ -9,6 +9,7 @@ import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const brandNames = [appName, 'Société de tir de Lavigny'];
 
 createInertiaApp({
     title: (title) => {
@@ -16,8 +17,9 @@ createInertiaApp({
             return appName;
         }
 
-        return title.includes(appName) ? title : `${title} - ${appName}`;
+        return brandNames.some((brand) => title.includes(brand)) ? title : `${title} - ${appName}`;
     },
+    serverHead: true,
     resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) })

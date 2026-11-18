@@ -7,7 +7,6 @@ import { H2 } from '@/components/typography/headings';
 import { OrderedList, P } from '@/components/typography/texts';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { Event } from '@/types';
-import { Head } from '@inertiajs/vue3';
 
 defineProps<{
     events: Event[];
@@ -15,8 +14,6 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Tir fédéral en campagne" />
-
     <WebLayout>
         <AppHeroSection title="Tir fédéral en campagne" image="/images/hero.webp"></AppHeroSection>
         <AppBreadcrumbs class="mt-96 pt-6" />

@@ -15,7 +15,6 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class MemberRegistrationController extends Controller
@@ -38,7 +37,7 @@ class MemberRegistrationController extends Controller
             $registration->makeHidden(['form_name', 'error_message', 'failed_at']);
         }
 
-        return Inertia::render('MemberRegistration', [
+        return $this->renderInertia('MemberRegistration', [
             'registration' => $registration,
             'formUrl' => $registration->formUrl(),
             'submitted' => $submitted,

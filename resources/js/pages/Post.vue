@@ -5,7 +5,6 @@ import { P } from '@/components/typography/texts';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { formatDate } from '@/lib/utils';
 import { Post } from '@/types';
-import { Head } from '@inertiajs/vue3';
 import { Calendar } from '@lucide/vue';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
@@ -24,8 +23,6 @@ watchEffect(async () => {
 </script>
 
 <template>
-    <Head :title="post.title" />
-
     <WebLayout>
         <AppHeroSection :title="post.title" image="/images/hero.webp">
             <template #description>

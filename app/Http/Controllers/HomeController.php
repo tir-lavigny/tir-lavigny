@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\Post;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
@@ -16,7 +15,7 @@ class HomeController extends Controller
             ->orderBy('publish_at', 'desc')
             ->get();
 
-        return Inertia::render('Home', [
+        return $this->renderInertia('Home', [
             'events' => $events,
             'posts' => $posts,
             'og' => [

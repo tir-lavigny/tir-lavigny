@@ -21,6 +21,7 @@ class Seo
         'verify-email',
         'verify-email/*',
         'confirm-password',
+        'api/*',
         'docs/*',
         '_scramble/*',
         '_boost/*',
@@ -58,6 +59,98 @@ class Seo
     public static function canonical(): string
     {
         return url()->current();
+    }
+
+    public static function ogLocale(): string
+    {
+        $locale = app()->getLocale();
+
+        return $locale === 'fr' ? 'fr_CH' : str_replace('-', '_', $locale);
+    }
+
+    /**
+     * @param  array<string, mixed>  $og
+     * @param  array<int, array<string, mixed>>  $jsonLd
+     * @param  array<int, array{title: string, href?: string}>  $breadcrumbs
+     * @return array<int, string>
+     */
+    public static function head(
+        array $og = [],
+        array $jsonLd = [],
+        array $breadcrumbs = [],
+        ?string $title = null,
+        bool $noindex = false,
+        bool $includeCanonical = true,
+    ): array {
+        $tags = [];
+        $tags[] = '<title>'.e(self::title($title ?? $og['title'] ?? null)).'</title>';
+
+        $description = $og['description'] ?? null;
+
+        if (is_string($description) && $description !== '') {
+            $tags[] = '<meta name="description" content="'.e($description).'">';
+        }
+
+        $tags[] = '<meta name="robots" content="'.($noindex ? 'noindex,nofollow' : self::robots()).'">';
+
+        if ($includeCanonical) {
+            $tags[] = '<link rel="canonical" href="'.e(self::canonical()).'">';
+        }
+
+        if ($og !== []) {
+            $ogTitle = (string) ($og['title'] ?? config('app.name'));
+            $ogDescription = (string) ($og['description'] ?? '');
+            $ogImage = (string) ($og['image'] ?? asset('/images/hero.webp'));
+            $ogType = (string) ($og['type'] ?? 'website');
+
+            $tags[] = '<meta property="og:title" content="'.e($ogTitle).'">';
+            $tags[] = '<meta property="og:description" content="'.e($ogDescription).'">';
+            $tags[] = '<meta property="og:image" content="'.e($ogImage).'">';
+            $tags[] = '<meta property="og:type" content="'.e($ogType).'">';
+            $tags[] = '<meta property="og:url" content="'.e(url()->current()).'">';
+            $tags[] = '<meta property="og:locale" content="'.e(self::ogLocale()).'">';
+            $tags[] = '<meta property="og:site_name" content="'.e((string) config('app.name')).'">';
+            $tags[] = '<meta name="twitter:card" content="summary_large_image">';
+            $tags[] = '<meta name="twitter:title" content="'.e($ogTitle).'">';
+            $tags[] = '<meta name="twitter:description" content="'.e($ogDescription).'">';
+            $tags[] = '<meta name="twitter:image" content="'.e($ogImage).'">';
+        }
+
+        $structuredData = array_merge([self::organization(), self::website()], $jsonLd);
+
+        if ($breadcrumbs !== []) {
+            $structuredData[] = self::breadcrumbs($breadcrumbs);
+        }
+
+        foreach ($structuredData as $data) {
+            $tags[] = self::jsonLd($data);
+        }
+
+        return array_map(
+            fn (string $tag, int $index): string => self::withHeadKey($tag, $index),
+            $tags,
+            array_keys($tags),
+        );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function defaultHead(): array
+    {
+        return self::head();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function errorHead(int $status): array
+    {
+        return self::head(
+            title: "Erreur {$status}",
+            noindex: true,
+            includeCanonical: false,
+        );
     }
 
     /**
@@ -170,6 +263,11 @@ class Seo
             ],
             'image' => asset('images/hero.webp'),
             'inLanguage' => 'fr-CH',
+            'author' => [
+                '@type' => 'Organization',
+                'name' => config('app.name'),
+                'url' => url('/'),
+            ],
             'publisher' => [
                 '@id' => url('/').'#organization',
             ],
@@ -232,5 +330,15 @@ class Seo
         }
 
         return '<script type="application/ld+json">'.$json.'</script>';
+    }
+
+    private static function withHeadKey(string $tag, int $index): string
+    {
+        return preg_replace(
+            '/^<([a-z][^\s\/>]*)/i',
+            '<$1 data-inertia="server-head-'.$index.'"',
+            $tag,
+            1
+        ) ?? $tag;
     }
 }

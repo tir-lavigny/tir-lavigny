@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import WebLayout from '@/layouts/WebLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { CalendarDays, CircleCheck, Mail, ShieldCheck, Wallet } from '@lucide/vue';
 
 const facts = [
@@ -52,8 +52,6 @@ const appointments = [
 </script>
 
 <template>
-    <Head title="Devenir membre" />
-
     <WebLayout>
         <AppHeroSection title="Devenir membre" image="/images/hero.webp">
             <template #description>

@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { Event } from '@/types';
-import { Head } from '@inertiajs/vue3';
 import { ListFilter } from '@lucide/vue';
 import { createReusableTemplate, formatDate, useMediaQuery } from '@vueuse/core';
 import { computed, ref } from 'vue';
@@ -64,8 +63,6 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
 </script>
 
 <template>
-    <Head title="Événements" />
-
     <DefineTemplate>
         <H2 class="!pb-0">Saison {{ new Date().getFullYear() }}</H2>
         <DropdownMenu>

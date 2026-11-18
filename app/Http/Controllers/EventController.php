@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Support\MarkdownText;
 use App\Support\Seo;
-use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\IcalendarGenerator\Components\Calendar as IcalCalendar;
 use Spatie\IcalendarGenerator\Components\Event as IcalEvent;
@@ -18,7 +17,7 @@ class EventController extends Controller
             ->orderBy('start_datetime')
             ->get();
 
-        return Inertia::render('Events', [
+        return $this->renderInertia('Events', [
             'events' => $events,
             'og' => [
                 'title' => 'Événements - '.config('app.name'),
@@ -44,7 +43,7 @@ class EventController extends Controller
             $event->location ? ' - '.$event->location->name : ''
         );
 
-        return Inertia::render('Event', [
+        return $this->renderInertia('Event', [
             'event' => $event,
             'content' => $content,
             'og' => [

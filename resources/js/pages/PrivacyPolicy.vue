@@ -2,12 +2,9 @@
 import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue';
 import { H1 } from '@/components/typography/headings';
 import WebLayout from '@/layouts/WebLayout.vue';
-import { Head } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <Head title="Protection des données" />
-
     <WebLayout>
         <AppBreadcrumbs class="mt-16" />
         <section class="flex flex-col gap-8 pb-12">
