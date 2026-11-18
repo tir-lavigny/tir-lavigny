@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue';
 import AppEventCalendar from '@/components/AppEventCalendar.vue';
 import AppEventCalendarCard from '@/components/AppEventCalendarCard.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
@@ -8,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { Event } from '@/types';
-import { Head } from '@inertiajs/vue3';
 import { ListFilter } from '@lucide/vue';
 import { createReusableTemplate, formatDate, useMediaQuery } from '@vueuse/core';
 import { computed, ref } from 'vue';
@@ -63,8 +63,6 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
 </script>
 
 <template>
-    <Head title="Événements" />
-
     <DefineTemplate>
         <H2 class="!pb-0">Saison {{ new Date().getFullYear() }}</H2>
         <DropdownMenu>
@@ -83,11 +81,12 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
     </DefineTemplate>
 
     <WebLayout>
-        <AppHeroSection title="Événements" image="/images/hero.jpg">
+        <AppHeroSection title="Événements" image="/images/hero.webp">
             <template #description> <Large> Prochains événements, tirs, etc. </Large> </template>
         </AppHeroSection>
+        <AppBreadcrumbs class="mt-96 pt-6" />
 
-        <section v-if="isMobile" class="mt-96 flex flex-col gap-8 py-12">
+        <section v-if="isMobile" class="flex flex-col gap-8 pb-12">
             <div class="flex flex-row items-center justify-between">
                 <ReuseTemplate />
             </div>
@@ -106,7 +105,7 @@ const [DefineTemplate, ReuseTemplate] = createReusableTemplate();
             </template>
         </section>
 
-        <section v-else class="mt-96 pt-12">
+        <section v-else>
             <div class="mb-6 flex flex-row items-center gap-6">
                 <ReuseTemplate />
             </div>

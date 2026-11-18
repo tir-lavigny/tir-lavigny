@@ -11,6 +11,7 @@ Route::middleware('auth:sanctum')->get('test', fn () => response()->json(['ok' =
 
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login'])
+        ->middleware('throttle:api-login')
         ->name('api.login');
 
     Route::middleware('auth:sanctum')->group(function () {

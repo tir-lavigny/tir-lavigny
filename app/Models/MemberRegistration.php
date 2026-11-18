@@ -19,12 +19,14 @@ class MemberRegistration extends Model
         'member_id',
         'form_data',
         'form_submitted_at',
+        'email_verified_at',
         'failed_at',
         'error_message',
     ];
 
     protected $hidden = [
         'form_data',
+        'email_verification_code_hash',
     ];
 
     protected $appends = [
@@ -35,6 +37,10 @@ class MemberRegistration extends Model
         'status' => MemberRegistrationStatus::class,
         'form_data' => EncryptedMemberFormData::class,
         'form_submitted_at' => 'datetime',
+        'email_verified_at' => 'datetime',
+        'email_verification_expires_at' => 'datetime',
+        'email_verification_sent_at' => 'datetime',
+        'email_verification_attempts' => 'integer',
         'failed_at' => 'datetime',
     ];
 
@@ -49,6 +55,18 @@ class MemberRegistration extends Model
     public function formUrl(): string
     {
         return rtrim(config('app.url'), '/').'/member-registration/'.$this->form_uuid;
+    }
+
+    public function isEmailVerified(): bool
+    {
+        return $this->email_verified_at !== null;
+    }
+
+    public function formEmail(): ?string
+    {
+        $email = $this->form_data['email'] ?? null;
+
+        return is_string($email) && $email !== '' ? $email : null;
     }
 
     public function getFormNameAttribute(): ?string

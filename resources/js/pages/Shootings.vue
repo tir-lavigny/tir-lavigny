@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue';
 import AppEventCard from '@/components/AppEventCard.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -6,7 +7,6 @@ import { H2 } from '@/components/typography/headings';
 import { List, P } from '@/components/typography/texts';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { Event } from '@/types';
-import { Head } from '@inertiajs/vue3';
 
 defineProps<{
     events: Event[];
@@ -14,11 +14,10 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Tirs militaires" />
-
     <WebLayout>
-        <AppHeroSection title="Tirs militaires" image="/images/hero.jpg"></AppHeroSection>
-        <section class="mt-96 gap-8 py-12">
+        <AppHeroSection title="Tirs militaires" image="/images/hero.webp"></AppHeroSection>
+        <AppBreadcrumbs class="mt-96 pt-6" />
+        <section class="gap-8 pb-12">
             <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
                 <div class="flex flex-col gap-4 md:col-span-2">
                     <div class="text-pretty">
@@ -31,10 +30,10 @@ defineProps<{
                             Notre société organise chaque année des séances de tir afin d'offrir la possibilité aux tireurs astreints et non
                             astreints, d'effectuer le programme obligatoire à 300 mètres au stand de Lavigny.
                         </P>
-                        <P> Le tir est gratuit, sauf la munition d'exercice, CHF 2.00 pour 3 coups. </P>
+                        <P> Le tir est gratuit, sauf la munition d'exercice, CHF 0.50 par coup. </P>
                         <P class="font-bold"> Important: La munition non tirée, doit être rendue à la fin du tir. </P>
                         <img
-                            src="/images/tirMilitaire.jpg"
+                            src="/images/tirMilitaire.webp"
                             alt="Tirs militaires"
                             class="mt-4 h-96 w-full rounded-lg object-cover object-center md:col-span-2 md:row-span-2"
                         />

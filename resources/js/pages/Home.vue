@@ -7,7 +7,6 @@ import { Large, List, P } from '@/components/typography/texts';
 import { Button } from '@/components/ui/button';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { Event, Post } from '@/types';
-import { Head } from '@inertiajs/vue3';
 import { Mail, MapPin } from '@lucide/vue';
 import { computed } from 'vue';
 
@@ -21,10 +20,8 @@ const hasEvents = computed(() => props.events.length > 0);
 </script>
 
 <template>
-    <Head title="Accueil" />
-
     <WebLayout>
-        <AppHeroSection title="Société de tir de lavigny" image="/images/hero.jpg">
+        <AppHeroSection title="Société de tir de lavigny" image="/images/hero.webp">
             <template #description> <Large> Tirs militaire, campagne et sportif </Large> </template>
         </AppHeroSection>
         <section class="mt-96 flex flex-col gap-8 pt-12" v-if="hasPosts">

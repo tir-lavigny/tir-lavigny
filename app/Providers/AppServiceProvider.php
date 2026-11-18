@@ -6,7 +6,11 @@ use App\Services\DavServiceInterface;
 use App\Services\InfomaniakDavService;
 use App\Services\StubDavService;
 use App\TokenAbility;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use RuntimeException;
 
@@ -36,6 +40,63 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->overrideSanctumConfigurationToSupportRefreshToken();
+        $this->defineRateLimiters();
+    }
+
+    private function defineRateLimiters(): void
+    {
+        RateLimiter::for('login', fn (Request $request) => [
+            Limit::perMinute(10)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('api-login', fn (Request $request) => [
+            Limit::perMinute(5)->by(Str::transliterate(
+                Str::lower($request->string('email')).'|'.$request->ip()
+            )),
+            Limit::perMinute(10)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('forgot-password', fn (Request $request) => [
+            Limit::perMinutes(10, 3)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('reset-password', fn (Request $request) => [
+            Limit::perMinutes(10, 5)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('register', fn (Request $request) => [
+            Limit::perHour(3)->by($request->ip()),
+        ]);
+
+        RateLimiter::for('confirm-password', fn (Request $request) => [
+            Limit::perMinute(6)->by($request->user()?->getAuthIdentifier() ?? $request->ip()),
+        ]);
+
+        RateLimiter::for('member-registration-verify-email', fn (Request $request) => [
+            Limit::perMinute(10)
+                ->by('verify:'.$request->string('form_uuid').'|'.$request->ip())
+                ->response(fn () => back()->withErrors([
+                    'code' => 'Trop de tentatives. Réessayez dans une minute.',
+                ])),
+        ]);
+
+        RateLimiter::for('member-registration-resend-verification', fn (Request $request) => [
+            Limit::perMinute(1)
+                ->by('resend-minute:'.$request->string('form_uuid').'|'.$request->ip())
+                ->response(fn () => back()->withErrors([
+                    'code' => 'Veuillez patienter avant de demander un nouveau code.',
+                ])),
+            Limit::perHour(5)
+                ->by('resend-hour-registration:'.$request->string('form_uuid'))
+                ->response(fn () => back()->withErrors([
+                    'code' => 'Trop de codes demandés pour cette inscription. Réessayez plus tard.',
+                ])),
+            Limit::perHour(5)
+                ->by('resend-hour-ip:'.$request->ip())
+                ->response(fn () => back()->withErrors([
+                    'code' => 'Trop de codes demandés. Réessayez plus tard.',
+                ])),
+        ]);
     }
 
     private function overrideSanctumConfigurationToSupportRefreshToken(): void

@@ -24,6 +24,7 @@ class MemberRegistrationPipelineService
         private readonly ?MemberDavSyncFailureNotifier $davFailureNotifier = null,
         private readonly ?SeasonVoucherService $seasonVoucherService = null,
         private readonly ?OnboardMemberAction $onboard = null,
+        private readonly ?MemberRegistrationEmailVerificationService $emailVerification = null,
     ) {}
 
     /**
@@ -82,12 +83,24 @@ class MemberRegistrationPipelineService
     public function retryFromStep(MemberRegistration $registration): void
     {
         match ($registration->status) {
-            MemberRegistrationStatus::FORM_FILLED => $this->sendValidationRequest($registration),
+            MemberRegistrationStatus::FORM_FILLED => $this->retryFromFormFilled($registration),
             MemberRegistrationStatus::ERROR => $this->processFormSubmission($registration),
             MemberRegistrationStatus::MEMBER_CREATED => $this->retryAfterMemberCreated($registration),
             MemberRegistrationStatus::COMPLETED => $this->retryDavSync($registration),
             default => throw new \InvalidArgumentException('Aucune étape à réessayer.'),
         };
+    }
+
+    private function retryFromFormFilled(MemberRegistration $registration): void
+    {
+        if ($registration->isEmailVerified()) {
+            $this->sendValidationRequest($registration);
+
+            return;
+        }
+
+        ($this->emailVerification ?? app(MemberRegistrationEmailVerificationService::class))
+            ->sendCode($registration);
     }
 
     private function retryAfterMemberCreated(MemberRegistration $registration): void

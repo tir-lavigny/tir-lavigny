@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use Illuminate\Database\Eloquent\Collection;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class ShootingController extends Controller
@@ -23,13 +22,17 @@ class ShootingController extends Controller
     {
         $events = $this->getShootingEvents('Tir militaire');
 
-        return Inertia::render('Shootings', [
+        return $this->renderInertia('Shootings', [
             'events' => $events,
             'og' => [
                 'title' => 'Tirs militaires - '.config('app.name'),
                 'description' => 'Venez effectuer vos tirs obligatoires au stand de Lavigny.',
-                'image' => asset('/images/tirMilitaire.jpg'),
+                'image' => asset('/images/tirMilitaire.webp'),
                 'type' => 'website',
+            ],
+            'breadcrumbs' => [
+                ['title' => 'Accueil', 'href' => route('home')],
+                ['title' => 'Tirs militaires', 'href' => route('shootings')],
             ],
         ]);
     }
@@ -38,13 +41,17 @@ class ShootingController extends Controller
     {
         $events = $this->getShootingEvents('Tir fédéral en campagne');
 
-        return Inertia::render('ShootingsField', [
+        return $this->renderInertia('ShootingsField', [
             'events' => $events,
             'og' => [
                 'title' => 'Tir fédéral en campagne - '.config('app.name'),
                 'description' => 'Le tir fédéral est la plus grande fête de tir au monde. Participez sous les couleurs de la Société de tir de Lavigny.',
                 'image' => asset('/images/tirCampagne.webp'),
                 'type' => 'website',
+            ],
+            'breadcrumbs' => [
+                ['title' => 'Accueil', 'href' => route('home')],
+                ['title' => 'Tir fédéral en campagne', 'href' => route('shootings.field')],
             ],
         ]);
     }

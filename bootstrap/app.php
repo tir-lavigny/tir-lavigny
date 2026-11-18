@@ -3,6 +3,7 @@
 use App\Http\Middleware\ForceJson;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Support\Seo;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         then: function () {
             Route::middleware([Sample::never()])
                 ->group(base_path('routes/health.php'));
+            Route::group([], base_path('routes/static.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware) {
@@ -51,12 +53,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->respond(function ($response, Throwable $exception, Request $request) {
             if ($response instanceof Response) {
                 if ($request->is('api/*')) {
+                    $headers = $response->headers->has('Retry-After')
+                        ? ['Retry-After' => $response->headers->get('Retry-After')]
+                        : [];
+
                     return response()->json([
                         'message' => $exception->getMessage(),
-                    ], $response->getStatusCode());
+                    ], $response->getStatusCode(), $headers);
                 }
-                if (! app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [500, 503, 404, 403])) {
-                    return Inertia::render('ErrorPage', ['status' => $response->getStatusCode()])
+                if (! app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [500, 503, 404, 403, 429])) {
+                    return Inertia::render('ErrorPage', [
+                        'status' => $response->getStatusCode(),
+                        'head' => Seo::errorHead($response->getStatusCode()),
+                    ])
                         ->toResponse($request)
                         ->setStatusCode($response->getStatusCode());
                 } elseif ($response->getStatusCode() === 419) {

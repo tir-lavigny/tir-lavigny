@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
 import TextLink from '@/components/TextLink.vue';
 import { H2 } from '@/components/typography/headings';
@@ -7,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import WebLayout from '@/layouts/WebLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { CalendarDays, CircleCheck, Mail, ShieldCheck, Wallet } from '@lucide/vue';
 
 const facts = [
@@ -51,17 +52,16 @@ const appointments = [
 </script>
 
 <template>
-    <Head title="Devenir membre" />
-
     <WebLayout>
-        <AppHeroSection title="Devenir membre" image="/images/hero.jpg">
+        <AppHeroSection title="Devenir membre" image="/images/hero.webp">
             <template #description>
                 <Large>Le plaisir du tir, sans contraintes !</Large>
             </template>
         </AppHeroSection>
+        <AppBreadcrumbs class="mt-96 pt-6" />
 
-        <section class="mt-96 pt-12">
-            <div class="mx-auto grid w-full max-w-3xl grid-cols-1 gap-3 px-4 sm:grid-cols-3">
+        <section>
+            <div class="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
                 <div
                     v-for="fact in facts"
                     :key="fact.title"
@@ -76,7 +76,7 @@ const appointments = [
             </div>
         </section>
 
-        <article class="mx-auto flex w-full max-w-3xl flex-col gap-12 px-4 py-12">
+        <article class="flex w-full flex-col gap-12 py-12">
             <section class="text-pretty">
                 <P>
                     Tu souhaites pratiquer le tir sportif dans une ambiance conviviale, sans devoir t’engager dans un programme chargé ni participer à

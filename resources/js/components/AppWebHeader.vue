@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
-import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -17,18 +16,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { getInitials } from '@/composables/useInitials';
-import type { BreadcrumbItem, NavItem, SharedData } from '@/types';
+import type { NavItem, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Calendar, House, LayoutDashboard, Menu, Moon, Sun, Target, UserPlus } from '@lucide/vue';
 import { computed } from 'vue';
-
-interface Props {
-    breadcrumbs?: BreadcrumbItem[];
-}
-
-const props = withDefaults(defineProps<Props>(), {
-    breadcrumbs: () => [],
-});
 
 const page = usePage<SharedData>();
 const auth = computed(() => page.props.auth);
@@ -214,12 +205,6 @@ const rightNavItems: NavItem[] = [
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-            </div>
-        </div>
-
-        <div v-if="props.breadcrumbs.length > 1" class="border-sidebar-border/70 flex w-full border-b">
-            <div class="mx-auto flex h-12 w-full items-center justify-start px-4 text-neutral-500 md:max-w-7xl">
-                <Breadcrumbs :breadcrumbs="breadcrumbs" />
             </div>
         </div>
     </div>
