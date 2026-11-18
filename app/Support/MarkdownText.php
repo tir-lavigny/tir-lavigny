@@ -12,8 +12,8 @@ class MarkdownText
         $text = preg_replace('/#{1,6}\s/', '', $text);
         $text = preg_replace('/\*\*|__/', '', $text);
         $text = preg_replace('/\*|_/', '', $text);
-        $text = preg_replace('/\[(.+?)\]\(.+?\)/', '$1', $text);
         $text = preg_replace('/!\[.*?\]\(.+?\)/', '', $text);
+        $text = preg_replace('/\[(.+?)\]\(.+?\)/', '$1', $text);
         $text = preg_replace('/`{1,3}[^`]*`{1,3}/', '', $text);
         $text = preg_replace('/\s+/', ' ', $text);
 
