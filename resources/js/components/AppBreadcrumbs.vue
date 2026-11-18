@@ -17,7 +17,7 @@ const breadcrumbs = computed(() => (props.breadcrumbs.length ? props.breadcrumbs
 </script>
 
 <template>
-    <div v-if="breadcrumbs.length > 1" class="py-2">
-        <Breadcrumbs :breadcrumbs="breadcrumbs" />
+    <div class="py-2">
+        <Breadcrumbs v-if="breadcrumbs.length > 1" :breadcrumbs="breadcrumbs" />
     </div>
 </template>
