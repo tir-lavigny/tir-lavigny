@@ -6,10 +6,11 @@ import { Head } from '@inertiajs/vue3';
 
 <template>
     <Head title="Protection des données" />
+
     <WebLayout>
-        <div class="mx-auto mt-16 w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+        <section class="flex flex-col gap-8 py-12">
             <H1>Déclaration de protection des données</H1>
-            <div class="mt-8 space-y-4"></div>
-        </div>
+            <div class="prose dark:prose-invert xl:prose-xl max-w-full"></div>
+        </section>
     </WebLayout>
 </template>

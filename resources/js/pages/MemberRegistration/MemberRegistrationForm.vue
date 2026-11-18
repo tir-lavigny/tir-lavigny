@@ -13,7 +13,7 @@ import { watchDebounced } from '@vueuse/core';
 import { stepForRegistrationError } from '@/lib/memberRegistrationForm';
 import type { AcceptableValue } from 'reka-ui';
 import { H1 } from '@/components/typography/headings';
-import { P } from '@/components/typography/texts';
+import { P, Muted } from '@/components/typography/texts';
 import { SWISS_CANTONS } from '@/lib/helpers';
 
 const props = defineProps<{
@@ -294,10 +294,10 @@ const submit = () => {
                 </div>
             </div>
 
-            <P v-if="currentStep === totalSteps" class="text-muted-foreground text-xs">
+            <Muted v-if="currentStep === totalSteps" class="text-muted-foreground text-xs">
                 En soumettant ce formulaire, vous confirmez avoir pris connaissance de notre
                 <Link :href="route('privacy-policy')" class="underline">déclaration de protection des données</Link>.
-            </P>
+            </Muted>
 
             <div class="flex justify-between">
                 <Button type="button" variant="outline" @click="prevStep" :disabled="currentStep === 1">Précédent</Button>
