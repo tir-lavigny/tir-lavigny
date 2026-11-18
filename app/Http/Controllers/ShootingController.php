@@ -31,6 +31,10 @@ class ShootingController extends Controller
                 'image' => asset('/images/tirMilitaire.webp'),
                 'type' => 'website',
             ],
+            'breadcrumbs' => [
+                ['title' => 'Accueil', 'href' => route('home')],
+                ['title' => 'Tirs militaires', 'href' => route('shootings')],
+            ],
         ]);
     }
 
@@ -45,6 +49,10 @@ class ShootingController extends Controller
                 'description' => 'Le tir fédéral est la plus grande fête de tir au monde. Participez sous les couleurs de la Société de tir de Lavigny.',
                 'image' => asset('/images/tirCampagne.webp'),
                 'type' => 'website',
+            ],
+            'breadcrumbs' => [
+                ['title' => 'Accueil', 'href' => route('home')],
+                ['title' => 'Tir fédéral en campagne', 'href' => route('shootings.field')],
             ],
         ]);
     }

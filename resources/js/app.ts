@@ -11,7 +11,13 @@ import { initializeTheme } from './composables/useAppearance';
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => {
+        if (!title) {
+            return appName;
+        }
+
+        return title.includes(appName) ? title : `${title} - ${appName}`;
+    },
     resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) })

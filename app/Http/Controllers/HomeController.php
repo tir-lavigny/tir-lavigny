@@ -12,10 +12,7 @@ class HomeController extends Controller
     public function index(): Response
     {
         $events = Event::with('location')->where('start_datetime', '>=', now())->orderBy('start_datetime')->take(3)->get();
-        $posts = Post::where('publish_at', '<=', now())
-            ->where(function ($query) {
-                $query->whereNull('expire_at')->orWhere('expire_at', '>', now());
-            })
+        $posts = Post::published()
             ->orderBy('publish_at', 'desc')
             ->get();
 

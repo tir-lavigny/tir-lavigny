@@ -34,7 +34,27 @@
         }
     </style>
 
-    <title data-inertia>{{ config('app.name', 'Laravel') }}</title>
+    @php
+        $og = $page['props']['og'] ?? [];
+        $seoTitle = \App\Support\Seo::title($og['title'] ?? null);
+        $seoDescription = $og['description'] ?? null;
+        $structuredData = array_merge(
+            [\App\Support\Seo::organization(), \App\Support\Seo::website()],
+            is_array($page['props']['json_ld'] ?? null) ? $page['props']['json_ld'] : [],
+        );
+
+        if (! empty($page['props']['breadcrumbs'])) {
+            $structuredData[] = \App\Support\Seo::breadcrumbs($page['props']['breadcrumbs']);
+        }
+    @endphp
+
+    <title data-inertia>{{ $seoTitle }}</title>
+
+    @if($seoDescription)
+        <meta name="description" content="{{ $seoDescription }}" />
+    @endif
+    <meta name="robots" content="{{ \App\Support\Seo::robots() }}" />
+    <link rel="canonical" href="{{ \App\Support\Seo::canonical() }}" />
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
@@ -44,10 +64,18 @@
         <meta property="og:description" content="{{ $page['props']['og']['description'] ?? '' }}" />
         <meta property="og:image" content="{{ $page['props']['og']['image'] ?? asset('/images/hero.webp') }}" />
         <meta property="og:type" content="{{ $page['props']['og']['type'] ?? 'website' }}" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="{{ $page['props']['og']['title'] ?? config('app.name') }}" />
+        <meta name="twitter:description" content="{{ $page['props']['og']['description'] ?? '' }}" />
+        <meta name="twitter:image" content="{{ $page['props']['og']['image'] ?? asset('/images/hero.webp') }}" />
     @endif
     <meta property="og:url" content="{{ url()->current() }}" />
     <meta property="og:locale" content="{{ str_replace('-', '_', app()->getLocale()) }}" />
     <meta property="og:site_name" content="{{ config('app.name') }}" />
+
+    @foreach($structuredData as $data)
+        {!! \App\Support\Seo::jsonLd($data) !!}
+    @endforeach
 
     @routes
     @vite(['resources/js/app.ts'])

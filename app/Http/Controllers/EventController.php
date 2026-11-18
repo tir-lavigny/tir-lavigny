@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use Illuminate\Support\Str;
+use App\Support\MarkdownText;
+use App\Support\Seo;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\IcalendarGenerator\Components\Calendar as IcalCalendar;
@@ -25,6 +26,10 @@ class EventController extends Controller
                 'image' => asset('/images/hero.webp'),
                 'type' => 'website',
             ],
+            'breadcrumbs' => [
+                ['title' => 'Accueil', 'href' => route('home')],
+                ['title' => 'Événements', 'href' => route('events')],
+            ],
         ]);
     }
 
@@ -32,31 +37,31 @@ class EventController extends Controller
     {
         $event->load('location');
         $content = $event->getEffectiveContent();
+        $description = MarkdownText::toPlainText($content) ?: sprintf(
+            '%s le %s%s',
+            $event->title,
+            $event->start_datetime->format('d.m.Y'),
+            $event->location ? ' - '.$event->location->name : ''
+        );
 
         return Inertia::render('Event', [
             'event' => $event,
             'content' => $content,
             'og' => [
                 'title' => $event->title,
-                'description' => $this->cleanOgDescription($content),
+                'description' => $description,
                 'image' => asset('/images/hero.webp'),
                 'type' => 'event',
             ],
+            'json_ld' => [
+                Seo::event($event, $description),
+            ],
+            'breadcrumbs' => [
+                ['title' => 'Accueil', 'href' => route('home')],
+                ['title' => 'Événements', 'href' => route('events')],
+                ['title' => $event->title, 'href' => route('events.show', $event)],
+            ],
         ]);
-    }
-
-    private function cleanOgDescription(?string $html): string
-    {
-        $text = strip_tags($html ?? '');
-        $text = preg_replace('/#{1,6}\s/', '', $text);
-        $text = preg_replace('/\*\*|__/', '', $text);
-        $text = preg_replace('/\*|_/', '', $text);
-        $text = preg_replace('/\[(.+?)\]\(.+?\)/', '$1', $text);
-        $text = preg_replace('/!\[.*?\]\(.+?\)/', '', $text);
-        $text = preg_replace('/`{1,3}[^`]*`{1,3}/', '', $text);
-        $text = preg_replace('/\s+/', ' ', $text);
-
-        return Str::limit(trim($text), 160, '...');
     }
 
     public function feed_calendar(): \Illuminate\Http\Response

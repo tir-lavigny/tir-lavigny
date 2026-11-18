@@ -16,6 +16,10 @@ class BecomeMemberController extends Controller
                 'image' => asset('/images/hero.webp'),
                 'type' => 'website',
             ],
+            'breadcrumbs' => [
+                ['title' => 'Accueil', 'href' => route('home')],
+                ['title' => 'Devenir membre', 'href' => route('become-member')],
+            ],
         ]);
     }
 }

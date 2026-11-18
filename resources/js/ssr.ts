@@ -13,7 +13,13 @@ createServer((page) =>
     createInertiaApp({
         page,
         render: renderToString,
-        title: (title) => `${title} - ${appName}`,
+        title: (title) => {
+            if (!title) {
+                return appName;
+            }
+
+            return title.includes(appName) ? title : `${title} - ${appName}`;
+        },
         resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
         setup({ App, props, plugin }) {
             const app = createSSRApp({ render: () => h(App, props) });

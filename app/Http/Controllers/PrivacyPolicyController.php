@@ -16,6 +16,10 @@ class PrivacyPolicyController extends Controller
                 'image' => asset('/images/hero.webp'),
                 'type' => 'website',
             ],
+            'breadcrumbs' => [
+                ['title' => 'Accueil', 'href' => route('home')],
+                ['title' => 'Protection des données', 'href' => route('privacy-policy')],
+            ],
         ]);
     }
 }
