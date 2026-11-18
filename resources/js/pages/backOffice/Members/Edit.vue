@@ -12,40 +12,12 @@ import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { Save, Undo2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
+import { SWISS_CANTONS } from '@/lib/helpers';
 
 const props = defineProps<{ member: Member; statuses: Record<string, string> }>();
 
 const page = usePage<SharedData>();
 const canViewSensitiveData = computed(() => hasPermissionTo(page.props.auth.user, 'view member sensitive data'));
-
-const swissCantons = [
-    { value: 'AG', label: 'Argovie (AG)' },
-    { value: 'AI', label: 'Appenzell Rhodes-Intérieures (AI)' },
-    { value: 'AR', label: 'Appenzell Rhodes-Extérieures (AR)' },
-    { value: 'BL', label: 'Bâle-Campagne (BL)' },
-    { value: 'BS', label: 'Bâle-Ville (BS)' },
-    { value: 'BE', label: 'Berne (BE)' },
-    { value: 'FR', label: 'Fribourg (FR)' },
-    { value: 'GE', label: 'Genève (GE)' },
-    { value: 'GL', label: 'Glaris (GL)' },
-    { value: 'GR', label: 'Grisons (GR)' },
-    { value: 'JU', label: 'Jura (JU)' },
-    { value: 'LU', label: 'Lucerne (LU)' },
-    { value: 'NE', label: 'Neuchâtel (NE)' },
-    { value: 'NW', label: 'Nidwald (NW)' },
-    { value: 'OW', label: 'Obwald (OW)' },
-    { value: 'SG', label: 'Saint-Gall (SG)' },
-    { value: 'SH', label: 'Schaffhouse (SH)' },
-    { value: 'SO', label: 'Soleure (SO)' },
-    { value: 'SZ', label: 'Schwytz (SZ)' },
-    { value: 'TI', label: 'Tessin (TI)' },
-    { value: 'TG', label: 'Thurgovie (TG)' },
-    { value: 'UR', label: 'Uri (UR)' },
-    { value: 'VD', label: 'Vaud (VD)' },
-    { value: 'VS', label: 'Valais (VS)' },
-    { value: 'ZG', label: 'Zoug (ZG)' },
-    { value: 'ZH', label: 'Zurich (ZH)' },
-];
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Membres', href: route('bo.members.index') },
@@ -170,7 +142,7 @@ const handleSubmit = () => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="none">Aucun</SelectItem>
-                                <SelectItem v-for="canton in swissCantons" :key="canton.value" :value="canton.value">
+                                <SelectItem v-for="canton in SWISS_CANTONS" :key="canton.value" :value="canton.value">
                                     {{ canton.label }}
                                 </SelectItem>
                             </SelectContent>
