@@ -137,6 +137,52 @@ class MemberRegistrationTest extends TestCase
         $response->assertSee('john@example.com');
     }
 
+    public function test_show_exposes_verification_resend_cooldown(): void
+    {
+        $this->freezeTime();
+
+        $registration = $this->registrationWithAvs('756.0000.0000.02');
+        $registration->email_verified_at = null;
+        $registration->email_verification_sent_at = now()->subSeconds(20);
+        $registration->save();
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('resendAvailableIn', 40)
+            ->where('emailVerificationSentAt', $registration->fresh()->email_verification_sent_at->toJSON())
+        );
+    }
+
+    public function test_show_reports_no_cooldown_once_email_is_verified(): void
+    {
+        $this->freezeTime();
+
+        $registration = $this->registrationWithAvs('756.0000.0000.03');
+        $registration->email_verification_sent_at = now()->subSeconds(10);
+        $registration->save();
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('resendAvailableIn', 0)
+        );
+    }
+
+    public function test_show_reports_no_cooldown_without_verification_code(): void
+    {
+        $registration = $this->registrationWithAvs('756.0000.0000.04');
+        $registration->email_verified_at = null;
+        $registration->save();
+
+        $response = $this->get(route('bo.member-registrations.show', $registration));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('resendAvailableIn', 0)
+            ->where('emailVerificationSentAt', null)
+        );
+    }
+
     public function test_show_does_not_expose_dav_uid(): void
     {
         $registration = MemberRegistration::create();

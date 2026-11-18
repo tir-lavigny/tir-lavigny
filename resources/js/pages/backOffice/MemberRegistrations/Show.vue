@@ -13,6 +13,7 @@ import { formatDate, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, MemberRegistration, SharedData } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { Copy, ExternalLink, RotateCcw, Trash2 } from '@lucide/vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
 interface AvsConflict {
@@ -28,9 +29,49 @@ const props = defineProps<{
     canViewSensitiveData: boolean;
     canEditAvs: boolean;
     avsConflict: AvsConflict | null;
+    resendAvailableIn: number;
+    emailVerificationSentAt: string | null;
 }>();
 
 const avsForm = useForm({ avs: '' });
+
+const retrying = ref(false);
+const cooldown = ref(props.resendAvailableIn);
+let cooldownTimer: ReturnType<typeof setInterval> | undefined;
+
+const stopCooldown = () => {
+    if (cooldownTimer) {
+        clearInterval(cooldownTimer);
+        cooldownTimer = undefined;
+    }
+};
+
+const startCooldown = () => {
+    stopCooldown();
+
+    if (cooldown.value <= 0) {
+        return;
+    }
+
+    cooldownTimer = setInterval(() => {
+        cooldown.value = Math.max(0, cooldown.value - 1);
+
+        if (cooldown.value === 0) {
+            stopCooldown();
+        }
+    }, 1000);
+};
+
+onMounted(startCooldown);
+onUnmounted(stopCooldown);
+
+watch(
+    () => props.resendAvailableIn,
+    (value) => {
+        cooldown.value = value;
+        startCooldown();
+    },
+);
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inscriptions', href: route('bo.member-registrations.index') },
@@ -96,6 +137,16 @@ const retryLabel = (status: string) => {
     return labels[status] ?? 'Réessayer';
 };
 
+const isAwaitingEmailVerification = () => props.registration.status === 'form_filled' && !isEmailVerified();
+
+const isRetryCoolingDown = () => isAwaitingEmailVerification() && cooldown.value > 0;
+
+const retryButtonLabel = (status: string) => {
+    const label = retryLabel(status);
+
+    return isAwaitingEmailVerification() && cooldown.value > 0 ? `${label} (${cooldown.value} s)` : label;
+};
+
 const handleValidate = () => {
     router.post(
         route('bo.member-registrations.validate', props.registration.id),
@@ -108,12 +159,17 @@ const handleValidate = () => {
 };
 
 const handleRetry = () => {
+    retrying.value = true;
+
     router.post(
         route('bo.member-registrations.retry', props.registration.id),
         {},
         {
             preserveScroll: true,
             onError: () => toast.error('Impossible de relancer le traitement.'),
+            onFinish: () => {
+                retrying.value = false;
+            },
         },
     );
 };
@@ -175,9 +231,10 @@ const displayUrl = flash?.form_url ?? props.formUrl;
                         L'adresse email du formulaire n'a pas encore été vérifiée. La validation est bloquée tant que le demandeur n'a pas saisi le
                         code reçu par email.
                     </P>
-                    <Button size="sm" variant="outline" @click="handleRetry">
+                    <Muted v-if="emailVerificationSentAt"> Dernier envoi : {{ formatDate(emailVerificationSentAt, 'DD.MM.YYYY HH:mm') }} </Muted>
+                    <Button size="sm" variant="outline" :disabled="isRetryCoolingDown() || retrying" @click="handleRetry">
                         <RotateCcw class="mr-2 size-4" />
-                        {{ retryLabel(registration.status) }}
+                        {{ retryButtonLabel(registration.status) }}
                     </Button>
                 </CardContent>
             </Card>
@@ -239,9 +296,16 @@ const displayUrl = flash?.form_url ?? props.formUrl;
                 <CardHeader class="pb-2"><CardTitle class="text-destructive text-sm">Erreur</CardTitle></CardHeader>
                 <CardContent>
                     <P class="text-sm">{{ registration.error_message ?? 'Synchronisation DAV échouée.' }}</P>
-                    <Button v-if="canRetry()" size="sm" variant="outline" class="mt-3" @click="handleRetry">
+                    <Button
+                        v-if="canRetry()"
+                        size="sm"
+                        variant="outline"
+                        class="mt-3"
+                        :disabled="isRetryCoolingDown() || retrying"
+                        @click="handleRetry"
+                    >
                         <RotateCcw class="mr-2 size-4" />
-                        {{ retryLabel(registration.status) }}
+                        {{ retryButtonLabel(registration.status) }}
                     </Button>
                 </CardContent>
             </Card>
@@ -251,9 +315,9 @@ const displayUrl = flash?.form_url ?? props.formUrl;
             <div class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
                 <H3>Données du formulaire</H3>
                 <div class="mt-4">
-                    <Pre v-if="registration.form_data" class="bg-muted max-h-96 overflow-auto rounded p-4 text-xs">{{
+                    <pre v-if="registration.form_data" class="bg-muted max-h-96 overflow-auto rounded p-4 text-xs">{{
                         JSON.stringify(registration.form_data, null, 2)
-                    }}</Pre>
+                    }}</pre>
                     <P v-else-if="!canViewSensitiveData" class="text-muted-foreground text-sm">Données sensibles masquées</P>
                     <P v-else class="text-muted-foreground text-sm">Aucune donnée</P>
                 </div>

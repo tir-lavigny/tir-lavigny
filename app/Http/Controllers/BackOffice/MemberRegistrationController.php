@@ -9,6 +9,7 @@ use App\MemberRegistrationStatus;
 use App\Models\Member;
 use App\Models\MemberRegistration;
 use App\Services\MemberRegistrationAvsConflictService;
+use App\Services\MemberRegistrationEmailVerificationService;
 use App\Services\MemberRegistrationPipelineService;
 use App\Support\PiiMasker;
 use Illuminate\Http\RedirectResponse;
@@ -53,6 +54,7 @@ class MemberRegistrationController extends Controller implements HasMiddleware
     public function show(
         MemberRegistration $memberRegistration,
         MemberRegistrationAvsConflictService $conflictService,
+        MemberRegistrationEmailVerificationService $emailVerification,
     ): Response {
         $memberRegistration->load('member');
 
@@ -67,6 +69,10 @@ class MemberRegistrationController extends Controller implements HasMiddleware
             'formUrl' => $memberRegistration->formUrl(),
             'canViewSensitiveData' => $canViewSensitiveData,
             'canEditAvs' => $canViewSensitiveData,
+            'resendAvailableIn' => $memberRegistration->isEmailVerified()
+                ? 0
+                : $emailVerification->secondsUntilResendAllowed($memberRegistration),
+            'emailVerificationSentAt' => $memberRegistration->email_verification_sent_at,
             'avsConflict' => $this->avsConflictPayload(
                 $conflictService->find($memberRegistration),
                 $memberRegistration,
