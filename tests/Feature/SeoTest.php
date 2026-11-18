@@ -15,6 +15,7 @@ class SeoTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
+            ->assertSee('<html lang="fr"', false)
             ->assertSee('<title data-inertia="server-head-0">'.config('app.name').'</title>', false)
             ->assertSee('name="description"', false)
             ->assertSee('name="robots" content="noindex,nofollow"', false)

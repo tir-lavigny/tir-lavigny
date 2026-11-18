@@ -68,6 +68,11 @@ class Seo
         return $locale === 'fr' ? 'fr_CH' : str_replace('-', '_', $locale);
     }
 
+    public static function inLanguage(): string
+    {
+        return str_replace('_', '-', self::ogLocale());
+    }
+
     /**
      * @param  array<string, mixed>  $og
      * @param  array<int, array<string, mixed>>  $jsonLd
@@ -192,7 +197,7 @@ class Seo
             '@id' => url('/').'#website',
             'name' => config('app.name'),
             'url' => url('/'),
-            'inLanguage' => 'fr-CH',
+            'inLanguage' => self::inLanguage(),
             'publisher' => [
                 '@id' => url('/').'#organization',
             ],
@@ -262,7 +267,7 @@ class Seo
                 '@id' => $url,
             ],
             'image' => asset('images/hero.webp'),
-            'inLanguage' => 'fr-CH',
+            'inLanguage' => self::inLanguage(),
             'author' => [
                 '@type' => 'Organization',
                 'name' => config('app.name'),
