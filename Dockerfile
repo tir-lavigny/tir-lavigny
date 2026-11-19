@@ -115,7 +115,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]
 
 
-FROM nginx:1.28-alpine AS web
+FROM nginx:1.30-alpine AS web
 
 RUN apk upgrade --no-cache
 
