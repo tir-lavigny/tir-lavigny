@@ -1,9 +1,6 @@
-ARG PHP_VERSION=8.4.28
-ARG NODE_VERSION=24.22.1
-
 ARG VCS_URL=https://github.com/tir-lavigny/tir-lavigny-laravel
 
-FROM php:${PHP_VERSION}-fpm-alpine AS php-base
+FROM php:8.4.28-fpm-alpine AS php-base
 
 RUN apk upgrade --no-cache
 
@@ -54,7 +51,7 @@ RUN composer dump-autoload \
     --no-scripts
 
 
-FROM node:${NODE_VERSION}-alpine AS frontend
+FROM node:24.22.1-alpine AS frontend
 
 ARG VITE_APP_NAME="Tir Lavigny"
 ENV VITE_APP_NAME=$VITE_APP_NAME
