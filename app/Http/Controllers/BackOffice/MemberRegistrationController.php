@@ -177,15 +177,17 @@ class MemberRegistrationController extends Controller implements HasMiddleware
     public function destroy(MemberRegistration $memberRegistration): RedirectResponse
     {
         abort_unless(
-            $memberRegistration->form_submitted_at === null,
+            $memberRegistration->member_id === null,
             403,
-            'Seules les inscriptions sans formulaire soumis peuvent être supprimées.'
+            'Les inscriptions dont un membre a été créé ne peuvent pas être supprimées.'
         );
+
+        $wasSubmitted = $memberRegistration->form_submitted_at !== null;
 
         $memberRegistration->delete();
 
         return redirect()->route('bo.member-registrations.index')
-            ->with('success', 'Lien supprimé avec succès.');
+            ->with('success', $wasSubmitted ? 'Inscription supprimée avec succès.' : 'Lien supprimé avec succès.');
     }
 
     /** @return array<string, mixed>|null */
