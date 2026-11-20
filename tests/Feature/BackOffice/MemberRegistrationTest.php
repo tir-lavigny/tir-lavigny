@@ -588,7 +588,7 @@ class MemberRegistrationTest extends TestCase
         $this->assertDatabaseMissing('member_registrations', ['id' => $registration->id]);
     }
 
-    public function test_destroy_rejects_submitted_registration(): void
+    public function test_destroy_deletes_submitted_registration_without_member(): void
     {
         $registration = MemberRegistration::create([
             'form_submitted_at' => now(),
@@ -597,7 +597,54 @@ class MemberRegistrationTest extends TestCase
 
         $response = $this->delete(route('bo.member-registrations.destroy', $registration));
 
-        $response->assertStatus(403);
+        $response->assertRedirect(route('bo.member-registrations.index'));
+        $response->assertSessionHas('success', 'Inscription supprimée avec succès.');
+        $this->assertDatabaseMissing('member_registrations', ['id' => $registration->id]);
+    }
+
+    public function test_destroy_deletes_failed_registration_without_member(): void
+    {
+        $registration = MemberRegistration::create([
+            'form_submitted_at' => now(),
+            'status' => MemberRegistrationStatus::ERROR,
+            'failed_at' => now(),
+        ]);
+
+        $response = $this->delete(route('bo.member-registrations.destroy', $registration));
+
+        $response->assertRedirect(route('bo.member-registrations.index'));
+        $response->assertSessionHas('success', 'Inscription supprimée avec succès.');
+        $this->assertDatabaseMissing('member_registrations', ['id' => $registration->id]);
+    }
+
+    public function test_destroy_rejects_registration_with_member(): void
+    {
+        $member = Member::factory()->create();
+        $registration = MemberRegistration::create([
+            'member_id' => $member->id,
+            'form_submitted_at' => now(),
+            'status' => MemberRegistrationStatus::COMPLETED,
+        ]);
+
+        $response = $this->delete(route('bo.member-registrations.destroy', $registration));
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('member_registrations', ['id' => $registration->id]);
+    }
+
+    public function test_destroy_rejects_failed_registration_with_member(): void
+    {
+        $member = Member::factory()->create();
+        $registration = MemberRegistration::create([
+            'member_id' => $member->id,
+            'form_submitted_at' => now(),
+            'status' => MemberRegistrationStatus::ERROR,
+            'failed_at' => now(),
+        ]);
+
+        $response = $this->delete(route('bo.member-registrations.destroy', $registration));
+
+        $response->assertForbidden();
         $this->assertDatabaseHas('member_registrations', ['id' => $registration->id]);
     }
 
