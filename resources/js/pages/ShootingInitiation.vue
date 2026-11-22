@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import WebLayout from '@/layouts/WebLayout.vue';
 import { Link } from '@inertiajs/vue3';
-import { CalendarDays, CircleCheck, Clock, Crosshair, Info, Mail, ShieldCheck, Target, Users, Utensils } from '@lucide/vue';
+import { CalendarDays, CircleCheck, Clock, Crosshair, Info, Mail, ShieldCheck, Users, Utensils } from '@lucide/vue';
 
 const initiationOptions = [
     {
