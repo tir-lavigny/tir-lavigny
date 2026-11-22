@@ -67,7 +67,7 @@ const shootingLinks = [
                 <div class="flex flex-col gap-4">
                     <H2>Envie de tirer ?</H2>
                     <P>
-                        Un stand de 300 m et 10 m, des moniteurs, et des séances sans engagement. Que tu fasses tes tirs obligatoires, que tu veuilles
+                        Un stand de 300 m et 10 m, des moniteurs, et des séances de tir le jeudi. Que tu fasses tes tirs obligatoires, que tu veuilles
                         essayer ou que tu cherches une société où pratiquer à ton rythme, tu es au bon endroit.
                     </P>
                     <Button variant="link" size="lg" class="justify-start px-0">
