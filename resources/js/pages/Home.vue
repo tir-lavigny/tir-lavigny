@@ -3,40 +3,111 @@ import AppEventCard from '@/components/AppEventCard.vue';
 import AppHeroSection from '@/components/AppHeroSection.vue';
 import AppPostCard from '@/components/AppPostCard.vue';
 import { H2 } from '@/components/typography/headings';
-import { Large, List, P } from '@/components/typography/texts';
+import { Large, List, Muted, P } from '@/components/typography/texts';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import WebLayout from '@/layouts/WebLayout.vue';
+import { formatDate } from '@/lib/utils';
 import { Event, Post } from '@/types';
-import { Mail, MapPin } from '@lucide/vue';
+import { Link } from '@inertiajs/vue3';
+import { ArrowRight, CalendarDays, Mail, MapPin } from '@lucide/vue';
 import { computed } from 'vue';
 
 const props = defineProps<{
     events: Event[];
     posts: Post[];
+    nextShootingEvent: Event | null;
 }>();
 
 const hasPosts = computed(() => props.posts.length > 0);
 const hasEvents = computed(() => props.events.length > 0);
+
+const shootingLinks = [
+    {
+        title: 'Essayer le tir',
+        description: 'Initiation encadrée, sans matériel',
+        route: 'shooting-initiation',
+    },
+    {
+        title: 'Tirs militaires',
+        description: 'Programme et dates',
+        route: 'shootings',
+    },
+    {
+        title: 'Devenir membre',
+        description: 'Cotisation annuelle, sans engagement',
+        route: 'become-member',
+    },
+    {
+        title: 'Tir fédéral en campagne',
+        description: 'Chaque mois de mai',
+        route: 'shootings.field',
+    },
+];
 </script>
 
 <template>
     <WebLayout>
-        <AppHeroSection title="Société de tir de lavigny" image="/images/hero.webp">
-            <template #description> <Large> Tirs militaire, campagne et sportif </Large> </template>
+        <AppHeroSection title="Société de tir de Lavigny" image="/images/hero.webp">
+            <template #description>
+                <Large>Tirs militaires, tir fédéral et initiation au stand de 300 m.</Large>
+            </template>
         </AppHeroSection>
-        <section class="mt-96 flex flex-col gap-8 pt-12" v-if="hasPosts">
+
+        <section class="mt-96 pt-12">
+            <Alert v-if="nextShootingEvent" class="mb-8">
+                <CalendarDays class="size-4" />
+                <AlertTitle>Prochain tir militaire</AlertTitle>
+                <AlertDescription>
+                    {{ formatDate(nextShootingEvent.start_datetime, 'dddd DD MMMM YYYY') }}.
+                    <Link :href="route('shootings')" class="text-primary underline-offset-4 hover:underline">Voir les dates</Link>
+                </AlertDescription>
+            </Alert>
+            <div class="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12">
+                <div class="flex flex-col gap-4">
+                    <H2>Envie de tirer ?</H2>
+                    <P>
+                        Un stand de 300 m et 10 m, des moniteurs, et des séances sans engagement. Que tu fasses tes tirs obligatoires, que tu veuilles
+                        essayer ou que tu cherches une société où pratiquer à ton rythme, tu es au bon endroit.
+                    </P>
+                    <Button variant="link" size="lg" class="justify-start px-0">
+                        <Link :href="route('events')" class="flex items-center"> <CalendarDays class="mr-2 h-4 w-4" /> Voir l’agenda </Link>
+                    </Button>
+                </div>
+                <ul class="flex flex-col divide-y">
+                    <li v-for="link in shootingLinks" :key="link.route">
+                        <Link :href="route(link.route)" class="group flex items-center justify-between gap-4 py-4">
+                            <div>
+                                <p class="font-semibold">{{ link.title }}</p>
+                                <Muted>{{ link.description }}</Muted>
+                            </div>
+                            <ArrowRight class="text-muted-foreground size-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <section data-testid="home-events-section" class="mt-12 flex flex-col gap-8" v-if="hasEvents">
+            <div class="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <H2>Prochain{{ events.length > 1 ? 's' : '' }} événement{{ events.length > 1 ? 's' : '' }}</H2>
+                <Button variant="link" size="lg" class="px-0">
+                    <Link :href="route('events')" class="flex items-center"> <CalendarDays class="mr-2 h-4 w-4" /> Tous les événements </Link>
+                </Button>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <AppEventCard v-for="event in events" class="w-full" :key="event.id" :event="event" />
+            </div>
+        </section>
+
+        <section v-if="hasPosts" class="mt-12 flex flex-col gap-8">
             <H2>Communication{{ posts.length > 1 ? 's' : '' }}</H2>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <AppPostCard v-for="post in posts" class="w-full" :key="post.public_id" :post="post" />
             </div>
         </section>
-        <section data-testid="home-events-section" class="mt-12 flex flex-col gap-8" v-if="hasEvents" :class="{ 'mt-96 pt-12': !hasPosts }">
-            <H2>Prochain{{ events.length > 1 ? 's' : '' }} événement{{ events.length > 1 ? 's' : '' }}</H2>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <AppEventCard v-for="event in events" class="w-full" :key="event.id" :event="event" />
-            </div>
-        </section>
-        <section data-testid="home-range-section" class="mt-12 flex flex-col gap-8" :class="{ 'mt-96 pt-12': !hasEvents && !hasPosts }">
+
+        <section data-testid="home-range-section" class="mt-12 flex flex-col gap-8">
             <H2>Stand de tir</H2>
             <div class="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
                 <div class="flex items-center justify-center p-4">
