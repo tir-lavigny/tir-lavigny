@@ -6,6 +6,7 @@ import TextLink from '@/components/TextLink.vue';
 import { H2 } from '@/components/typography/headings';
 import { OrderedList, P } from '@/components/typography/texts';
 import WebLayout from '@/layouts/WebLayout.vue';
+import { contactHref } from '@/lib/utils';
 import { Event } from '@/types';
 
 defineProps<{
@@ -72,12 +73,7 @@ defineProps<{
                         <H2>Plus d'informations</H2>
                         <P>
                             Pour toute question concernant le tir fédéral en campagne, n'hésitez pas à nous contacter
-                            <a
-                                href="javascript:location='mailto:\u0063\u006f\u006e\u0074\u0061\u0063\u0074\u0040\u0074\u0069\u0072\u002d\u006c\u0061\u0076\u0069\u0067\u006e\u0079\u002e\u0063\u0068';void 0"
-                                class="text-primary decoration-primary!"
-                            >
-                                par mail.
-                            </a>
+                            <a :href="contactHref" class="text-primary decoration-primary!"> par mail. </a>
                         </P>
                     </div>
                 </div>

@@ -14,10 +14,15 @@ class HomeController extends Controller
         $posts = Post::published()
             ->orderBy('publish_at', 'desc')
             ->get();
+        $nextShootingEvent = Event::whereLike('title', '%Tir militaire%', false)
+            ->where('start_datetime', '>=', now())
+            ->orderBy('start_datetime')
+            ->first();
 
         return $this->renderInertia('Home', [
             'events' => $events,
             'posts' => $posts,
+            'nextShootingEvent' => $nextShootingEvent,
             'og' => [
                 'title' => config('app.name'),
                 'description' => 'Société de tir de Lavigny - Tirs militaire, campagne et sportif',
