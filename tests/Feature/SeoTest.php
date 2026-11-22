@@ -85,9 +85,11 @@ class SeoTest extends TestCase
             ->assertSee(route('events.show', $event), false)
             ->assertSee(route('shootings'), false)
             ->assertSee(route('shootings.field'), false)
+            ->assertSee(route('shooting-initiation'), false)
             ->assertSee(route('posts.show', $post->public_id), false)
             ->assertDontSee(route('posts.show', $expiredPost->public_id), false)
             ->assertDontSee(route('posts.show', $futurePost->public_id), false)
+            ->assertDontSee(route('privacy-policy'), false)
             ->assertDontSee('/back-office', false)
             ->assertDontSee('/member-registration', false);
     }
@@ -102,6 +104,7 @@ class SeoTest extends TestCase
             ->assertSee('Sitemap: '.route('sitemap'))
             ->assertSee('Disallow: /back-office/')
             ->assertSee('Disallow: /member-registration/')
+            ->assertSee('Disallow: /privacy-policy')
             ->assertSee('Disallow: /api/')
             ->assertSee('Disallow: /docs/')
             ->assertSee('Disallow: /_scramble/')
@@ -122,6 +125,10 @@ class SeoTest extends TestCase
         $this->get('/login')
             ->assertOk()
             ->assertSee('name="robots" content="noindex,nofollow"', false);
+
+        $this->get('/privacy-policy')
+            ->assertOk()
+            ->assertSee('name="robots" content="noindex,nofollow"', false);
     }
 
     public function test_error_pages_are_noindex_in_production(): void
@@ -138,6 +145,9 @@ class SeoTest extends TestCase
     {
         $this->get('/become-member')
             ->assertSee('<title data-inertia="server-head-0">Devenir membre - Société de tir de Lavigny</title>', false);
+
+        $this->get('/shooting-initiation')
+            ->assertSee('<title data-inertia="server-head-0">Initiation au tir - Société de tir de Lavigny</title>', false);
 
         $this->get('/privacy-policy')
             ->assertSee('<title data-inertia="server-head-0">Déclaration de protection des données - Société de tir de Lavigny</title>', false);

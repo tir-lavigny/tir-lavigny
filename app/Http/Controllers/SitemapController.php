@@ -18,8 +18,8 @@ class SitemapController extends Controller
             $this->url(route('events'), $eventsUpdatedAt),
             $this->url(route('shootings'), $eventsUpdatedAt),
             $this->url(route('shootings.field'), $eventsUpdatedAt),
+            $this->url(route('shooting-initiation')),
             $this->url(route('become-member')),
-            $this->url(route('privacy-policy')),
         ];
 
         Event::query()

@@ -14,6 +14,7 @@ class RobotsController extends Controller
                 'Allow: /',
                 'Disallow: /back-office/',
                 'Disallow: /member-registration/',
+                'Disallow: /privacy-policy',
                 'Disallow: /login',
                 'Disallow: /register',
                 'Disallow: /forgot-password',
