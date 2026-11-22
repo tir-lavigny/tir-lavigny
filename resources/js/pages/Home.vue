@@ -7,7 +7,7 @@ import { Large, List, Muted, P } from '@/components/typography/texts';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import WebLayout from '@/layouts/WebLayout.vue';
-import { formatDate } from '@/lib/utils';
+import { contactHref, formatDate } from '@/lib/utils';
 import { Event, Post } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import { ArrowRight, CalendarDays, Mail, MapPin } from '@lucide/vue';
@@ -128,12 +128,7 @@ const shootingLinks = [
                         </a>
                     </Button>
                     <Button variant="link" size="lg">
-                        <a
-                            href="javascript:location='mailto:\u0063\u006f\u006e\u0074\u0061\u0063\u0074\u0040\u0074\u0069\u0072\u002d\u006c\u0061\u0076\u0069\u0067\u006e\u0079\u002e\u0063\u0068';void 0"
-                            class="flex items-center"
-                        >
-                            <Mail class="mr-2 h-4 w-4" /> Contactez-nous par mail
-                        </a>
+                        <a :href="contactHref" class="flex items-center"> <Mail class="mr-2 h-4 w-4" /> Contactez-nous par mail </a>
                     </Button>
                     <div class="ml-6">
                         <P> Caractéristiques du stand : </P>

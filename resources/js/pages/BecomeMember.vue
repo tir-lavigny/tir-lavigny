@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import WebLayout from '@/layouts/WebLayout.vue';
+import { contactHref } from '@/lib/utils';
 import { Link } from '@inertiajs/vue3';
 import { CalendarDays, CircleCheck, Mail, ShieldCheck, Wallet } from '@lucide/vue';
 
@@ -214,9 +215,7 @@ const appointments = [
                 </P>
                 <div class="mt-6 flex flex-col gap-3 sm:flex-row">
                     <Button as-child size="lg">
-                        <a
-                            href="javascript:location='mailto:\u0063\u006f\u006e\u0074\u0061\u0063\u0074\u0040\u0074\u0069\u0072\u002d\u006c\u0061\u0076\u0069\u0067\u006e\u0079\u002e\u0063\u0068';void 0"
-                        >
+                        <a :href="contactHref">
                             <Mail class="size-4" />
                             Nous contacter
                         </a>

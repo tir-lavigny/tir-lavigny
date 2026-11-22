@@ -9,6 +9,8 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+export const contactHref = String.raw`javascript:location='mailto:\u0063\u006f\u006e\u0074\u0061\u0063\u0074\u0040\u0074\u0069\u0072\u002d\u006c\u0061\u0076\u0069\u0067\u006e\u0079\u002e\u0063\u0068';void 0`;
+
 export function formatDate(date: string | Date, format: string, options?: UseDateFormatOptions) {
     if (!date) return '—';
     const dateObj = new Date(date);
