@@ -100,7 +100,9 @@ const canValidate = () => props.registration.status === 'form_filled' && !props.
 
 const canRetry = () => !props.avsConflict || props.registration.status === 'completed';
 
-const canDelete = () => props.registration.form_submitted_at === null;
+const canDelete = () => props.registration.member_id === null;
+
+const isSubmitted = () => props.registration.form_submitted_at !== null;
 
 const statusBadgeVariant = (status: string) => {
     if (hasFailed()) return 'destructive';
@@ -186,7 +188,7 @@ const handleDelete = () => {
         onSuccess: () => {
             router.get(route('bo.member-registrations.index'));
         },
-        onError: () => toast.error('Impossible de supprimer le lien.'),
+        onError: () => toast.error("Impossible de supprimer l'inscription."),
     });
 };
 
@@ -206,8 +208,12 @@ const displayUrl = flash?.form_url ?? props.formUrl;
             <Tooltip v-if="canDelete() && hasPermissionTo(user, 'manage member registration')">
                 <TooltipTrigger>
                     <AppAlertDialog
-                        title="Supprimer ce lien ?"
-                        description="Cette action est irréversible. Le formulaire n'a pas encore été soumis."
+                        :title="isSubmitted() ? 'Supprimer cette inscription ?' : 'Supprimer ce lien ?'"
+                        :description="
+                            isSubmitted()
+                                ? 'Cette action est irréversible. Le formulaire et toutes les données associées seront supprimés définitivement.'
+                                : 'Cette action est irréversible. Le formulaire n\'a pas encore été soumis.'
+                        "
                         cancelText="Annuler"
                     >
                         <template #trigger>

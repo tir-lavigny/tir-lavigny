@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use App\Models\Post;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 
@@ -18,23 +17,16 @@ class SitemapController extends Controller
             $this->url(route('events'), $eventsUpdatedAt),
             $this->url(route('shootings'), $eventsUpdatedAt),
             $this->url(route('shootings.field'), $eventsUpdatedAt),
+            $this->url(route('shooting-initiation')),
             $this->url(route('become-member')),
-            $this->url(route('privacy-policy')),
         ];
 
         Event::query()
-            ->where('start_datetime', '>=', now()->startOfYear())
+            ->notEnded()
             ->orderBy('start_datetime')
             ->get(['id', 'updated_at'])
             ->each(function (Event $event) use (&$urls) {
                 $urls[] = $this->url(route('events.show', $event), $event->updated_at);
-            });
-
-        Post::published()
-            ->orderBy('publish_at')
-            ->get(['public_id', 'updated_at'])
-            ->each(function (Post $post) use (&$urls) {
-                $urls[] = $this->url(route('posts.show', $post->public_id), $post->updated_at);
             });
 
         return response()

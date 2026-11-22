@@ -22,11 +22,14 @@ use App\Http\Controllers\MemberRegistrationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\ShootingController;
+use App\Http\Controllers\ShootingInitiationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/become-member', BecomeMemberController::class)->name('become-member');
+
+Route::get('/shooting-initiation', ShootingInitiationController::class)->name('shooting-initiation');
 
 Route::get('/privacy-policy', PrivacyPolicyController::class)->name('privacy-policy');
 

@@ -1,10 +1,5 @@
 name: Weekly rebuild
 
-# Rebuilds images from current main with a fresh base OS layer (apk upgrade),
-# scans them (the scan gate runs inside docker.yml), deploys staging
-# automatically, and upserts the persistent review issue for the manual
-# production pull. Production never deploys from here (Option A).
-
 on:
   schedule:
     - cron: '0 2 * * 0'
@@ -61,10 +56,6 @@ jobs:
 
           git config user.name "tir-lavigny-cd[bot]"
           git config user.email "${{ steps.app-token.outputs.installation-id }}+tir-lavigny-cd[bot]@users.noreply.github.com"
-          # Peel tags to their commit first: git tag on a tag object would
-          # create a nested tag. Each rev tag then pins its environment's own
-          # lineage — prod -> release commit, staging -> latest dev commit —
-          # so the rebuild refreshes only the base layer, never code.
           PROD_COMMIT=$(git rev-parse "${LATEST}^{commit}")
           STAGING_COMMIT=""
           if [ -n "$LATEST_DEV" ]; then
@@ -116,18 +107,25 @@ jobs:
         with:
           client-id: ${{ secrets.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: planning
 
       - name: Upsert review issue
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          GH_REPO: ${{ github.repository }}
+          GH_REPO: tir-lavigny/planning
+          SOURCE_REPO: ${{ github.repository }}
           PROD: ${{ needs.rebuild-tags.outputs.prod }}
           STAGING: ${{ needs.rebuild-tags.outputs.staging }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           DEPLOY_URL: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/deploy-production.yml
-          TITLE: '[rev] Production image ready for review'
+          TITLE: '[rev] tir-lavigny — production image ready for review'
         run: |
           set -euo pipefail
+          gh label create rebuild-review --repo "$GH_REPO" \
+            --description "Weekly rebuild awaiting production review" \
+            --color 0e8a16 --force >/dev/null 2>&1 || true
+
           if [ -n "$STAGING" ]; then
             STAGING_LINE="- **Staging tag**: \`${STAGING}\` — deployed automatically; verify at https://staging.tir-lavigny.ch"
           else
@@ -136,6 +134,7 @@ jobs:
           BODY="$(cat <<EOF
           Weekly rebuild ready for production review.
 
+          - **Source repo**: [\`${SOURCE_REPO}\`](https://github.com/${SOURCE_REPO})
           - **Production tag**: \`${PROD}\` (images built + scan-gated, NOT deployed)
           ${STAGING_LINE}
           - **Scan**: gate passed (no fixable CRITICAL) — full report in the [build run](${RUN_URL}) step summary
@@ -149,12 +148,13 @@ jobs:
           Body refreshes on every rebuild while open; closing after deployment re-notifies on the next cycle.
           EOF
           )"
-          existing="$(gh issue list --state open --json number,title \
+          existing="$(gh issue list --repo "$GH_REPO" --state open --json number,title \
             --jq ".[] | select(.title == \"${TITLE}\") | .number" | head -1)"
           if [ -n "$existing" ]; then
-            gh issue edit "$existing" --body "$BODY" --add-assignee zurfjereluhmie
-            echo "issue updated #${existing}"
+            gh issue edit "$existing" --repo "$GH_REPO" --body "$BODY" --add-assignee zurfjereluhmie
+            echo "issue updated ${GH_REPO}#${existing}"
           else
-            gh issue create --title "$TITLE" --body "$BODY" --assignee zurfjereluhmie
-            echo "issue created"
+            gh issue create --repo "$GH_REPO" --title "$TITLE" --body "$BODY" \
+              --assignee zurfjereluhmie --label rebuild-review
+            echo "issue created in ${GH_REPO}"
           fi
