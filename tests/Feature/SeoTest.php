@@ -66,15 +66,14 @@ class SeoTest extends TestCase
             ->assertSee('"author":{"@type":"Organization"', false);
     }
 
-    public function test_sitemap_lists_public_pages_and_published_posts(): void
+    public function test_sitemap_lists_public_pages_and_upcoming_events(): void
     {
         $event = Event::factory()->create(['start_datetime' => now()->addDay()]);
-        $post = Post::factory()->create(['publish_at' => now()->subHour()]);
-        $expiredPost = Post::factory()->create([
-            'publish_at' => now()->subHour(),
-            'expire_at' => now()->subHour(),
+        $endedEvent = Event::factory()->create([
+            'start_datetime' => now()->subWeek(),
+            'end_datetime' => now()->subWeek()->addHour(),
         ]);
-        $futurePost = Post::factory()->create(['publish_at' => now()->addDay()]);
+        $post = Post::factory()->create(['publish_at' => now()->subHour()]);
 
         $this->get('/sitemap.xml')
             ->assertOk()
@@ -83,11 +82,12 @@ class SeoTest extends TestCase
             ->assertSee(route('home'), false)
             ->assertSee(route('events'), false)
             ->assertSee(route('events.show', $event), false)
+            ->assertDontSee(route('events.show', $endedEvent), false)
             ->assertSee(route('shootings'), false)
             ->assertSee(route('shootings.field'), false)
-            ->assertSee(route('posts.show', $post->public_id), false)
-            ->assertDontSee(route('posts.show', $expiredPost->public_id), false)
-            ->assertDontSee(route('posts.show', $futurePost->public_id), false)
+            ->assertSee(route('shooting-initiation'), false)
+            ->assertDontSee(route('posts.show', $post->public_id), false)
+            ->assertDontSee(route('privacy-policy'), false)
             ->assertDontSee('/back-office', false)
             ->assertDontSee('/member-registration', false);
     }
@@ -102,6 +102,7 @@ class SeoTest extends TestCase
             ->assertSee('Sitemap: '.route('sitemap'))
             ->assertSee('Disallow: /back-office/')
             ->assertSee('Disallow: /member-registration/')
+            ->assertSee('Disallow: /privacy-policy')
             ->assertSee('Disallow: /api/')
             ->assertSee('Disallow: /docs/')
             ->assertSee('Disallow: /_scramble/')
@@ -122,6 +123,50 @@ class SeoTest extends TestCase
         $this->get('/login')
             ->assertOk()
             ->assertSee('name="robots" content="noindex,nofollow"', false);
+
+        $this->get('/privacy-policy')
+            ->assertOk()
+            ->assertSee('name="robots" content="noindex,nofollow"', false);
+    }
+
+    public function test_posts_are_noindex_in_production(): void
+    {
+        app()->detectEnvironment(fn () => 'production');
+
+        $post = Post::factory()->create(['publish_at' => now()->subHour()]);
+
+        $this->get(route('posts.show', $post->public_id))
+            ->assertOk()
+            ->assertSee('name="robots" content="noindex,nofollow"', false);
+    }
+
+    public function test_upcoming_events_are_indexable_in_production(): void
+    {
+        app()->detectEnvironment(fn () => 'production');
+
+        $event = Event::factory()->create([
+            'start_datetime' => now()->addDay(),
+            'end_datetime' => now()->addDay()->addHours(2),
+        ]);
+
+        $this->get(route('events.show', $event))
+            ->assertOk()
+            ->assertSee('name="robots" content="index,follow"', false);
+    }
+
+    public function test_ended_events_are_noindex_in_production_without_event_structured_data(): void
+    {
+        app()->detectEnvironment(fn () => 'production');
+
+        $event = Event::factory()->create([
+            'start_datetime' => now()->subDays(2),
+            'end_datetime' => now()->subDay(),
+        ]);
+
+        $this->get(route('events.show', $event))
+            ->assertOk()
+            ->assertSee('name="robots" content="noindex,nofollow"', false)
+            ->assertDontSee('"@type":"Event"', false);
     }
 
     public function test_error_pages_are_noindex_in_production(): void
@@ -138,6 +183,9 @@ class SeoTest extends TestCase
     {
         $this->get('/become-member')
             ->assertSee('<title data-inertia="server-head-0">Devenir membre - Société de tir de Lavigny</title>', false);
+
+        $this->get('/shooting-initiation')
+            ->assertSee('<title data-inertia="server-head-0">Initiation au tir - Société de tir de Lavigny</title>', false);
 
         $this->get('/privacy-policy')
             ->assertSee('<title data-inertia="server-head-0">Déclaration de protection des données - Société de tir de Lavigny</title>', false);

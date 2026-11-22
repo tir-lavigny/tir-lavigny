@@ -18,7 +18,7 @@ import { useAppearance } from '@/composables/useAppearance';
 import { getInitials } from '@/composables/useInitials';
 import type { NavItem, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Calendar, House, LayoutDashboard, Menu, Moon, Sun, Target, UserPlus } from '@lucide/vue';
+import { Calendar, Crosshair, House, LayoutDashboard, Menu, Moon, Sun, Target, UserPlus } from '@lucide/vue';
 import { computed } from 'vue';
 
 const page = usePage<SharedData>();
@@ -53,6 +53,11 @@ const mainNavItems: NavItem[] = [
         title: 'Tir fédéral en campagne',
         href: 'shootings.field',
         icon: Target,
+    },
+    {
+        title: 'Initiation au tir',
+        href: 'shooting-initiation',
+        icon: Crosshair,
     },
     {
         title: 'Devenir membre',

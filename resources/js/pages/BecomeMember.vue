@@ -55,7 +55,7 @@ const appointments = [
     <WebLayout>
         <AppHeroSection title="Devenir membre" image="/images/hero.webp">
             <template #description>
-                <Large>Le plaisir du tir, sans contraintes !</Large>
+                <Large>Le plaisir du tir, sans contraintes&nbsp;!</Large>
             </template>
         </AppHeroSection>
         <AppBreadcrumbs class="mt-96 pt-6" />
@@ -80,7 +80,7 @@ const appointments = [
             <section class="text-pretty">
                 <P>
                     Tu souhaites pratiquer le tir sportif dans une ambiance conviviale, sans devoir t’engager dans un programme chargé ni participer à
-                    toutes les activités ? Alors, la Société de tir de Lavigny est faite pour toi !
+                    toutes les activités&nbsp;? Alors, la Société de tir de Lavigny est faite pour toi&nbsp;!
                 </P>
                 <P>
                     Notre société te permet de pratiquer le tir à ton rythme, selon tes envies et tes disponibilités. Que tu sois un tireur
@@ -100,8 +100,8 @@ const appointments = [
                     seulement de temps en temps, tu gardes toute ta liberté.
                 </P>
                 <P>
-                    Notre philosophie est simple : se faire plaisir, progresser à son rythme et partager de bons moments autour du tir sportif, sans
-                    contraintes inutiles.
+                    Notre philosophie est simple&nbsp;: se faire plaisir, progresser à son rythme et partager de bons moments autour du tir sportif,
+                    sans contraintes inutiles.
                 </P>
             </section>
 
@@ -129,7 +129,7 @@ const appointments = [
                 </P>
                 <P>
                     Ce week-end est l’occasion de sortir de nos habitudes, de vivre de nouvelles expériences et surtout de passer de bons moments
-                    ensemble. Chacun est libre d’y participer ou non : le programme de la société est là pour te proposer des activités, pas pour
+                    ensemble. Chacun est libre d’y participer ou non&nbsp;: le programme de la société est là pour te proposer des activités, pas pour
                     t’imposer des obligations.
                 </P>
             </section>
@@ -144,7 +144,7 @@ const appointments = [
                             <CardTitle class="text-lg leading-tight">{{ appointment.title }}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p class="text-muted-foreground text-sm leading-relaxed">{{ appointment.description }}</p>
+                            <Muted class="leading-relaxed">{{ appointment.description }}</Muted>
                         </CardContent>
                     </Card>
                 </div>
@@ -155,9 +155,9 @@ const appointments = [
             </section>
 
             <section id="arme" class="scroll-mt-24 text-pretty">
-                <H2>Tu ne possèdes pas d’arme ?</H2>
+                <H2>Tu ne possèdes pas d’arme&nbsp;?</H2>
                 <P>
-                    Tu aimerais pratiquer le tir, mais tu ne possèdes pas encore ta propre arme ? Ce n’est pas un problème : la société peut
+                    Tu aimerais pratiquer le tir, mais tu ne possèdes pas encore ta propre arme&nbsp;? Ce n’est pas un problème&nbsp;: la société peut
                     s’arranger pour t’en mettre une à disposition.
                 </P>
                 <Card class="mt-6 gap-4">
@@ -170,10 +170,10 @@ const appointments = [
                                 <p class="font-semibold">Une arme mise à disposition</p>
                                 <Badge variant="secondary">Sur demande</Badge>
                             </div>
-                            <p class="text-muted-foreground text-sm leading-relaxed">
+                            <Muted class="leading-relaxed">
                                 Son utilisation se fait sous la supervision d’un moniteur de tir, qui t’accompagne et veille au respect des règles de
                                 sécurité. Tu peux ainsi découvrir le tir ou pratiquer sans devoir investir immédiatement dans ton propre matériel.
-                            </p>
+                            </Muted>
                         </div>
                     </CardContent>
                 </Card>
@@ -203,10 +203,10 @@ const appointments = [
             </section>
 
             <section id="rejoindre" class="scroll-mt-24 text-pretty">
-                <H2>Envie de nous rejoindre ?</H2>
+                <H2>Envie de nous rejoindre&nbsp;?</H2>
                 <P>
                     Tu recherches une société de tir conviviale, où tu peux pratiquer à ton rythme, rencontrer d’autres passionnés et participer aux
-                    activités qui t’intéressent, sans obligation de présence ?
+                    activités qui t’intéressent, sans obligation de présence&nbsp;?
                 </P>
                 <P>
                     Que tu possèdes déjà une arme ou que tu souhaites simplement découvrir le tir sportif, nous serons heureux de t’accueillir parmi
@@ -229,7 +229,7 @@ const appointments = [
                     </Button>
                 </div>
                 <p class="mt-8 text-center font-semibold text-balance">
-                    La Société de tir de Lavigny : le plaisir de tirer, la liberté de participer et la convivialité avant tout !
+                    La Société de tir de Lavigny&nbsp;: le plaisir de tirer, la liberté de participer et la convivialité avant tout&nbsp;!
                 </p>
             </section>
         </article>

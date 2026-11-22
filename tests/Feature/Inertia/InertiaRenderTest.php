@@ -94,6 +94,16 @@ class InertiaRenderTest extends TestCase
             );
     }
 
+    public function test_shooting_initiation_page_renders_correct_component(): void
+    {
+        $this->get('/shooting-initiation')
+            ->assertInertia(fn ($page) => $page
+                ->component('ShootingInitiation')
+                ->has('og')
+                ->where('og.title', 'Initiation au tir - Société de tir de Lavigny')
+            );
+    }
+
     public function test_privacy_policy_page_renders_correct_component(): void
     {
         $this->get('/privacy-policy')

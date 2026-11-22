@@ -13,6 +13,8 @@ class Seo
         'back-office/*',
         'member-registration',
         'member-registration/*',
+        'privacy-policy',
+        'posts/*',
         'login',
         'register',
         'forgot-password',

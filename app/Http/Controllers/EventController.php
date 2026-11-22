@@ -36,6 +36,7 @@ class EventController extends Controller
     {
         $event->load('location');
         $content = $event->getEffectiveContent();
+        $hasEnded = $event->hasEnded();
         $description = MarkdownText::toPlainText($content) ?: sprintf(
             '%s le %s%s',
             $event->title,
@@ -52,7 +53,7 @@ class EventController extends Controller
                 'image' => asset('/images/hero.webp'),
                 'type' => 'event',
             ],
-            'json_ld' => [
+            'json_ld' => $hasEnded ? [] : [
                 Seo::event($event, $description),
             ],
             'breadcrumbs' => [
@@ -60,7 +61,7 @@ class EventController extends Controller
                 ['title' => 'Événements', 'href' => route('events')],
                 ['title' => $event->title, 'href' => route('events.show', $event)],
             ],
-        ]);
+        ], noindex: $hasEnded);
     }
 
     public function feed_calendar(): \Illuminate\Http\Response

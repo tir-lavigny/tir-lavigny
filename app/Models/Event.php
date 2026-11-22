@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\LogsActivity;
 use Database\Factories\EventFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,6 +34,25 @@ class Event extends Model
         'has_chain_conflict' => 'boolean',
         'pending_conflict_fields' => 'array',
     ];
+
+    public function hasEnded(): bool
+    {
+        return ($this->end_datetime ?? $this->start_datetime)->isPast();
+    }
+
+    /**
+     * @param  Builder<Event>  $query
+     */
+    public function scopeNotEnded(Builder $query): void
+    {
+        $query->where(function (Builder $query) {
+            $query->where('end_datetime', '>=', now())
+                ->orWhere(function (Builder $query) {
+                    $query->whereNull('end_datetime')
+                        ->where('start_datetime', '>=', now());
+                });
+        });
+    }
 
     /**
      * @return BelongsTo<Location, $this>
