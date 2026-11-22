@@ -70,6 +70,19 @@ class InertiaRenderTest extends TestCase
             );
     }
 
+    public function test_home_includes_next_military_shooting_event(): void
+    {
+        Event::factory()->create(['title' => 'Tir militaire', 'start_datetime' => now()->subDay()]);
+        Event::factory()->create(['title' => 'Tir fédéral en campagne', 'start_datetime' => now()->addDay()]);
+        $nextShooting = Event::factory()->create(['title' => 'Tir militaire', 'start_datetime' => now()->addDays(3)]);
+
+        $this->get('/')
+            ->assertInertia(fn ($page) => $page
+                ->component('Home')
+                ->where('nextShootingEvent.id', $nextShooting->id)
+            );
+    }
+
     public function test_home_only_includes_published_non_expired_posts(): void
     {
         Post::factory()->create(['title' => 'Future Post',  'publish_at' => now()->addDay()]);

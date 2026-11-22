@@ -2,6 +2,7 @@
 import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue';
 import { H1 } from '@/components/typography/headings';
 import WebLayout from '@/layouts/WebLayout.vue';
+import { contactHref } from '@/lib/utils';
 </script>
 
 <template>
@@ -20,12 +21,7 @@ import WebLayout from '@/layouts/WebLayout.vue';
                     1143 Apples
                 </p>
                 <p>
-                    <a
-                        href="javascript:location='mailto:\u0063\u006f\u006e\u0074\u0061\u0063\u0074\u0040\u0074\u0069\u0072\u002d\u006c\u0061\u0076\u0069\u0067\u006e\u0079\u002e\u0063\u0068';void 0"
-                        class="flex items-center"
-                    >
-                        E-mail
-                    </a>
+                    <a :href="contactHref" class="flex items-center"> E-mail </a>
                 </p>
 
                 <h2>2. Données personnelles collectées</h2>
