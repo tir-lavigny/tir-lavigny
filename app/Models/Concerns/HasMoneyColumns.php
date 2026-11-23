@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
  *
  * Money is stored in cents only. The decimal attribute name stays the public
  * contract — forms post `unit_price`, JSON returns `"12.50"` — and is converted
- * at the model boundary.
+ * at the model boundary. Models hide their cents columns and append the decimal
+ * names, so serialized payloads keep their historical shape.
  *
  * This helper deliberately has no native Attribute return type: Laravel's
  * getAttributeMarkedMutatorMethods() invokes every method whose declared return

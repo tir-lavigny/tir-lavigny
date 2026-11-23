@@ -31,16 +31,8 @@ class Voucher extends Model
         'member_id',
     ];
 
-    /**
-     * Cents columns stay internal: the serialized payload keeps exposing the
-     * decimal attributes so API and Inertia consumers are unaffected.
-     */
     protected $hidden = ['discount_fixed_cents'];
 
-    /**
-     * Decimal money attributes are computed from the cents columns; they are
-     * appended so serialized payloads keep their historical keys.
-     */
     protected $appends = ['discount_fixed'];
 
     protected $casts = [

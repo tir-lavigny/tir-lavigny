@@ -33,16 +33,8 @@ class Ticket extends Model
         'stock_location_id',
     ];
 
-    /**
-     * Cents columns stay internal: the serialized payload keeps exposing the
-     * decimal attributes so API and Inertia consumers are unaffected.
-     */
     protected $hidden = ['total_cents'];
 
-    /**
-     * Decimal money attributes are computed from the cents columns; they are
-     * appended so serialized payloads keep their historical keys.
-     */
     protected $appends = ['total'];
 
     protected $casts = [

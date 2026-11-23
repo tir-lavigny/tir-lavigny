@@ -30,16 +30,8 @@ class Season extends Model
         'initial_balance_cents',
     ];
 
-    /**
-     * Cents columns stay internal: the serialized payload keeps exposing the
-     * decimal attributes so API and Inertia consumers are unaffected.
-     */
     protected $hidden = ['initial_balance_cents', 'end_balance_cents'];
 
-    /**
-     * Decimal money attributes are computed from the cents columns; they are
-     * appended so serialized payloads keep their historical keys.
-     */
     protected $appends = ['initial_balance', 'end_balance'];
 
     protected $casts = [
