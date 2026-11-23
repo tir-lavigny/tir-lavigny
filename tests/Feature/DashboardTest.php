@@ -88,10 +88,10 @@ class DashboardTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('backOffice/Dashboard')
                 ->where('dailySales', fn ($sales) => $sales->count() === 2
-                    && $sales[0]['cash'] == 130
-                    && $sales[0]['twint'] == 70
-                    && $sales[1]['cash'] == 200
-                    && $sales[1]['twint'] == 80
+                    && $sales[0]['cash'] === '130.00'
+                    && $sales[0]['twint'] === '70.00'
+                    && $sales[1]['cash'] === '200.00'
+                    && $sales[1]['twint'] === '80.00'
                 )
             );
     }
@@ -129,8 +129,8 @@ class DashboardTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('backOffice/Dashboard')
                 ->where('dailySales', fn ($sales) => $sales->count() === 1
-                    && $sales[0]['cash'] == 100
-                    && $sales[0]['twint'] == 50
+                    && $sales[0]['cash'] === '100.00'
+                    && $sales[0]['twint'] === '50.00'
                 )
             );
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\Controller;
 use App\Models\CashMovement;
 use App\Models\Season;
+use App\Support\Money;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -81,14 +82,14 @@ class CashMovementController extends Controller implements HasMiddleware
 
     /**
      * @param  array{direction: string, amount: float, occurred_at: string, remark?: string|null}  $validated
-     * @return array{amount: float, occurred_at: string, remark: string|null}
+     * @return array{amount_cents: int, occurred_at: string, remark: string|null}
      */
     private function payload(array $validated): array
     {
-        $amount = abs((float) $validated['amount']);
+        $amountCents = abs((int) Money::toCents($validated['amount']));
 
         return [
-            'amount' => $validated['direction'] === 'out' ? -$amount : $amount,
+            'amount_cents' => $validated['direction'] === 'out' ? -$amountCents : $amountCents,
             'occurred_at' => $validated['occurred_at'],
             'remark' => $validated['remark'] ?? null,
         ];

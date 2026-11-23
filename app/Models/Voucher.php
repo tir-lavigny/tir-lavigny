@@ -3,30 +3,56 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use App\Models\Concerns\HasMoneyColumns;
 use Database\Factories\VoucherFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string|null $discount_percent
+ * @property string|null $discount_fixed
+ * @property int|null $discount_fixed_cents
+ */
 class Voucher extends Model
 {
     /** @use HasFactory<VoucherFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, HasMoneyColumns, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'discount_percent',
         'discount_fixed',
+        'discount_fixed_cents',
         'product_id',
         'season_id',
         'member_id',
     ];
 
+    /**
+     * Cents columns stay internal: the serialized payload keeps exposing the
+     * decimal attributes so API and Inertia consumers are unaffected.
+     */
+    protected $hidden = ['discount_fixed_cents'];
+
     protected $casts = [
         'discount_percent' => 'decimal:2',
-        'discount_fixed' => 'decimal:2',
+        'discount_fixed_cents' => 'integer',
     ];
+
+    /** @return Attribute<string|null, array<string, int|string|null>> */
+    protected function discountFixed(): Attribute
+    {
+        return $this->legacyMoneyAttribute('discount_fixed');
+    }
+
+    /** @return Attribute<int|null, array<string, int|string|null>> */
+    protected function discountFixedCents(): Attribute
+    {
+        return $this->centsMoneyAttribute('discount_fixed');
+    }
 
     /**
      * @return BelongsTo<Product, $this>

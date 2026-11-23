@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use App\Models\Concerns\HasMoneyColumns;
 use Database\Factories\TicketFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,13 +14,18 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use LogicException;
 
+/**
+ * @property string|null $total
+ * @property int|null $total_cents
+ */
 class Ticket extends Model
 {
     /** @use HasFactory<TicketFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, HasMoneyColumns, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'total',
+        'total_cents',
         'payment_method',
         'operating_day_id',
         'member_id',
@@ -26,10 +33,28 @@ class Ticket extends Model
         'stock_location_id',
     ];
 
+    /**
+     * Cents columns stay internal: the serialized payload keeps exposing the
+     * decimal attributes so API and Inertia consumers are unaffected.
+     */
+    protected $hidden = ['total_cents'];
+
     protected $casts = [
-        'total' => 'decimal:2',
         'sold_at' => 'datetime',
+        'total_cents' => 'integer',
     ];
+
+    /** @return Attribute<string|null, array<string, int|string|null>> */
+    protected function total(): Attribute
+    {
+        return $this->legacyMoneyAttribute('total');
+    }
+
+    /** @return Attribute<int|null, array<string, int|string|null>> */
+    protected function totalCents(): Attribute
+    {
+        return $this->centsMoneyAttribute('total');
+    }
 
     protected static function booted(): void
     {

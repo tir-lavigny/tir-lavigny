@@ -25,10 +25,10 @@ class TicketService
             /** @var array<int, array{product_id: int, quantity: int, custom_unit_price?: float, voucher_ids?: array<int, int|null>}> $items */
             $items = $data['items'];
 
-            $result = $calculator->compute($items);
+            $result = $calculator->computeCents($items);
 
             $ticket = Ticket::create([
-                'total' => $result['total'],
+                'total_cents' => $result['total_cents'],
                 'payment_method' => $data['payment_method'],
                 'operating_day_id' => $day->id,
                 'member_id' => $data['member_id'] ?? null,

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\Voucher;
+use App\Support\Money;
 
 class TicketCalculator
 {
@@ -14,17 +15,44 @@ class TicketCalculator
      * with vouchers expands into one computed row per voucher (quantity 1)
      * plus one remainder row without voucher.
      *
+     * Amounts are computed in integer cents and converted to decimals only at
+     * the boundary, for the POS preview payload.
+     *
      * @param  array<int, array{product_id: int, quantity: int, custom_unit_price?: float, voucher_ids?: array<int, int|null>}>  $items
      * @return array{total: float, items: array<int, array{product_id: int, voucher_id: int|null, quantity: int, unit_price: float, subtotal: float}>}
      */
     public function compute(array $items): array
     {
+        $result = $this->computeCents($items);
+
+        return [
+            'total' => Money::toFloat($result['total_cents']),
+            'items' => array_map(fn (array $item): array => [
+                'product_id' => $item['product_id'],
+                'voucher_id' => $item['voucher_id'],
+                'quantity' => $item['quantity'],
+                'unit_price' => Money::toFloat($item['unit_price_cents']),
+                'subtotal' => Money::toFloat($item['subtotal_cents']),
+            ], $result['items']),
+        ];
+    }
+
+    /**
+     * Same computation as compute(), but returning integer cents so that the
+     * stored ticket never passes through a float.
+     *
+     * @param  array<int, array{product_id: int, quantity: int, custom_unit_price?: float, voucher_ids?: array<int, int|null>}>  $items
+     * @return array{total_cents: int, items: list<array{product_id: int, voucher_id: int|null, quantity: int, unit_price_cents: int, subtotal_cents: int}>}
+     */
+    public function computeCents(array $items): array
+    {
         $computedItems = [];
-        $total = 0;
+        $totalCents = 0;
 
         foreach ($items as $item) {
             $product = Product::findOrFail($item['product_id']);
-            $unitPrice = (float) ($item['custom_unit_price'] ?? $product->unit_price);
+            $unitPriceCents = $this->customPriceCents($item['custom_unit_price'] ?? null)
+                ?? (int) $product->unit_price_cents;
             $quantity = (int) $item['quantity'];
 
             $voucherIds = array_values(array_filter(
@@ -38,40 +66,47 @@ class TicketCalculator
             }
 
             foreach ($vouchers as $voucher) {
-                $discount = $this->unitDiscount($voucher, $unitPrice);
-                $voucherId = (int) $voucher->id;
-                $subtotal = round($unitPrice - $discount, 2);
-                $total += $subtotal;
+                $subtotalCents = $unitPriceCents - $this->unitDiscountCents($voucher, $unitPriceCents);
+                $totalCents += $subtotalCents;
 
                 $computedItems[] = [
                     'product_id' => $product->id,
-                    'voucher_id' => $voucherId,
+                    'voucher_id' => (int) $voucher->id,
                     'quantity' => 1,
-                    'unit_price' => $unitPrice,
-                    'subtotal' => $subtotal,
+                    'unit_price_cents' => $unitPriceCents,
+                    'subtotal_cents' => $subtotalCents,
                 ];
             }
 
             $remaining = $quantity - count($vouchers);
 
             if ($remaining > 0) {
-                $subtotal = round($unitPrice * $remaining, 2);
-                $total += $subtotal;
+                $subtotalCents = $unitPriceCents * $remaining;
+                $totalCents += $subtotalCents;
 
                 $computedItems[] = [
                     'product_id' => $product->id,
                     'voucher_id' => null,
                     'quantity' => $remaining,
-                    'unit_price' => $unitPrice,
-                    'subtotal' => $subtotal,
+                    'unit_price_cents' => $unitPriceCents,
+                    'subtotal_cents' => $subtotalCents,
                 ];
             }
         }
 
         return [
-            'total' => round($total, 2),
+            'total_cents' => $totalCents,
             'items' => $computedItems,
         ];
+    }
+
+    private function customPriceCents(float|int|string|null $customPrice): ?int
+    {
+        if ($customPrice === null || $customPrice === '') {
+            return null;
+        }
+
+        return Money::toCents($customPrice);
     }
 
     /**
@@ -79,18 +114,18 @@ class TicketCalculator
      * A zero percent is treated as absent so fixed vouchers stored with a
      * legacy 0 percent still apply their fixed amount.
      */
-    private function unitDiscount(Voucher $voucher, float $unitPrice): float
+    private function unitDiscountCents(Voucher $voucher, int $unitPriceCents): int
     {
         $percent = $voucher->discount_percent !== null
             ? (float) $voucher->discount_percent
             : null;
 
         if ($percent !== null && $percent > 0) {
-            $discount = $unitPrice * ($percent / 100);
+            $discountCents = Money::percentOf($unitPriceCents, $percent);
         } else {
-            $discount = (float) $voucher->discount_fixed;
+            $discountCents = (int) $voucher->discount_fixed_cents;
         }
 
-        return round(min(max($discount, 0), $unitPrice), 2);
+        return max(0, min($discountCents, $unitPriceCents));
     }
 }

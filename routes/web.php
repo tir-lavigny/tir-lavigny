@@ -5,6 +5,7 @@ use App\Http\Controllers\BackOffice\DavController;
 use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
 use App\Http\Controllers\BackOffice\MemberController;
+use App\Http\Controllers\BackOffice\MemberExportController;
 use App\Http\Controllers\BackOffice\MemberRegistrationController as BackOfficeMemberRegistrationController;
 use App\Http\Controllers\BackOffice\PostController as BackOfficePostController;
 use App\Http\Controllers\BackOffice\Register;
@@ -234,6 +235,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
     });
 
     Route::middleware('permission:manage members')->group(function () {
+        Route::get('members/export', [MemberExportController::class, 'export'])
+            ->name('bo.members.export');
         Route::resource('members', MemberController::class)->only([
             'index', 'create', 'store', 'show', 'edit', 'update',
         ])->withTrashed()->names([

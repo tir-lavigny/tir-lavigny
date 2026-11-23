@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use App\Models\Concerns\HasMoneyColumns;
 use Database\Factories\ProductFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,26 +16,47 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property-read Pivot|null $pivot
+ * @property string|null $unit_price
+ * @property int|null $unit_price_cents
  */
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, HasMoneyColumns, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'name',
         'picture',
         'unit_price',
+        'unit_price_cents',
         'allows_custom_price',
         'category_id',
         'is_stockable',
     ];
 
+    /**
+     * Cents columns stay internal: the serialized payload keeps exposing the
+     * decimal attributes so API and Inertia consumers are unaffected.
+     */
+    protected $hidden = ['unit_price_cents'];
+
     protected $casts = [
-        'unit_price' => 'decimal:2',
         'allows_custom_price' => 'boolean',
         'is_stockable' => 'boolean',
+        'unit_price_cents' => 'integer',
     ];
+
+    /** @return Attribute<string|null, array<string, int|string|null>> */
+    protected function unitPrice(): Attribute
+    {
+        return $this->legacyMoneyAttribute('unit_price');
+    }
+
+    /** @return Attribute<int|null, array<string, int|string|null>> */
+    protected function unitPriceCents(): Attribute
+    {
+        return $this->centsMoneyAttribute('unit_price');
+    }
 
     /**
      * @return BelongsTo<Category, $this>

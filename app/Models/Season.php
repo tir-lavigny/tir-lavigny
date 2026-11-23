@@ -3,31 +3,57 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use App\Models\Concerns\HasMoneyColumns;
+use App\Support\Money;
 use Database\Factories\SeasonFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string|null $initial_balance
+ * @property int|null $initial_balance_cents
+ * @property-read float|null $end_balance
+ */
 class Season extends Model
 {
     /** @use HasFactory<SeasonFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, HasMoneyColumns, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'name',
         'start_date',
         'end_date',
         'initial_balance',
+        'initial_balance_cents',
         'end_balance',
     ];
+
+    /**
+     * Cents columns stay internal: the serialized payload keeps exposing the
+     * decimal attributes so API and Inertia consumers are unaffected.
+     */
+    protected $hidden = ['initial_balance_cents', 'end_balance_cents'];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'initial_balance' => 'decimal:2',
-        'end_balance' => 'decimal:2',
+        'initial_balance_cents' => 'integer',
     ];
+
+    /** @return Attribute<string|null, array<string, int|string|null>> */
+    protected function initialBalance(): Attribute
+    {
+        return $this->legacyMoneyAttribute('initial_balance');
+    }
+
+    /** @return Attribute<int|null, array<string, int|string|null>> */
+    protected function initialBalanceCents(): Attribute
+    {
+        return $this->centsMoneyAttribute('initial_balance');
+    }
 
     /**
      * @return HasMany<OperatingDay, $this>
@@ -84,8 +110,16 @@ class Season extends Model
 
     public function closingBalanceFor(OperatingDay $day): float
     {
-        return $this->closingBalanceLedger()['day_balances'][$day->id]
-            ?? (float) $this->initial_balance;
+        return Money::toFloat($this->closingBalanceCentsFor($day));
+    }
+
+    /**
+     * Closing balance of an operating day in integer cents, from the ledger.
+     */
+    public function closingBalanceCentsFor(OperatingDay $day): int
+    {
+        return $this->closingBalanceLedger()['day_balances_cents'][$day->id]
+            ?? (int) ($this->initial_balance_cents ?? 0);
     }
 
     /**
@@ -94,26 +128,31 @@ class Season extends Model
     public function balanceSummary(): array
     {
         $ledger = $this->closingBalanceLedger();
-        $dayBalances = $ledger['day_balances'];
-        $lastDayBalance = $dayBalances === [] ? (float) $this->initial_balance : (float) end($dayBalances);
+        $dayBalancesCents = $ledger['day_balances_cents'];
+        $lastDayBalanceCents = $dayBalancesCents === [] ? (int) ($this->initial_balance_cents ?? 0) : (int) end($dayBalancesCents);
+        $salesTotalCents = (int) $this->operatingDays()->sum('total_cash_cents');
+        $movementsTotalCents = (int) $this->cashMovements()->sum('amount_cents');
 
         return [
-            'initial_balance' => (float) $this->initial_balance,
-            'sales_total' => round((float) $this->operatingDays()->sum('total_cash'), 2),
-            'movements_total' => round((float) $this->cashMovements()->sum('amount'), 2),
-            'last_day_balance' => $lastDayBalance,
-            'post_last_day_movements' => round($ledger['end_balance'] - $lastDayBalance, 2),
+            'initial_balance' => Money::toFloat($this->initial_balance_cents ?? 0),
+            'sales_total' => Money::toFloat($salesTotalCents),
+            'movements_total' => Money::toFloat($movementsTotalCents),
+            'last_day_balance' => Money::toFloat($lastDayBalanceCents),
+            'post_last_day_movements' => Money::toFloat($ledger['end_balance_cents'] - $lastDayBalanceCents),
             'end_balance' => $ledger['end_balance'],
         ];
     }
 
     public function recalculateClosingBalances(): void
     {
-        foreach ($this->closingBalanceLedger()['day_balances'] as $dayId => $balance) {
+        foreach ($this->closingBalanceLedger()['day_balances_cents'] as $dayId => $balanceCents) {
             OperatingDay::query()
                 ->whereKey($dayId)
                 ->whereNotNull('closed_at')
-                ->update(['closing_balance' => $balance]);
+                ->update([
+                    'closing_balance_cents' => $balanceCents,
+                    'closing_balance' => Money::fromCents($balanceCents),
+                ]);
         }
     }
 
@@ -124,44 +163,46 @@ class Season extends Model
      * after D. Movements dated after the last operating day only affect the
      * end balance.
      *
-     * @return array{day_balances: array<int, float>, end_balance: float}
+     * @return array{day_balances: array<int, float>, day_balances_cents: array<int, int>, end_balance: float, end_balance_cents: int}
      */
     public function closingBalanceLedger(): array
     {
         $days = $this->operatingDays()
             ->orderBy('date')
             ->orderBy('id')
-            ->get(['id', 'date', 'total_cash']);
+            ->get(['id', 'date', 'total_cash_cents']);
 
         $movements = $this->cashMovements()
             ->orderBy('occurred_at')
             ->orderBy('id')
-            ->get(['amount', 'occurred_at']);
+            ->get(['amount_cents', 'occurred_at']);
 
-        $running = (float) $this->initial_balance;
-        $balances = [];
+        $runningCents = (int) ($this->initial_balance_cents ?? 0);
+        $balancesCents = [];
         $index = 0;
         $movementCount = $movements->count();
 
         foreach ($days as $day) {
-            $dayMovements = 0.0;
+            $dayMovementsCents = 0;
 
             while ($index < $movementCount && $movements[$index]->occurred_at->lte($day->date)) {
-                $dayMovements += (float) $movements[$index]->amount;
+                $dayMovementsCents += (int) $movements[$index]->amount_cents;
                 $index++;
             }
 
-            $running += (float) $day->total_cash + $dayMovements;
-            $balances[$day->id] = round($running, 2);
+            $runningCents += (int) $day->total_cash_cents + $dayMovementsCents;
+            $balancesCents[$day->id] = $runningCents;
         }
 
         for (; $index < $movementCount; $index++) {
-            $running += (float) $movements[$index]->amount;
+            $runningCents += (int) $movements[$index]->amount_cents;
         }
 
         return [
-            'day_balances' => $balances,
-            'end_balance' => round($running, 2),
+            'day_balances' => array_map(fn (int $cents): float => Money::toFloat($cents), $balancesCents),
+            'day_balances_cents' => $balancesCents,
+            'end_balance' => Money::toFloat($runningCents),
+            'end_balance_cents' => $runningCents,
         ];
     }
 
