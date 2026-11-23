@@ -25,15 +25,21 @@ class TicketCalculator
     {
         $result = $this->computeCents($items);
 
+        $computedItems = [];
+
+        foreach ($result['items'] as $item) {
+            $computedItems[] = [
+                'product_id' => (int) $item['product_id'],
+                'voucher_id' => $item['voucher_id'] === null ? null : (int) $item['voucher_id'],
+                'quantity' => (int) $item['quantity'],
+                'unit_price' => (float) Money::toFloat($item['unit_price_cents']),
+                'subtotal' => (float) Money::toFloat($item['subtotal_cents']),
+            ];
+        }
+
         return [
-            'total' => Money::toFloat($result['total_cents']),
-            'items' => array_map(fn (array $item): array => [
-                'product_id' => $item['product_id'],
-                'voucher_id' => $item['voucher_id'],
-                'quantity' => $item['quantity'],
-                'unit_price' => Money::toFloat($item['unit_price_cents']),
-                'subtotal' => Money::toFloat($item['subtotal_cents']),
-            ], $result['items']),
+            'total' => (float) Money::toFloat($result['total_cents']),
+            'items' => $computedItems,
         ];
     }
 
