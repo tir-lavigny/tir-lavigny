@@ -55,7 +55,7 @@ class PriceListControllerTest extends TestCase
         $this->assertDatabaseHas('price_lists', ['name' => 'Normal', 'notes' => 'Prix de base']);
         $this->assertDatabaseHas('price_list_items', [
             'product_id' => $product->id,
-            'unit_price' => 12.00,
+            'unit_price_cents' => 1200,
         ]);
     }
 
@@ -116,7 +116,7 @@ class PriceListControllerTest extends TestCase
         $this->assertDatabaseMissing('price_list_items', ['product_id' => $product->id]);
         $this->assertDatabaseHas('price_list_items', [
             'product_id' => $other->id,
-            'unit_price' => 6.00,
+            'unit_price_cents' => 600,
         ]);
     }
 
@@ -156,7 +156,7 @@ class PriceListControllerTest extends TestCase
         $response = $this->post(route('bo.register.price-lists.apply', $priceList));
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 12.00]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price_cents' => 1200]);
         $this->assertDatabaseHas('price_lists', ['id' => $priceList->id, 'is_active' => true]);
         $this->assertDatabaseHas('price_lists', ['id' => $previousActive->id, 'is_active' => false]);
         $this->assertNotNull($priceList->fresh()->last_applied_at);
@@ -174,7 +174,7 @@ class PriceListControllerTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Prix appliqués : 0 produit(s) mis à jour, 1 ignoré(s).');
-        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 10.00]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price_cents' => 1000]);
     }
 
     public function test_apply_skips_the_protected_correction_product(): void
@@ -199,8 +199,8 @@ class PriceListControllerTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('products', ['id' => $correction->id, 'unit_price' => 0]);
-        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 12.00]);
+        $this->assertDatabaseHas('products', ['id' => $correction->id, 'unit_price_cents' => 0]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price_cents' => 1200]);
         $response->assertSessionHas('success', 'Prix appliqués : 1 produit(s) mis à jour, 1 ignoré(s).');
     }
 
@@ -245,9 +245,9 @@ class PriceListControllerTest extends TestCase
         $response = $this->post(route('bo.register.price-lists.sync-from-catalog', $priceList));
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('price_list_items', ['product_id' => $kept->id, 'unit_price' => 12.00]);
+        $this->assertDatabaseHas('price_list_items', ['product_id' => $kept->id, 'unit_price_cents' => 1200]);
         $this->assertDatabaseMissing('price_list_items', ['product_id' => $removed->id]);
-        $this->assertDatabaseHas('price_list_items', ['product_id' => $added->id, 'unit_price' => 2.00]);
+        $this->assertDatabaseHas('price_list_items', ['product_id' => $added->id, 'unit_price_cents' => 200]);
     }
 
     public function test_sync_prices_updates_list_from_current_products(): void
@@ -262,9 +262,9 @@ class PriceListControllerTest extends TestCase
         $this->assertDatabaseHas('price_list_items', [
             'price_list_id' => $priceList->id,
             'product_id' => $product->id,
-            'unit_price' => 10.00,
+            'unit_price_cents' => 1000,
         ]);
-        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 10.00]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price_cents' => 1000]);
         $this->assertDatabaseHas('price_lists', ['id' => $priceList->id, 'is_active' => true]);
     }
 
@@ -283,7 +283,7 @@ class PriceListControllerTest extends TestCase
         $this->assertDatabaseHas('price_list_items', [
             'price_list_id' => $priceList->id,
             'product_id' => $product->id,
-            'unit_price' => 12.00,
+            'unit_price_cents' => 1200,
         ]);
     }
 
@@ -299,7 +299,7 @@ class PriceListControllerTest extends TestCase
         $copy = PriceList::where('name', 'Normal (copie)')->first();
         $this->assertNotNull($copy);
         $this->assertFalse($copy->is_active);
-        $this->assertDatabaseHas('price_list_items', ['price_list_id' => $copy->id, 'unit_price' => 12.00]);
+        $this->assertDatabaseHas('price_list_items', ['price_list_id' => $copy->id, 'unit_price_cents' => 1200]);
     }
 
     public function test_destroy_deletes_active_list(): void

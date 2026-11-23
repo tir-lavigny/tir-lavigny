@@ -82,7 +82,7 @@ class TicketControllerTest extends TestCase
         $response->assertJsonPath('data.payment_method', 'cash');
         $this->assertDatabaseHas('tickets', [
             'operating_day_id' => $day->id,
-            'total' => 10.00,
+            'total_cents' => 1000,
         ]);
     }
 
@@ -116,8 +116,8 @@ class TicketControllerTest extends TestCase
         $this->assertDatabaseHas('ticket_items', [
             'product_id' => $product->id,
             'quantity' => 3,
-            'unit_price' => 3.50,
-            'subtotal' => 10.50,
+            'unit_price_cents' => 350,
+            'subtotal_cents' => 1050,
         ]);
     }
 
@@ -153,7 +153,7 @@ class TicketControllerTest extends TestCase
             ],
         ], $this->authHeaders())->assertCreated();
 
-        $this->assertDatabaseHas('tickets', ['total' => 13.00]);
+        $this->assertDatabaseHas('tickets', ['total_cents' => 1300]);
         $this->assertDatabaseCount('ticket_items', 2);
     }
 
@@ -192,7 +192,7 @@ class TicketControllerTest extends TestCase
         $this->assertDatabaseHas('ticket_items', [
             'product_id' => $product->id,
             'voucher_id' => $voucher->id,
-            'subtotal' => 9.00,
+            'subtotal_cents' => 900,
         ]);
     }
 
@@ -233,25 +233,25 @@ class TicketControllerTest extends TestCase
             ],
         ], $this->authHeaders())->assertCreated();
 
-        $this->assertDatabaseHas('tickets', ['total' => 10.00]);
+        $this->assertDatabaseHas('tickets', ['total_cents' => 1000]);
         $this->assertDatabaseCount('ticket_items', 3);
         $this->assertDatabaseHas('ticket_items', [
             'product_id' => $product->id,
             'voucher_id' => $voucher1->id,
             'quantity' => 1,
-            'subtotal' => 0.00,
+            'subtotal_cents' => 0,
         ]);
         $this->assertDatabaseHas('ticket_items', [
             'product_id' => $product->id,
             'voucher_id' => $voucher2->id,
             'quantity' => 1,
-            'subtotal' => 0.00,
+            'subtotal_cents' => 0,
         ]);
         $this->assertDatabaseHas('ticket_items', [
             'product_id' => $product->id,
             'voucher_id' => null,
             'quantity' => 1,
-            'subtotal' => 10.00,
+            'subtotal_cents' => 1000,
         ]);
     }
 
@@ -362,8 +362,8 @@ class TicketControllerTest extends TestCase
 
         $this->assertDatabaseHas('ticket_items', [
             'product_id' => $product->id,
-            'unit_price' => 7.50,
-            'subtotal' => 7.50,
+            'unit_price_cents' => 750,
+            'subtotal_cents' => 750,
         ]);
     }
 

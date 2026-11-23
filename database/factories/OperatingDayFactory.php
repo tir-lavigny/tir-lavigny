@@ -21,9 +21,8 @@ class OperatingDayFactory extends Factory
             'closed_at' => null,
             'season_id' => Season::factory(),
             'cash_remark' => null,
-            'closing_balance' => null,
-            'total_cash' => 0,
-            'total_twint' => 0,
+            'total_cash_cents' => 0,
+            'total_twint_cents' => 0,
         ];
     }
 

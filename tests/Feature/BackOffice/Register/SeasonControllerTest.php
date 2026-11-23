@@ -154,7 +154,7 @@ class SeasonControllerTest extends TestCase
 
         $this->assertEquals(1700.00, $day1->fresh()->closing_balance);
         $this->assertEquals(1800.00, $day2->fresh()->closing_balance);
-        $this->assertDatabaseHas('seasons', ['id' => $season->id, 'initial_balance' => 1500]);
+        $this->assertDatabaseHas('seasons', ['id' => $season->id, 'initial_balance_cents' => 150000]);
     }
 
     public function test_update_initial_balance_leaves_open_days_balance_null(): void
@@ -585,7 +585,7 @@ class SeasonControllerTest extends TestCase
 
         $this->assertDatabaseHas('vouchers', [
             'discount_percent' => 100.00,
-            'discount_fixed' => null,
+            'discount_fixed_cents' => null,
         ]);
     }
 
