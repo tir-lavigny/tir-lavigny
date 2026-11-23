@@ -5,7 +5,9 @@ namespace App\Http\Controllers\BackOffice;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Event;
+use App\Models\OperatingDay;
 use App\Models\Season;
+use App\Support\Money;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,10 +39,16 @@ class DashboardController extends Controller
 
         $dailySales = $currentSeason
             ? $currentSeason->operatingDays()
-                ->selectRaw('date, sum(total_cash_cents) / 100.0 as cash, sum(total_twint_cents) / 100.0 as twint')
+                ->selectRaw('date, sum(total_cash_cents) as cash_cents, sum(total_twint_cents) as twint_cents')
                 ->groupBy('date')
                 ->orderBy('date')
                 ->get()
+                ->map(fn (OperatingDay $day): array => [
+                    'date' => $day->date,
+                    'cash' => Money::fromCents((int) $day->getAttribute('cash_cents')),
+                    'twint' => Money::fromCents((int) $day->getAttribute('twint_cents')),
+                ])
+                ->values()
             : [];
 
         return Inertia::render('backOffice/Dashboard', [

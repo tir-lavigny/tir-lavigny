@@ -43,7 +43,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 type DashboardProps = {
     activities: ActivityLog[];
     eventsPerYear: { year: string; count: number }[];
-    dailySales: { date: string; cash: number; twint: number }[];
+    dailySales: { date: string; cash: number | string; twint: number | string }[];
 };
 
 defineProps<DashboardProps>();
