@@ -119,6 +119,46 @@ class BillingCustomerControllerTest extends TestCase
         $this->assertSame('Tir Sportif SA', $billingCustomer->organization_name);
     }
 
+    public function test_rejects_email_delivery_without_email(): void
+    {
+        $this->actingAsAdmin();
+
+        $response = $this->post(route('bo.invoicing.billing-customers.store'), [
+            'type' => 'individual',
+            'first_name' => 'Alice',
+            'last_name' => 'Martin',
+            'address' => 'Rue du Lac 4',
+            'postal_code' => '1003',
+            'city' => 'Lausanne',
+            'country' => 'CH',
+            'email' => '',
+            'preferred_invoice_delivery' => 'email',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertDatabaseCount('billing_customers', 0);
+    }
+
+    public function test_allows_postal_delivery_without_email(): void
+    {
+        $this->actingAsAdmin();
+
+        $response = $this->post(route('bo.invoicing.billing-customers.store'), [
+            'type' => 'individual',
+            'first_name' => 'Alice',
+            'last_name' => 'Martin',
+            'address' => 'Rue du Lac 4',
+            'postal_code' => '1003',
+            'city' => 'Lausanne',
+            'country' => 'CH',
+            'email' => '',
+            'preferred_invoice_delivery' => 'postal',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('billing_customers', 1);
+    }
+
     public function test_rejects_an_individual_without_names(): void
     {
         $this->actingAsAdmin();
