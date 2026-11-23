@@ -299,9 +299,9 @@ class TicketCalculatorTest extends TestCase
             ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]],
         ]);
 
-        // 33.33% of 100 cents = 33.33 cents, rounded to 33.
-        $this->assertSame(33, $result['items'][0]['subtotal_cents']);
-        $this->assertSame(33, $result['total_cents']);
+        // 33.33% of 100 cents = 33.33 cents, rounded to 33; 100 - 33 = 67.
+        $this->assertSame(67, $result['items'][0]['subtotal_cents']);
+        $this->assertSame(67, $result['total_cents']);
     }
 
     public function test_compute_cents_does_not_drift_on_repeated_decimals(): void

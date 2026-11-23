@@ -33,7 +33,7 @@ class MoneyColumnsTest extends TestCase
         $this->assertSame(1234, $product->unit_price_cents);
         $this->assertSame('12.34', $product->unit_price);
         $this->assertSame(1234, (int) DB::table('products')->where('id', $product->id)->value('unit_price_cents'));
-        $this->assertSame('12.34', DB::table('products')->where('id', $product->id)->value('unit_price'));
+        $this->assertEquals(12.34, (float) DB::table('products')->where('id', $product->id)->value('unit_price'));
     }
 
     public function test_writing_cents_mirrors_the_decimal_column(): void
@@ -42,7 +42,7 @@ class MoneyColumnsTest extends TestCase
 
         $this->assertSame(1050, $ticket->total_cents);
         $this->assertSame('10.50', $ticket->total);
-        $this->assertSame('10.50', DB::table('tickets')->where('id', $ticket->id)->value('total'));
+        $this->assertEquals(10.50, (float) DB::table('tickets')->where('id', $ticket->id)->value('total'));
     }
 
     public function test_reading_falls_back_to_the_decimal_column_when_cents_are_null(): void

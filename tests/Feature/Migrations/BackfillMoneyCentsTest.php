@@ -4,6 +4,7 @@ namespace Tests\Feature\Migrations;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Season;
 use App\Models\Ticket;
 use App\Models\Voucher;
 use Illuminate\Database\Migrations\Migration;
@@ -64,7 +65,7 @@ class BackfillMoneyCentsTest extends TestCase
 
     public function test_it_leaves_null_amounts_null(): void
     {
-        $season = \App\Models\Season::factory()->create();
+        $season = Season::factory()->create();
         DB::table('seasons')->where('id', $season->id)->update(['end_balance' => null, 'end_balance_cents' => null]);
 
         $this->migration()->up();
@@ -93,6 +94,6 @@ class BackfillMoneyCentsTest extends TestCase
         $row = DB::table('products')->where('id', $product->id)->first();
 
         $this->assertNull($row->unit_price_cents);
-        $this->assertSame('10.00', $row->unit_price);
+        $this->assertEquals(10.00, (float) $row->unit_price);
     }
 }

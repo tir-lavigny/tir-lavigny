@@ -12,6 +12,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string|null $discount_percent
+ * @property string|null $discount_fixed
+ * @property int|null $discount_fixed_cents
+ */
 class Voucher extends Model
 {
     /** @use HasFactory<VoucherFactory> */
@@ -30,11 +35,13 @@ class Voucher extends Model
         'discount_percent' => 'decimal:2',
     ];
 
+    /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function discountFixed(): Attribute
     {
         return $this->legacyMoneyAttribute('discount_fixed');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function discountFixedCents(): Attribute
     {
         return $this->centsMoneyAttribute('discount_fixed');

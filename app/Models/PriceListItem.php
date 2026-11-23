@@ -9,6 +9,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string|null $unit_price
+ * @property int|null $unit_price_cents
+ */
 class PriceListItem extends Model
 {
     /** @use HasFactory<PriceListItemFactory> */
@@ -21,11 +25,13 @@ class PriceListItem extends Model
         'unit_price_cents',
     ];
 
+    /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function unitPrice(): Attribute
     {
         return $this->legacyMoneyAttribute('unit_price');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function unitPriceCents(): Attribute
     {
         return $this->centsMoneyAttribute('unit_price');

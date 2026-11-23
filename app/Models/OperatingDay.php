@@ -12,6 +12,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string|null $total_cash
+ * @property string|null $total_twint
+ * @property int|null $total_cash_cents
+ * @property int|null $total_twint_cents
+ * @property int|null $closing_balance_cents
+ * @property-read float|null $closing_balance
+ */
 class OperatingDay extends Model
 {
     /** @use HasFactory<OperatingDayFactory> */
@@ -37,26 +45,31 @@ class OperatingDay extends Model
         'closed_at' => 'datetime',
     ];
 
+    /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function totalCash(): Attribute
     {
         return $this->legacyMoneyAttribute('total_cash');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function totalCashCents(): Attribute
     {
         return $this->centsMoneyAttribute('total_cash');
     }
 
+    /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function totalTwint(): Attribute
     {
         return $this->legacyMoneyAttribute('total_twint');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function totalTwintCents(): Attribute
     {
         return $this->centsMoneyAttribute('total_twint');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function closingBalanceCents(): Attribute
     {
         return $this->centsMoneyAttribute('closing_balance');
@@ -83,6 +96,7 @@ class OperatingDay extends Model
         return $this->closed_at === null;
     }
 
+    /** @return Attribute<float|null, array<string, int|string|null>> */
     protected function closingBalance(): Attribute
     {
         return Attribute::make(

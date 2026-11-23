@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property-read Pivot|null $pivot
+ * @property string|null $unit_price
+ * @property int|null $unit_price_cents
  */
 class Product extends Model
 {
@@ -37,11 +39,13 @@ class Product extends Model
         'is_stockable' => 'boolean',
     ];
 
+    /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function unitPrice(): Attribute
     {
         return $this->legacyMoneyAttribute('unit_price');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function unitPriceCents(): Attribute
     {
         return $this->centsMoneyAttribute('unit_price');

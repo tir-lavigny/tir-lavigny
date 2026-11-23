@@ -12,6 +12,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string|null $initial_balance
+ * @property int|null $initial_balance_cents
+ * @property-read float|null $end_balance
+ */
 class Season extends Model
 {
     /** @use HasFactory<SeasonFactory> */
@@ -31,11 +36,13 @@ class Season extends Model
         'end_date' => 'date',
     ];
 
+    /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function initialBalance(): Attribute
     {
         return $this->legacyMoneyAttribute('initial_balance');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function initialBalanceCents(): Attribute
     {
         return $this->centsMoneyAttribute('initial_balance');

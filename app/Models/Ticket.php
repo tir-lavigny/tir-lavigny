@@ -14,6 +14,10 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use LogicException;
 
+/**
+ * @property string|null $total
+ * @property int|null $total_cents
+ */
 class Ticket extends Model
 {
     /** @use HasFactory<TicketFactory> */
@@ -33,11 +37,13 @@ class Ticket extends Model
         'sold_at' => 'datetime',
     ];
 
+    /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function total(): Attribute
     {
         return $this->legacyMoneyAttribute('total');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function totalCents(): Attribute
     {
         return $this->centsMoneyAttribute('total');

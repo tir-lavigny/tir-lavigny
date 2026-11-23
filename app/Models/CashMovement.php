@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string|null $amount
+ * @property int|null $amount_cents
+ */
 class CashMovement extends Model
 {
     /** @use HasFactory<CashMovementFactory> */
@@ -27,11 +31,13 @@ class CashMovement extends Model
         'occurred_at' => 'date',
     ];
 
+    /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function amount(): Attribute
     {
         return $this->legacyMoneyAttribute('amount');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function amountCents(): Attribute
     {
         return $this->centsMoneyAttribute('amount');

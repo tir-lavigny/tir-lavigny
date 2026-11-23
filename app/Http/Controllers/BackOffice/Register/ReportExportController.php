@@ -76,8 +76,8 @@ class ReportExportController extends Controller implements HasMiddleware
                 'Date' => $day->date->format('d.m.Y'),
                 'Total Espèces' => number_format(Money::toFloat($day->total_cash_cents), 2, ',', '.'),
                 'Total Twint' => number_format(Money::toFloat($day->total_twint_cents), 2, ',', '.'),
-                'Solde Clôture' => $day->closing_balance_cents !== null
-                    ? number_format(Money::toFloat($day->closing_balance_cents), 2, ',', '.')
+                'Solde Clôture' => $day->closing_balance !== null
+                    ? number_format($day->closing_balance, 2, ',', '.')
                     : '',
             ];
         }

@@ -11,6 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use LogicException;
 
+/**
+ * @property string|null $unit_price
+ * @property string|null $subtotal
+ * @property int|null $unit_price_cents
+ * @property int|null $subtotal_cents
+ */
 class TicketItem extends Model
 {
     /** @use HasFactory<TicketItemFactory> */
@@ -31,21 +37,25 @@ class TicketItem extends Model
         'quantity' => 'integer',
     ];
 
+    /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function unitPrice(): Attribute
     {
         return $this->legacyMoneyAttribute('unit_price');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function unitPriceCents(): Attribute
     {
         return $this->centsMoneyAttribute('unit_price');
     }
 
+    /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function subtotal(): Attribute
     {
         return $this->legacyMoneyAttribute('subtotal');
     }
 
+    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function subtotalCents(): Attribute
     {
         return $this->centsMoneyAttribute('subtotal');
