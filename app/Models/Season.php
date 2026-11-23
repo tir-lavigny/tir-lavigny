@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property string $initial_balance
- * @property int|null $initial_balance_cents
+ * @property int $initial_balance_cents
  * @property-read float|null $end_balance
  */
 class Season extends Model

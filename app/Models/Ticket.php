@@ -16,7 +16,7 @@ use LogicException;
 
 /**
  * @property string $total
- * @property int|null $total_cents
+ * @property int $total_cents
  */
 class Ticket extends Model
 {

@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property string $total_cash
  * @property string $total_twint
- * @property int|null $total_cash_cents
- * @property int|null $total_twint_cents
+ * @property int $total_cash_cents
+ * @property int $total_twint_cents
  * @property int|null $closing_balance_cents
  * @property-read float $closing_balance
  */

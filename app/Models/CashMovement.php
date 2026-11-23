@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property string $amount
- * @property int|null $amount_cents
+ * @property int $amount_cents
  */
 class CashMovement extends Model
 {

@@ -14,8 +14,8 @@ use LogicException;
 /**
  * @property string $unit_price
  * @property string $subtotal
- * @property int|null $unit_price_cents
- * @property int|null $subtotal_cents
+ * @property int $unit_price_cents
+ * @property int $subtotal_cents
  */
 class TicketItem extends Model
 {
