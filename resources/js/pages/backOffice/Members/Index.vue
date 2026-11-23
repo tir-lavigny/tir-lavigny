@@ -103,7 +103,9 @@ const toggleExportColumn = (key: string) => {
     exportColumns.value = exportColumns.value.includes(key) ? exportColumns.value.filter((column) => column !== key) : [...exportColumns.value, key];
 };
 
-const columnLabels: Record<string, string> = Object.fromEntries([...exportColumnOptions, ...sensitiveColumnOptions].map((option) => [option.key, option.label]));
+const columnLabels: Record<string, string> = Object.fromEntries(
+    [...exportColumnOptions, ...sensitiveColumnOptions].map((option) => [option.key, option.label]),
+);
 
 const columnLabel = (key: string): string => columnLabels[key] ?? key;
 
@@ -394,8 +396,7 @@ const downloadExport = () => {
                             <Button type="button" size="sm" variant="outline" @click="addExtraColumn"> <Plus class="mr-2 size-4" /> Ajouter </Button>
                         </div>
                         <p class="text-muted-foreground text-xs">
-                            Colonnes vides ajoutées après les données du membre. Laissez la largeur vide pour l'ajuster au contenu (Excel
-                            uniquement).
+                            Colonnes vides ajoutées après les données du membre. Laissez la largeur vide pour l'ajuster au contenu (Excel uniquement).
                         </p>
                         <div v-for="(extra, index) in extraColumns" :key="index" class="flex items-center gap-2">
                             <Input v-model="extra.header" :placeholder="`En-tête ${index + 1}`" maxlength="100" />
