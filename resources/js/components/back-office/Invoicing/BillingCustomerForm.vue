@@ -51,7 +51,7 @@ defineExpose({ form });
             <div class="grid gap-2">
                 <Label for="type">Type de client</Label>
                 <Select v-model="form.type">
-                    <SelectTrigger id="type">
+                    <SelectTrigger id="type" class="w-full">
                         <SelectValue placeholder="Sélectionner un type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -63,7 +63,7 @@ defineExpose({ form });
             <div class="grid gap-2">
                 <Label for="preferred_invoice_delivery">Mode d'envoi préféré</Label>
                 <Select v-model="form.preferred_invoice_delivery">
-                    <SelectTrigger id="preferred_invoice_delivery">
+                    <SelectTrigger id="preferred_invoice_delivery" class="w-full">
                         <SelectValue placeholder="Sélectionner un mode" />
                     </SelectTrigger>
                     <SelectContent>
@@ -122,7 +122,14 @@ defineExpose({ form });
             </div>
             <div class="grid gap-2">
                 <Label for="email">Email</Label>
-                <Input id="email" v-model="form.email" type="email" placeholder="Email" maxlength="255" />
+                <Input
+                    id="email"
+                    v-model="form.email"
+                    type="email"
+                    placeholder="Email"
+                    maxlength="255"
+                    :required="form.preferred_invoice_delivery === 'email'"
+                />
                 <InputError :message="form.errors.email" />
             </div>
             <div class="grid gap-2">

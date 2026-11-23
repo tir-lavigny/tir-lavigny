@@ -43,7 +43,12 @@ class UpdateBillingCustomerRequest extends FormRequest
             'postal_code' => ['required', 'string', 'max:20'],
             'city' => ['required', 'string', 'max:255'],
             'country' => ['required', 'string', 'size:2', 'alpha'],
-            'email' => ['nullable', 'email', 'max:255'],
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::requiredIf(fn (): bool => $this->input('preferred_invoice_delivery') === InvoiceDeliveryMethod::Email->value),
+            ],
             'phone' => ['nullable', 'string', 'max:50'],
             'preferred_invoice_delivery' => ['required', Rule::enum(InvoiceDeliveryMethod::class)],
         ];
@@ -65,6 +70,8 @@ class UpdateBillingCustomerRequest extends FormRequest
             'city.required' => 'La ville est obligatoire.',
             'country.required' => 'Le pays est obligatoire.',
             'country.size' => 'Le pays doit être un code à deux lettres.',
+            'email.required' => "L'email est obligatoire pour l'envoi par email.",
+            'email.email' => "L'email n'est pas valide.",
             'preferred_invoice_delivery.required' => "Le mode d'envoi est obligatoire.",
         ];
     }

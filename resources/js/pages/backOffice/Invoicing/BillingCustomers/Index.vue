@@ -113,7 +113,7 @@ const goToPage = (pageNumber: number) => {
                 <div class="grid gap-2 md:w-56">
                     <Label for="type">Type</Label>
                     <Select v-model="typeFilter">
-                        <SelectTrigger id="type">
+                        <SelectTrigger id="type" class="w-full">
                             <SelectValue placeholder="Tous" />
                         </SelectTrigger>
                         <SelectContent>
@@ -125,7 +125,7 @@ const goToPage = (pageNumber: number) => {
                 <div class="grid gap-2 md:w-56">
                     <Label for="delivery">Envoi</Label>
                     <Select v-model="deliveryFilter">
-                        <SelectTrigger id="delivery">
+                        <SelectTrigger id="delivery" class="w-full">
                             <SelectValue placeholder="Tous" />
                         </SelectTrigger>
                         <SelectContent>
@@ -218,7 +218,7 @@ const goToPage = (pageNumber: number) => {
                 <div class="grid gap-2">
                     <Label for="member_id">Membre</Label>
                     <Select v-model="syncForm.member_id">
-                        <SelectTrigger id="member_id">
+                        <SelectTrigger id="member_id" class="w-full">
                             <SelectValue placeholder="Sélectionner un membre" />
                         </SelectTrigger>
                         <SelectContent>
