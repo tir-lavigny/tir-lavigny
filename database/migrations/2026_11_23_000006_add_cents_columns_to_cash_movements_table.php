@@ -14,7 +14,7 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('cash_movements', 'amount_cents')) {
             Schema::table('cash_movements', function (Blueprint $table) {
-                $table->integer('amount_cents')->nullable()->after('amount');
+                $table->bigInteger('amount_cents')->nullable()->after('amount');
             });
         }
     }

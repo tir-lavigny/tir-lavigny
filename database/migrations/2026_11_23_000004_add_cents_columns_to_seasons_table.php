@@ -14,13 +14,13 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('seasons', 'initial_balance_cents')) {
             Schema::table('seasons', function (Blueprint $table) {
-                $table->integer('initial_balance_cents')->nullable()->after('initial_balance');
+                $table->bigInteger('initial_balance_cents')->nullable()->after('initial_balance');
             });
         }
 
         if (! Schema::hasColumn('seasons', 'end_balance_cents')) {
             Schema::table('seasons', function (Blueprint $table) {
-                $table->integer('end_balance_cents')->nullable()->after('end_balance');
+                $table->bigInteger('end_balance_cents')->nullable()->after('end_balance');
             });
         }
     }

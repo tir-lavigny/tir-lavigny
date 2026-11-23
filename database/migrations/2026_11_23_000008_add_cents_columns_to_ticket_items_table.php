@@ -14,13 +14,13 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('ticket_items', 'unit_price_cents')) {
             Schema::table('ticket_items', function (Blueprint $table) {
-                $table->integer('unit_price_cents')->nullable()->after('unit_price');
+                $table->bigInteger('unit_price_cents')->nullable()->after('unit_price');
             });
         }
 
         if (! Schema::hasColumn('ticket_items', 'subtotal_cents')) {
             Schema::table('ticket_items', function (Blueprint $table) {
-                $table->integer('subtotal_cents')->nullable()->after('subtotal');
+                $table->bigInteger('subtotal_cents')->nullable()->after('subtotal');
             });
         }
     }

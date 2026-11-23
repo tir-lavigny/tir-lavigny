@@ -14,7 +14,7 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('price_list_items', 'unit_price_cents')) {
             Schema::table('price_list_items', function (Blueprint $table) {
-                $table->integer('unit_price_cents')->nullable()->after('unit_price');
+                $table->bigInteger('unit_price_cents')->nullable()->after('unit_price');
             });
         }
     }

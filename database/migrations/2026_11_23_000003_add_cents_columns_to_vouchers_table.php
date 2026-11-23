@@ -14,7 +14,7 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('vouchers', 'discount_fixed_cents')) {
             Schema::table('vouchers', function (Blueprint $table) {
-                $table->integer('discount_fixed_cents')->nullable()->after('discount_fixed');
+                $table->bigInteger('discount_fixed_cents')->nullable()->after('discount_fixed');
             });
         }
     }

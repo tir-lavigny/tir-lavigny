@@ -14,19 +14,19 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('operating_days', 'closing_balance_cents')) {
             Schema::table('operating_days', function (Blueprint $table) {
-                $table->integer('closing_balance_cents')->nullable()->after('closing_balance');
+                $table->bigInteger('closing_balance_cents')->nullable()->after('closing_balance');
             });
         }
 
         if (! Schema::hasColumn('operating_days', 'total_cash_cents')) {
             Schema::table('operating_days', function (Blueprint $table) {
-                $table->integer('total_cash_cents')->nullable()->after('total_cash');
+                $table->bigInteger('total_cash_cents')->nullable()->after('total_cash');
             });
         }
 
         if (! Schema::hasColumn('operating_days', 'total_twint_cents')) {
             Schema::table('operating_days', function (Blueprint $table) {
-                $table->integer('total_twint_cents')->nullable()->after('total_twint');
+                $table->bigInteger('total_twint_cents')->nullable()->after('total_twint');
             });
         }
     }

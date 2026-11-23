@@ -14,7 +14,7 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('tickets', 'total_cents')) {
             Schema::table('tickets', function (Blueprint $table) {
-                $table->integer('total_cents')->nullable()->after('total');
+                $table->bigInteger('total_cents')->nullable()->after('total');
             });
         }
     }
