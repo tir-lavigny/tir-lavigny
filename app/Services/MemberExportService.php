@@ -48,6 +48,15 @@ class MemberExportService
     public const DEFAULT_COLUMNS = ['last_name', 'first_name', 'email', 'tel', 'status'];
 
     /**
+     * Bounds for a best-fit column width, in Excel character units.
+     */
+    public const MIN_WIDTH = 8.0;
+
+    public const MAX_WIDTH = 60.0;
+
+    public const WIDTH_PADDING = 2.0;
+
+    /**
      * @param  array{search?: string|null, status?: string|null, archived?: bool, sort?: string|null}  $filters
      * @return Builder<Member>
      */
@@ -139,14 +148,41 @@ class MemberExportService
     }
 
     /**
-     * Widths for the extra columns, keyed by 1-based Excel column index.
+     * Best-fit widths keyed by 1-based Excel column index, the way Excel's
+     * "autofit column width" behaves: the widest rendered value or the header,
+     * plus a little padding, clamped so a single long value cannot open a
+     * 255-character column. A width set on an extra column still wins.
      *
+     * @param  Builder<Member>  $query
+     * @param  array<int, string>  $columns
      * @param  array<int, array{header: string, width?: float|int|string|null}>  $extraColumns
      * @return array<int, float>
      */
-    public function extraColumnWidths(int $columnCount, array $extraColumns): array
+    public function columnWidths(Builder $query, array $columns, array $extraColumns): array
     {
+        $lengths = [];
+
+        foreach ($columns as $column) {
+            $lengths[] = mb_strlen(self::COLUMNS[$column]);
+        }
+
+        foreach ($extraColumns as $extraColumn) {
+            $lengths[] = mb_strlen($extraColumn['header']);
+        }
+
+        // One extra pass over the rows the export streams, so widths follow the
+        // real cell contents: status labels, decrypted AVS, formatted values.
+        foreach ($query->cursor() as $member) {
+            foreach ($columns as $index => $column) {
+                $lengths[$index] = max($lengths[$index], mb_strlen($this->value($member, $column) ?? ''));
+            }
+        }
+
         $widths = [];
+
+        foreach ($lengths as $index => $length) {
+            $widths[$index + 1] = min(self::MAX_WIDTH, max(self::MIN_WIDTH, $length + self::WIDTH_PADDING));
+        }
 
         foreach (array_values($extraColumns) as $index => $extraColumn) {
             $width = $extraColumn['width'] ?? null;
@@ -155,7 +191,7 @@ class MemberExportService
                 continue;
             }
 
-            $widths[$columnCount + $index + 1] = (float) $width;
+            $widths[count($columns) + $index + 1] = (float) $width;
         }
 
         return $widths;

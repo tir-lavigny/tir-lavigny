@@ -163,14 +163,58 @@ class MemberExportServiceTest extends TestCase
         $this->assertSame([['Actif'], ['Passif']], $rows);
     }
 
-    public function test_extra_column_widths_start_after_the_member_columns(): void
+    public function test_column_widths_fit_the_widest_value_in_the_selected_order(): void
     {
-        $widths = $this->service->extraColumnWidths(3, [
-            ['header' => 'Is present', 'width' => 12],
-            ['header' => 'Has paid'],
-            ['header' => 'Remarks', 'width' => '30'],
+        Member::factory()->create([
+            'first_name' => 'Maximilien',
+            'last_name' => 'Dupont',
+            'email' => 'maximilien.dupont@example.com',
         ]);
 
-        $this->assertSame([4 => 12.0, 6 => 30.0], $widths);
+        $widths = $this->service->columnWidths(
+            $this->service->memberQuery([]),
+            ['last_name', 'first_name', 'email'],
+            [],
+        );
+
+        // 1-based, in the requested order: "Dupont" 6, "Maximilien" 10, the email 29,
+        // each plus WIDTH_PADDING.
+        $this->assertSame([1 => 8.0, 2 => 12.0, 3 => 31.0], $widths);
+    }
+
+    public function test_column_widths_fall_back_to_the_header_when_there_are_no_rows(): void
+    {
+        $widths = $this->service->columnWidths($this->service->memberQuery([]), ['last_name', 'email'], []);
+
+        // "Nom" 3 and "Email" 5, both padded to 5 and 7, then raised to MIN_WIDTH.
+        $this->assertSame([1 => 8.0, 2 => 8.0], $widths);
+    }
+
+    public function test_column_widths_are_clamped_to_the_maximum(): void
+    {
+        Member::factory()->create(['last_name' => str_repeat('a', 200)]);
+
+        $widths = $this->service->columnWidths($this->service->memberQuery([]), ['last_name'], []);
+
+        $this->assertSame([1 => MemberExportService::MAX_WIDTH], $widths);
+    }
+
+    public function test_extra_columns_get_fitted_widths_and_keep_explicit_ones(): void
+    {
+        $widths = $this->service->columnWidths(
+            $this->service->memberQuery([]),
+            ['last_name'],
+            [
+                ['header' => 'Is present', 'width' => 12],
+                ['header' => 'Has paid'],
+                ['header' => 'Remarks', 'width' => '30'],
+            ],
+        );
+
+        // Member columns first, then the extras at 2, 3 and 4.
+        $this->assertSame(8.0, $widths[1]);
+        $this->assertSame(12.0, $widths[2]);
+        $this->assertSame(10.0, $widths[3]);  // "Has paid" 8 + 2
+        $this->assertSame(30.0, $widths[4]);
     }
 }

@@ -15,7 +15,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Member, PaginatedMembers, SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Download, Eye, Plus, RefreshCw, Search, Undo2, X } from '@lucide/vue';
+import { ChevronDown, ChevronUp, Download, Eye, Plus, RefreshCw, Search, Undo2, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -76,7 +76,7 @@ const showExportDialog = ref(false);
 const exportFormat = ref('xlsx');
 const exportSortByStatus = ref(false);
 const exportColumns = ref<string[]>(['last_name', 'first_name', 'email', 'tel', 'status']);
-const extraColumns = ref<{ header: string; width: number }[]>([]);
+const extraColumns = ref<{ header: string; width: number | null }[]>([]);
 
 const exportColumnOptions = [
     { key: 'first_name', label: 'Prénom' },
@@ -103,12 +103,50 @@ const toggleExportColumn = (key: string) => {
     exportColumns.value = exportColumns.value.includes(key) ? exportColumns.value.filter((column) => column !== key) : [...exportColumns.value, key];
 };
 
+const columnLabels: Record<string, string> = Object.fromEntries([...exportColumnOptions, ...sensitiveColumnOptions].map((option) => [option.key, option.label]));
+
+const columnLabel = (key: string): string => columnLabels[key] ?? key;
+
+const moveItem = <T,>(items: T[], from: number, to: number): T[] => {
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+
+    if (moved === undefined) {
+        return next;
+    }
+
+    next.splice(to, 0, moved);
+
+    return next;
+};
+
+const moveExportColumn = (key: string, offset: number) => {
+    const from = exportColumns.value.indexOf(key);
+    const to = from + offset;
+
+    if (from === -1 || to < 0 || to >= exportColumns.value.length) {
+        return;
+    }
+
+    exportColumns.value = moveItem(exportColumns.value, from, to);
+};
+
+const moveExtraColumn = (index: number, offset: number) => {
+    const to = index + offset;
+
+    if (to < 0 || to >= extraColumns.value.length) {
+        return;
+    }
+
+    extraColumns.value = moveItem(extraColumns.value, index, to);
+};
+
 const addExtraColumn = () => {
     if (extraColumns.value.length >= 20) {
         return;
     }
 
-    extraColumns.value.push({ header: '', width: 20 });
+    extraColumns.value.push({ header: '', width: null });
 };
 
 const removeExtraColumn = (index: number) => {
@@ -138,7 +176,10 @@ const exportUrl = computed(() => {
         .filter((extra) => extra.header.trim() !== '')
         .forEach((extra, index) => {
             params.set(`extra_columns[${index}][header]`, extra.header.trim());
-            params.set(`extra_columns[${index}][width]`, String(extra.width || 20));
+
+            if (typeof extra.width === 'number' && extra.width >= 1) {
+                params.set(`extra_columns[${index}][width]`, String(extra.width));
+            }
         });
 
     return `${route('bo.members.export')}?${params.toString()}`;
@@ -313,6 +354,36 @@ const downloadExport = () => {
                             L'export de l'AVS et de la nationalité nécessite la permission « view member sensitive data ».
                         </p>
                     </div>
+                    <div v-if="exportColumns.length > 0" class="grid gap-2">
+                        <Label>Ordre des colonnes</Label>
+                        <ol class="grid gap-1">
+                            <li v-for="(key, index) in exportColumns" :key="key" class="flex items-center gap-2 text-sm">
+                                <span class="text-muted-foreground w-4 text-right tabular-nums">{{ index + 1 }}.</span>
+                                <span class="flex-1">{{ columnLabel(key) }}</span>
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    :disabled="index === 0"
+                                    aria-label="Monter la colonne"
+                                    @click="moveExportColumn(key, -1)"
+                                >
+                                    <ChevronUp />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    :disabled="index === exportColumns.length - 1"
+                                    aria-label="Descendre la colonne"
+                                    @click="moveExportColumn(key, 1)"
+                                >
+                                    <ChevronDown />
+                                </Button>
+                            </li>
+                        </ol>
+                        <p class="text-muted-foreground text-xs">Les colonnes sont écrites dans cet ordre, de gauche à droite.</p>
+                    </div>
                     <label class="flex items-center gap-2 text-sm">
                         <Checkbox v-model="exportSortByStatus" />
                         Trier par statut (actifs puis passifs)
@@ -323,12 +394,40 @@ const downloadExport = () => {
                             <Button type="button" size="sm" variant="outline" @click="addExtraColumn"> <Plus class="mr-2 size-4" /> Ajouter </Button>
                         </div>
                         <p class="text-muted-foreground text-xs">
-                            Colonnes vides ajoutées après les données du membre, avec un en-tête et une largeur personnalisés (largeur utilisée pour
-                            Excel).
+                            Colonnes vides ajoutées après les données du membre. Laissez la largeur vide pour l'ajuster au contenu (Excel
+                            uniquement).
                         </p>
                         <div v-for="(extra, index) in extraColumns" :key="index" class="flex items-center gap-2">
                             <Input v-model="extra.header" :placeholder="`En-tête ${index + 1}`" maxlength="100" />
-                            <Input v-model.number="extra.width" type="number" min="1" max="255" class="w-24" aria-label="Largeur" />
+                            <Input
+                                v-model.number="extra.width"
+                                type="number"
+                                min="1"
+                                max="255"
+                                placeholder="auto"
+                                class="w-24"
+                                aria-label="Largeur (auto si vide)"
+                            />
+                            <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                :disabled="index === 0"
+                                aria-label="Monter la colonne"
+                                @click="moveExtraColumn(index, -1)"
+                            >
+                                <ChevronUp />
+                            </Button>
+                            <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                :disabled="index === extraColumns.length - 1"
+                                aria-label="Descendre la colonne"
+                                @click="moveExtraColumn(index, 1)"
+                            >
+                                <ChevronDown />
+                            </Button>
                             <Button type="button" size="icon" variant="outline" @click="removeExtraColumn(index)">
                                 <X />
                             </Button>

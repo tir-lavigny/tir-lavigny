@@ -39,9 +39,6 @@ class MemberExportController extends Controller implements HasMiddleware
             Auth::user()?->can(MemberExportService::SENSITIVE_PERMISSION) ?? false,
         );
         $extraColumns = $this->normalizeExtraColumns((array) ($validated['extra_columns'] ?? []));
-        $extraWidths = $format === 'xlsx'
-            ? $this->memberExportService->extraColumnWidths(count($columns), $extraColumns)
-            : [];
 
         $search = $validated['search'] ?? null;
         $status = $validated['status'] ?? null;
@@ -54,14 +51,20 @@ class MemberExportController extends Controller implements HasMiddleware
             'sort' => is_string($sort) ? $sort : null,
         ]);
 
+        // Excel only: best-fit widths for every column, the way double-clicking a
+        // column border does. CSV carries no widths.
+        $widths = $format === 'xlsx'
+            ? $this->memberExportService->columnWidths($query, $columns, $extraColumns)
+            : [];
+
         $fileName = 'membres-'.now()->format('Y-m-d').'.'.$format;
 
         $writer = SimpleExcelWriter::streamDownload(
             downloadName: $fileName,
             type: $format,
-            writerCallback: function (WriterInterface $writer, string $downloadName) use ($extraWidths): void {
+            writerCallback: function (WriterInterface $writer, string $downloadName) use ($widths): void {
                 if ($writer instanceof XlsxWriter) {
-                    foreach ($extraWidths as $columnIndex => $width) {
+                    foreach ($widths as $columnIndex => $width) {
                         // openSpout counts columns from 1; the service already returns 1-based keys.
                         $writer->getOptions()->setColumnWidth($width, max(1, $columnIndex));
                     }
