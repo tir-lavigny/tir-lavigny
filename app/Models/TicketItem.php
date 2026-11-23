@@ -39,34 +39,28 @@ class TicketItem extends Model
      */
     protected $hidden = ['unit_price_cents', 'subtotal_cents'];
 
+    /**
+     * Decimal money attributes are computed from the cents columns; they are
+     * appended so serialized payloads keep their historical keys.
+     */
+    protected $appends = ['unit_price', 'subtotal'];
+
     protected $casts = [
         'quantity' => 'integer',
         'unit_price_cents' => 'integer',
         'subtotal_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function unitPrice(): Attribute
     {
-        return $this->legacyMoneyAttribute('unit_price');
+        return $this->moneyAttribute('unit_price');
     }
 
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function unitPriceCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('unit_price');
-    }
-
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function subtotal(): Attribute
     {
-        return $this->legacyMoneyAttribute('subtotal');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function subtotalCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('subtotal');
+        return $this->moneyAttribute('subtotal');
     }
 
     protected static function booted(): void

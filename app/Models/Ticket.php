@@ -39,21 +39,21 @@ class Ticket extends Model
      */
     protected $hidden = ['total_cents'];
 
+    /**
+     * Decimal money attributes are computed from the cents columns; they are
+     * appended so serialized payloads keep their historical keys.
+     */
+    protected $appends = ['total'];
+
     protected $casts = [
         'sold_at' => 'datetime',
         'total_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function total(): Attribute
     {
-        return $this->legacyMoneyAttribute('total');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function totalCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('total');
+        return $this->moneyAttribute('total');
     }
 
     protected static function booted(): void

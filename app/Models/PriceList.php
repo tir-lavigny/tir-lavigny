@@ -32,15 +32,4 @@ class PriceList extends Model
     {
         return $this->hasMany(PriceListItem::class);
     }
-
-    /**
-     * @return array<int, float>
-     */
-    public function activeItemPrices(): array
-    {
-        return $this->items()
-            ->pluck('unit_price', 'product_id')
-            ->map(fn ($price): float => (float) $price)
-            ->all();
-    }
 }

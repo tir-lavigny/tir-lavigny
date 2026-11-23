@@ -33,21 +33,21 @@ class CashMovement extends Model
      */
     protected $hidden = ['amount_cents'];
 
+    /**
+     * Decimal money attributes are computed from the cents columns; they are
+     * appended so serialized payloads keep their historical keys.
+     */
+    protected $appends = ['amount'];
+
     protected $casts = [
         'occurred_at' => 'date',
         'amount_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function amount(): Attribute
     {
-        return $this->legacyMoneyAttribute('amount');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function amountCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('amount');
+        return $this->moneyAttribute('amount');
     }
 
     /**

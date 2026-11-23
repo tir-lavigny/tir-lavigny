@@ -40,22 +40,22 @@ class Product extends Model
      */
     protected $hidden = ['unit_price_cents'];
 
+    /**
+     * Decimal money attributes are computed from the cents columns; they are
+     * appended so serialized payloads keep their historical keys.
+     */
+    protected $appends = ['unit_price'];
+
     protected $casts = [
         'allows_custom_price' => 'boolean',
         'is_stockable' => 'boolean',
         'unit_price_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function unitPrice(): Attribute
     {
-        return $this->legacyMoneyAttribute('unit_price');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function unitPriceCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('unit_price');
+        return $this->moneyAttribute('unit_price');
     }
 
     /**
@@ -140,7 +140,7 @@ class Product extends Model
     protected static function booted(): void
     {
         static::updating(function (Product $product) {
-            if ($product->getOriginal('name') === 'Correction' && $product->isDirty(['name', 'category_id', 'unit_price', 'allows_custom_price', 'is_stockable'])) {
+            if ($product->getOriginal('name') === 'Correction' && $product->isDirty(['name', 'category_id', 'unit_price_cents', 'allows_custom_price', 'is_stockable'])) {
                 abort(422, 'Le produit Correction est protégé.');
             }
         });

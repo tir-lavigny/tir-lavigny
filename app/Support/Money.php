@@ -7,8 +7,7 @@ namespace App\Support;
  * the integer cents amounts used to store and compute money.
  *
  * Monetary values are never kept in a PHP float internally: amounts enter the
- * application as decimals (form input, legacy column) and are converted once
- * at the boundary.
+ * application as decimals (form input) and are converted once at the boundary.
  */
 final class Money
 {

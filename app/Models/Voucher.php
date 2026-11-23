@@ -37,21 +37,21 @@ class Voucher extends Model
      */
     protected $hidden = ['discount_fixed_cents'];
 
+    /**
+     * Decimal money attributes are computed from the cents columns; they are
+     * appended so serialized payloads keep their historical keys.
+     */
+    protected $appends = ['discount_fixed'];
+
     protected $casts = [
         'discount_percent' => 'decimal:2',
         'discount_fixed_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function discountFixed(): Attribute
     {
-        return $this->legacyMoneyAttribute('discount_fixed');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function discountFixedCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('discount_fixed');
+        return $this->moneyAttribute('discount_fixed');
     }
 
     /**

@@ -45,6 +45,12 @@ class OperatingDay extends Model
      */
     protected $hidden = ['closing_balance_cents', 'total_cash_cents', 'total_twint_cents'];
 
+    /**
+     * Decimal money attributes are computed from the cents columns; they are
+     * appended so serialized payloads keep their historical keys.
+     */
+    protected $appends = ['closing_balance', 'total_cash', 'total_twint'];
+
     protected $casts = [
         'date' => 'date',
         'started_at' => 'datetime',
@@ -54,34 +60,16 @@ class OperatingDay extends Model
         'total_twint_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function totalCash(): Attribute
     {
-        return $this->legacyMoneyAttribute('total_cash');
+        return $this->moneyAttribute('total_cash');
     }
 
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function totalCashCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('total_cash');
-    }
-
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function totalTwint(): Attribute
     {
-        return $this->legacyMoneyAttribute('total_twint');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function totalTwintCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('total_twint');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function closingBalanceCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('closing_balance');
+        return $this->moneyAttribute('total_twint');
     }
 
     /**
@@ -116,19 +104,12 @@ class OperatingDay extends Model
                     return Money::toFloat((int) $cents);
                 }
 
-                if (($attributes['closed_at'] ?? null) !== null && $value !== null) {
-                    return Money::toFloat(Money::toCents($value));
-                }
-
-                return $this->season?->closingBalanceFor($this);
+                return ($attributes['closed_at'] ?? null) === null
+                    ? $this->season?->closingBalanceFor($this)
+                    : null;
             },
             set: function (mixed $value): array {
-                $cents = Money::toCents($value);
-
-                return [
-                    'closing_balance_cents' => $cents,
-                    'closing_balance' => Money::fromCents($cents),
-                ];
+                return ['closing_balance_cents' => Money::toCents($value)];
             },
         );
     }

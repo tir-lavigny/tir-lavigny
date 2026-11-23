@@ -31,20 +31,20 @@ class PriceListItem extends Model
      */
     protected $hidden = ['unit_price_cents'];
 
+    /**
+     * Decimal money attributes are computed from the cents columns; they are
+     * appended so serialized payloads keep their historical keys.
+     */
+    protected $appends = ['unit_price'];
+
     protected $casts = [
         'unit_price_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function unitPrice(): Attribute
     {
-        return $this->legacyMoneyAttribute('unit_price');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function unitPriceCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('unit_price');
+        return $this->moneyAttribute('unit_price');
     }
 
     /**
