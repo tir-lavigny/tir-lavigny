@@ -43,6 +43,7 @@ class Product extends Model
     protected $casts = [
         'allows_custom_price' => 'boolean',
         'is_stockable' => 'boolean',
+        'unit_price_cents' => 'integer',
     ];
 
     /** @return Attribute<string|null, array<string, int|string|null>> */

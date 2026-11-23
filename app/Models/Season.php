@@ -40,6 +40,7 @@ class Season extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'initial_balance_cents' => 'integer',
     ];
 
     /** @return Attribute<string|null, array<string, int|string|null>> */

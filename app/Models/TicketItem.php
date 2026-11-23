@@ -41,6 +41,8 @@ class TicketItem extends Model
 
     protected $casts = [
         'quantity' => 'integer',
+        'unit_price_cents' => 'integer',
+        'subtotal_cents' => 'integer',
     ];
 
     /** @return Attribute<string|null, array<string, int|string|null>> */

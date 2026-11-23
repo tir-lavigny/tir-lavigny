@@ -39,6 +39,7 @@ class Voucher extends Model
 
     protected $casts = [
         'discount_percent' => 'decimal:2',
+        'discount_fixed_cents' => 'integer',
     ];
 
     /** @return Attribute<string|null, array<string, int|string|null>> */

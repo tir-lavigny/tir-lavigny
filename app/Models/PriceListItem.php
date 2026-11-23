@@ -31,6 +31,10 @@ class PriceListItem extends Model
      */
     protected $hidden = ['unit_price_cents'];
 
+    protected $casts = [
+        'unit_price_cents' => 'integer',
+    ];
+
     /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function unitPrice(): Attribute
     {

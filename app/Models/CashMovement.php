@@ -35,6 +35,7 @@ class CashMovement extends Model
 
     protected $casts = [
         'occurred_at' => 'date',
+        'amount_cents' => 'integer',
     ];
 
     /** @return Attribute<string|null, array<string, int|string|null>> */

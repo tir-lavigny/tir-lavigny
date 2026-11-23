@@ -49,6 +49,9 @@ class OperatingDay extends Model
         'date' => 'date',
         'started_at' => 'datetime',
         'closed_at' => 'datetime',
+        'closing_balance_cents' => 'integer',
+        'total_cash_cents' => 'integer',
+        'total_twint_cents' => 'integer',
     ];
 
     /** @return Attribute<string|null, array<string, int|string|null>> */

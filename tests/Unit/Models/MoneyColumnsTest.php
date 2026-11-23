@@ -128,4 +128,18 @@ class MoneyColumnsTest extends TestCase
         $this->assertSame('10.50', $array['total']);
         $this->assertSame(1050, $ticket->total_cents);
     }
+
+    public function test_string_cents_from_a_driver_are_returned_as_integers(): void
+    {
+        $ticket = Ticket::factory()->create(['total_cents' => 1050]);
+
+        // Some drivers / PDO settings hand back numeric columns as strings.
+        DB::table('tickets')->where('id', $ticket->id)->update(['total_cents' => '1050']);
+
+        $fresh = $ticket->fresh();
+
+        $this->assertSame(1050, $fresh->total_cents);
+        $this->assertSame(1050, (int) $fresh->getRawOriginal('total_cents'));
+        $this->assertSame('10.50', $fresh->total);
+    }
 }

@@ -41,6 +41,7 @@ class Ticket extends Model
 
     protected $casts = [
         'sold_at' => 'datetime',
+        'total_cents' => 'integer',
     ];
 
     /** @return Attribute<string|null, array<string, int|string|null>> */
