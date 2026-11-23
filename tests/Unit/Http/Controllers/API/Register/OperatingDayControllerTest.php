@@ -71,6 +71,10 @@ class OperatingDayControllerTest extends TestCase
 
         $day = OperatingDay::where('season_id', $season->id)->first();
         $this->assertEquals(Carbon::today('Europe/Zurich')->format('Y-m-d'), $day->date->format('Y-m-d'));
+
+        $this->assertSame(0, $day->total_cash_cents);
+        $this->assertSame('0.00', $response->getData(true)['data']['total_cash']);
+        $this->assertSame('0.00', $response->getData(true)['data']['total_twint']);
     }
 
     public function test_store_sets_started_at_to_now(): void

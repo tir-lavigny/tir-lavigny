@@ -51,6 +51,15 @@ class OperatingDay extends Model
      */
     protected $appends = ['closing_balance', 'total_cash', 'total_twint'];
 
+    /**
+     * A new day starts with zero totals, matching the default the legacy
+     * decimal columns used to carry.
+     */
+    protected $attributes = [
+        'total_cash_cents' => 0,
+        'total_twint_cents' => 0,
+    ];
+
     protected $casts = [
         'date' => 'date',
         'started_at' => 'datetime',
