@@ -62,7 +62,8 @@ class MemberExportController extends Controller implements HasMiddleware
             writerCallback: function (WriterInterface $writer, string $downloadName) use ($extraWidths): void {
                 if ($writer instanceof XlsxWriter) {
                     foreach ($extraWidths as $columnIndex => $width) {
-                        $writer->getOptions()->setColumnWidth($width, $columnIndex);
+                        // openSpout counts columns from 1; the service already returns 1-based keys.
+                        $writer->getOptions()->setColumnWidth($width, max(1, $columnIndex));
                     }
                 }
 
