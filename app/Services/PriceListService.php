@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\PriceList;
 use App\Models\PriceListItem;
 use App\Models\Product;
+use App\Support\Money;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -93,8 +94,8 @@ class PriceListService
                 'product_id' => $item->product_id,
                 'product_name' => $product === null ? 'Produit supprimé' : $product->name,
                 'category_name' => $product?->category?->name,
-                'current_price' => $product === null || $product->trashed() ? null : (float) $product->unit_price,
-                'new_price' => (float) $item->unit_price,
+                'current_price' => $product === null || $product->trashed() ? null : Money::toFloat($product->unit_price_cents),
+                'new_price' => Money::toFloat($item->unit_price_cents),
                 'status' => $status,
             ];
         }
@@ -111,7 +112,7 @@ class PriceListService
                 'product_id' => $product->id,
                 'product_name' => $product->name,
                 'category_name' => $product->category?->name,
-                'current_price' => (float) $product->unit_price,
+                'current_price' => Money::toFloat($product->unit_price_cents),
                 'new_price' => null,
                 'status' => 'not_in_list',
             ];
@@ -140,8 +141,8 @@ class PriceListService
                     continue;
                 }
 
-                if ((float) $product->unit_price !== (float) $item->unit_price) {
-                    $product->update(['unit_price' => $item->unit_price]);
+                if ($product->unit_price_cents !== $item->unit_price_cents) {
+                    $product->update(['unit_price_cents' => $item->unit_price_cents]);
                     $updated++;
                 }
             }
@@ -221,7 +222,7 @@ class PriceListService
                 ->each(function (Product $product) use ($list, &$added): void {
                     $list->items()->create([
                         'product_id' => $product->id,
-                        'unit_price' => $product->unit_price,
+                        'unit_price_cents' => $product->unit_price_cents,
                     ]);
                     $added++;
                 });
@@ -256,8 +257,8 @@ class PriceListService
                     continue;
                 }
 
-                if ((float) $item->unit_price !== (float) $product->unit_price) {
-                    $item->update(['unit_price' => $product->unit_price]);
+                if ($item->unit_price_cents !== $product->unit_price_cents) {
+                    $item->update(['unit_price_cents' => $product->unit_price_cents]);
                     $updated++;
                 }
             }
@@ -284,9 +285,9 @@ class PriceListService
             ]);
 
             $copy->items()->createMany(
-                $list->items()->get(['product_id', 'unit_price'])->map(fn (PriceListItem $item): array => [
+                $list->items()->get(['product_id', 'unit_price_cents'])->map(fn (PriceListItem $item): array => [
                     'product_id' => $item->product_id,
-                    'unit_price' => $item->unit_price,
+                    'unit_price_cents' => $item->unit_price_cents,
                 ])->all()
             );
 
@@ -315,7 +316,7 @@ class PriceListService
             return 'missing';
         }
 
-        return (float) $product->unit_price === (float) $item->unit_price ? 'unchanged' : 'changed';
+        return $product->unit_price_cents === $item->unit_price_cents ? 'unchanged' : 'changed';
     }
 
     private function uniqueName(string $base): string

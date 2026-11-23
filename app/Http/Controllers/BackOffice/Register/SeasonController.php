@@ -8,6 +8,7 @@ use App\Http\Requests\BackOffice\Register\UpdateSeasonRequest;
 use App\Models\Member;
 use App\Models\Season;
 use App\Services\SeasonVoucherService;
+use App\Support\Money;
 use App\Traits\SearchesAccentInsensitively;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -87,7 +88,7 @@ class SeasonController extends Controller implements HasMiddleware
     {
         $data = $request->validated();
         $initialBalanceChanged = array_key_exists('initial_balance', $data)
-            && (float) $data['initial_balance'] !== (float) $season->initial_balance;
+            && Money::toCents($data['initial_balance']) !== $season->initial_balance_cents;
 
         DB::transaction(function () use ($season, $data, $initialBalanceChanged) {
             $season->update($data);

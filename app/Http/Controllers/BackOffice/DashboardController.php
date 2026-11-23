@@ -37,7 +37,7 @@ class DashboardController extends Controller
 
         $dailySales = $currentSeason
             ? $currentSeason->operatingDays()
-                ->selectRaw('date, sum(total_cash) as cash, sum(total_twint) as twint')
+                ->selectRaw('date, sum(total_cash_cents) / 100.0 as cash, sum(total_twint_cents) / 100.0 as twint')
                 ->groupBy('date')
                 ->orderBy('date')
                 ->get()

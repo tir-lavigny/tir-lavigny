@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Season;
 use App\Models\StockLocation;
 use App\Services\TicketCalculator;
+use App\Support\Money;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\RedirectResponse;
@@ -97,10 +98,13 @@ class OperatingDayController extends Controller implements HasMiddleware
             ->orderBy('id')
             ->get();
 
-        $openingBalance = round(
-            (float) $operatingDay->closing_balance - (float) $operatingDay->total_cash - (float) $cashMovements->sum('amount'),
-            2
-        );
+        $closingBalanceCents = $operatingDay->closing_balance_cents
+            ?? $season->closingBalanceCentsFor($operatingDay);
+
+        $openingBalanceCents = (int) $closingBalanceCents
+            - (int) $operatingDay->total_cash_cents
+            - (int) $cashMovements->sum('amount_cents');
+        $openingBalance = Money::toFloat($openingBalanceCents);
 
         return Inertia::render('backOffice/Register/OperatingDays/Show', [
             'operatingDay' => $operatingDay,
