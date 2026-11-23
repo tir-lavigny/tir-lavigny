@@ -13,6 +13,11 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
  * source of truth for logic and aggregates, while the decimal column is
  * mirrored so an application rollback still reads valid data and existing
  * serialized payloads keep the exact same shape.
+ *
+ * These helpers deliberately have no native Attribute return type: Laravel's
+ * Reflector (getAttributeMarkedMutatorMethods) invokes every method returning
+ * Attribute with no arguments to build the mutator cache, which would explode
+ * on the required $column parameter.
  */
 trait HasMoneyColumns
 {
@@ -49,8 +54,9 @@ trait HasMoneyColumns
 
     /**
      * Integer cents attribute, mirroring the legacy decimal column on write.
+     *
+     * @return Attribute<int|null, array<string, int|string|null>>
      */
-    /** @return Attribute<int|null, array<string, int|string|null>> */
     protected function centsMoneyAttribute(string $column)
     {
         return Attribute::make(

@@ -28,7 +28,7 @@ final class Money
             return $amount * 100;
         }
 
-        $normalized = trim(str_replace([',', ' '], ['', ''], is_float($amount) ? number_format($amount, 4, '.', '') : $amount));
+        $normalized = self::normalize($amount);
 
         if ($normalized === '' || $normalized === '-' || $normalized === '+') {
             return null;
@@ -47,6 +47,27 @@ final class Money
         }
 
         return $matches[1] === '-' && $cents !== 0 ? -$cents : $cents;
+    }
+
+    /**
+     * Normalize a user-facing amount to a plain "1234.56" string.
+     *
+     * Swiss-formatted input is accepted: thin/spaced thousands separators are
+     * dropped, and a comma counts as the decimal separator unless a dot is
+     * already present (then it is a thousands separator).
+     */
+    private static function normalize(float|string $amount): string
+    {
+        $normalized = trim(is_float($amount) ? number_format($amount, 4, '.', '') : $amount);
+        $normalized = str_replace([' ', "'"], '', $normalized);
+
+        if (! str_contains($normalized, ',')) {
+            return $normalized;
+        }
+
+        return str_contains($normalized, '.')
+            ? str_replace(',', '', $normalized)
+            : str_replace(',', '.', $normalized);
     }
 
     /**
@@ -73,7 +94,10 @@ final class Money
     }
 
     /**
-     * Apply a percentage to an amount in cents, rounded half up to the cent.
+     * Apply a percentage to an amount in cents, rounded half away from zero.
+     *
+     * The percentage is converted to basis points (33.33% => 3333) and applied
+     * with integer arithmetic only.
      */
     public static function percentOf(int $cents, float|string|null $percent): int
     {
@@ -81,6 +105,15 @@ final class Money
             return 0;
         }
 
-        return (int) round($cents * ((float) $percent) / 100);
+        $basisPoints = self::toCents($percent) ?? 0;
+
+        if ($basisPoints === 0 || $cents === 0) {
+            return 0;
+        }
+
+        $product = $cents * $basisPoints;
+        $rounded = intdiv(abs($product) + 5000, 10000);
+
+        return $product < 0 ? -$rounded : $rounded;
     }
 }

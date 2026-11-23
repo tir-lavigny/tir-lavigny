@@ -31,6 +31,12 @@ class Season extends Model
         'end_balance',
     ];
 
+    /**
+     * Cents columns stay internal: the serialized payload keeps exposing the
+     * decimal attributes so API and Inertia consumers are unaffected.
+     */
+    protected $hidden = ['initial_balance_cents', 'end_balance_cents'];
+
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
@@ -103,8 +109,16 @@ class Season extends Model
 
     public function closingBalanceFor(OperatingDay $day): float
     {
-        return $this->closingBalanceLedger()['day_balances'][$day->id]
-            ?? Money::toFloat($this->initial_balance_cents ?? 0);
+        return Money::toFloat($this->closingBalanceCentsFor($day));
+    }
+
+    /**
+     * Closing balance of an operating day in integer cents, from the ledger.
+     */
+    public function closingBalanceCentsFor(OperatingDay $day): int
+    {
+        return $this->closingBalanceLedger()['day_balances_cents'][$day->id]
+            ?? (int) ($this->initial_balance_cents ?? 0);
     }
 
     /**
@@ -113,8 +127,8 @@ class Season extends Model
     public function balanceSummary(): array
     {
         $ledger = $this->closingBalanceLedger();
-        $dayBalances = $ledger['day_balances'];
-        $lastDayBalance = $dayBalances === [] ? Money::toFloat($this->initial_balance_cents ?? 0) : (float) end($dayBalances);
+        $dayBalancesCents = $ledger['day_balances_cents'];
+        $lastDayBalanceCents = $dayBalancesCents === [] ? (int) ($this->initial_balance_cents ?? 0) : (int) end($dayBalancesCents);
         $salesTotalCents = (int) $this->operatingDays()->sum('total_cash_cents');
         $movementsTotalCents = (int) $this->cashMovements()->sum('amount_cents');
 
@@ -122,8 +136,8 @@ class Season extends Model
             'initial_balance' => Money::toFloat($this->initial_balance_cents ?? 0),
             'sales_total' => Money::toFloat($salesTotalCents),
             'movements_total' => Money::toFloat($movementsTotalCents),
-            'last_day_balance' => $lastDayBalance,
-            'post_last_day_movements' => round($ledger['end_balance'] - $lastDayBalance, 2),
+            'last_day_balance' => Money::toFloat($lastDayBalanceCents),
+            'post_last_day_movements' => Money::toFloat($ledger['end_balance_cents'] - $lastDayBalanceCents),
             'end_balance' => $ledger['end_balance'],
         ];
     }

@@ -98,7 +98,10 @@ class OperatingDayController extends Controller implements HasMiddleware
             ->orderBy('id')
             ->get();
 
-        $openingBalanceCents = (int) $operatingDay->closing_balance_cents
+        $closingBalanceCents = $operatingDay->closing_balance_cents
+            ?? $season->closingBalanceCentsFor($operatingDay);
+
+        $openingBalanceCents = (int) $closingBalanceCents
             - (int) $operatingDay->total_cash_cents
             - (int) $cashMovements->sum('amount_cents');
         $openingBalance = Money::toFloat($openingBalanceCents);

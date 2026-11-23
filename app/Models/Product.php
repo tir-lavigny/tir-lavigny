@@ -34,6 +34,12 @@ class Product extends Model
         'is_stockable',
     ];
 
+    /**
+     * Cents columns stay internal: the serialized payload keeps exposing the
+     * decimal attributes so API and Inertia consumers are unaffected.
+     */
+    protected $hidden = ['unit_price_cents'];
+
     protected $casts = [
         'allows_custom_price' => 'boolean',
         'is_stockable' => 'boolean',

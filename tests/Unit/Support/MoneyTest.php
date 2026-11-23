@@ -19,6 +19,10 @@ class MoneyTest extends TestCase
             'sub-cent rounds up' => ['0.005', 1],
             'sub-cent rounds down' => ['0.004', 0],
             'negative amount' => ['-25.50', -2550],
+            'comma decimal separator' => ['1,50', 150],
+            'comma decimal with thousands dot' => ['1,234.56', 123456],
+            'swiss apostrophe thousands' => ["1'234.56", 123456],
+            'thousands space' => ['1 234.56', 123456],
             'float precision noise' => [0.1 + 0.2, 30],
             'zero' => [0, 0],
             'zero string' => ['0.00', 0],
@@ -55,6 +59,8 @@ class MoneyTest extends TestCase
         $this->assertSame(333, Money::percentOf(1000, 33.3));
         $this->assertSame(675, Money::percentOf(675, 100));
         $this->assertSame(0, Money::percentOf(10000, null));
+        $this->assertSame(-100, Money::percentOf(-1000, 10));
+        $this->assertSame(8, Money::percentOf(1000, 0.75)); // 7.5 cents rounds half up
     }
 
     public function test_round_trip_is_lossless(): void

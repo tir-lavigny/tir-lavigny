@@ -117,4 +117,15 @@ class MoneyColumnsTest extends TestCase
         $this->assertSame(25010, $season->initial_balance_cents);
         $this->assertSame('250.10', $season->initial_balance);
     }
+
+    public function test_cents_columns_are_hidden_from_serialization(): void
+    {
+        $ticket = Ticket::factory()->create(['total_cents' => 1050]);
+
+        $array = $ticket->toArray();
+
+        $this->assertArrayNotHasKey('total_cents', $array);
+        $this->assertSame('10.50', $array['total']);
+        $this->assertSame(1050, $ticket->total_cents);
+    }
 }

@@ -33,6 +33,12 @@ class TicketItem extends Model
         'subtotal_cents',
     ];
 
+    /**
+     * Cents columns stay internal: the serialized payload keeps exposing the
+     * decimal attributes so API and Inertia consumers are unaffected.
+     */
+    protected $hidden = ['unit_price_cents', 'subtotal_cents'];
+
     protected $casts = [
         'quantity' => 'integer',
     ];

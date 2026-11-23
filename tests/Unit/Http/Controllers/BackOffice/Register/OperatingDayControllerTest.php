@@ -98,4 +98,45 @@ class OperatingDayControllerTest extends TestCase
             'closing_balance' => 250.00,
         ]);
     }
+
+    private function openingBalanceFor(OperatingDay $day): mixed
+    {
+        $response = $this->controller->show($day);
+        $request = Request::create('/', 'GET', [], [], [], ['HTTP_X_INERTIA' => 'true']);
+        $content = $response->toResponse($request)->getContent();
+
+        return json_decode((string) $content, true)['props']['openingBalance'];
+    }
+
+    public function test_opening_balance_of_a_fresh_open_day_is_the_season_initial_balance(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 100.00]);
+        $day = OperatingDay::factory()->create(['season_id' => $season->id]);
+
+        $this->assertEquals(100.00, $this->openingBalanceFor($day));
+    }
+
+    public function test_opening_balance_of_an_open_day_ignores_the_days_own_sales(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 100.00]);
+        $day = OperatingDay::factory()->create(['season_id' => $season->id]);
+        Ticket::factory()->cash()->create(['operating_day_id' => $day->id, 'total' => 25.00]);
+        $day->recalculateTotals();
+
+        $this->assertEquals(100.00, $this->openingBalanceFor($day->fresh()));
+    }
+
+    public function test_opening_balance_of_a_closed_day_uses_the_stored_closing_balance(): void
+    {
+        $season = Season::factory()->create(['initial_balance' => 100.00]);
+        $day = OperatingDay::factory()->create([
+            'season_id' => $season->id,
+            'closed_at' => now(),
+            'closing_balance' => 150.00,
+        ]);
+        Ticket::factory()->cash()->create(['operating_day_id' => $day->id, 'total' => 50.00]);
+        $day->recalculateTotals();
+
+        $this->assertEquals(100.00, $this->openingBalanceFor($day->fresh()));
+    }
 }

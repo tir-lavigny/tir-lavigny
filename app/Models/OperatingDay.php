@@ -39,6 +39,12 @@ class OperatingDay extends Model
         'total_twint_cents',
     ];
 
+    /**
+     * Cents columns stay internal: the serialized payload keeps exposing the
+     * decimal attributes so API and Inertia consumers are unaffected.
+     */
+    protected $hidden = ['closing_balance_cents', 'total_cash_cents', 'total_twint_cents'];
+
     protected $casts = [
         'date' => 'date',
         'started_at' => 'datetime',

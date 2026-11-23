@@ -25,6 +25,12 @@ class PriceListItem extends Model
         'unit_price_cents',
     ];
 
+    /**
+     * Cents columns stay internal: the serialized payload keeps exposing the
+     * decimal attributes so API and Inertia consumers are unaffected.
+     */
+    protected $hidden = ['unit_price_cents'];
+
     /** @return Attribute<string|null, array<string, int|string|null>> */
     protected function unitPrice(): Attribute
     {
