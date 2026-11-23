@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @property string|null $initial_balance
+ * @property string $initial_balance
  * @property int|null $initial_balance_cents
  * @property-read float|null $end_balance
  */

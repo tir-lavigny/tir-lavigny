@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @property string|null $amount
+ * @property string $amount
  * @property int|null $amount_cents
  */
 class CashMovement extends Model

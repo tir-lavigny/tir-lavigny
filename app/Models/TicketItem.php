@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use LogicException;
 
 /**
- * @property string|null $unit_price
- * @property string|null $subtotal
+ * @property string $unit_price
+ * @property string $subtotal
  * @property int|null $unit_price_cents
  * @property int|null $subtotal_cents
  */

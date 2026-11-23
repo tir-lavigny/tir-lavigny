@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use LogicException;
 
 /**
- * @property string|null $total
+ * @property string $total
  * @property int|null $total_cents
  */
 class Ticket extends Model

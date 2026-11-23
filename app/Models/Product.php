@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property-read Pivot|null $pivot
- * @property string|null $unit_price
+ * @property string $unit_price
  * @property int|null $unit_price_cents
  */
 class Product extends Model

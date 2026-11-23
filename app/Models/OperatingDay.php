@@ -13,12 +13,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property string|null $total_cash
- * @property string|null $total_twint
+ * @property string $total_cash
+ * @property string $total_twint
  * @property int|null $total_cash_cents
  * @property int|null $total_twint_cents
  * @property int|null $closing_balance_cents
- * @property-read float|null $closing_balance
+ * @property-read float $closing_balance
  */
 class OperatingDay extends Model
 {

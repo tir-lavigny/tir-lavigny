@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @property string|null $unit_price
+ * @property string $unit_price
  * @property int|null $unit_price_cents
  */
 class PriceListItem extends Model
