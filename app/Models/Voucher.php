@@ -31,27 +31,19 @@ class Voucher extends Model
         'member_id',
     ];
 
-    /**
-     * Cents columns stay internal: the serialized payload keeps exposing the
-     * decimal attributes so API and Inertia consumers are unaffected.
-     */
     protected $hidden = ['discount_fixed_cents'];
+
+    protected $appends = ['discount_fixed'];
 
     protected $casts = [
         'discount_percent' => 'decimal:2',
         'discount_fixed_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function discountFixed(): Attribute
     {
-        return $this->legacyMoneyAttribute('discount_fixed');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function discountFixedCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('discount_fixed');
+        return $this->moneyAttribute('discount_fixed');
     }
 
     /**

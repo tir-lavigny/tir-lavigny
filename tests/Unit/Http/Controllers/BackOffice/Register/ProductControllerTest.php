@@ -67,7 +67,7 @@ class ProductControllerTest extends TestCase
 
         $this->assertDatabaseHas('products', [
             'name' => 'Jus de pomme',
-            'unit_price' => 4.50,
+            'unit_price_cents' => 450,
         ]);
     }
 

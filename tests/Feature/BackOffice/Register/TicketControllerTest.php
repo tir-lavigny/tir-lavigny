@@ -122,7 +122,7 @@ class TicketControllerTest extends TestCase
         $response->assertRedirect(route('bo.register.operating-days.show', $day));
         $response->assertSessionHas('success');
 
-        $ticket = Ticket::where('operating_day_id', $day->id)->where('total', 25.00)->firstOrFail();
+        $ticket = Ticket::where('operating_day_id', $day->id)->where('total_cents', 2500)->firstOrFail();
         $this->assertEquals('25.00', $ticket->total);
         $this->assertEquals('cash', $ticket->payment_method);
         $this->assertNotNull($day->fresh()->closed_at);

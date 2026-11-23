@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @property string|null $initial_balance
+ * @property string $initial_balance
  * @property int|null $initial_balance_cents
  * @property-read float|null $end_balance
  */
@@ -28,14 +28,11 @@ class Season extends Model
         'end_date',
         'initial_balance',
         'initial_balance_cents',
-        'end_balance',
     ];
 
-    /**
-     * Cents columns stay internal: the serialized payload keeps exposing the
-     * decimal attributes so API and Inertia consumers are unaffected.
-     */
     protected $hidden = ['initial_balance_cents', 'end_balance_cents'];
+
+    protected $appends = ['initial_balance', 'end_balance'];
 
     protected $casts = [
         'start_date' => 'date',
@@ -43,16 +40,10 @@ class Season extends Model
         'initial_balance_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function initialBalance(): Attribute
     {
-        return $this->legacyMoneyAttribute('initial_balance');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function initialBalanceCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('initial_balance');
+        return $this->moneyAttribute('initial_balance');
     }
 
     /**
@@ -149,10 +140,7 @@ class Season extends Model
             OperatingDay::query()
                 ->whereKey($dayId)
                 ->whereNotNull('closed_at')
-                ->update([
-                    'closing_balance_cents' => $balanceCents,
-                    'closing_balance' => Money::fromCents($balanceCents),
-                ]);
+                ->update(['closing_balance_cents' => $balanceCents]);
         }
     }
 

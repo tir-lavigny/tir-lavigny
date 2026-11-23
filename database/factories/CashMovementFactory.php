@@ -17,7 +17,7 @@ class CashMovementFactory extends Factory
     {
         return [
             'season_id' => Season::factory(),
-            'amount' => fake()->randomFloat(2, 10, 500),
+            'amount_cents' => fake()->numberBetween(1000, 50000),
             'occurred_at' => now()->toDateString(),
             'remark' => null,
         ];

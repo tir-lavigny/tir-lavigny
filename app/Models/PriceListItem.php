@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @property string|null $unit_price
+ * @property string $unit_price
  * @property int|null $unit_price_cents
  */
 class PriceListItem extends Model
@@ -25,26 +25,18 @@ class PriceListItem extends Model
         'unit_price_cents',
     ];
 
-    /**
-     * Cents columns stay internal: the serialized payload keeps exposing the
-     * decimal attributes so API and Inertia consumers are unaffected.
-     */
     protected $hidden = ['unit_price_cents'];
+
+    protected $appends = ['unit_price'];
 
     protected $casts = [
         'unit_price_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function unitPrice(): Attribute
     {
-        return $this->legacyMoneyAttribute('unit_price');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function unitPriceCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('unit_price');
+        return $this->moneyAttribute('unit_price');
     }
 
     /**

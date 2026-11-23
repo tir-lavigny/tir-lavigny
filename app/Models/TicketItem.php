@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use LogicException;
 
 /**
- * @property string|null $unit_price
- * @property string|null $subtotal
+ * @property string $unit_price
+ * @property string $subtotal
  * @property int|null $unit_price_cents
  * @property int|null $subtotal_cents
  */
@@ -33,11 +33,9 @@ class TicketItem extends Model
         'subtotal_cents',
     ];
 
-    /**
-     * Cents columns stay internal: the serialized payload keeps exposing the
-     * decimal attributes so API and Inertia consumers are unaffected.
-     */
     protected $hidden = ['unit_price_cents', 'subtotal_cents'];
+
+    protected $appends = ['unit_price', 'subtotal'];
 
     protected $casts = [
         'quantity' => 'integer',
@@ -45,28 +43,16 @@ class TicketItem extends Model
         'subtotal_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function unitPrice(): Attribute
     {
-        return $this->legacyMoneyAttribute('unit_price');
+        return $this->moneyAttribute('unit_price');
     }
 
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function unitPriceCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('unit_price');
-    }
-
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function subtotal(): Attribute
     {
-        return $this->legacyMoneyAttribute('subtotal');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function subtotalCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('subtotal');
+        return $this->moneyAttribute('subtotal');
     }
 
     protected static function booted(): void

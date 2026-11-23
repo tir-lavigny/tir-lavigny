@@ -17,8 +17,8 @@ class VoucherFactory extends Factory
     {
         return [
             'discount_percent' => fake()->randomElement([5, 10, 15, 20, null]),
-            'discount_fixed' => fn (array $attributes) => $attributes['discount_percent'] === null
-                ? fake()->randomFloat(2, 1, 10)
+            'discount_fixed_cents' => fn (array $attributes) => $attributes['discount_percent'] === null
+                ? fake()->numberBetween(100, 1000)
                 : null,
             'product_id' => Product::factory(),
             'season_id' => Season::factory(),
@@ -30,7 +30,7 @@ class VoucherFactory extends Factory
     {
         return $this->state(fn () => [
             'discount_percent' => fake()->randomElement([5, 10, 15, 20]),
-            'discount_fixed' => null,
+            'discount_fixed_cents' => null,
         ]);
     }
 
@@ -38,7 +38,7 @@ class VoucherFactory extends Factory
     {
         return $this->state(fn () => [
             'discount_percent' => null,
-            'discount_fixed' => fake()->randomFloat(2, 1, 10),
+            'discount_fixed_cents' => fake()->numberBetween(100, 1000),
         ]);
     }
 }

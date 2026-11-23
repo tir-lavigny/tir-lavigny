@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use LogicException;
 
 /**
- * @property string|null $total
+ * @property string $total
  * @property int|null $total_cents
  */
 class Ticket extends Model
@@ -33,27 +33,19 @@ class Ticket extends Model
         'stock_location_id',
     ];
 
-    /**
-     * Cents columns stay internal: the serialized payload keeps exposing the
-     * decimal attributes so API and Inertia consumers are unaffected.
-     */
     protected $hidden = ['total_cents'];
+
+    protected $appends = ['total'];
 
     protected $casts = [
         'sold_at' => 'datetime',
         'total_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function total(): Attribute
     {
-        return $this->legacyMoneyAttribute('total');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function totalCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('total');
+        return $this->moneyAttribute('total');
     }
 
     protected static function booted(): void

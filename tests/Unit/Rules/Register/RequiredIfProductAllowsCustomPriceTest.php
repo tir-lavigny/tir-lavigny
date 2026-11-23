@@ -33,7 +33,7 @@ class RequiredIfProductAllowsCustomPriceTest extends TestCase
     {
         return DB::table('products')->insertGetId([
             'name' => 'Test Product',
-            'unit_price' => 10.00,
+            'unit_price_cents' => 1000,
             'allows_custom_price' => $allowsCustom,
             'category_id' => $this->createCategory(),
             'created_at' => now(),

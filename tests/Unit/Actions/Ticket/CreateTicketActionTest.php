@@ -81,7 +81,7 @@ class CreateTicketActionTest extends TestCase
             'id' => $ticket->id,
             'operating_day_id' => $day->id,
             'payment_method' => 'cash',
-            'total' => 10.00,
+            'total_cents' => 1000,
         ]);
         $this->assertDatabaseHas('ticket_items', [
             'ticket_id' => $ticket->id,
@@ -126,7 +126,7 @@ class CreateTicketActionTest extends TestCase
             'id' => $ticket->id,
             'operating_day_id' => $day->id,
             'payment_method' => 'cash',
-            'total' => 5.00,
+            'total_cents' => 500,
         ]);
     }
 

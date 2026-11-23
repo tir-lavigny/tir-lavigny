@@ -16,7 +16,7 @@ class ProductFactory extends Factory
         return [
             'name' => fake()->words(2, true),
             'picture' => null,
-            'unit_price' => fake()->randomFloat(2, 1, 50),
+            'unit_price_cents' => fake()->numberBetween(100, 5000),
             'allows_custom_price' => false,
             'category_id' => Category::factory(),
             'is_stockable' => true,

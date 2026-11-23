@@ -74,7 +74,7 @@ class StoreVoucherRequestTest extends TestCase
             'name' => 'Test Season',
             'start_date' => Carbon::now()->startOfYear()->toDateString(),
             'end_date' => Carbon::now()->endOfYear()->toDateString(),
-            'initial_balance' => 0,
+            'initial_balance_cents' => 0,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -84,7 +84,7 @@ class StoreVoucherRequestTest extends TestCase
     {
         return DB::table('products')->insertGetId([
             'name' => 'Test Product',
-            'unit_price' => 10.00,
+            'unit_price_cents' => 1000,
             'allows_custom_price' => false,
             'category_id' => $this->createCategory(),
             'created_at' => now(),

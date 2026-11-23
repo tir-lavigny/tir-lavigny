@@ -13,12 +13,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property string|null $total_cash
- * @property string|null $total_twint
+ * @property string $total_cash
+ * @property string $total_twint
  * @property int|null $total_cash_cents
  * @property int|null $total_twint_cents
  * @property int|null $closing_balance_cents
- * @property-read float|null $closing_balance
+ * @property-read float $closing_balance
  */
 class OperatingDay extends Model
 {
@@ -39,11 +39,18 @@ class OperatingDay extends Model
         'total_twint_cents',
     ];
 
-    /**
-     * Cents columns stay internal: the serialized payload keeps exposing the
-     * decimal attributes so API and Inertia consumers are unaffected.
-     */
     protected $hidden = ['closing_balance_cents', 'total_cash_cents', 'total_twint_cents'];
+
+    protected $appends = ['closing_balance', 'total_cash', 'total_twint'];
+
+    /**
+     * A new day starts with zero totals, matching the default the legacy
+     * decimal columns used to carry.
+     */
+    protected $attributes = [
+        'total_cash_cents' => 0,
+        'total_twint_cents' => 0,
+    ];
 
     protected $casts = [
         'date' => 'date',
@@ -54,34 +61,16 @@ class OperatingDay extends Model
         'total_twint_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function totalCash(): Attribute
     {
-        return $this->legacyMoneyAttribute('total_cash');
+        return $this->moneyAttribute('total_cash');
     }
 
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function totalCashCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('total_cash');
-    }
-
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function totalTwint(): Attribute
     {
-        return $this->legacyMoneyAttribute('total_twint');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function totalTwintCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('total_twint');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function closingBalanceCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('closing_balance');
+        return $this->moneyAttribute('total_twint');
     }
 
     /**
@@ -116,19 +105,12 @@ class OperatingDay extends Model
                     return Money::toFloat((int) $cents);
                 }
 
-                if (($attributes['closed_at'] ?? null) !== null && $value !== null) {
-                    return Money::toFloat(Money::toCents($value));
-                }
-
-                return $this->season?->closingBalanceFor($this);
+                return ($attributes['closed_at'] ?? null) === null
+                    ? $this->season?->closingBalanceFor($this)
+                    : null;
             },
             set: function (mixed $value): array {
-                $cents = Money::toCents($value);
-
-                return [
-                    'closing_balance_cents' => $cents,
-                    'closing_balance' => Money::fromCents($cents),
-                ];
+                return ['closing_balance_cents' => Money::toCents($value)];
             },
         );
     }

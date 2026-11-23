@@ -17,7 +17,7 @@ class PriceListItemFactory extends Factory
         return [
             'price_list_id' => PriceList::factory(),
             'product_id' => Product::factory(),
-            'unit_price' => fake()->randomFloat(2, 1, 50),
+            'unit_price_cents' => fake()->numberBetween(100, 5000),
         ];
     }
 }

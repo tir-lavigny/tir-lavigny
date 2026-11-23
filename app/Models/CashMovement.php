@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @property string|null $amount
+ * @property string $amount
  * @property int|null $amount_cents
  */
 class CashMovement extends Model
@@ -27,27 +27,19 @@ class CashMovement extends Model
         'remark',
     ];
 
-    /**
-     * Cents columns stay internal: the serialized payload keeps exposing the
-     * decimal attributes so API and Inertia consumers are unaffected.
-     */
     protected $hidden = ['amount_cents'];
+
+    protected $appends = ['amount'];
 
     protected $casts = [
         'occurred_at' => 'date',
         'amount_cents' => 'integer',
     ];
 
-    /** @return Attribute<string|null, array<string, int|string|null>> */
+    /** @return Attribute<string|null, array<string, int|null>> */
     protected function amount(): Attribute
     {
-        return $this->legacyMoneyAttribute('amount');
-    }
-
-    /** @return Attribute<int|null, array<string, int|string|null>> */
-    protected function amountCents(): Attribute
-    {
-        return $this->centsMoneyAttribute('amount');
+        return $this->moneyAttribute('amount');
     }
 
     /**

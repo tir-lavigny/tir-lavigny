@@ -58,7 +58,7 @@ class CashMovementControllerTest extends TestCase
             'remark' => 'Apport de la banque',
         ])->assertRedirect()->assertSessionHas('success');
 
-        $this->assertDatabaseHas('cash_movements', ['season_id' => $season->id, 'amount' => 500]);
+        $this->assertDatabaseHas('cash_movements', ['season_id' => $season->id, 'amount_cents' => 50000]);
         $this->assertEquals(1200.00, $day1->fresh()->closing_balance);
         $this->assertEquals(1800.00, $day2->fresh()->closing_balance);
         $this->assertEquals(1800.00, $season->fresh()->end_balance);
@@ -76,7 +76,7 @@ class CashMovementControllerTest extends TestCase
             'occurred_at' => '2026-05-02',
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('cash_movements', ['season_id' => $season->id, 'amount' => -300]);
+        $this->assertDatabaseHas('cash_movements', ['season_id' => $season->id, 'amount_cents' => -30000]);
         $this->assertEquals(1200.00, $day1->fresh()->closing_balance);
         $this->assertEquals(1000.00, $day2->fresh()->closing_balance);
         $this->assertEquals(1000.00, $season->fresh()->end_balance);
@@ -161,7 +161,7 @@ class CashMovementControllerTest extends TestCase
 
         $this->assertEquals(1200.00, $day1->fresh()->closing_balance);
         $this->assertEquals(1350.00, $day2->fresh()->closing_balance);
-        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount' => 50]);
+        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount_cents' => 5000]);
     }
 
     public function test_update_can_turn_an_injection_into_a_withdrawal(): void
@@ -181,7 +181,7 @@ class CashMovementControllerTest extends TestCase
             'occurred_at' => '2026-05-01',
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount' => -100]);
+        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount_cents' => -10000]);
         $this->assertEquals(1100.00, $day1->fresh()->closing_balance);
     }
 
@@ -334,7 +334,7 @@ class CashMovementControllerTest extends TestCase
             'occurred_at' => Carbon::tomorrow('Europe/Zurich')->toDateString(),
         ])->assertSessionHasErrors(['occurred_at']);
 
-        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount' => 100]);
+        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount_cents' => 10000]);
     }
 
     public function test_store_accepts_today(): void
@@ -385,7 +385,7 @@ class CashMovementControllerTest extends TestCase
         $this->put(route('bo.register.seasons.cash-movements.update', [$season, $movement]), $payload)->assertForbidden();
         $this->delete(route('bo.register.seasons.cash-movements.destroy', [$season, $movement]))->assertForbidden();
 
-        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount' => 100]);
+        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount_cents' => 10000]);
     }
 
     public function test_cannot_touch_a_movement_from_another_season(): void
@@ -406,7 +406,7 @@ class CashMovementControllerTest extends TestCase
 
         $this->delete(route('bo.register.seasons.cash-movements.destroy', [$season, $movement]))->assertNotFound();
 
-        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount' => 100]);
+        $this->assertDatabaseHas('cash_movements', ['id' => $movement->id, 'amount_cents' => 10000]);
     }
 
     public function test_season_show_exposes_movements_and_balance_summary(): void
