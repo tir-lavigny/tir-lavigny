@@ -18,6 +18,7 @@ import {
     MapPin,
     Newspaper,
     PanelTop,
+    Receipt,
     Repeat,
     ShoppingCart,
     Tag,
@@ -201,6 +202,18 @@ const stockNavItems: NavItem[] = [
         : []),
 ];
 
+const invoicingNavItems: NavItem[] = [
+    ...(hasAnyPermission(user, ['view invoices', 'manage invoicing'])
+        ? [
+              {
+                  title: 'Clients de facturation',
+                  href: route('bo.invoicing.billing-customers.index'),
+                  icon: Receipt,
+              },
+          ]
+        : []),
+];
+
 const managementNavItems: NavItem[] = [
     ...(hasPermissionTo(user, 'manage members')
         ? [
@@ -291,6 +304,13 @@ watch(
                 :items="stockNavItems"
                 label="Stock"
                 :default-open="persistentMenusState.stock"
+            />
+            <NavMainCollapsible
+                v-if="invoicingNavItems.length"
+                @update:open="persistentMenusState.invoicing = $event"
+                :items="invoicingNavItems"
+                label="Facturation"
+                :default-open="persistentMenusState.invoicing"
             />
             <NavMainCollapsible
                 v-if="managementNavItems.length"
