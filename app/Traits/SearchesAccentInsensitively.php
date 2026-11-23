@@ -85,6 +85,7 @@ trait SearchesAccentInsensitively
             'first_name' => $driver === 'sqlite' ? 'unaccent(first_name)' : 'first_name COLLATE utf8mb4_unicode_ci',
             'last_name' => $driver === 'sqlite' ? 'unaccent(last_name)' : 'last_name COLLATE utf8mb4_unicode_ci',
             'name' => $driver === 'sqlite' ? 'unaccent(name)' : 'name COLLATE utf8mb4_unicode_ci',
+            'organization_name' => $driver === 'sqlite' ? 'unaccent(organization_name)' : 'organization_name COLLATE utf8mb4_unicode_ci',
             'title' => $driver === 'sqlite' ? 'unaccent(title)' : 'title COLLATE utf8mb4_unicode_ci',
             'email' => $driver === 'sqlite' ? 'unaccent(email)' : 'email COLLATE utf8mb4_unicode_ci',
             default => throw new InvalidArgumentException("Unsupported accent-insensitive column [{$column}]."),
