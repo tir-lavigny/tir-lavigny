@@ -11,6 +11,7 @@ use App\Models\Ticket;
 use App\Models\TicketItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class MoneyColumnsTest extends TestCase
@@ -24,7 +25,23 @@ class MoneyColumnsTest extends TestCase
         ]);
     }
 
-    public function test_writing_a_decimal_amount_populates_both_columns(): void
+    public function test_legacy_decimal_money_columns_are_gone(): void
+    {
+        $this->assertFalse(Schema::hasColumn('products', 'unit_price'));
+        $this->assertFalse(Schema::hasColumn('price_list_items', 'unit_price'));
+        $this->assertFalse(Schema::hasColumn('vouchers', 'discount_fixed'));
+        $this->assertFalse(Schema::hasColumn('seasons', 'initial_balance'));
+        $this->assertFalse(Schema::hasColumn('seasons', 'end_balance'));
+        $this->assertFalse(Schema::hasColumn('operating_days', 'closing_balance'));
+        $this->assertFalse(Schema::hasColumn('operating_days', 'total_cash'));
+        $this->assertFalse(Schema::hasColumn('operating_days', 'total_twint'));
+        $this->assertFalse(Schema::hasColumn('cash_movements', 'amount'));
+        $this->assertFalse(Schema::hasColumn('tickets', 'total'));
+        $this->assertFalse(Schema::hasColumn('ticket_items', 'unit_price'));
+        $this->assertFalse(Schema::hasColumn('ticket_items', 'subtotal'));
+    }
+
+    public function test_writing_a_decimal_amount_stores_cents_only(): void
     {
         $product = $this->product();
 
@@ -33,31 +50,22 @@ class MoneyColumnsTest extends TestCase
         $this->assertSame(1234, $product->unit_price_cents);
         $this->assertSame('12.34', $product->unit_price);
         $this->assertSame(1234, (int) DB::table('products')->where('id', $product->id)->value('unit_price_cents'));
-        $this->assertEquals(12.34, (float) DB::table('products')->where('id', $product->id)->value('unit_price'));
     }
 
-    public function test_writing_cents_mirrors_the_decimal_column(): void
+    public function test_writing_cents_exposes_the_decimal_attribute(): void
     {
         $ticket = Ticket::factory()->create(['total_cents' => 1050]);
 
         $this->assertSame(1050, $ticket->total_cents);
         $this->assertSame('10.50', $ticket->total);
-        $this->assertEquals(10.50, (float) DB::table('tickets')->where('id', $ticket->id)->value('total'));
     }
 
-    public function test_reading_falls_back_to_the_decimal_column_when_cents_are_null(): void
+    public function test_a_null_amount_stays_null(): void
     {
-        $product = $this->product();
+        $season = Season::factory()->create(['initial_balance' => null]);
 
-        DB::table('products')->where('id', $product->id)->update([
-            'unit_price' => '3.99',
-            'unit_price_cents' => null,
-        ]);
-
-        $fresh = $product->fresh();
-
-        $this->assertSame(399, $fresh->unit_price_cents);
-        $this->assertSame('3.99', $fresh->unit_price);
+        $this->assertNull($season->initial_balance_cents);
+        $this->assertNull($season->initial_balance);
     }
 
     public function test_negative_cash_movements_keep_their_sign(): void
@@ -108,6 +116,8 @@ class MoneyColumnsTest extends TestCase
 
         $this->assertSame(225, $item->unit_price_cents);
         $this->assertSame(675, $item->subtotal_cents);
+        $this->assertSame('2.25', $item->unit_price);
+        $this->assertSame('6.75', $item->subtotal);
     }
 
     public function test_season_initial_balance_is_stored_as_cents(): void

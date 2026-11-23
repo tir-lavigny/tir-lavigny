@@ -15,7 +15,7 @@ class TicketItemFactory extends Factory
 {
     public function definition(): array
     {
-        $unitPrice = fake()->randomFloat(2, 1, 50);
+        $unitPriceCents = fake()->numberBetween(100, 5000);
         $quantity = fake()->numberBetween(1, 5);
 
         return [
@@ -23,8 +23,8 @@ class TicketItemFactory extends Factory
             'ticket_id' => Ticket::factory(),
             'voucher_id' => null,
             'quantity' => $quantity,
-            'unit_price' => $unitPrice,
-            'subtotal' => $unitPrice * $quantity,
+            'unit_price_cents' => $unitPriceCents,
+            'subtotal_cents' => $unitPriceCents * $quantity,
         ];
     }
 

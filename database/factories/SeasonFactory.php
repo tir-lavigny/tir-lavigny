@@ -18,8 +18,7 @@ class SeasonFactory extends Factory
             'name' => fake()->year().' Season',
             'start_date' => $start,
             'end_date' => (clone $start)->modify('+3 months'),
-            'initial_balance' => fake()->randomFloat(2, 0, 500),
-            'end_balance' => null,
+            'initial_balance_cents' => fake()->numberBetween(0, 50000),
         ];
     }
 }

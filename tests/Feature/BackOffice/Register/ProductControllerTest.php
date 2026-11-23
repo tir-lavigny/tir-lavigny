@@ -64,7 +64,7 @@ class ProductControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('products', [
             'name' => 'Jus de pomme',
-            'unit_price' => 4.50,
+            'unit_price_cents' => 450,
         ]);
     }
 
@@ -155,7 +155,7 @@ class ProductControllerTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('error');
-        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price' => 0]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'unit_price_cents' => 0]);
     }
 
     public function test_update_rejects_renaming_correction_product(): void

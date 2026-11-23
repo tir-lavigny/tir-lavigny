@@ -72,7 +72,7 @@ class StoreTicketRequestTest extends TestCase
             'name' => 'Test Season',
             'start_date' => Carbon::now()->startOfYear()->toDateString(),
             'end_date' => Carbon::now()->endOfYear()->toDateString(),
-            'initial_balance' => 0,
+            'initial_balance_cents' => 0,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -81,8 +81,8 @@ class StoreTicketRequestTest extends TestCase
             'date' => Carbon::now()->toDateString(),
             'started_at' => Carbon::now(),
             'season_id' => $seasonId,
-            'total_cash' => 0,
-            'total_twint' => 0,
+            'total_cash_cents' => 0,
+            'total_twint_cents' => 0,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -102,7 +102,7 @@ class StoreTicketRequestTest extends TestCase
     {
         return DB::table('products')->insertGetId([
             'name' => 'Test Product',
-            'unit_price' => 10.00,
+            'unit_price_cents' => 1000,
             'allows_custom_price' => $allowsCustom,
             'category_id' => $this->createCategory(),
             'created_at' => now(),

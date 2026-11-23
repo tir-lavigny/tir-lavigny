@@ -26,7 +26,7 @@ class DateNotDuplicateTest extends TestCase
             'name' => $name,
             'start_date' => $start,
             'end_date' => $end,
-            'initial_balance' => 0,
+            'initial_balance_cents' => 0,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -67,8 +67,8 @@ class DateNotDuplicateTest extends TestCase
             'date' => $testDate,
             'started_at' => now(),
             'season_id' => $season1,
-            'total_cash' => 0,
-            'total_twint' => 0,
+            'total_cash_cents' => 0,
+            'total_twint_cents' => 0,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -94,8 +94,8 @@ class DateNotDuplicateTest extends TestCase
             'date' => $testDate,
             'started_at' => now(),
             'season_id' => $seasonId,
-            'total_cash' => 0,
-            'total_twint' => 0,
+            'total_cash_cents' => 0,
+            'total_twint_cents' => 0,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

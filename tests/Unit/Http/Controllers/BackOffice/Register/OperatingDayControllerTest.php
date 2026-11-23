@@ -95,7 +95,7 @@ class OperatingDayControllerTest extends TestCase
 
         $this->assertDatabaseHas('operating_days', [
             'id' => $day->id,
-            'closing_balance' => 250.00,
+            'closing_balance_cents' => 25000,
         ]);
     }
 

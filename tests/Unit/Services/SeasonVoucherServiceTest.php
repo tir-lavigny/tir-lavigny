@@ -244,7 +244,7 @@ class SeasonVoucherServiceTest extends TestCase
 
         $this->assertDatabaseHas('vouchers', [
             'discount_percent' => 100.00,
-            'discount_fixed' => null,
+            'discount_fixed_cents' => null,
         ]);
     }
 

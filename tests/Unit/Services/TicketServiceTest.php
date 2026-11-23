@@ -86,7 +86,7 @@ class TicketServiceTest extends TestCase
             'id' => $ticket->id,
             'operating_day_id' => $day->id,
             'payment_method' => 'cash',
-            'total' => 15.00,
+            'total_cents' => 1500,
         ]);
     }
 
