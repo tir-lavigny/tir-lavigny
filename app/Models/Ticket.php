@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use App\Models\Concerns\HasMoneyColumns;
 use Database\Factories\TicketFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,10 +17,11 @@ use LogicException;
 class Ticket extends Model
 {
     /** @use HasFactory<TicketFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, HasMoneyColumns, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'total',
+        'total_cents',
         'payment_method',
         'operating_day_id',
         'member_id',
@@ -27,9 +30,18 @@ class Ticket extends Model
     ];
 
     protected $casts = [
-        'total' => 'decimal:2',
         'sold_at' => 'datetime',
     ];
+
+    protected function total(): Attribute
+    {
+        return $this->legacyMoneyAttribute('total');
+    }
+
+    protected function totalCents(): Attribute
+    {
+        return $this->centsMoneyAttribute('total');
+    }
 
     protected static function booted(): void
     {

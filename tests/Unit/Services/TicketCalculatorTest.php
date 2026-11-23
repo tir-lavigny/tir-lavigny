@@ -266,4 +266,52 @@ class TicketCalculatorTest extends TestCase
         $this->assertEquals(10.00, $result['items'][1]['subtotal']);
         $this->assertEquals(5.00, $result['items'][2]['subtotal']);
     }
+
+    public function test_compute_cents_returns_integer_amounts(): void
+    {
+        $product = $this->makeProduct(2.25);
+
+        $result = $this->calculator->computeCents([
+            ['product_id' => $product->id, 'quantity' => 3],
+        ]);
+
+        $this->assertSame(675, $result['total_cents']);
+        $this->assertSame([
+            'product_id' => $product->id,
+            'voucher_id' => null,
+            'quantity' => 3,
+            'unit_price_cents' => 225,
+            'subtotal_cents' => 675,
+        ], $result['items'][0]);
+    }
+
+    public function test_compute_cents_rounds_percentage_discounts_to_the_cent(): void
+    {
+        $season = $this->makeSeason();
+        $product = $this->makeProduct(1.00);
+        $voucher = Voucher::factory()->percent()->create([
+            'discount_percent' => 33.33,
+            'product_id' => $product->id,
+            'season_id' => $season->id,
+        ]);
+
+        $result = $this->calculator->computeCents([
+            ['product_id' => $product->id, 'quantity' => 1, 'voucher_ids' => [$voucher->id]],
+        ]);
+
+        // 33.33% of 100 cents = 33.33 cents, rounded to 33.
+        $this->assertSame(33, $result['items'][0]['subtotal_cents']);
+        $this->assertSame(33, $result['total_cents']);
+    }
+
+    public function test_compute_cents_does_not_drift_on_repeated_decimals(): void
+    {
+        $product = $this->makeProduct(0.10);
+
+        $result = $this->calculator->computeCents([
+            ['product_id' => $product->id, 'quantity' => 3],
+        ]);
+
+        $this->assertSame(30, $result['total_cents']);
+    }
 }

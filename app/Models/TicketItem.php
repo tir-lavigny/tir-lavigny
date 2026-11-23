@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasMoneyColumns;
 use Database\Factories\TicketItemFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +14,7 @@ use LogicException;
 class TicketItem extends Model
 {
     /** @use HasFactory<TicketItemFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasMoneyColumns, SoftDeletes;
 
     protected $fillable = [
         'product_id',
@@ -20,14 +22,34 @@ class TicketItem extends Model
         'voucher_id',
         'quantity',
         'unit_price',
+        'unit_price_cents',
         'subtotal',
+        'subtotal_cents',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
-        'unit_price' => 'decimal:2',
-        'subtotal' => 'decimal:2',
     ];
+
+    protected function unitPrice(): Attribute
+    {
+        return $this->legacyMoneyAttribute('unit_price');
+    }
+
+    protected function unitPriceCents(): Attribute
+    {
+        return $this->centsMoneyAttribute('unit_price');
+    }
+
+    protected function subtotal(): Attribute
+    {
+        return $this->legacyMoneyAttribute('subtotal');
+    }
+
+    protected function subtotalCents(): Attribute
+    {
+        return $this->centsMoneyAttribute('subtotal');
+    }
 
     protected static function booted(): void
     {

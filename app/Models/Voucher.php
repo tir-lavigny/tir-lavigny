@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use App\Models\Concerns\HasMoneyColumns;
 use Database\Factories\VoucherFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,11 +15,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Voucher extends Model
 {
     /** @use HasFactory<VoucherFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, HasMoneyColumns, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'discount_percent',
         'discount_fixed',
+        'discount_fixed_cents',
         'product_id',
         'season_id',
         'member_id',
@@ -25,8 +28,17 @@ class Voucher extends Model
 
     protected $casts = [
         'discount_percent' => 'decimal:2',
-        'discount_fixed' => 'decimal:2',
     ];
+
+    protected function discountFixed(): Attribute
+    {
+        return $this->legacyMoneyAttribute('discount_fixed');
+    }
+
+    protected function discountFixedCents(): Attribute
+    {
+        return $this->centsMoneyAttribute('discount_fixed');
+    }
 
     /**
      * @return BelongsTo<Product, $this>

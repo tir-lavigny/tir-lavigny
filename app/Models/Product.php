@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\LogsActivity;
+use App\Models\Concerns\HasMoneyColumns;
 use Database\Factories\ProductFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,22 +20,32 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, HasMoneyColumns, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'name',
         'picture',
         'unit_price',
+        'unit_price_cents',
         'allows_custom_price',
         'category_id',
         'is_stockable',
     ];
 
     protected $casts = [
-        'unit_price' => 'decimal:2',
         'allows_custom_price' => 'boolean',
         'is_stockable' => 'boolean',
     ];
+
+    protected function unitPrice(): Attribute
+    {
+        return $this->legacyMoneyAttribute('unit_price');
+    }
+
+    protected function unitPriceCents(): Attribute
+    {
+        return $this->centsMoneyAttribute('unit_price');
+    }
 
     /**
      * @return BelongsTo<Category, $this>

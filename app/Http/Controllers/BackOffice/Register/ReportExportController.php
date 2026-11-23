@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BackOffice\Register;
 use App\Http\Controllers\Controller;
 use App\Models\Season;
 use App\Services\StockReportService;
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -73,10 +74,10 @@ class ReportExportController extends Controller implements HasMiddleware
         foreach ($days as $day) {
             yield [
                 'Date' => $day->date->format('d.m.Y'),
-                'Total Espèces' => number_format((float) $day->total_cash, 2, ',', '.'),
-                'Total Twint' => number_format((float) $day->total_twint, 2, ',', '.'),
-                'Solde Clôture' => $day->closing_balance !== null
-                    ? number_format((float) $day->closing_balance, 2, ',', '.')
+                'Total Espèces' => number_format(Money::toFloat($day->total_cash_cents), 2, ',', '.'),
+                'Total Twint' => number_format(Money::toFloat($day->total_twint_cents), 2, ',', '.'),
+                'Solde Clôture' => $day->closing_balance_cents !== null
+                    ? number_format(Money::toFloat($day->closing_balance_cents), 2, ',', '.')
                     : '',
             ];
         }
@@ -97,7 +98,7 @@ class ReportExportController extends Controller implements HasMiddleware
                     '# Ticket' => $ticket->id,
                     'Vendu à' => $ticket->sold_at->setTimezone('Europe/Zurich')->format('H:i'),
                     'Paiement' => $ticket->payment_method === 'cash' ? 'Espèces' : 'TWINT',
-                    'Total' => number_format((float) $ticket->total, 2, ',', '.'),
+                    'Total' => number_format(Money::toFloat($ticket->total_cents), 2, ',', '.'),
                 ];
             }
         }
@@ -114,12 +115,12 @@ class ReportExportController extends Controller implements HasMiddleware
         foreach ($days as $day) {
             foreach ($day->tickets as $ticket) {
                 foreach ($ticket->ticketItems as $item) {
-                    $discount = 0;
+                    $discountCents = 0;
                     if ($item->voucher) {
                         if ($item->voucher->discount_percent !== null) {
-                            $discount = $item->unit_price * ($item->voucher->discount_percent / 100);
+                            $discountCents = Money::percentOf((int) $item->unit_price_cents, $item->voucher->discount_percent);
                         } else {
-                            $discount = $item->voucher->discount_fixed;
+                            $discountCents = (int) $item->voucher->discount_fixed_cents;
                         }
                     }
 
@@ -128,9 +129,9 @@ class ReportExportController extends Controller implements HasMiddleware
                         '# Ticket' => $ticket->id,
                         'Produit' => $item->product->name,
                         'Quantité' => $item->quantity,
-                        'Prix Unitaire' => number_format((float) $item->unit_price, 2, ',', '.'),
-                        'Sous-total' => number_format((float) $item->subtotal, 2, ',', '.'),
-                        'Réduction' => $discount > 0 ? number_format((float) $discount, 2, ',', '.') : '',
+                        'Prix Unitaire' => number_format(Money::toFloat($item->unit_price_cents), 2, ',', '.'),
+                        'Sous-total' => number_format(Money::toFloat($item->subtotal_cents), 2, ',', '.'),
+                        'Réduction' => $discountCents > 0 ? number_format(Money::toFloat($discountCents), 2, ',', '.') : '',
                     ];
                 }
             }
