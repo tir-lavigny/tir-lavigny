@@ -92,6 +92,29 @@ class FinancialDocumentTest extends TestCase
         $this->assertSame(FinancialDocumentStatus::Stored, $document->fresh()->status);
     }
 
+    public function test_regenerate_command_replaces_archived_pdf(): void
+    {
+        $invoice = Invoice::factory()->create();
+        $document = FinancialDocument::create([
+            'documentable_type' => $invoice->getMorphClass(),
+            'documentable_id' => $invoice->id,
+            'status' => FinancialDocumentStatus::Stored,
+            'disk' => 'local',
+            'path' => 'invoices/2027/2027-0001.pdf',
+            'sha256' => hash('sha256', 'old'),
+            'generated_at' => now(),
+            'archived_at' => now(),
+        ]);
+
+        $this->artisan('invoicing:regenerate-documents')
+            ->assertFailed();
+
+        $this->artisan('invoicing:regenerate-documents', ['--force' => true])
+            ->assertSuccessful();
+
+        $this->assertSame(FinancialDocumentStatus::Stored, $document->fresh()->status);
+    }
+
     public function test_pdf_generation_failure_rolls_back_issuance(): void
     {
         $actor = User::factory()->create();
