@@ -234,19 +234,66 @@ const statusLabel = computed(() => {
                 <H3>Montants</H3>
                 <div class="mt-4 grid gap-2 text-sm">
                     <div class="flex justify-between">
-                        <span>Total</span><span class="font-mono">{{ formatMoney(creditNote.total) }}</span>
+                        <span class="inline-flex items-center gap-1">
+                            Total
+                            <Tooltip>
+                                <TooltipTrigger as-child>
+                                    <Info class="text-muted-foreground h-3.5 w-3.5" />
+                                </TooltipTrigger>
+                                <TooltipContent>Montant total du crédit accordé par cet avoir.</TooltipContent>
+                            </Tooltip>
+                        </span>
+                        <span class="font-mono">{{ formatMoney(creditNote.total) }}</span>
                     </div>
                     <div v-if="appliedCents > 0" class="flex justify-between">
-                        <span>Imputé</span><span class="font-mono">{{ formatMoney(appliedCents / 100) }}</span>
+                        <span class="inline-flex items-center gap-1">
+                            Imputé
+                            <Tooltip>
+                                <TooltipTrigger as-child>
+                                    <Info class="text-muted-foreground h-3.5 w-3.5" />
+                                </TooltipTrigger>
+                                <TooltipContent>Montant du crédit déjà utilisé pour réduire une facture.</TooltipContent>
+                            </Tooltip>
+                        </span>
+                        <span class="font-mono">{{ formatMoney(appliedCents / 100) }}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span>Remboursé</span><span class="font-mono">{{ formatMoney(refundedCents / 100) }}</span>
+                        <span class="inline-flex items-center gap-1">
+                            Remboursé
+                            <Tooltip>
+                                <TooltipTrigger as-child>
+                                    <Info class="text-muted-foreground h-3.5 w-3.5" />
+                                </TooltipTrigger>
+                                <TooltipContent>Montant déjà remboursé au client. Il réduit le crédit disponible.</TooltipContent>
+                            </Tooltip>
+                        </span>
+                        <span class="font-mono">{{ formatMoney(refundedCents / 100) }}</span>
                     </div>
                     <div v-if="reversedCents > 0" class="flex justify-between">
-                        <span>Annulé</span><span class="font-mono">{{ formatMoney(reversedCents / 100) }}</span>
+                        <span class="inline-flex items-center gap-1">
+                            Annulé
+                            <Tooltip>
+                                <TooltipTrigger as-child>
+                                    <Info class="text-muted-foreground h-3.5 w-3.5" />
+                                </TooltipTrigger>
+                                <TooltipContent>Montant déjà annulé par un ou plusieurs avoirs d'annulation.</TooltipContent>
+                            </Tooltip>
+                        </span>
+                        <span class="font-mono">{{ formatMoney(reversedCents / 100) }}</span>
                     </div>
                     <div class="flex justify-between font-semibold">
-                        <span>Disponible</span><span class="font-mono">{{ formatMoney(availableCents / 100) }}</span>
+                        <span class="inline-flex items-center gap-1">
+                            Disponible
+                            <Tooltip>
+                                <TooltipTrigger as-child>
+                                    <Info class="text-muted-foreground h-3.5 w-3.5" />
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    >Crédit restant utilisable pour une imputation, un remboursement ou un avoir d'annulation.</TooltipContent
+                                >
+                            </Tooltip>
+                        </span>
+                        <span class="font-mono">{{ formatMoney(availableCents / 100) }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span>Émis le</span><span>{{ creditNote.issued_at ? formatDate(creditNote.issued_at, 'DD.MM.YYYY') : '—' }}</span>
