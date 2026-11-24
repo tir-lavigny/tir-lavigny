@@ -5,43 +5,38 @@
     @include('pdfs.partials.style')
 </head>
 <body>
-    <table class="brand">
-        <tr>
-            <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
-            <td>
-                <div class="brand-name">{{ $creditNote->creditor_name }}</div>
-                <div class="brand-meta">
-                    {{ $creditNote->creditor_address }}<br>
-                    {{ $creditNote->creditor_postal_code }} {{ $creditNote->creditor_city }}<br>
-                    {{ $creditNote->creditor_country }}
-                </div>
-            </td>
-            <td class="right">
-                <div class="eyebrow">Avoir</div>
-                <h1>{{ $creditNote->credit_note_number }}</h1>
-                <div class="small muted">Facture {{ $creditNote->invoice->invoice_number }}</div>
-            </td>
-        </tr>
-    </table>
+    <div class="page-top">
+        <table class="brand-right">
+            <tr>
+                <td class="right">
+                    <div class="brand-name">{{ $creditNote->creditor_name }}</div>
+                    <div class="brand-meta">
+                        {{ $creditNote->creditor_address }}<br>
+                        {{ $creditNote->creditor_postal_code }} {{ $creditNote->creditor_city }}<br>
+                        {{ $creditNote->creditor_country }}
+                    </div>
+                </td>
+                <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
+            </tr>
+        </table>
 
-    <table class="doc-meta">
-        <tr>
-            <td style="width: 58%;">
-                <div class="eyebrow">Établi pour</div>
-                <div class="party">
-                    <strong>{{ $creditNote->recipient_name }}</strong><br>
-                    {{ $creditNote->recipient_address }}<br>
-                    {{ $creditNote->recipient_postal_code }} {{ $creditNote->recipient_city }}<br>
-                    {{ $creditNote->recipient_country }}
-                </div>
-            </td>
-            <td class="right">
-                <div class="eyebrow">Émission</div>
-                <div>{{ $creditNote->issue_date?->format('d.m.Y') }}</div>
-                <div class="small muted" style="margin-top: 3mm;">Devise {{ $creditNote->currency->value }}</div>
-            </td>
-        </tr>
-    </table>
+        <div class="address-window">
+            <div class="party">
+                <strong>{{ $creditNote->recipient_name }}</strong><br>
+                {{ $creditNote->recipient_address }}<br>
+                {{ $creditNote->recipient_postal_code }} {{ $creditNote->recipient_city }}<br>
+                {{ $creditNote->recipient_country }}
+            </div>
+        </div>
+
+        <div class="doc-title right">
+            <div class="eyebrow">Avoir</div>
+            <h1>{{ $creditNote->credit_note_number }}</h1>
+            <div class="small muted">Facture {{ $creditNote->invoice->invoice_number }}</div>
+            <div class="small muted" style="margin-top: 3mm;">Émis le {{ $creditNote->issue_date?->format('d.m.Y') }}</div>
+            <div class="small muted">Devise {{ $creditNote->currency->value }}</div>
+        </div>
+    </div>
 
     <h2>Motif</h2>
     <div class="reference">

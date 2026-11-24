@@ -5,43 +5,38 @@
     @include('pdfs.partials.style')
 </head>
 <body>
-    <table class="brand">
-        <tr>
-            <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
-            <td>
-                <div class="brand-name">{{ $invoice->creditor_name }}</div>
-                <div class="brand-meta">
-                    {{ $invoice->creditor_address }}<br>
-                    {{ $invoice->creditor_postal_code }} {{ $invoice->creditor_city }}<br>
-                    {{ $invoice->creditor_country }} · {{ $invoice->creditor_iban }}
-                </div>
-            </td>
-            <td class="right">
-                <div class="eyebrow">Facture</div>
-                <h1>{{ $invoice->invoice_number }}</h1>
-                <div class="small muted">Émise le {{ $invoice->issue_date?->format('d.m.Y') }}</div>
-            </td>
-        </tr>
-    </table>
+    <div class="page-top">
+        <table class="brand-right">
+            <tr>
+                <td class="right">
+                    <div class="brand-name">{{ $invoice->creditor_name }}</div>
+                    <div class="brand-meta">
+                        {{ $invoice->creditor_address }}<br>
+                        {{ $invoice->creditor_postal_code }} {{ $invoice->creditor_city }}<br>
+                        {{ $invoice->creditor_country }} · {{ $invoice->creditor_iban }}
+                    </div>
+                </td>
+                <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
+            </tr>
+        </table>
 
-    <table class="doc-meta">
-        <tr>
-            <td style="width: 58%;">
-                <div class="eyebrow">Facturé à</div>
-                <div class="party">
-                    <strong>{{ $invoice->recipient_name }}</strong><br>
-                    {{ $invoice->recipient_address }}<br>
-                    {{ $invoice->recipient_postal_code }} {{ $invoice->recipient_city }}<br>
-                    {{ $invoice->recipient_country }}
-                </div>
-            </td>
-            <td class="right">
-                <div class="eyebrow">Échéance</div>
-                <div>{{ $invoice->due_date?->format('d.m.Y') }}</div>
-                <div class="small muted" style="margin-top: 3mm;">Devise {{ $invoice->currency->value }}</div>
-            </td>
-        </tr>
-    </table>
+        <div class="address-window">
+            <div class="party">
+                <strong>{{ $invoice->recipient_name }}</strong><br>
+                {{ $invoice->recipient_address }}<br>
+                {{ $invoice->recipient_postal_code }} {{ $invoice->recipient_city }}<br>
+                {{ $invoice->recipient_country }}
+            </div>
+        </div>
+
+        <div class="doc-title right">
+            <div class="eyebrow">Facture</div>
+            <h1>{{ $invoice->invoice_number }}</h1>
+            <div class="small muted">Émise le {{ $invoice->issue_date?->format('d.m.Y') }}</div>
+            <div class="small muted" style="margin-top: 3mm;">Échéance le {{ $invoice->due_date?->format('d.m.Y') }}</div>
+            <div class="small muted">Devise {{ $invoice->currency->value }}</div>
+        </div>
+    </div>
 
     <h2>Détail de la facture</h2>
     <table class="lines">

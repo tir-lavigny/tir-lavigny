@@ -2,10 +2,16 @@
 
 namespace Tests\Feature\BackOffice\Invoicing;
 
+use App\Domains\Invoicing\Actions\CreditNotes\CreateCreditNote;
+use App\Domains\Invoicing\Actions\CreditNotes\CreateCreditNoteReversal;
+use App\Domains\Invoicing\Actions\CreditNotes\IssueCreditNote;
+use App\Domains\Invoicing\Actions\CreditNotes\IssueCreditNoteReversal;
+use App\Domains\Invoicing\Actions\CreditNotes\ReverseCreditNoteApplication;
 use App\Domains\Invoicing\Actions\Invoices\CreateInvoice;
 use App\Domains\Invoicing\Actions\Invoices\IssueInvoice;
 use App\Domains\Invoicing\Enums\FinancialDocumentStatus;
 use App\Domains\Invoicing\Models\BillingCustomer;
+use App\Domains\Invoicing\Models\CreditNote;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Models\InvoiceItem;
 use App\Domains\Invoicing\Services\FinancialDocumentArchiver;
@@ -76,6 +82,49 @@ class PdfDocumentsTest extends TestCase
         $this->assertSame('SCOR', $qrBill->getPaymentReference()?->getType());
         $this->assertStringStartsWith('RF', (string) $qrBill->getPaymentReference()?->getReference());
         $this->assertSame("Facture {$invoice->invoice_number}", $qrBill->getAdditionalInformation()?->getFormattedString());
+    }
+
+    public function test_generates_credit_note_and_reversal_pdf_documents(): void
+    {
+        $actor = User::factory()->create();
+        $customer = BillingCustomer::factory()->create();
+        $invoice = app(CreateInvoice::class)->execute($this->invoiceData($customer->id), $actor);
+        $invoice = app(IssueInvoice::class)->execute($invoice, $actor);
+
+        $creditNote = app(CreateCreditNote::class)->execute([
+            'invoice_id' => $invoice->id,
+            'reason' => 'Correction',
+            'issue_date' => '2027-01-20',
+            'items' => [
+                ['description' => 'Correction', 'quantity' => '1', 'unit_price' => '50.00'],
+            ],
+        ], $actor);
+        $creditNote = app(IssueCreditNote::class)->execute($creditNote, $actor);
+
+        $this->assertSame(FinancialDocumentStatus::Stored, $creditNote->document?->status);
+        $this->assertStringStartsWith(
+            '%PDF',
+            Storage::disk($creditNote->document->disk)->get($creditNote->document->path),
+        );
+
+        $application = $creditNote->applications()->firstOrFail();
+        app(ReverseCreditNoteApplication::class)->execute($application, 5000, 'Correction', $actor);
+        $creditNote = CreditNote::query()->findOrFail($creditNote->id);
+
+        $reversal = app(CreateCreditNoteReversal::class)->execute($creditNote, [
+            'reason' => 'Annulation',
+            'issue_date' => '2027-02-01',
+            'items' => [
+                ['description' => 'Annulation', 'amount' => '50.00'],
+            ],
+        ], $actor);
+        $reversal = app(IssueCreditNoteReversal::class)->execute($reversal, $actor);
+
+        $this->assertSame(FinancialDocumentStatus::Stored, $reversal->document?->status);
+        $this->assertStringStartsWith(
+            '%PDF',
+            Storage::disk($reversal->document->disk)->get($reversal->document->path),
+        );
     }
 
     private function issuedInvoice(): Invoice

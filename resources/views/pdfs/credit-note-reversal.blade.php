@@ -5,43 +5,38 @@
     @include('pdfs.partials.style')
 </head>
 <body>
-    <table class="brand">
-        <tr>
-            <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
-            <td>
-                <div class="brand-name">{{ $reversal->creditor_name }}</div>
-                <div class="brand-meta">
-                    {{ $reversal->creditor_address }}<br>
-                    {{ $reversal->creditor_postal_code }} {{ $reversal->creditor_city }}<br>
-                    {{ $reversal->creditor_country }}
-                </div>
-            </td>
-            <td class="right">
-                <div class="eyebrow">Avoir d’annulation</div>
-                <h1>{{ $reversal->credit_note_reversal_number }}</h1>
-                <div class="small muted">Avoir {{ $reversal->creditNote->credit_note_number }}</div>
-            </td>
-        </tr>
-    </table>
+    <div class="page-top">
+        <table class="brand-right">
+            <tr>
+                <td class="right">
+                    <div class="brand-name">{{ $reversal->creditor_name }}</div>
+                    <div class="brand-meta">
+                        {{ $reversal->creditor_address }}<br>
+                        {{ $reversal->creditor_postal_code }} {{ $reversal->creditor_city }}<br>
+                        {{ $reversal->creditor_country }}
+                    </div>
+                </td>
+                <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
+            </tr>
+        </table>
 
-    <table class="doc-meta">
-        <tr>
-            <td style="width: 58%;">
-                <div class="eyebrow">Établi pour</div>
-                <div class="party">
-                    <strong>{{ $reversal->recipient_name }}</strong><br>
-                    {{ $reversal->recipient_address }}<br>
-                    {{ $reversal->recipient_postal_code }} {{ $reversal->recipient_city }}<br>
-                    {{ $reversal->recipient_country }}
-                </div>
-            </td>
-            <td class="right">
-                <div class="eyebrow">Émission</div>
-                <div>{{ $reversal->issue_date?->format('d.m.Y') }}</div>
-                <div class="small muted" style="margin-top: 3mm;">Devise {{ $reversal->currency->value }}</div>
-            </td>
-        </tr>
-    </table>
+        <div class="address-window">
+            <div class="party">
+                <strong>{{ $reversal->recipient_name }}</strong><br>
+                {{ $reversal->recipient_address }}<br>
+                {{ $reversal->recipient_postal_code }} {{ $reversal->recipient_city }}<br>
+                {{ $reversal->recipient_country }}
+            </div>
+        </div>
+
+        <div class="doc-title right">
+            <div class="eyebrow">Avoir d’annulation</div>
+            <h1>{{ $reversal->credit_note_reversal_number }}</h1>
+            <div class="small muted">Avoir {{ $reversal->creditNote->credit_note_number }}</div>
+            <div class="small muted" style="margin-top: 3mm;">Émis le {{ $reversal->issue_date?->format('d.m.Y') }}</div>
+            <div class="small muted">Devise {{ $reversal->currency->value }}</div>
+        </div>
+    </div>
 
     <h2>Motif</h2>
     <div class="reference">
