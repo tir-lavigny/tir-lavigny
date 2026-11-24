@@ -63,6 +63,28 @@ class InvoicingSettingsTest extends TestCase
         ]);
     }
 
+    public function test_saves_envelope_window_side(): void
+    {
+        $this->actingAs($this->admin())
+            ->put(route('bo.invoicing.settings.update'), $this->settingsData([
+                'envelope_window' => 'right',
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('invoicing_settings', [
+            'envelope_window' => 'right',
+        ]);
+    }
+
+    public function test_rejects_invalid_envelope_window_side(): void
+    {
+        $this->actingAs($this->admin())
+            ->put(route('bo.invoicing.settings.update'), $this->settingsData([
+                'envelope_window' => 'top',
+            ]))
+            ->assertSessionHasErrors('envelope_window');
+    }
+
     public function test_missing_settings_block_invoice_creation(): void
     {
         InvoicingSettings::query()->delete();
@@ -94,6 +116,7 @@ class InvoicingSettingsTest extends TestCase
             'creditor_city' => 'Lavigny',
             'creditor_country' => 'CH',
             'creditor_iban' => 'CH9300762011623852957',
+            'envelope_window' => 'left',
             ...$overrides,
         ];
     }

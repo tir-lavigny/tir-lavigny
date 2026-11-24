@@ -6,26 +6,44 @@
 </head>
 <body>
     <div class="page-top">
-        <table class="brand-right">
-            <tr>
-                <td class="right">
-                    <div class="brand-name">{{ $invoice->creditor_name }}</div>
-                    <div class="brand-meta">
-                        {{ $invoice->creditor_address }}<br>
-                        {{ $invoice->creditor_postal_code }} {{ $invoice->creditor_city }}<br>
-                        {{ $invoice->creditor_country }} · {{ $invoice->creditor_iban }}
-                    </div>
-                </td>
-                <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
-            </tr>
-        </table>
+        @if ($envelopeWindow === 'right')
+            <table class="brand-left">
+                <tr>
+                    <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
+                    <td>
+                        <div class="brand-name">{{ $invoice->creditor_name }}</div>
+                        <div class="brand-meta">
+                            {{ $invoice->creditor_address }}<br>
+                            {{ $invoice->creditor_postal_code }} {{ $invoice->creditor_city }}<br>
+                            {{ $invoice->creditor_country }} · {{ $invoice->creditor_iban }}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        @else
+            <table class="brand-right">
+                <tr>
+                    <td class="right">
+                        <div class="brand-name">{{ $invoice->creditor_name }}</div>
+                        <div class="brand-meta">
+                            {{ $invoice->creditor_address }}<br>
+                            {{ $invoice->creditor_postal_code }} {{ $invoice->creditor_city }}<br>
+                            {{ $invoice->creditor_country }} · {{ $invoice->creditor_iban }}
+                        </div>
+                    </td>
+                    <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
+                </tr>
+            </table>
+        @endif
 
-        <div class="address-window">
+        <div class="address-window window-{{ $envelopeWindow }}">
             <div class="party">
                 <strong>{{ $invoice->recipient_name }}</strong><br>
                 {{ $invoice->recipient_address }}<br>
-                {{ $invoice->recipient_postal_code }} {{ $invoice->recipient_city }}<br>
-                {{ $invoice->recipient_country }}
+                {{ $invoice->recipient_postal_code }} {{ $invoice->recipient_city }}
+                @if (strtoupper($invoice->recipient_country) !== 'CH')
+                    <br>{{ $invoice->recipient_country }}
+                @endif
             </div>
         </div>
 

@@ -3,6 +3,7 @@ import { H1, H3 } from '@/components/typography/headings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
@@ -15,6 +16,7 @@ interface InvoicingSettings {
     creditor_city: string;
     creditor_country: string;
     creditor_iban: string;
+    envelope_window: 'left' | 'right';
 }
 
 const props = defineProps<{
@@ -34,6 +36,7 @@ const form = useForm({
     creditor_city: props.settings?.creditor_city ?? '',
     creditor_country: props.settings?.creditor_country ?? 'CH',
     creditor_iban: props.settings?.creditor_iban ?? '',
+    envelope_window: props.settings?.envelope_window ?? 'left',
 });
 
 const submit = () => {
@@ -102,6 +105,23 @@ const submit = () => {
                         placeholder="CH93 0076 2011 6238 5295 7"
                     />
                     <p v-if="form.errors.creditor_iban" class="text-destructive mt-1 text-sm">{{ form.errors.creditor_iban }}</p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <Label for="envelope_window">Fenêtre de l’enveloppe</Label>
+                    <Select v-model="form.envelope_window">
+                        <SelectTrigger id="envelope_window" class="mt-1 w-full">
+                            <SelectValue placeholder="Sélectionner une fenêtre" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="left">Fenêtre à gauche</SelectItem>
+                            <SelectItem value="right">Fenêtre à droite</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p class="text-muted-foreground mt-1 text-sm">
+                        Détermine la position de l’adresse du destinataire et du bloc expéditeur sur les PDF.
+                    </p>
+                    <p v-if="form.errors.envelope_window" class="text-destructive mt-1 text-sm">{{ form.errors.envelope_window }}</p>
                 </div>
 
                 <div class="md:col-span-2">
