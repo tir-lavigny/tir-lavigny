@@ -4,6 +4,7 @@ use App\Http\Controllers\BackOffice\DashboardController;
 use App\Http\Controllers\BackOffice\DavController;
 use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
+use App\Http\Controllers\BackOffice\Invoicing\BillingCustomerController as BackOfficeBillingCustomerController;
 use App\Http\Controllers\BackOffice\MemberController;
 use App\Http\Controllers\BackOffice\MemberExportController;
 use App\Http\Controllers\BackOffice\MemberRegistrationController as BackOfficeMemberRegistrationController;
@@ -299,6 +300,30 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
             ->name('bo.register.trash.restore');
         Route::delete('trash/{type}/{id}', [Register\TrashController::class, 'forceDelete'])
             ->name('bo.register.trash.force-delete');
+    });
+
+    Route::prefix('invoicing')->name('bo.invoicing.')->group(function () {
+        Route::middleware('permission:view invoices|manage invoicing')->group(function () {
+            Route::get('billing-customers', [BackOfficeBillingCustomerController::class, 'index'])
+                ->name('billing-customers.index');
+        });
+
+        Route::middleware('permission:manage invoicing')->group(function () {
+            Route::get('billing-customers/create', [BackOfficeBillingCustomerController::class, 'create'])
+                ->name('billing-customers.create');
+            Route::post('billing-customers', [BackOfficeBillingCustomerController::class, 'store'])
+                ->name('billing-customers.store');
+            Route::post('billing-customers/sync-member', [BackOfficeBillingCustomerController::class, 'syncMember'])
+                ->name('billing-customers.sync-member');
+            Route::get('billing-customers/{billingCustomer}/edit', [BackOfficeBillingCustomerController::class, 'edit'])
+                ->name('billing-customers.edit');
+            Route::put('billing-customers/{billingCustomer}', [BackOfficeBillingCustomerController::class, 'update'])
+                ->name('billing-customers.update');
+            Route::delete('billing-customers/{billingCustomer}', [BackOfficeBillingCustomerController::class, 'destroy'])
+                ->name('billing-customers.destroy');
+            Route::post('billing-customers/{billingCustomer}/sync-member', [BackOfficeBillingCustomerController::class, 'syncExisting'])
+                ->name('billing-customers.sync');
+        });
     });
 
     // ── Stock Management ──

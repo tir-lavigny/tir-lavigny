@@ -76,6 +76,18 @@ class RolesAndPermissionsSeeder extends Seeder
         $recordStockLossPermission = Permission::firstOrCreate(['name' => 'record stock loss']);
         $compactStockPermission = Permission::firstOrCreate(['name' => 'compact stock']);
 
+        // Invoicing permissions
+        $viewInvoicesPermission = Permission::firstOrCreate(['name' => 'view invoices']);
+        $createInvoicesPermission = Permission::firstOrCreate(['name' => 'create invoices']);
+        $issueInvoicesPermission = Permission::firstOrCreate(['name' => 'issue invoices']);
+        $sendInvoicesPermission = Permission::firstOrCreate(['name' => 'send invoices']);
+        $cancelInvoicesPermission = Permission::firstOrCreate(['name' => 'cancel invoices']);
+        $viewPaymentsPermission = Permission::firstOrCreate(['name' => 'view payments']);
+        $createPaymentsPermission = Permission::firstOrCreate(['name' => 'create payments']);
+        $manageInvoicingPermission = Permission::firstOrCreate(['name' => 'manage invoicing']);
+        $manageMembershipFeesPermission = Permission::firstOrCreate(['name' => 'manage membership fees']);
+        $manageInvoiceRemindersPermission = Permission::firstOrCreate(['name' => 'manage invoice reminders']);
+
         $cashierRole = Role::firstOrCreate(['name' => 'cashier']);
         $cashierManagerRole = Role::firstOrCreate(['name' => 'cashier manager']);
         $accountantRole = Role::firstOrCreate(['name' => 'accountant']);
@@ -128,6 +140,16 @@ class RolesAndPermissionsSeeder extends Seeder
             $manageStockPermission,
             $recordStockLossPermission,
             $compactStockPermission,
+            $viewInvoicesPermission,
+            $createInvoicesPermission,
+            $issueInvoicesPermission,
+            $sendInvoicesPermission,
+            $cancelInvoicesPermission,
+            $viewPaymentsPermission,
+            $createPaymentsPermission,
+            $manageInvoicingPermission,
+            $manageMembershipFeesPermission,
+            $manageInvoiceRemindersPermission,
         ]);
 
         $editorRole->syncPermissions([
@@ -202,6 +224,21 @@ class RolesAndPermissionsSeeder extends Seeder
             $createMemberRegistrationPermission,
             $manageMemberRegistrationPermission,
             $manageMembersPermission,
+        ]);
+
+        $treasurerRole = Role::firstOrCreate(['name' => 'treasurer']);
+        $treasurerRole->syncPermissions([
+            $backOfficeAccessPermission,
+            $viewInvoicesPermission,
+            $createInvoicesPermission,
+            $issueInvoicesPermission,
+            $sendInvoicesPermission,
+            $cancelInvoicesPermission,
+            $viewPaymentsPermission,
+            $createPaymentsPermission,
+            $manageInvoicingPermission,
+            $manageMembershipFeesPermission,
+            $manageInvoiceRemindersPermission,
         ]);
 
         // Role used as mailing list for members
