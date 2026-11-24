@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\EncryptedMemberData;
+use App\Domains\Invoicing\Models\BillingCustomer;
 use App\LogsActivity;
 use App\MemberStatus;
 use App\Support\MemberDataCipher;
@@ -121,6 +122,14 @@ class Member extends Model
     public function registration(): HasOne
     {
         return $this->hasOne(MemberRegistration::class);
+    }
+
+    /**
+     * @return HasOne<BillingCustomer, $this>
+     */
+    public function billingCustomer(): HasOne
+    {
+        return $this->hasOne(BillingCustomer::class);
     }
 
     public function isAnonymized(): bool

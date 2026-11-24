@@ -83,6 +83,34 @@ export interface Content {
     events_count?: number;
 }
 
+export interface BillingCustomer {
+    id: number;
+    member_id: number | null;
+    type: 'individual' | 'organization';
+    first_name: string | null;
+    last_name: string | null;
+    organization_name: string | null;
+    address: string;
+    postal_code: string;
+    city: string;
+    country: string;
+    email: string | null;
+    phone: string | null;
+    preferred_invoice_delivery: 'email' | 'postal';
+    member?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string | null;
+    } | null;
+    created_at: string; // ISO 8601 format
+    updated_at: string; // ISO 8601 format
+}
+
+export interface PaginatedBillingCustomers extends PaginatedData<BillingCustomer> {
+    data?: BillingCustomer[];
+}
+
 export abstract class PaginatedData<T> {
     abstract current_page: number;
     abstract data?: T[];
