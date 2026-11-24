@@ -153,6 +153,7 @@ class InvoiceController extends Controller
             'creditNoteApplications.reversals',
             'paymentAllocations.payment',
             'document',
+            'deliveries.processor',
         ]);
 
         return Inertia::render('backOffice/Invoicing/Invoices/Show', [

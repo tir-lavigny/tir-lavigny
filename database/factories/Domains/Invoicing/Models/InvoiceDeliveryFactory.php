@@ -7,6 +7,7 @@ use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Models\InvoiceDelivery;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<InvoiceDelivery>
@@ -21,10 +22,12 @@ class InvoiceDeliveryFactory extends Factory
             'invoice_id' => Invoice::factory(),
             'channel' => InvoiceDeliveryMethod::Email,
             'recipient' => fake()->safeEmail(),
+            'batch_id' => (string) Str::uuid(),
             'status' => DeliveryStatus::Pending,
             'processed_at' => null,
             'processed_by' => null,
             'notes' => null,
+            'error' => null,
         ];
     }
 }

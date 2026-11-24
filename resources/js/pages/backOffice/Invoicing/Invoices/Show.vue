@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useInvoicePrinting } from '@/composables/useInvoicePrinting';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasAnyPermission, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Invoice, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { CheckCircle2, Download, Pencil, RefreshCw, Trash2, XCircle } from '@lucide/vue';
+import { ArrowLeftRight, CheckCircle2, Download, Mail, Pencil, Printer, RefreshCw, Trash2, XCircle } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -27,8 +29,23 @@ const canCreate = computed(() => hasAnyPermission(user, ['create invoices', 'man
 const canIssue = computed(() => hasAnyPermission(user, ['issue invoices', 'manage invoicing']));
 const canCancel = computed(() => hasAnyPermission(user, ['cancel invoices', 'manage invoicing']));
 const canManageInvoicing = computed(() => hasPermissionTo(user, 'manage invoicing'));
+const canSend = computed(() => hasAnyPermission(user, ['send invoices', 'manage invoicing']));
 const hasStoredDocument = computed(() => props.invoice.document?.status === 'stored');
 const documentFailed = computed(() => props.invoice.document?.status === 'failed');
+const isDistributable = computed(() => ['issued', 'partially_paid', 'paid'].includes(props.invoice.status));
+const emailPending = computed(() =>
+    (props.invoice.deliveries ?? []).some((delivery) => delivery.channel === 'email' && delivery.status === 'pending'),
+);
+const emailSent = computed(() => (props.invoice.deliveries ?? []).some((delivery) => delivery.channel === 'email' && delivery.status === 'sent'));
+const deliveryStarted = computed(() => (props.invoice.deliveries ?? []).some((delivery) => ['pending', 'sent', 'printed'].includes(delivery.status)));
+const canSendEmail = computed(
+    () => isDistributable.value && canSend.value && props.invoice.delivery_method === 'email' && hasStoredDocument.value && !emailPending.value,
+);
+const canPrintInvoice = computed(
+    () => isDistributable.value && canSend.value && props.invoice.delivery_method === 'postal' && hasStoredDocument.value,
+);
+const canChangeDeliveryMethod = computed(() => isDistributable.value && canSend.value && !deliveryStarted.value);
+const { printing, printInvoice: printInvoicePdf } = useInvoicePrinting();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Factures', href: route('bo.invoicing.invoices.index') },
@@ -37,6 +54,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const cancelDialogOpen = ref(false);
 const cancelForm = useForm({ reason: '' });
+const deliveryDialogOpen = ref(false);
+const deliveryMethodForm = useForm({ delivery_method: props.invoice.delivery_method });
 
 const issueInvoice = () => {
     router.post(
@@ -100,6 +119,53 @@ const statusLabel = computed(() => {
         cancelled: 'Annulée',
     }[props.invoice.status];
 });
+
+const deliveryStatusLabel = (status: string): string => {
+    const labels: Record<string, string> = {
+        pending: 'En attente',
+        sent: 'Envoyé',
+        failed: 'Échec',
+        printed: 'Imprimé',
+    };
+
+    return labels[status] ?? status;
+};
+
+const channelLabel = (channel: string): string => (channel === 'email' ? 'Email' : 'Postal');
+
+const sendEmail = (): void => {
+    router.post(
+        route('bo.invoicing.invoices.email', props.invoice.id),
+        {},
+        {
+            preserveScroll: true,
+            onError: (errors) => toast.error(errors.action ?? "L'envoi a échoué."),
+        },
+    );
+};
+
+const printCurrentInvoice = async (): Promise<void> => {
+    await printInvoicePdf(props.invoice.id);
+};
+
+const openDeliveryDialog = (): void => {
+    deliveryMethodForm.delivery_method = props.invoice.delivery_method;
+    deliveryMethodForm.clearErrors();
+    deliveryDialogOpen.value = true;
+};
+
+const submitDeliveryMethod = (): void => {
+    deliveryMethodForm.put(route('bo.invoicing.invoices.delivery-method', props.invoice.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            deliveryDialogOpen.value = false;
+        },
+        onError: (errors) => {
+            const formErrors = errors as Record<string, string>;
+            toast.error(formErrors.action ?? formErrors.delivery_method ?? 'Le mode de distribution n’a pas pu être modifié.');
+        },
+    });
+};
 </script>
 
 <template>
@@ -122,6 +188,16 @@ const statusLabel = computed(() => {
                 </Button>
                 <Button v-if="hasStoredDocument" as-child variant="outline">
                     <a :href="route('bo.invoicing.invoices.pdf', invoice.id)"> <Download class="mr-2 h-4 w-4" /> Télécharger le PDF </a>
+                </Button>
+                <Button v-if="canSendEmail" variant="outline" @click="sendEmail">
+                    <Mail class="mr-2 h-4 w-4" />
+                    {{ emailSent ? 'Renvoyer par email' : 'Envoyer par email' }}
+                </Button>
+                <Button v-if="canPrintInvoice" variant="outline" :disabled="printing" @click="printCurrentInvoice">
+                    <Printer class="mr-2 h-4 w-4" /> Imprimer
+                </Button>
+                <Button v-if="canChangeDeliveryMethod" variant="outline" @click="openDeliveryDialog">
+                    <ArrowLeftRight class="mr-2 h-4 w-4" /> Mode d’envoi
                 </Button>
                 <Button v-if="documentFailed && canManageInvoicing" variant="outline" @click="retryDocument">
                     <RefreshCw class="mr-2 h-4 w-4" /> Réessayer l’archivage
@@ -297,6 +373,41 @@ const statusLabel = computed(() => {
         </div>
 
         <div class="border-sidebar-border/70 dark:border-sidebar-border mx-4 mt-4 rounded-xl border p-4">
+            <H3>Distribution</H3>
+            <p v-if="!invoice.deliveries?.length" class="text-muted-foreground mt-4 text-sm">Aucune distribution enregistrée.</p>
+            <div v-else class="mt-4 overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Canal</TableHead>
+                            <TableHead>Destinataire</TableHead>
+                            <TableHead>Statut</TableHead>
+                            <TableHead>Traité par</TableHead>
+                            <TableHead>Détail</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow v-for="delivery in invoice.deliveries" :key="delivery.id">
+                            <TableCell>{{ formatDate(delivery.created_at, 'DD.MM.YYYY HH:mm') }}</TableCell>
+                            <TableCell>{{ channelLabel(delivery.channel) }}</TableCell>
+                            <TableCell class="max-w-xs whitespace-normal">{{ delivery.recipient }}</TableCell>
+                            <TableCell>
+                                <Badge variant="secondary">{{ deliveryStatusLabel(delivery.status) }}</Badge>
+                            </TableCell>
+                            <TableCell>{{ delivery.processor?.name ?? '—' }}</TableCell>
+                            <TableCell class="text-muted-foreground max-w-sm whitespace-normal">
+                                <span v-if="delivery.error" class="text-destructive">{{ delivery.error }}</span>
+                                <span v-else-if="delivery.processed_at">{{ formatDate(delivery.processed_at, 'DD.MM.YYYY HH:mm') }}</span>
+                                <span v-else>—</span>
+                            </TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+
+        <div class="border-sidebar-border/70 dark:border-sidebar-border mx-4 mt-4 rounded-xl border p-4">
             <H3>Historique</H3>
             <ul class="mt-4 flex flex-col gap-3 text-sm">
                 <li v-for="log in invoice.activity_logs" :key="log.id" class="flex flex-col gap-1">
@@ -325,6 +436,36 @@ const statusLabel = computed(() => {
                 <DialogFooter>
                     <Button variant="outline" @click="cancelDialogOpen = false">Annuler</Button>
                     <Button variant="destructive" :disabled="cancelForm.processing" @click="submitCancel">Confirmer</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog v-model:open="deliveryDialogOpen">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Mode de distribution</DialogTitle>
+                    <DialogDescription>
+                        Le mode peut être modifié tant qu’aucun envoi n’a commencé. Les coordonnées historiques de la facture sont conservées.
+                    </DialogDescription>
+                </DialogHeader>
+                <div class="grid gap-2">
+                    <Label for="delivery_method">Mode d’envoi</Label>
+                    <Select v-model="deliveryMethodForm.delivery_method">
+                        <SelectTrigger id="delivery_method" class="w-full">
+                            <SelectValue placeholder="Sélectionner un mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="email">Email</SelectItem>
+                            <SelectItem value="postal">Postal</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p v-if="deliveryMethodForm.errors.delivery_method" class="text-destructive text-sm">
+                        {{ deliveryMethodForm.errors.delivery_method }}
+                    </p>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" @click="deliveryDialogOpen = false">Annuler</Button>
+                    <Button :disabled="deliveryMethodForm.processing" @click="submitDeliveryMethod">Enregistrer</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

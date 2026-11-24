@@ -11,3 +11,12 @@ Artisan::command('inspire', function () {
 Schedule::command('telescope:prune')->weekly();
 Schedule::command('idempotency:prune')->daily();
 Schedule::command('activitylogs:prune')->daily();
+
+Schedule::command('queue:work', [
+    '--stop-when-empty',
+    '--max-time=50',
+    '--tries=3',
+    '--backoff=60',
+])
+    ->everyMinute()
+    ->withoutOverlapping(2);
