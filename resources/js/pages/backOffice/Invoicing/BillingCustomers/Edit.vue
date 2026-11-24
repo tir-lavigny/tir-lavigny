@@ -6,6 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { BillingCustomer, BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { RefreshCw } from '@lucide/vue';
+import { computed } from 'vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{
@@ -19,7 +20,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Modifier le client', href: route('bo.invoicing.billing-customers.edit', props.billingCustomer.id) },
 ];
 
-const formDefaults = {
+const formDefaults = computed(() => ({
     type: props.billingCustomer.type,
     first_name: props.billingCustomer.first_name ?? '',
     last_name: props.billingCustomer.last_name ?? '',
@@ -31,7 +32,7 @@ const formDefaults = {
     email: props.billingCustomer.email ?? '',
     phone: props.billingCustomer.phone ?? '',
     preferred_invoice_delivery: props.billingCustomer.preferred_invoice_delivery,
-};
+}));
 
 const submit = (form: any) => {
     form.put(route('bo.invoicing.billing-customers.update', props.billingCustomer.id), {

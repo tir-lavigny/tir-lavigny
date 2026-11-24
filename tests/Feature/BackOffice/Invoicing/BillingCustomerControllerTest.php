@@ -283,6 +283,7 @@ class BillingCustomerControllerTest extends TestCase
 
         $response = $this->post(route('bo.invoicing.billing-customers.sync', $billingCustomer));
 
+        $response->assertRedirect(route('bo.invoicing.billing-customers.edit', $billingCustomer));
         $response->assertSessionHas('success');
         $this->assertSame('Morges', $billingCustomer->fresh()->city);
     }
