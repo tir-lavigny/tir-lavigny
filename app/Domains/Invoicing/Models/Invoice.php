@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -199,6 +200,19 @@ class Invoice extends Model
     public function creditNoteApplications(): HasMany
     {
         return $this->hasMany(CreditNoteApplication::class);
+    }
+
+    /**
+     * @return HasManyThrough<CreditNoteApplicationReversal, CreditNoteApplication, $this>
+     */
+    public function creditNoteApplicationReversals(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            CreditNoteApplicationReversal::class,
+            CreditNoteApplication::class,
+            'invoice_id',
+            'credit_note_application_id',
+        );
     }
 
     /**

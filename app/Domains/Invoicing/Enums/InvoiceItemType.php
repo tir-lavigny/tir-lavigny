@@ -13,9 +13,19 @@ enum InvoiceItemType: string
     {
         return match ($this) {
             self::Product => 'Produit',
-            self::Fee => 'Taxe',
+            self::Fee => 'Frais / prestation',
             self::Discount => 'Remise',
             self::Adjustment => 'Ajustement',
+        };
+    }
+
+    public function description(): string
+    {
+        return match ($this) {
+            self::Product => "Vente d'un article.",
+            self::Fee => 'Cotisation, participation ou service.',
+            self::Discount => 'Réduction accordée, montant négatif.',
+            self::Adjustment => 'Correction positive ou négative.',
         };
     }
 }

@@ -16,6 +16,8 @@ class InvoiceActivityLog extends Model
 
     public $timestamps = false;
 
+    protected $appends = ['action_label'];
+
     protected $fillable = [
         'invoice_id',
         'user_id',
@@ -46,6 +48,25 @@ class InvoiceActivityLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getActionLabelAttribute(): string
+    {
+        return match ($this->action) {
+            'invoice.created' => 'Facture créée',
+            'invoice.updated' => 'Facture modifiée',
+            'invoice.issued' => 'Facture émise',
+            'invoice.cancelled' => 'Facture annulée',
+            'invoice.deleted' => 'Brouillon supprimé',
+            'credit_note.created' => 'Avoir créé',
+            'credit_note.updated' => 'Avoir modifié',
+            'credit_note.deleted' => 'Avoir supprimé',
+            'credit_note.issued' => 'Avoir émis',
+            'credit_note.refunded' => 'Remboursement enregistré',
+            'credit_note.reversal_created' => "Avoir d'annulation créé",
+            'credit_note.reversal_issued' => "Avoir d'annulation émis",
+            default => $this->action,
+        };
     }
 
     protected static function booted(): void

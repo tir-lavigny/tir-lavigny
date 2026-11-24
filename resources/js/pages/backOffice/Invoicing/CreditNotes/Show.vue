@@ -8,17 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasAnyPermission } from '@/lib/utils';
 import type { BreadcrumbItem, CreditNote, CreditNoteApplication, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { CheckCircle2, Pencil, Trash2 } from '@lucide/vue';
+import { CheckCircle2, Info, Pencil, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     creditNote: CreditNote;
     availableCents: number;
+    appliedCents: number;
+    refundedCents: number;
+    reversedCents: number;
     targetInvoices: Array<{ id: number; invoice_number: string | null; recipient_name: string; total: string; status: string }>;
 }>();
 
@@ -27,6 +31,18 @@ const user = page.props.auth.user;
 const canCreate = computed(() => hasAnyPermission(user, ['create invoices', 'manage invoicing']));
 const canIssue = computed(() => hasAnyPermission(user, ['issue invoices', 'manage invoicing']));
 const canManage = computed(() => hasAnyPermission(user, ['manage invoicing']));
+const reversible = computed(() => props.availableCents > 0 && props.appliedCents === 0 && props.refundedCents === 0);
+const reversalBlockedReason = computed(() => {
+    if (props.appliedCents > 0) {
+        return "Annulez d'abord les imputations.";
+    }
+
+    if (props.refundedCents > 0) {
+        return "Les remboursements doivent être réconciliés avant un avoir d'annulation.";
+    }
+
+    return 'Aucun crédit disponible à annuler.';
+});
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Avoirs', href: route('bo.invoicing.credit-notes.index') },
@@ -57,7 +73,7 @@ const issueCreditNote = () => {
         {
             preserveScroll: true,
             onSuccess: () => toast.success('Avoir émis.'),
-            onError: () => toast.error("Erreur lors de l'émission de l'avoir."),
+            onError: (errors) => toast.error(errors.action ?? "Erreur lors de l'émission de l'avoir."),
         },
     );
 };
@@ -65,7 +81,7 @@ const issueCreditNote = () => {
 const deleteCreditNote = () => {
     router.delete(route('bo.invoicing.credit-notes.destroy', props.creditNote.id), {
         onSuccess: () => toast.success('Avoir brouillon supprimé.'),
-        onError: () => toast.error("Erreur lors de la suppression de l'avoir."),
+        onError: (errors) => toast.error(errors.action ?? "Erreur lors de la suppression de l'avoir."),
     });
 };
 
@@ -77,7 +93,7 @@ const submitApply = () => {
             applyForm.reset();
             toast.success('Avoir imputé.');
         },
-        onError: () => toast.error("Erreur lors de l'imputation."),
+        onError: (errors) => toast.error(errors.amount ?? errors.action ?? "Erreur lors de l'imputation."),
     });
 };
 
@@ -89,7 +105,7 @@ const submitRefund = () => {
             refundForm.reset();
             toast.success('Remboursement enregistré.');
         },
-        onError: () => toast.error("Erreur lors de l'enregistrement du remboursement."),
+        onError: (errors) => toast.error(errors.amount ?? errors.action ?? "Erreur lors de l'enregistrement du remboursement."),
     });
 };
 
@@ -111,7 +127,7 @@ const submitReverseApplication = () => {
             reverseDialogOpen.value = false;
             toast.success('Imputation annulée.');
         },
-        onError: () => toast.error("Erreur lors de l'annulation de l'imputation."),
+        onError: (errors) => toast.error(errors.amount ?? errors.action ?? "Erreur lors de l'annulation de l'imputation."),
     });
 };
 
@@ -122,7 +138,7 @@ const issueReversal = (reversalId: number) => {
         {
             preserveScroll: true,
             onSuccess: () => toast.success("Avoir d'annulation émis."),
-            onError: () => toast.error("Erreur lors de l'émission de l'avoir d'annulation."),
+            onError: (errors) => toast.error(errors.action ?? "Erreur lors de l'émission de l'avoir d'annulation."),
         },
     );
 };
@@ -181,9 +197,17 @@ const statusLabel = computed(() => {
                 <Button v-if="creditNote.status !== 'draft' && availableCents > 0 && canManage" variant="outline" @click="refundDialogOpen = true">
                     Remboursement
                 </Button>
-                <Button v-if="creditNote.status !== 'draft' && canManage" as-child variant="outline">
+                <Button v-if="creditNote.status !== 'draft' && canManage && reversible" as-child variant="outline">
                     <Link :href="route('bo.invoicing.credit-notes.reversals.create', creditNote.id)">Créer un avoir d'annulation</Link>
                 </Button>
+                <Tooltip v-else-if="creditNote.status !== 'draft' && canManage">
+                    <TooltipTrigger as-child>
+                        <span>
+                            <Button disabled variant="outline"> <Info class="mr-2 h-4 w-4" /> Créer un avoir d'annulation </Button>
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent>{{ reversalBlockedReason }}</TooltipContent>
+                </Tooltip>
                 <AppAlertDialog
                     v-if="creditNote.status === 'draft' && canCreate"
                     title="Supprimer ce brouillon ?"
@@ -262,7 +286,9 @@ const statusLabel = computed(() => {
                     <TableRow>
                         <TableHead>Facture</TableHead>
                         <TableHead>Date</TableHead>
-                        <TableHead class="text-right">Montant</TableHead>
+                        <TableHead class="text-right">Montant initial</TableHead>
+                        <TableHead class="text-right">Annulé</TableHead>
+                        <TableHead class="text-right">Net</TableHead>
                         <TableHead class="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -275,6 +301,21 @@ const statusLabel = computed(() => {
                         </TableCell>
                         <TableCell>{{ formatDate(application.applied_at, 'DD.MM.YYYY') }}</TableCell>
                         <TableCell class="text-right font-mono">{{ formatMoney(application.amount) }}</TableCell>
+                        <TableCell
+                            class="text-right font-mono"
+                            :title="
+                                (application.reversals ?? [])
+                                    .map((reversal) => `${formatDate(reversal.reversed_at, 'DD.MM.YYYY')} · ${reversal.reason}`)
+                                    .join('\n')
+                            "
+                            >{{ formatMoney((application.reversals ?? []).reduce((sum, reversal) => sum + Number(reversal.amount), 0)) }}</TableCell
+                        >
+                        <TableCell class="text-right font-mono">
+                            <span :class="{ 'text-muted-foreground line-through': applicationNet(application) === 0 }">{{
+                                formatMoney(applicationNet(application))
+                            }}</span>
+                            <Badge v-if="applicationNet(application) === 0" variant="outline" class="ml-2">Annulé</Badge>
+                        </TableCell>
                         <TableCell class="text-right">
                             <Button
                                 v-if="canManage && applicationNet(application) > 0"
@@ -303,7 +344,7 @@ const statusLabel = computed(() => {
                 <TableBody>
                     <TableRow v-for="refund in creditNote.refunds" :key="refund.id">
                         <TableCell>{{ formatDate(refund.refund_date, 'DD.MM.YYYY') }}</TableCell>
-                        <TableCell>{{ refund.payment_method }}</TableCell>
+                        <TableCell>{{ refund.payment_method_label ?? refund.payment_method }}</TableCell>
                         <TableCell class="text-right font-mono">{{ formatMoney(refund.amount) }}</TableCell>
                     </TableRow>
                 </TableBody>
@@ -372,7 +413,9 @@ const statusLabel = computed(() => {
                 </DialogHeader>
                 <div class="grid gap-2">
                     <Label for="refund_amount">Montant</Label>
-                    <Input id="refund_amount" v-model="refundForm.amount" type="number" step="0.01" min="0.01" />
+                    <Input id="refund_amount" v-model="refundForm.amount" type="number" step="0.01" min="0.01" :max="availableCents / 100" />
+                    <p class="text-muted-foreground text-xs">Disponible : {{ formatMoney(availableCents / 100) }}</p>
+                    <p v-if="refundForm.errors.amount" class="text-destructive text-sm">{{ refundForm.errors.amount }}</p>
                     <Label for="refund_date">Date</Label>
                     <Input id="refund_date" v-model="refundForm.refund_date" type="date" />
                     <Label for="refund_method">Méthode</Label>

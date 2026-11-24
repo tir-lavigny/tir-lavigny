@@ -15,7 +15,10 @@ import { CheckCircle2, Pencil, Trash2, XCircle } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
-const props = defineProps<{ invoice: Invoice }>();
+const props = defineProps<{
+    invoice: Invoice;
+    balance: { paid_cents: number; credited_cents: number; outstanding_cents: number };
+}>();
 
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
@@ -39,7 +42,7 @@ const issueInvoice = () => {
         {
             preserveScroll: true,
             onSuccess: () => toast.success('Facture émise.'),
-            onError: () => toast.error("Erreur lors de l'émission."),
+            onError: (errors) => toast.error(errors.action ?? "Erreur lors de l'émission."),
         },
     );
 };
@@ -51,14 +54,14 @@ const submitCancel = () => {
             cancelDialogOpen.value = false;
             toast.success('Facture annulée.');
         },
-        onError: () => toast.error("Erreur lors de l'annulation."),
+        onError: (errors) => toast.error(errors.action ?? errors.reason ?? "Erreur lors de l'annulation."),
     });
 };
 
 const deleteInvoice = () => {
     router.delete(route('bo.invoicing.invoices.destroy', props.invoice.id), {
         onSuccess: () => toast.success('Facture brouillon supprimée.'),
-        onError: () => toast.error('Erreur lors de la suppression.'),
+        onError: (errors) => toast.error(errors.action ?? 'Erreur lors de la suppression.'),
     });
 };
 
@@ -155,6 +158,28 @@ const statusLabel = computed(() => {
         </div>
 
         <div class="border-sidebar-border/70 dark:border-sidebar-border mx-4 mt-4 rounded-xl border p-4">
+            <H3>Situation financière</H3>
+            <div class="mt-4 grid grid-cols-1 gap-2 text-sm md:grid-cols-4">
+                <div>
+                    <div class="text-muted-foreground">Total facture</div>
+                    <div class="font-mono">{{ formatMoney(invoice.total) }}</div>
+                </div>
+                <div>
+                    <div class="text-muted-foreground">Payé</div>
+                    <div class="font-mono">{{ formatMoney(balance.paid_cents / 100) }}</div>
+                </div>
+                <div>
+                    <div class="text-muted-foreground">Crédité par avoirs</div>
+                    <div class="font-mono">{{ formatMoney(balance.credited_cents / 100) }}</div>
+                </div>
+                <div>
+                    <div class="text-muted-foreground">Reste à payer</div>
+                    <div class="font-mono font-semibold">{{ formatMoney(balance.outstanding_cents / 100) }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-sidebar-border/70 dark:border-sidebar-border mx-4 mt-4 rounded-xl border p-4">
             <H3>Lignes</H3>
             <div class="mt-4">
                 <Table>
@@ -170,7 +195,7 @@ const statusLabel = computed(() => {
                     <TableBody>
                         <TableRow v-for="item in invoice.items" :key="item.id">
                             <TableCell>{{ item.description }}</TableCell>
-                            <TableCell>{{ item.type }}</TableCell>
+                            <TableCell>{{ item.type_label ?? item.type }}</TableCell>
                             <TableCell class="text-right">{{ item.quantity }}</TableCell>
                             <TableCell class="text-right font-mono">{{ formatMoney(item.unit_price) }}</TableCell>
                             <TableCell class="text-right font-mono">{{ formatMoney(item.total) }}</TableCell>
@@ -189,6 +214,40 @@ const statusLabel = computed(() => {
             </div>
         </div>
 
+        <div
+            v-if="invoice.credit_note_applications?.length"
+            class="border-sidebar-border/70 dark:border-sidebar-border mx-4 mt-4 rounded-xl border p-4"
+        >
+            <H3>Crédits appliqués</H3>
+            <Table class="mt-4">
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Avoir</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead class="text-right">Montant</TableHead>
+                        <TableHead class="text-right">Annulé</TableHead>
+                        <TableHead class="text-right">Net</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    <TableRow v-for="application in invoice.credit_note_applications" :key="application.id">
+                        <TableCell class="font-mono">{{ application.credit_note?.credit_note_number ?? `#${application.credit_note_id}` }}</TableCell>
+                        <TableCell>{{ formatDate(application.applied_at, 'DD.MM.YYYY') }}</TableCell>
+                        <TableCell class="text-right font-mono">{{ formatMoney(application.amount) }}</TableCell>
+                        <TableCell class="text-right font-mono">{{
+                            formatMoney((application.reversals ?? []).reduce((sum, reversal) => sum + Number(reversal.amount), 0))
+                        }}</TableCell>
+                        <TableCell class="text-right font-mono">{{
+                            formatMoney(
+                                Number(application.amount) -
+                                    (application.reversals ?? []).reduce((sum, reversal) => sum + Number(reversal.amount), 0),
+                            )
+                        }}</TableCell>
+                    </TableRow>
+                </TableBody>
+            </Table>
+        </div>
+
         <div v-if="invoice.cancellation_reason" class="border-destructive/40 mx-4 mt-4 rounded-xl border p-4 text-sm">
             <H3>Annulation</H3>
             <p class="mt-2">{{ invoice.cancellation_reason }}</p>
@@ -200,7 +259,7 @@ const statusLabel = computed(() => {
             <ul class="mt-4 flex flex-col gap-3 text-sm">
                 <li v-for="log in invoice.activity_logs" :key="log.id" class="flex flex-col gap-1">
                     <div class="flex items-center justify-between gap-4">
-                        <span class="font-medium">{{ log.action }}</span>
+                        <span class="font-medium">{{ log.action_label ?? log.action }}</span>
                         <span class="text-muted-foreground">{{ formatDate(log.created_at, 'DD.MM.YYYY HH:mm') }}</span>
                     </div>
                     <span v-if="log.user" class="text-muted-foreground">{{ log.user.name }}</span>

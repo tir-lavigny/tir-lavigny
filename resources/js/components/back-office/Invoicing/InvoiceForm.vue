@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useForm } from '@inertiajs/vue3';
-import { Plus, Trash2 } from '@lucide/vue';
-import { onMounted, ref, watch } from 'vue';
+import { Info, Plus, Trash2 } from '@lucide/vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 export interface InvoiceLineForm {
     type: string;
@@ -37,15 +38,16 @@ interface InvoiceTotalsPreview {
 
 const props = defineProps<{
     formDefaults: InvoiceFormDefaults;
-    billingCustomers: Array<{ id: number; name: string; email: string | null }>;
+    billingCustomers: Array<{ id: number; name: string; email: string | null; preferred_invoice_delivery: string }>;
     deliveryMethods: Array<{ value: string; label: string }>;
+    itemTypes: Array<{ value: string; label: string; description: string }>;
     previewUrl: string;
     submitLabel: string;
     onSubmit: (form: any) => void;
 }>();
 
 const blankLine = (): InvoiceLineForm => ({
-    type: 'fee',
+    type: 'product',
     description: '',
     quantity: '1',
     unit_price: '',
@@ -59,6 +61,23 @@ const form = useForm<any>({
     ...props.formDefaults,
     items: initialItems,
 });
+
+const selectedCustomer = computed(() => props.billingCustomers.find((customer) => String(customer.id) === String(form.billing_customer_id)));
+const customerHasEmail = computed(() => Boolean(selectedCustomer.value?.email));
+const availableDeliveryMethods = computed(() => props.deliveryMethods.filter((method) => method.value !== 'email' || customerHasEmail.value));
+
+watch(
+    () => form.billing_customer_id,
+    () => {
+        const customer = selectedCustomer.value;
+
+        if (!customer) {
+            return;
+        }
+
+        form.delivery_method = customer.email ? customer.preferred_invoice_delivery : 'postal';
+    },
+);
 
 const totals = ref<InvoiceTotalsPreview | null>(null);
 let previewTimer: ReturnType<typeof setTimeout> | undefined;
@@ -109,9 +128,15 @@ watch(
     { deep: true },
 );
 
-onMounted(fetchPreview);
+onMounted(() => {
+    if (selectedCustomer.value && !selectedCustomer.value.email) {
+        form.delivery_method = 'postal';
+    }
 
-const addLine = (type = 'fee') => {
+    fetchPreview();
+});
+
+const addLine = (type = 'product') => {
     form.items.push({ ...blankLine(), type });
 };
 
@@ -146,15 +171,28 @@ const lineTotal = (index: number | string): string => totals.value?.lines[Number
             </div>
 
             <div class="grid gap-2">
-                <Label for="delivery_method">Mode d'envoi</Label>
+                <div class="flex items-center gap-1">
+                    <Label for="delivery_method">Mode d'envoi</Label>
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Info class="text-muted-foreground h-4 w-4" />
+                        </TooltipTrigger>
+                        <TooltipContent> Email nécessite une adresse email valide. Postal prépare la facture pour l'impression. </TooltipContent>
+                    </Tooltip>
+                </div>
                 <Select v-model="form.delivery_method">
                     <SelectTrigger id="delivery_method" class="w-full">
                         <SelectValue placeholder="Sélectionner un mode" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem v-for="method in deliveryMethods" :key="method.value" :value="method.value">{{ method.label }}</SelectItem>
+                        <SelectItem v-for="method in availableDeliveryMethods" :key="method.value" :value="method.value">{{
+                            method.label
+                        }}</SelectItem>
                     </SelectContent>
                 </Select>
+                <p v-if="selectedCustomer && !customerHasEmail" class="text-muted-foreground text-xs">
+                    Ce client n'a pas d'adresse email. Envoi postal uniquement.
+                </p>
                 <InputError :message="form.errors.delivery_method" />
             </div>
 
@@ -175,7 +213,7 @@ const lineTotal = (index: number | string): string => totals.value?.lines[Number
             <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <Label>Lignes de facture</Label>
                 <div class="flex gap-2">
-                    <Button type="button" variant="outline" @click="addLine('fee')"> <Plus class="mr-2 h-4 w-4" /> Ligne </Button>
+                    <Button type="button" variant="outline" @click="addLine()"> <Plus class="mr-2 h-4 w-4" /> Ligne </Button>
                     <Button type="button" variant="outline" @click="addLine('discount')"> <Plus class="mr-2 h-4 w-4" /> Remise </Button>
                 </div>
             </div>
@@ -186,7 +224,23 @@ const lineTotal = (index: number | string): string => totals.value?.lines[Number
                 <table class="w-full text-sm">
                     <thead class="bg-muted/50">
                         <tr>
-                            <th class="w-36 px-3 py-2 text-left font-medium">Type</th>
+                            <th class="w-36 px-3 py-2 text-left font-medium">
+                                <span class="inline-flex items-center gap-1">
+                                    Type
+                                    <Tooltip>
+                                        <TooltipTrigger as-child>
+                                            <Info class="text-muted-foreground h-4 w-4" />
+                                        </TooltipTrigger>
+                                        <TooltipContent class="max-w-xs">
+                                            <ul class="flex flex-col gap-1">
+                                                <li v-for="type in itemTypes" :key="type.value">
+                                                    <span class="font-medium">{{ type.label }}</span> — {{ type.description }}
+                                                </li>
+                                            </ul>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </span>
+                            </th>
                             <th class="px-3 py-2 text-left font-medium">Description</th>
                             <th class="w-28 px-3 py-2 text-left font-medium">Quantité</th>
                             <th class="w-36 px-3 py-2 text-left font-medium">Prix unitaire</th>
@@ -202,10 +256,7 @@ const lineTotal = (index: number | string): string => totals.value?.lines[Number
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="product">Produit</SelectItem>
-                                        <SelectItem value="fee">Taxe</SelectItem>
-                                        <SelectItem value="discount">Remise</SelectItem>
-                                        <SelectItem value="adjustment">Ajustement</SelectItem>
+                                        <SelectItem v-for="type in itemTypes" :key="type.value" :value="type.value">{{ type.label }}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </td>

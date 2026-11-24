@@ -37,7 +37,7 @@ const formDefaults = computed(() => ({
 const submit = (form: any) => {
     form.put(route('bo.invoicing.billing-customers.update', props.billingCustomer.id), {
         onSuccess: () => toast.success('Client de facturation mis à jour.'),
-        onError: () => toast.error('Erreur lors de la mise à jour.'),
+        onError: (errors: Record<string, string>) => toast.error(errors.action ?? 'Erreur lors de la mise à jour.'),
     });
 };
 
@@ -48,7 +48,7 @@ const syncMember = () => {
         {
             preserveScroll: true,
             onSuccess: () => toast.success('Client de facturation synchronisé.'),
-            onError: () => toast.error('Erreur lors de la synchronisation.'),
+            onError: (errors: Record<string, string>) => toast.error(errors.action ?? 'Erreur lors de la synchronisation.'),
         },
     );
 };

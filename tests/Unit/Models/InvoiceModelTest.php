@@ -3,7 +3,10 @@
 namespace Tests\Unit\Models;
 
 use App\Domains\Invoicing\Enums\InvoiceItemType;
+use App\Domains\Invoicing\Enums\PaymentMethod;
+use App\Domains\Invoicing\Models\CreditNoteRefund;
 use App\Domains\Invoicing\Models\Invoice;
+use App\Domains\Invoicing\Models\InvoiceActivityLog;
 use App\Domains\Invoicing\Models\InvoiceItem;
 use App\Domains\Invoicing\Models\InvoicePayment;
 use App\Domains\Invoicing\Models\Payment;
@@ -58,6 +61,17 @@ class InvoiceModelTest extends TestCase
         $product->delete();
 
         $this->assertTrue($item->fresh()->product->is($product));
+    }
+
+    public function test_exposes_french_item_type_and_activity_labels(): void
+    {
+        $item = InvoiceItem::factory()->make(['type' => InvoiceItemType::Fee]);
+        $log = new InvoiceActivityLog(['action' => 'invoice.created']);
+        $refund = new CreditNoteRefund(['payment_method' => PaymentMethod::BankTransfer]);
+
+        $this->assertSame('Frais / prestation', $item->type_label);
+        $this->assertSame('Facture créée', $log->action_label);
+        $this->assertSame('Virement bancaire', $refund->payment_method_label);
     }
 
     public function test_payment_allocations_are_available_through_invoice(): void

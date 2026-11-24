@@ -40,7 +40,7 @@ const form = useForm({
 const submit = () => {
     form.post(route('bo.invoicing.credit-notes.reversals.store', props.creditNote.id), {
         onSuccess: () => toast.success("Avoir d'annulation brouillon créé."),
-        onError: () => toast.error("Erreur lors de la création de l'avoir d'annulation."),
+        onError: (errors) => toast.error(errors.items ?? errors.action ?? "Erreur lors de la création de l'avoir d'annulation."),
     });
 };
 </script>
@@ -71,8 +71,9 @@ const submit = () => {
                 </div>
                 <div class="grid gap-2">
                     <Label for="amount">Montant à annuler</Label>
-                    <Input id="amount" v-model="form.items[0].amount" type="number" step="0.01" min="0.01" required />
-                    <InputError :message="form.errors['items.0.amount']" />
+                    <Input id="amount" v-model="form.items[0].amount" type="number" step="0.01" min="0.01" :max="availableCents / 100" required />
+                    <p class="text-muted-foreground text-xs">Disponible : {{ formatMoney(availableCents / 100) }}</p>
+                    <InputError :message="form.errors['items.0.amount'] ?? form.errors.items" />
                 </div>
                 <div class="flex justify-end">
                     <Button type="submit" :disabled="form.processing">Enregistrer le brouillon</Button>

@@ -4,6 +4,7 @@ namespace App\Http\Requests\BackOffice\Invoicing;
 
 use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
 use App\Domains\Invoicing\Models\Invoice;
+use App\Http\Requests\BackOffice\Invoicing\Concerns\ValidatesInvoiceDelivery;
 use App\Http\Requests\BackOffice\Invoicing\Concerns\ValidatesInvoiceLines;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,7 @@ use Illuminate\Validation\Validator;
 
 class StoreInvoiceRequest extends FormRequest
 {
+    use ValidatesInvoiceDelivery;
     use ValidatesInvoiceLines;
 
     public function authorize(): bool
@@ -40,6 +42,7 @@ class StoreInvoiceRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 $this->validateInvoiceTotals($validator);
+                $this->validateInvoiceDelivery($validator);
             },
         ];
     }

@@ -122,6 +122,7 @@ export interface InvoiceItem {
     total: string;
     position: number;
     metadata?: Record<string, unknown> | null;
+    type_label?: string;
 }
 
 export interface InvoiceActivityLog {
@@ -132,6 +133,7 @@ export interface InvoiceActivityLog {
     description: string | null;
     metadata: Record<string, unknown> | null;
     created_at: string;
+    action_label?: string;
     user?: { id: number; name: string } | null;
 }
 
@@ -154,6 +156,9 @@ export interface Invoice {
     currency: string;
     subtotal: string;
     total: string;
+    remaining_cents?: number;
+    credited_cents?: number;
+    paid_cents?: number;
     issued_at: string | null;
     sent_at: string | null;
     cancelled_at: string | null;
@@ -163,6 +168,7 @@ export interface Invoice {
     items?: InvoiceItem[];
     activity_logs?: InvoiceActivityLog[];
     billing_customer?: BillingCustomer | null;
+    credit_note_applications?: CreditNoteApplication[];
     created_at: string;
     updated_at: string;
 }
@@ -189,6 +195,7 @@ export interface CreditNoteApplication {
     amount: string;
     applied_at: string;
     invoice?: Invoice;
+    credit_note?: CreditNote;
     reversals?: CreditNoteApplicationReversal[];
 }
 
@@ -206,6 +213,7 @@ export interface CreditNoteRefund {
     amount: string;
     refund_date: string;
     payment_method: string;
+    payment_method_label?: string;
     reference: string | null;
     notes: string | null;
 }

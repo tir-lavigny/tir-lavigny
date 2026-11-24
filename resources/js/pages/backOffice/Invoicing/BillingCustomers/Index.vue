@@ -59,7 +59,7 @@ const submitSync = () => {
             syncForm.reset();
             toast.success('Client de facturation créé depuis le membre.');
         },
-        onError: () => toast.error('Erreur lors de la synchronisation.'),
+        onError: (errors) => toast.error(errors.action ?? 'Erreur lors de la synchronisation.'),
     });
 };
 

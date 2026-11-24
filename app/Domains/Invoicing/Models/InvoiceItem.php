@@ -41,7 +41,7 @@ class InvoiceItem extends Model
 
     protected $hidden = ['unit_price_cents', 'total_cents'];
 
-    protected $appends = ['unit_price', 'total'];
+    protected $appends = ['unit_price', 'total', 'type_label'];
 
     protected function casts(): array
     {
@@ -80,6 +80,11 @@ class InvoiceItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class)->withTrashed();
+    }
+
+    public function getTypeLabelAttribute(): string
+    {
+        return $this->type->label();
     }
 
     protected static function booted(): void
