@@ -189,6 +189,40 @@ export interface CreditNoteApplication {
     amount: string;
     applied_at: string;
     invoice?: Invoice;
+    reversals?: CreditNoteApplicationReversal[];
+}
+
+export interface CreditNoteApplicationReversal {
+    id: number;
+    credit_note_application_id: number;
+    amount: string;
+    reason: string;
+    reversed_at: string;
+}
+
+export interface CreditNoteRefund {
+    id: number;
+    credit_note_id: number;
+    amount: string;
+    refund_date: string;
+    payment_method: string;
+    reference: string | null;
+    notes: string | null;
+}
+
+export interface CreditNoteReversal {
+    id: number;
+    credit_note_id: number;
+    credit_note_reversal_number: string | null;
+    status: 'draft' | 'issued';
+    reason: string;
+    issue_date: string | null;
+    total: string;
+    items?: Array<{
+        id: number;
+        description: string;
+        amount: string;
+    }>;
 }
 
 export interface CreditNote {
@@ -213,6 +247,8 @@ export interface CreditNote {
     invoice?: Invoice;
     items?: CreditNoteItem[];
     applications?: CreditNoteApplication[];
+    refunds?: CreditNoteRefund[];
+    reversals?: CreditNoteReversal[];
     created_at: string;
     updated_at: string;
 }

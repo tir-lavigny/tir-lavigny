@@ -6,6 +6,9 @@ use App\Domains\Invoicing\Enums\CustomerAccountEntryType;
 use App\Domains\Invoicing\Models\BillingCustomer;
 use App\Domains\Invoicing\Models\CreditNote;
 use App\Domains\Invoicing\Models\CreditNoteApplication;
+use App\Domains\Invoicing\Models\CreditNoteApplicationReversal;
+use App\Domains\Invoicing\Models\CreditNoteRefund;
+use App\Domains\Invoicing\Models\CreditNoteReversal;
 use App\Domains\Invoicing\Models\CustomerAccountEntry;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Models\User;
@@ -113,7 +116,56 @@ class CustomerAccountLedger
             $application->amount_cents,
             $actor,
             invoice: $application->invoice,
+            metadata: ['credit_note_id' => $application->credit_note_id],
+        );
+    }
+
+    public function recordCreditApplicationReversed(CreditNoteApplicationReversal $reversal, User $actor): void
+    {
+        $application = $reversal->application;
+
+        $this->recordEntry(
+            $application->creditNote->billingCustomer,
+            CustomerAccountEntryType::CreditApplicationReversed,
+            0,
+            $reversal->amount_cents,
+            $actor,
             creditNote: $application->creditNote,
+            metadata: ['invoice_id' => $application->invoice_id],
+        );
+
+        $this->recordEntry(
+            $application->invoice->billingCustomer,
+            CustomerAccountEntryType::CreditApplicationReversed,
+            $reversal->amount_cents,
+            0,
+            $actor,
+            invoice: $application->invoice,
+            metadata: ['credit_note_id' => $application->credit_note_id],
+        );
+    }
+
+    public function recordCreditNoteRefunded(CreditNoteRefund $refund, User $actor): void
+    {
+        $this->recordEntry(
+            $refund->creditNote->billingCustomer,
+            CustomerAccountEntryType::CreditNoteRefunded,
+            $refund->amount_cents,
+            0,
+            $actor,
+            creditNote: $refund->creditNote,
+        );
+    }
+
+    public function recordCreditNoteReversed(CreditNoteReversal $reversal, User $actor): void
+    {
+        $this->recordEntry(
+            $reversal->creditNote->billingCustomer,
+            CustomerAccountEntryType::CreditNoteReversed,
+            $reversal->total_cents,
+            0,
+            $actor,
+            creditNote: $reversal->creditNote,
         );
     }
 

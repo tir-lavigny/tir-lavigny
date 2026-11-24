@@ -4,6 +4,7 @@ namespace App\Domains\Invoicing\Services;
 
 use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Domains\Invoicing\Models\CreditNoteApplication;
+use App\Domains\Invoicing\Models\CreditNoteApplicationReversal;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Models\InvoicePayment;
 
@@ -11,9 +12,15 @@ class InvoiceBalanceCalculator
 {
     public function creditedCents(Invoice $invoice): int
     {
-        return (int) CreditNoteApplication::query()
+        $applied = (int) CreditNoteApplication::query()
             ->where('invoice_id', $invoice->id)
             ->sum('amount_cents');
+
+        $reversed = (int) CreditNoteApplicationReversal::query()
+            ->whereHas('application', fn ($query) => $query->where('invoice_id', $invoice->id))
+            ->sum('amount_cents');
+
+        return max(0, $applied - $reversed);
     }
 
     public function paidCents(Invoice $invoice): int

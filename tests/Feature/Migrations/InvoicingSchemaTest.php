@@ -34,6 +34,11 @@ class InvoicingSchemaTest extends TestCase
             'credit_notes',
             'credit_note_items',
             'credit_note_applications',
+            'credit_note_application_reversals',
+            'credit_note_refunds',
+            'credit_note_reversal_sequences',
+            'credit_note_reversals',
+            'credit_note_reversal_items',
         ];
     }
 
@@ -60,6 +65,10 @@ class InvoicingSchemaTest extends TestCase
     {
         $this->assertUniqueIndex('invoices', ['invoice_number']);
         $this->assertUniqueIndex('invoice_sequences', ['year']);
+        $this->assertUniqueIndex('credit_notes', ['credit_note_number']);
+        $this->assertUniqueIndex('credit_note_sequences', ['year']);
+        $this->assertUniqueIndex('credit_note_reversals', ['credit_note_reversal_number']);
+        $this->assertUniqueIndex('credit_note_reversal_sequences', ['year']);
     }
 
     public function test_member_has_one_billing_customer(): void
