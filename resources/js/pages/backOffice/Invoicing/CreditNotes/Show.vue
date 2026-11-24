@@ -13,7 +13,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasAnyPermission } from '@/lib/utils';
 import type { BreadcrumbItem, CreditNote, CreditNoteApplication, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { CheckCircle2, Info, Pencil, Trash2 } from '@lucide/vue';
+import { CheckCircle2, Download, Info, Pencil, RefreshCw, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -31,6 +31,8 @@ const user = page.props.auth.user;
 const canCreate = computed(() => hasAnyPermission(user, ['create invoices', 'manage invoicing']));
 const canIssue = computed(() => hasAnyPermission(user, ['issue invoices', 'manage invoicing']));
 const canManage = computed(() => hasAnyPermission(user, ['manage invoicing']));
+const hasStoredDocument = computed(() => props.creditNote.document?.status === 'stored');
+const documentFailed = computed(() => props.creditNote.document?.status === 'failed');
 const reversible = computed(() => props.availableCents > 0 && props.appliedCents === 0);
 const reversalBlockedReason = computed(() => {
     if (props.appliedCents > 0) {
@@ -68,8 +70,47 @@ const issueCreditNote = () => {
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('Avoir émis.'),
+            onSuccess: (page) => {
+                const issued = page.props.creditNote as CreditNote | undefined;
+                if (issued?.document?.status === 'failed') {
+                    toast.warning('Avoir émis, mais le PDF n’a pas pu être archivé.');
+                } else {
+                    toast.success('Avoir émis.');
+                }
+            },
             onError: (errors) => toast.error(errors.action ?? "Erreur lors de l'émission de l'avoir."),
+        },
+    );
+};
+
+const retryDocument = () => {
+    if (!props.creditNote.document) {
+        return;
+    }
+
+    router.post(
+        route('bo.invoicing.financial-documents.retry', props.creditNote.document.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => toast.success('PDF archivé.'),
+            onError: (errors) => toast.error(errors.document ?? "Erreur lors de l'archivage du PDF."),
+        },
+    );
+};
+
+const retryReversalDocument = (reversal: NonNullable<CreditNote['reversals']>[number]) => {
+    if (!reversal.document) {
+        return;
+    }
+
+    router.post(
+        route('bo.invoicing.financial-documents.retry', reversal.document.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => toast.success('PDF archivé.'),
+            onError: (errors) => toast.error(errors.document ?? "Erreur lors de l'archivage du PDF."),
         },
     );
 };
@@ -133,7 +174,15 @@ const issueReversal = (reversalId: number) => {
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success("Avoir d'annulation émis."),
+            onSuccess: (page) => {
+                const creditNote = page.props.creditNote as CreditNote | undefined;
+                const issuedReversal = creditNote?.reversals?.find((reversal) => reversal.id === reversalId);
+                if (issuedReversal?.document?.status === 'failed') {
+                    toast.warning('Avoir d’annulation émis, mais le PDF n’a pas pu être archivé.');
+                } else {
+                    toast.success("Avoir d'annulation émis.");
+                }
+            },
             onError: (errors) => toast.error(errors.action ?? "Erreur lors de l'émission de l'avoir d'annulation."),
         },
     );
@@ -173,6 +222,12 @@ const statusLabel = computed(() => {
             <div class="flex flex-wrap gap-2">
                 <Button v-if="creditNote.status === 'draft' && canCreate" as-child variant="outline">
                     <Link :href="route('bo.invoicing.credit-notes.edit', creditNote.id)"> <Pencil class="mr-2 h-4 w-4" /> Modifier </Link>
+                </Button>
+                <Button v-if="hasStoredDocument" as-child variant="outline">
+                    <a :href="route('bo.invoicing.credit-notes.pdf', creditNote.id)"> <Download class="mr-2 h-4 w-4" /> Télécharger le PDF </a>
+                </Button>
+                <Button v-if="documentFailed && canManage" variant="outline" @click="retryDocument">
+                    <RefreshCw class="mr-2 h-4 w-4" /> Réessayer l’archivage
                 </Button>
                 <AppAlertDialog
                     v-if="creditNote.status === 'draft' && canIssue"
@@ -218,6 +273,16 @@ const statusLabel = computed(() => {
                     </template>
                 </AppAlertDialog>
             </div>
+        </div>
+
+        <div
+            v-if="creditNote.document && creditNote.document.status !== 'stored'"
+            class="border-destructive/40 bg-destructive/5 mx-4 rounded-xl border p-4 text-sm"
+        >
+            <p class="font-medium">
+                {{ creditNote.document.status === 'pending' ? 'Le PDF est en cours d’archivage.' : 'Le PDF n’a pas pu être archivé.' }}
+            </p>
+            <p v-if="creditNote.document.error" class="text-muted-foreground mt-1">{{ creditNote.document.error }}</p>
         </div>
 
         <div class="mx-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -421,6 +486,22 @@ const statusLabel = computed(() => {
                         <TableCell class="text-right font-mono">{{ formatMoney(reversal.total) }}</TableCell>
                         <TableCell class="text-right">
                             <Button v-if="reversal.status === 'draft' && canManage" size="sm" @click="issueReversal(reversal.id)">Émettre</Button>
+                            <Button
+                                v-if="reversal.status === 'issued' && reversal.document?.status === 'stored'"
+                                as-child
+                                size="sm"
+                                variant="outline"
+                            >
+                                <a :href="route('bo.invoicing.credit-note-reversals.pdf', reversal.id)"> <Download class="mr-2 h-4 w-4" /> PDF </a>
+                            </Button>
+                            <Button
+                                v-if="reversal.status === 'issued' && reversal.document?.status === 'failed' && canManage"
+                                size="sm"
+                                variant="outline"
+                                @click="retryReversalDocument(reversal)"
+                            >
+                                <RefreshCw class="mr-2 h-4 w-4" /> Réessayer
+                            </Button>
                         </TableCell>
                     </TableRow>
                 </TableBody>

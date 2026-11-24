@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useListFilters } from '@/composables/useListFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate, formatMoney, hasAnyPermission } from '@/lib/utils';
+import { formatDate, formatMoney, hasAnyPermission, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Invoice, PaginatedInvoices, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { CheckCircle2, Eye, Pencil, Plus, Search, Trash2, XCircle } from '@lucide/vue';
@@ -23,12 +23,15 @@ const props = defineProps<{
     statuses: Array<{ value: string; label: string }>;
     types: Array<{ value: string; label: string }>;
     years: number[];
+    invoicingConfigured: boolean;
 }>();
 
 const page = usePage<SharedData>();
 const user = page.props.auth.user;
 
 const canCreate = computed(() => hasAnyPermission(user, ['create invoices', 'manage invoicing']));
+const canCreateInvoice = computed(() => canCreate.value && props.invoicingConfigured);
+const canManageSettings = computed(() => hasPermissionTo(user, 'manage invoicing'));
 const canIssue = computed(() => hasAnyPermission(user, ['issue invoices', 'manage invoicing']));
 const canCancel = computed(() => hasAnyPermission(user, ['cancel invoices', 'manage invoicing']));
 
@@ -72,7 +75,14 @@ const issueInvoice = (invoice: Invoice) => {
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('Facture émise.'),
+            onSuccess: (page) => {
+                const issued = page.props.invoice as Invoice | undefined;
+                if (issued?.document?.status === 'failed') {
+                    toast.warning('Facture émise, mais le PDF n’a pas pu être archivé.');
+                } else {
+                    toast.success('Facture émise.');
+                }
+            },
             onError: (errors) => toast.error(errors.action ?? "Erreur lors de l'émission."),
         },
     );
@@ -120,8 +130,16 @@ const goToPage = (pageNumber: number) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="m-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <H1>Factures</H1>
-            <Button v-if="canCreate" as-child>
+            <Button v-if="canCreateInvoice" as-child>
                 <Link :href="route('bo.invoicing.invoices.create')"> <Plus class="mr-2 h-4 w-4" /> Nouvelle facture </Link>
+            </Button>
+        </div>
+
+        <div v-if="!invoicingConfigured" class="border-destructive/40 bg-destructive/5 mx-4 rounded-xl border p-4 text-sm">
+            <p class="font-medium">Les paramètres de facturation sont incomplets.</p>
+            <p class="text-muted-foreground mt-1">La création et l’émission de factures sont bloquées.</p>
+            <Button v-if="canManageSettings" as-child variant="link" class="mt-2 h-auto p-0">
+                <Link :href="route('bo.invoicing.settings.edit')">Configurer les paramètres</Link>
             </Button>
         </div>
 
