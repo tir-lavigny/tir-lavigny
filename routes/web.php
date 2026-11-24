@@ -372,6 +372,21 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
         Route::post('credit-notes/{creditNote}/issue', [BackOfficeCreditNoteController::class, 'issue'])
             ->middleware('permission:issue invoices|manage invoicing')
             ->name('credit-notes.issue');
+
+        Route::middleware('permission:manage invoicing')->group(function () {
+            Route::post('credit-notes/{creditNote}/apply', [BackOfficeCreditNoteController::class, 'apply'])
+                ->name('credit-notes.apply');
+            Route::post('credit-note-applications/{creditNoteApplication}/reverse', [BackOfficeCreditNoteController::class, 'reverseApplication'])
+                ->name('credit-note-applications.reverse');
+            Route::post('credit-notes/{creditNote}/refund', [BackOfficeCreditNoteController::class, 'refund'])
+                ->name('credit-notes.refund');
+            Route::get('credit-notes/{creditNote}/reversals/create', [BackOfficeCreditNoteController::class, 'createReversal'])
+                ->name('credit-notes.reversals.create');
+            Route::post('credit-notes/{creditNote}/reversals', [BackOfficeCreditNoteController::class, 'storeReversal'])
+                ->name('credit-notes.reversals.store');
+            Route::post('credit-note-reversals/{creditNoteReversal}/issue', [BackOfficeCreditNoteController::class, 'issueReversal'])
+                ->name('credit-note-reversals.issue');
+        });
     });
 
     // ── Stock Management ──

@@ -120,6 +120,22 @@ class CreditNote extends Model
     }
 
     /**
+     * @return HasMany<CreditNoteRefund, $this>
+     */
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(CreditNoteRefund::class);
+    }
+
+    /**
+     * @return HasMany<CreditNoteReversal, $this>
+     */
+    public function reversals(): HasMany
+    {
+        return $this->hasMany(CreditNoteReversal::class);
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function creator(): BelongsTo

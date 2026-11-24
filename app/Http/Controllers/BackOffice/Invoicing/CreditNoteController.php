@@ -2,21 +2,35 @@
 
 namespace App\Http\Controllers\BackOffice\Invoicing;
 
+use App\Domains\Invoicing\Actions\CreditNotes\ApplyCreditNoteToInvoice;
 use App\Domains\Invoicing\Actions\CreditNotes\CreateCreditNote;
+use App\Domains\Invoicing\Actions\CreditNotes\CreateCreditNoteReversal;
 use App\Domains\Invoicing\Actions\CreditNotes\DeleteDraftCreditNote;
 use App\Domains\Invoicing\Actions\CreditNotes\IssueCreditNote;
+use App\Domains\Invoicing\Actions\CreditNotes\IssueCreditNoteReversal;
+use App\Domains\Invoicing\Actions\CreditNotes\RecordCreditNoteRefund;
+use App\Domains\Invoicing\Actions\CreditNotes\ReverseCreditNoteApplication;
 use App\Domains\Invoicing\Actions\CreditNotes\UpdateDraftCreditNote;
 use App\Domains\Invoicing\Enums\CreditNoteStatus;
+use App\Domains\Invoicing\Exceptions\CreditNoteNotApplicable;
 use App\Domains\Invoicing\Exceptions\CreditNoteNotIssuable;
+use App\Domains\Invoicing\Exceptions\CreditNoteReversalNotIssuable;
 use App\Domains\Invoicing\Models\CreditNote;
+use App\Domains\Invoicing\Models\CreditNoteApplication;
+use App\Domains\Invoicing\Models\CreditNoteReversal;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Services\CreditNoteBalanceCalculator;
 use App\Domains\Invoicing\Services\CreditNoteCreditLimit;
 use App\Domains\Invoicing\Services\CreditNoteDraftService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BackOffice\Invoicing\ApplyCreditNoteRequest;
 use App\Http\Requests\BackOffice\Invoicing\IssueCreditNoteRequest;
+use App\Http\Requests\BackOffice\Invoicing\IssueCreditNoteReversalRequest;
 use App\Http\Requests\BackOffice\Invoicing\PreviewCreditNoteRequest;
+use App\Http\Requests\BackOffice\Invoicing\RecordCreditNoteRefundRequest;
+use App\Http\Requests\BackOffice\Invoicing\ReverseCreditNoteApplicationRequest;
 use App\Http\Requests\BackOffice\Invoicing\StoreCreditNoteRequest;
+use App\Http\Requests\BackOffice\Invoicing\StoreCreditNoteReversalRequest;
 use App\Http\Requests\BackOffice\Invoicing\UpdateCreditNoteRequest;
 use App\Support\Money;
 use App\Traits\SearchesAccentInsensitively;
@@ -95,11 +109,23 @@ class CreditNoteController extends Controller
     {
         Gate::authorize('view', $creditNote);
 
-        $creditNote->load(['invoice', 'items.invoiceItem', 'applications.invoice']);
+        $creditNote->load([
+            'invoice',
+            'items.invoiceItem',
+            'applications.invoice',
+            'applications.reversals',
+            'refunds',
+            'reversals.items',
+        ]);
 
         return Inertia::render('backOffice/Invoicing/CreditNotes/Show', [
             'creditNote' => $creditNote,
             'availableCents' => $balances->availableCents($creditNote),
+            'targetInvoices' => Invoice::query()
+                ->where('billing_customer_id', $creditNote->billing_customer_id)
+                ->whereIn('status', ['issued', 'partially_paid'])
+                ->orderByDesc('issued_at')
+                ->get(['id', 'invoice_number', 'recipient_name', 'total_cents', 'status']),
         ]);
     }
 
@@ -168,5 +194,101 @@ class CreditNoteController extends Controller
             'total_cents' => $prepared['total_cents'],
             'total' => Money::fromCents($prepared['total_cents']),
         ]);
+    }
+
+    public function apply(
+        ApplyCreditNoteRequest $request,
+        CreditNote $creditNote,
+        ApplyCreditNoteToInvoice $apply,
+    ): RedirectResponse {
+        $invoice = Invoice::query()->findOrFail((int) $request->validated('invoice_id'));
+
+        try {
+            $apply->execute(
+                $creditNote,
+                $invoice,
+                Money::toCents($request->validated('amount')) ?? 0,
+                $request->user(),
+            );
+        } catch (CreditNoteNotApplicable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return back()->with('success', 'Avoir imputé.');
+    }
+
+    public function reverseApplication(
+        ReverseCreditNoteApplicationRequest $request,
+        CreditNoteApplication $creditNoteApplication,
+        ReverseCreditNoteApplication $reverse,
+    ): RedirectResponse {
+        try {
+            $reverse->execute(
+                $creditNoteApplication,
+                Money::toCents($request->validated('amount')) ?? 0,
+                $request->validated('reason'),
+                $request->user(),
+            );
+        } catch (CreditNoteNotApplicable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return back()->with('success', 'Imputation annulée.');
+    }
+
+    public function refund(
+        RecordCreditNoteRefundRequest $request,
+        CreditNote $creditNote,
+        RecordCreditNoteRefund $refund,
+    ): RedirectResponse {
+        $data = $request->validated();
+        $data['amount_cents'] = Money::toCents($data['amount']) ?? 0;
+
+        try {
+            $refund->execute($creditNote, $data, $request->user());
+        } catch (CreditNoteNotApplicable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return back()->with('success', 'Remboursement enregistré.');
+    }
+
+    public function createReversal(CreditNote $creditNote, CreditNoteBalanceCalculator $balances): Response
+    {
+        Gate::authorize('reverse', $creditNote);
+        $creditNote->load('items');
+
+        return Inertia::render('backOffice/Invoicing/CreditNotes/CreateReversal', [
+            'creditNote' => $creditNote,
+            'availableCents' => $balances->availableCents($creditNote),
+        ]);
+    }
+
+    public function storeReversal(
+        StoreCreditNoteReversalRequest $request,
+        CreditNote $creditNote,
+        CreateCreditNoteReversal $create,
+    ): RedirectResponse {
+        try {
+            $create->execute($creditNote, $request->validated(), $request->user());
+        } catch (CreditNoteNotApplicable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return back()->with('success', "Avoir d'annulation brouillon créé.");
+    }
+
+    public function issueReversal(
+        IssueCreditNoteReversalRequest $request,
+        CreditNoteReversal $creditNoteReversal,
+        IssueCreditNoteReversal $issue,
+    ): RedirectResponse {
+        try {
+            $issue->execute($creditNoteReversal, $request->user());
+        } catch (CreditNoteReversalNotIssuable $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return back()->with('success', "Avoir d'annulation émis.");
     }
 }
