@@ -22,11 +22,14 @@ class InvoiceIssuedMail extends Mailable
 
     public function envelope(): Envelope
     {
+        $senderName = $this->invoice->creditor_name ?: (string) config('mail.from.name');
+        $replyTo = config('app.email')
+            ? [new Address((string) config('app.email'), $senderName)]
+            : [];
+
         return new Envelope(
-            from: new Address(
-                (string) config('mail.from.address'),
-                $this->invoice->creditor_name ?: (string) config('mail.from.name'),
-            ),
+            from: new Address((string) config('mail.from.address'), $senderName),
+            replyTo: $replyTo,
             subject: 'Facture '.$this->invoice->invoice_number.' — '.$this->invoice->creditor_name,
         );
     }

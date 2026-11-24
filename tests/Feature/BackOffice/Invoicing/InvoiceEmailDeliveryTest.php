@@ -305,6 +305,8 @@ class InvoiceEmailDeliveryTest extends TestCase
         $pdf = '%PDF-1.4 test invoice';
 
         (new InvoiceIssuedMail($invoice, $pdf))
+            ->assertSeeInHtml('Instrument Sans')
+            ->assertSeeInHtml('Montant total')
             ->assertSeeInHtml((string) $invoice->invoice_number)
             ->assertSeeInHtml('150.00')
             ->assertSeeInHtml('14.02.2027')
