@@ -42,10 +42,6 @@ class IssueCreditNoteReversal
                 throw CreditNoteReversalNotIssuable::for($locked, 'credit applications must be reversed first.');
             }
 
-            if ($this->balances->refundedCents($creditNote) > 0) {
-                throw CreditNoteReversalNotIssuable::for($locked, 'refunds must be reconciled first.');
-            }
-
             if ($locked->total_cents > $this->balances->availableCents($creditNote)) {
                 throw CreditNoteReversalNotIssuable::for($locked, 'the reversal exceeds the available credit.');
             }

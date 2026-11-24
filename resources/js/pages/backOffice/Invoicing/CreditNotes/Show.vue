@@ -31,14 +31,10 @@ const user = page.props.auth.user;
 const canCreate = computed(() => hasAnyPermission(user, ['create invoices', 'manage invoicing']));
 const canIssue = computed(() => hasAnyPermission(user, ['issue invoices', 'manage invoicing']));
 const canManage = computed(() => hasAnyPermission(user, ['manage invoicing']));
-const reversible = computed(() => props.availableCents > 0 && props.appliedCents === 0 && props.refundedCents === 0);
+const reversible = computed(() => props.availableCents > 0 && props.appliedCents === 0);
 const reversalBlockedReason = computed(() => {
     if (props.appliedCents > 0) {
         return "Annulez d'abord les imputations.";
-    }
-
-    if (props.refundedCents > 0) {
-        return "Les remboursements doivent être réconciliés avant un avoir d'annulation.";
     }
 
     return 'Aucun crédit disponible à annuler.';
@@ -240,7 +236,16 @@ const statusLabel = computed(() => {
                     <div class="flex justify-between">
                         <span>Total</span><span class="font-mono">{{ formatMoney(creditNote.total) }}</span>
                     </div>
+                    <div v-if="appliedCents > 0" class="flex justify-between">
+                        <span>Imputé</span><span class="font-mono">{{ formatMoney(appliedCents / 100) }}</span>
+                    </div>
                     <div class="flex justify-between">
+                        <span>Remboursé</span><span class="font-mono">{{ formatMoney(refundedCents / 100) }}</span>
+                    </div>
+                    <div v-if="reversedCents > 0" class="flex justify-between">
+                        <span>Annulé</span><span class="font-mono">{{ formatMoney(reversedCents / 100) }}</span>
+                    </div>
+                    <div class="flex justify-between font-semibold">
                         <span>Disponible</span><span class="font-mono">{{ formatMoney(availableCents / 100) }}</span>
                     </div>
                     <div class="flex justify-between">
