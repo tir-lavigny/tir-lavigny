@@ -115,7 +115,7 @@ class BillingCustomerController extends Controller
         Gate::authorize('delete', $billingCustomer);
 
         if ($billingCustomer->invoices()->exists() || $billingCustomer->campaignMembers()->exists()) {
-            return back()->with('error', 'Impossible de supprimer ce client car il est lié à des factures.');
+            return back()->withErrors(['action' => 'Impossible de supprimer ce client car il est lié à des factures.']);
         }
 
         $billingCustomer->delete();
@@ -134,7 +134,7 @@ class BillingCustomerController extends Controller
         try {
             $billingCustomer = $sync->execute($member);
         } catch (CannotInvoiceAnonymizedMember) {
-            return back()->with('error', 'Ce membre est anonymisé et ne peut pas être facturé.');
+            return back()->withErrors(['action' => 'Ce membre est anonymisé et ne peut pas être facturé.']);
         }
 
         return redirect()
@@ -149,13 +149,13 @@ class BillingCustomerController extends Controller
         Gate::authorize('update', $billingCustomer);
 
         if ($billingCustomer->member === null) {
-            return back()->with('error', 'Ce client de facturation n\'est pas lié à un membre.');
+            return back()->withErrors(['action' => 'Ce client de facturation n\'est pas lié à un membre.']);
         }
 
         try {
             $sync->execute($billingCustomer->member);
         } catch (CannotInvoiceAnonymizedMember) {
-            return back()->with('error', 'Ce membre est anonymisé et ne peut pas être facturé.');
+            return back()->withErrors(['action' => 'Ce membre est anonymisé et ne peut pas être facturé.']);
         }
 
         return redirect()

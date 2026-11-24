@@ -3,6 +3,7 @@
 namespace App\Domains\Invoicing\Models;
 
 use App\Domains\Invoicing\Enums\InvoiceItemType;
+use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Models\Concerns\HasMoneyColumns;
 use App\Models\Product;
 use Database\Factories\Domains\Invoicing\Models\InvoiceItemFactory;
@@ -10,8 +11,10 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LogicException;
 
 /**
+ * @property InvoiceItemType $type
  * @property string $unit_price
  * @property string $total
  * @property int $unit_price_cents
@@ -38,7 +41,7 @@ class InvoiceItem extends Model
 
     protected $hidden = ['unit_price_cents', 'total_cents'];
 
-    protected $appends = ['unit_price', 'total'];
+    protected $appends = ['unit_price', 'total', 'type_label'];
 
     protected function casts(): array
     {
@@ -77,5 +80,29 @@ class InvoiceItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class)->withTrashed();
+    }
+
+    public function getTypeLabelAttribute(): string
+    {
+        return $this->type->label();
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (InvoiceItem $item): void {
+            $status = $item->invoice()->first()?->status;
+
+            if ($status !== null && $status !== InvoiceStatus::Draft) {
+                throw new LogicException('Issued invoice lines cannot be modified.');
+            }
+        });
+
+        static::deleting(function (InvoiceItem $item): void {
+            $status = $item->invoice()->first()?->status;
+
+            if ($status !== null && $status !== InvoiceStatus::Draft) {
+                throw new LogicException('Issued invoice lines cannot be deleted.');
+            }
+        });
     }
 }

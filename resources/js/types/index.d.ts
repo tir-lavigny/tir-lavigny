@@ -111,6 +111,160 @@ export interface PaginatedBillingCustomers extends PaginatedData<BillingCustomer
     data?: BillingCustomer[];
 }
 
+export interface InvoiceItem {
+    id: number;
+    invoice_id: number;
+    product_id: number | null;
+    type: 'product' | 'fee' | 'discount' | 'adjustment';
+    description: string;
+    quantity: string;
+    unit_price: string;
+    total: string;
+    position: number;
+    metadata?: Record<string, unknown> | null;
+    type_label?: string;
+}
+
+export interface InvoiceActivityLog {
+    id: number;
+    invoice_id: number | null;
+    user_id: number | null;
+    action: string;
+    description: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+    action_label?: string;
+    user?: { id: number; name: string } | null;
+}
+
+export interface Invoice {
+    id: number;
+    billing_customer_id: number;
+    membership_fee_campaign_id: number | null;
+    type: 'membership_fee' | 'one_off';
+    status: 'draft' | 'issued' | 'partially_paid' | 'paid' | 'cancelled';
+    invoice_number: string | null;
+    recipient_name: string;
+    recipient_address: string;
+    recipient_postal_code: string;
+    recipient_city: string;
+    recipient_country: string;
+    recipient_email: string | null;
+    delivery_method: 'email' | 'postal';
+    issue_date: string | null;
+    due_date: string | null;
+    currency: string;
+    subtotal: string;
+    total: string;
+    remaining_cents?: number;
+    credited_cents?: number;
+    paid_cents?: number;
+    issued_at: string | null;
+    sent_at: string | null;
+    cancelled_at: string | null;
+    cancelled_by: number | null;
+    cancellation_reason: string | null;
+    created_by: number | null;
+    items?: InvoiceItem[];
+    activity_logs?: InvoiceActivityLog[];
+    billing_customer?: BillingCustomer | null;
+    credit_note_applications?: CreditNoteApplication[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedInvoices extends PaginatedData<Invoice> {
+    data?: Invoice[];
+}
+
+export interface CreditNoteItem {
+    id: number;
+    credit_note_id: number;
+    invoice_item_id: number | null;
+    description: string;
+    quantity: string;
+    unit_price: string;
+    total: string;
+    position: number;
+}
+
+export interface CreditNoteApplication {
+    id: number;
+    credit_note_id: number;
+    invoice_id: number;
+    amount: string;
+    applied_at: string;
+    invoice?: Invoice;
+    credit_note?: CreditNote;
+    reversals?: CreditNoteApplicationReversal[];
+}
+
+export interface CreditNoteApplicationReversal {
+    id: number;
+    credit_note_application_id: number;
+    amount: string;
+    reason: string;
+    reversed_at: string;
+}
+
+export interface CreditNoteRefund {
+    id: number;
+    credit_note_id: number;
+    amount: string;
+    refund_date: string;
+    payment_method: string;
+    payment_method_label?: string;
+    reference: string | null;
+    notes: string | null;
+}
+
+export interface CreditNoteReversal {
+    id: number;
+    credit_note_id: number;
+    credit_note_reversal_number: string | null;
+    status: 'draft' | 'issued';
+    reason: string;
+    issue_date: string | null;
+    total: string;
+    items?: Array<{
+        id: number;
+        description: string;
+        amount: string;
+    }>;
+}
+
+export interface CreditNote {
+    id: number;
+    invoice_id: number;
+    billing_customer_id: number;
+    credit_note_number: string | null;
+    status: 'draft' | 'issued' | 'partially_used' | 'fully_used' | 'partially_reversed' | 'reversed';
+    reason: string;
+    issue_date: string | null;
+    currency: string;
+    subtotal: string;
+    total: string;
+    recipient_name: string;
+    recipient_address: string;
+    recipient_postal_code: string;
+    recipient_city: string;
+    recipient_country: string;
+    recipient_email: string | null;
+    created_by: number | null;
+    issued_at: string | null;
+    invoice?: Invoice;
+    items?: CreditNoteItem[];
+    applications?: CreditNoteApplication[];
+    refunds?: CreditNoteRefund[];
+    reversals?: CreditNoteReversal[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedCreditNotes extends PaginatedData<CreditNote> {
+    data?: CreditNote[];
+}
+
 export abstract class PaginatedData<T> {
     abstract current_page: number;
     abstract data?: T[];

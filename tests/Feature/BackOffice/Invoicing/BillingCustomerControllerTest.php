@@ -320,7 +320,7 @@ class BillingCustomerControllerTest extends TestCase
 
         $response = $this->delete(route('bo.invoicing.billing-customers.destroy', $billingCustomer));
 
-        $response->assertSessionHas('error');
+        $response->assertSessionHasErrors('action');
         $this->assertModelExists($billingCustomer);
     }
 
