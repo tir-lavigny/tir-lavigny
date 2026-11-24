@@ -15,9 +15,11 @@ import {
     ClipboardList,
     FileText,
     LayoutGrid,
+    Mail,
     MapPin,
     Newspaper,
     PanelTop,
+    Printer,
     Receipt,
     Repeat,
     Settings,
@@ -221,6 +223,20 @@ const invoicingNavItems: NavItem[] = [
                   href: route('bo.invoicing.credit-notes.index'),
                   icon: Receipt,
               },
+              ...(hasAnyPermission(user, ['send invoices', 'manage invoicing'])
+                  ? [
+                        {
+                            title: 'Envois email',
+                            href: route('bo.invoicing.deliveries.email.index'),
+                            icon: Mail,
+                        },
+                        {
+                            title: 'Impressions postales',
+                            href: route('bo.invoicing.deliveries.postal.index'),
+                            icon: Printer,
+                        },
+                    ]
+                  : []),
               ...(hasPermissionTo(user, 'manage invoicing')
                   ? [
                         {

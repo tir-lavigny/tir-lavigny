@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use LogicException;
@@ -161,7 +162,15 @@ class Invoice extends Model
      */
     public function deliveries(): HasMany
     {
-        return $this->hasMany(InvoiceDelivery::class);
+        return $this->hasMany(InvoiceDelivery::class)->latest('created_at')->latest('id');
+    }
+
+    /**
+     * @return HasOne<InvoiceDelivery, $this>
+     */
+    public function latestDelivery(): HasOne
+    {
+        return $this->hasOne(InvoiceDelivery::class)->latestOfMany();
     }
 
     /**
@@ -247,6 +256,15 @@ class Invoice extends Model
         return $this->status === InvoiceStatus::Issued;
     }
 
+    public function isDistributable(): bool
+    {
+        return in_array($this->status, [
+            InvoiceStatus::Issued,
+            InvoiceStatus::PartiallyPaid,
+            InvoiceStatus::Paid,
+        ], true);
+    }
+
     protected static function booted(): void
     {
         static::updating(function (Invoice $invoice): void {
@@ -263,6 +281,7 @@ class Invoice extends Model
                 'status',
                 'issued_at',
                 'sent_at',
+                'delivery_method',
                 'cancelled_at',
                 'cancelled_by',
                 'cancellation_reason',

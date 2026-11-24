@@ -8,6 +8,7 @@ use App\Http\Controllers\BackOffice\Invoicing\BillingCustomerController as BackO
 use App\Http\Controllers\BackOffice\Invoicing\CreditNoteController as BackOfficeCreditNoteController;
 use App\Http\Controllers\BackOffice\Invoicing\FinancialDocumentController as BackOfficeFinancialDocumentController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoiceController as BackOfficeInvoiceController;
+use App\Http\Controllers\BackOffice\Invoicing\InvoiceDeliveryController as BackOfficeInvoiceDeliveryController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoicingSettingsController as BackOfficeInvoicingSettingsController;
 use App\Http\Controllers\BackOffice\MemberController;
 use App\Http\Controllers\BackOffice\MemberExportController;
@@ -361,6 +362,26 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
         Route::post('invoices/{invoice}/cancel', [BackOfficeInvoiceController::class, 'cancel'])
             ->middleware('permission:cancel invoices|manage invoicing')
             ->name('invoices.cancel');
+
+        Route::middleware('permission:view invoices|send invoices|manage invoicing')->group(function () {
+            Route::get('deliveries/email', [BackOfficeInvoiceDeliveryController::class, 'emailQueue'])
+                ->name('deliveries.email.index');
+            Route::get('deliveries/postal', [BackOfficeInvoiceDeliveryController::class, 'postalQueue'])
+                ->name('deliveries.postal.index');
+        });
+
+        Route::middleware('permission:send invoices|manage invoicing')->group(function () {
+            Route::post('deliveries/email', [BackOfficeInvoiceDeliveryController::class, 'sendBulkEmail'])
+                ->name('deliveries.email.send');
+            Route::post('deliveries/postal/print', [BackOfficeInvoiceDeliveryController::class, 'printPostal'])
+                ->name('deliveries.postal.print');
+            Route::post('invoices/{invoice}/email', [BackOfficeInvoiceDeliveryController::class, 'sendEmail'])
+                ->name('invoices.email');
+            Route::post('invoices/{invoice}/print', [BackOfficeInvoiceDeliveryController::class, 'printInvoice'])
+                ->name('invoices.print');
+            Route::put('invoices/{invoice}/delivery-method', [BackOfficeInvoiceDeliveryController::class, 'updateDeliveryMethod'])
+                ->name('invoices.delivery-method');
+        });
 
         Route::middleware('permission:view invoices|manage invoicing')->group(function () {
             Route::get('credit-notes', [BackOfficeCreditNoteController::class, 'index'])->name('credit-notes.index');

@@ -133,6 +133,22 @@ export interface InvoiceItem {
     type_label?: string;
 }
 
+export interface InvoiceDelivery {
+    id: number;
+    invoice_id: number;
+    channel: 'email' | 'postal';
+    recipient: string;
+    batch_id: string | null;
+    status: 'pending' | 'sent' | 'failed' | 'printed';
+    processed_at: string | null;
+    processed_by: number | null;
+    notes: string | null;
+    error: string | null;
+    created_at: string;
+    updated_at: string;
+    processor?: { id: number; name: string } | null;
+}
+
 export interface InvoiceActivityLog {
     id: number;
     invoice_id: number | null;
@@ -178,6 +194,8 @@ export interface Invoice {
     billing_customer?: BillingCustomer | null;
     credit_note_applications?: CreditNoteApplication[];
     document?: FinancialDocument | null;
+    deliveries?: InvoiceDelivery[];
+    latest_delivery?: InvoiceDelivery | null;
     created_at: string;
     updated_at: string;
 }
