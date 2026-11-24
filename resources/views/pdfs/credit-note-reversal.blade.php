@@ -29,12 +29,12 @@
             </div>
         </div>
 
-        <div class="doc-title right">
-            <div class="eyebrow">Avoir d’annulation</div>
-            <h1>{{ $reversal->credit_note_reversal_number }}</h1>
-            <div class="small muted">Avoir {{ $reversal->creditNote->credit_note_number }}</div>
-            <div class="small muted" style="margin-top: 3mm;">Émis le {{ $reversal->issue_date?->format('d.m.Y') }}</div>
-            <div class="small muted">Devise {{ $reversal->currency->value }}</div>
+    </div>
+
+    <div class="doc-summary">
+        <div><span class="type">Avoir d’annulation</span><span class="ref">{{ $reversal->credit_note_reversal_number }}</span></div>
+        <div class="meta">
+            Avoir {{ $reversal->creditNote->credit_note_number }} · Émis le {{ $reversal->issue_date?->format('d.m.Y') }} · {{ $reversal->currency->value }}
         </div>
     </div>
 

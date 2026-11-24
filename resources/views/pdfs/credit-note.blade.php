@@ -29,12 +29,12 @@
             </div>
         </div>
 
-        <div class="doc-title right">
-            <div class="eyebrow">Avoir</div>
-            <h1>{{ $creditNote->credit_note_number }}</h1>
-            <div class="small muted">Facture {{ $creditNote->invoice->invoice_number }}</div>
-            <div class="small muted" style="margin-top: 3mm;">Émis le {{ $creditNote->issue_date?->format('d.m.Y') }}</div>
-            <div class="small muted">Devise {{ $creditNote->currency->value }}</div>
+    </div>
+
+    <div class="doc-summary">
+        <div><span class="type">Avoir</span><span class="ref">{{ $creditNote->credit_note_number }}</span></div>
+        <div class="meta">
+            Facture {{ $creditNote->invoice->invoice_number }} · Émis le {{ $creditNote->issue_date?->format('d.m.Y') }} · {{ $creditNote->currency->value }}
         </div>
     </div>
 
