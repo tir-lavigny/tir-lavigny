@@ -151,24 +151,33 @@ class CreditNoteOperationsTest extends TestCase
         ], $actor);
     }
 
-    public function test_blocks_reversal_while_refunds_remain(): void
+    public function test_allows_reversal_of_remaining_credit_after_refund(): void
     {
         $actor = User::factory()->create();
-        $invoice = $this->issuedInvoice(BillingCustomer::factory()->create(), $actor, '100.00');
-        $creditNote = $this->issuedCreditNote($invoice, $actor, '100.00');
+        $invoice = $this->issuedInvoice(BillingCustomer::factory()->create(), $actor, '50.00');
+        $creditNote = $this->issuedCreditNote($invoice, $actor, '50.00');
         $application = $creditNote->applications()->firstOrFail();
-        app(ReverseCreditNoteApplication::class)->execute($application, 10000, 'Recredit', $actor);
+        app(ReverseCreditNoteApplication::class)->execute($application, 5000, 'Recredit', $actor);
+
         app(RecordCreditNoteRefund::class)->execute($creditNote->fresh(), [
-            'amount_cents' => 2000,
+            'amount_cents' => 4600,
             'refund_date' => '2027-02-01',
             'payment_method' => 'cash',
         ], $actor);
 
-        $this->expectException(CreditNoteNotApplicable::class);
-        app(CreateCreditNoteReversal::class)->execute($creditNote->fresh(), [
+        $this->assertSame(400, app(CreditNoteBalanceCalculator::class)->availableCents($creditNote->fresh()));
+
+        $reversal = app(CreateCreditNoteReversal::class)->execute($creditNote->fresh(), [
             'reason' => 'Correction',
-            'items' => [['description' => 'Annulation', 'amount' => '10.00']],
+            'issue_date' => '2027-03-01',
+            'items' => [['description' => 'Solde', 'amount' => '4.00']],
         ], $actor);
+
+        $issued = app(IssueCreditNoteReversal::class)->execute($reversal, $actor);
+
+        $this->assertSame('CNR-2027-0001', $issued->credit_note_reversal_number);
+        $this->assertSame(0, app(CreditNoteBalanceCalculator::class)->availableCents($creditNote->fresh()));
+        $this->assertSame(CreditNoteStatus::PartiallyReversed, $creditNote->fresh()->status);
     }
 
     public function test_recalculates_balances_from_records(): void

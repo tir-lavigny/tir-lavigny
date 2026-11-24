@@ -138,26 +138,32 @@ class CreditNoteOperationsControllerTest extends TestCase
         $this->assertDatabaseCount('credit_note_reversals', 0);
     }
 
-    public function test_blocks_reversal_while_refunds_exist(): void
+    public function test_allows_reversal_of_remaining_credit_after_refund(): void
     {
         $this->actingAsAdmin();
         $actor = User::factory()->create();
-        $invoice = $this->issuedInvoice(BillingCustomer::factory()->create(), $actor, '100.00');
-        $creditNote = $this->issuedCreditNote($invoice, $actor, '100.00');
+        $invoice = $this->issuedInvoice(BillingCustomer::factory()->create(), $actor, '50.00');
+        $creditNote = $this->issuedCreditNote($invoice, $actor, '50.00');
         $this->reverseAutoApplication($creditNote, $actor);
 
         $this->post(route('bo.invoicing.credit-notes.refund', $creditNote), [
-            'amount' => '20.00',
+            'amount' => '46.00',
             'refund_date' => '2027-02-01',
             'payment_method' => 'cash',
-        ]);
+        ])->assertSessionHas('success');
 
         $this->post(route('bo.invoicing.credit-notes.reversals.store', $creditNote), [
-            'reason' => 'Correction',
-            'items' => [['description' => 'Annulation', 'amount' => '10.00']],
-        ])->assertSessionHasErrors('items');
+            'reason' => 'Solde',
+            'issue_date' => '2027-03-01',
+            'items' => [['description' => 'Solde', 'amount' => '4.00']],
+        ])->assertSessionHas('success');
 
-        $this->assertDatabaseCount('credit_note_reversals', 0);
+        $reversal = CreditNoteReversal::firstOrFail();
+
+        $this->post(route('bo.invoicing.credit-note-reversals.issue', $reversal))
+            ->assertSessionHas('success');
+
+        $this->assertSame('CNR-2027-0001', $reversal->fresh()->credit_note_reversal_number);
     }
 
     private function actingAsAdmin(): User
