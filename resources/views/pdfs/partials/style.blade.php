@@ -55,21 +55,27 @@
     .small { font-size: 8pt; }
     .accent { color: #2563eb; }
     .right { text-align: right; }
+    .left { text-align: left; }
 
     .page-top {
         position: relative;
         height: 70mm;
     }
 
-    .brand-right {
+    .brand-right,
+    .brand-left {
         position: absolute;
         top: 0;
-        right: 0;
         width: 100mm;
         border-collapse: collapse;
     }
-    .brand-right td { vertical-align: middle; }
-    .brand-logo { width: 17mm; text-align: right; }
+    .brand-right { right: 0; }
+    .brand-left { left: 0; }
+    .brand-right td,
+    .brand-left td { vertical-align: middle; }
+    .brand-logo { width: 17mm; }
+    .brand-right .brand-logo { text-align: right; }
+    .brand-left .brand-logo { text-align: left; }
     .brand-logo img { width: 15mm; height: 15mm; }
     .brand-name { font-size: 11pt; font-weight: 600; color: #020817; }
     .brand-meta { color: #64748b; font-size: 7.5pt; line-height: 1.35; }
@@ -77,12 +83,13 @@
     .address-window {
         position: absolute;
         top: 29mm;
-        left: 2mm;
         width: 85mm;
         min-height: 40mm;
         font-size: 10pt;
         line-height: 1.5;
     }
+    .address-window.window-left { left: 2mm; }
+    .address-window.window-right { right: -6mm; }
 
     .doc-summary {
         margin: 0 0 1mm;

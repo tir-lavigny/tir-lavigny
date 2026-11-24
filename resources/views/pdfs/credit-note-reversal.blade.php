@@ -6,26 +6,44 @@
 </head>
 <body>
     <div class="page-top">
-        <table class="brand-right">
-            <tr>
-                <td class="right">
-                    <div class="brand-name">{{ $reversal->creditor_name }}</div>
-                    <div class="brand-meta">
-                        {{ $reversal->creditor_address }}<br>
-                        {{ $reversal->creditor_postal_code }} {{ $reversal->creditor_city }}<br>
-                        {{ $reversal->creditor_country }}
-                    </div>
-                </td>
-                <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
-            </tr>
-        </table>
+        @if ($envelopeWindow === 'right')
+            <table class="brand-left">
+                <tr>
+                    <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
+                    <td>
+                        <div class="brand-name">{{ $reversal->creditor_name }}</div>
+                        <div class="brand-meta">
+                            {{ $reversal->creditor_address }}<br>
+                            {{ $reversal->creditor_postal_code }} {{ $reversal->creditor_city }}<br>
+                            {{ $reversal->creditor_country }}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        @else
+            <table class="brand-right">
+                <tr>
+                    <td class="right">
+                        <div class="brand-name">{{ $reversal->creditor_name }}</div>
+                        <div class="brand-meta">
+                            {{ $reversal->creditor_address }}<br>
+                            {{ $reversal->creditor_postal_code }} {{ $reversal->creditor_city }}<br>
+                            {{ $reversal->creditor_country }}
+                        </div>
+                    </td>
+                    <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
+                </tr>
+            </table>
+        @endif
 
-        <div class="address-window">
+        <div class="address-window window-{{ $envelopeWindow }}">
             <div class="party">
                 <strong>{{ $reversal->recipient_name }}</strong><br>
                 {{ $reversal->recipient_address }}<br>
-                {{ $reversal->recipient_postal_code }} {{ $reversal->recipient_city }}<br>
-                {{ $reversal->recipient_country }}
+                {{ $reversal->recipient_postal_code }} {{ $reversal->recipient_city }}
+                @if (strtoupper($reversal->recipient_country) !== 'CH')
+                    <br>{{ $reversal->recipient_country }}
+                @endif
             </div>
         </div>
 
