@@ -21,7 +21,7 @@ return new class extends Migration
             $table->unsignedInteger('position')->default(0);
             $table->timestamps();
 
-            $table->index(['credit_note_reversal_id', 'position']);
+            $table->index(['credit_note_reversal_id', 'position'], 'cnr_items_reversal_position_index');
         });
     }
 

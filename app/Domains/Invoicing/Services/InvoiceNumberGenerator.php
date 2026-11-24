@@ -39,6 +39,6 @@ class InvoiceNumberGenerator
             $sequence->update(['last_number' => $nextNumber]);
 
             return sprintf('%d-%04d', $year, $nextNumber);
-        });
+        }, 5);
     }
 }

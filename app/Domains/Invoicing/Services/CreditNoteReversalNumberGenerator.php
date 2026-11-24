@@ -39,6 +39,6 @@ class CreditNoteReversalNumberGenerator
             $sequence->update(['last_number' => $nextNumber]);
 
             return sprintf('CNR-%d-%04d', $year, $nextNumber);
-        });
+        }, 5);
     }
 }

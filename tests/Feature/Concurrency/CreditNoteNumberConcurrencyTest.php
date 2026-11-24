@@ -3,7 +3,7 @@
 namespace Tests\Feature\Concurrency;
 
 use App\Domains\Invoicing\Models\CreditNoteSequence;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
@@ -11,7 +11,19 @@ use Tests\TestCase;
 #[Group('concurrency')]
 class CreditNoteNumberConcurrencyTest extends TestCase
 {
-    use RefreshDatabase;
+    protected function setUpTraits(): array
+    {
+        $driver = config('database.default');
+        $connection = config("database.connections.{$driver}.driver");
+
+        if (! in_array($connection, ['mysql', 'mariadb'], true) || env('RUN_CONCURRENCY_TESTS') !== '1') {
+            $this->markTestSkipped('Requires a MariaDB test connection and RUN_CONCURRENCY_TESTS=1.');
+        }
+
+        return parent::setUpTraits();
+    }
+
+    use DatabaseTruncation;
 
     public function test_parallel_credit_note_number_allocation_is_unique(): void
     {

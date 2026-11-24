@@ -30,7 +30,9 @@ return new class extends Migration
         }
 
         Schema::table('customer_account_entries', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('credit_note_id');
+            $table->dropForeign('customer_entries_credit_note_fk');
+            $table->dropIndex(['credit_note_id', 'type']);
+            $table->dropColumn('credit_note_id');
         });
     }
 };
