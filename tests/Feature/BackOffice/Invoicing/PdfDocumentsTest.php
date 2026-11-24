@@ -14,6 +14,7 @@ use App\Domains\Invoicing\Models\BillingCustomer;
 use App\Domains\Invoicing\Models\CreditNote;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Models\InvoiceItem;
+use App\Domains\Invoicing\Models\InvoicingSettings;
 use App\Domains\Invoicing\Services\FinancialDocumentArchiver;
 use App\Domains\Invoicing\Services\FinancialDocumentGenerator;
 use App\Domains\Invoicing\Services\PaymentReferenceGenerator;
@@ -82,6 +83,31 @@ class PdfDocumentsTest extends TestCase
         $this->assertSame('SCOR', $qrBill->getPaymentReference()?->getType());
         $this->assertStringStartsWith('RF', (string) $qrBill->getPaymentReference()?->getReference());
         $this->assertSame("Facture {$invoice->invoice_number}", $qrBill->getAdditionalInformation()?->getFormattedString());
+    }
+
+    public function test_right_window_mirrors_recipient_and_creditor_blocks(): void
+    {
+        $invoice = $this->issuedInvoice();
+        $html = view('pdfs.invoice', [
+            'invoice' => $invoice,
+            'envelopeWindow' => 'right',
+        ])->render();
+
+        $this->assertStringContainsString('address-window window-right', $html);
+        $this->assertStringContainsString('brand-left', $html);
+    }
+
+    public function test_generates_pdf_for_right_window_setting(): void
+    {
+        InvoicingSettings::query()->update(['envelope_window' => 'right']);
+        $invoice = $this->issuedInvoice();
+        $pdf = app(FinancialDocumentGenerator::class)->invoice($invoice);
+
+        $this->assertStringStartsWith('%PDF', $pdf);
+        $this->assertStringContainsString('brand-left', view('pdfs.invoice', [
+            'invoice' => $invoice,
+            'envelopeWindow' => 'right',
+        ])->render());
     }
 
     public function test_generates_credit_note_and_reversal_pdf_documents(): void

@@ -6,21 +6,37 @@
 </head>
 <body>
     <div class="page-top">
-        <table class="brand-right">
-            <tr>
-                <td class="right">
-                    <div class="brand-name">{{ $creditNote->creditor_name }}</div>
-                    <div class="brand-meta">
-                        {{ $creditNote->creditor_address }}<br>
-                        {{ $creditNote->creditor_postal_code }} {{ $creditNote->creditor_city }}<br>
-                        {{ $creditNote->creditor_country }}
-                    </div>
-                </td>
-                <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
-            </tr>
-        </table>
+        @if ($envelopeWindow === 'right')
+            <table class="brand-left">
+                <tr>
+                    <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
+                    <td>
+                        <div class="brand-name">{{ $creditNote->creditor_name }}</div>
+                        <div class="brand-meta">
+                            {{ $creditNote->creditor_address }}<br>
+                            {{ $creditNote->creditor_postal_code }} {{ $creditNote->creditor_city }}<br>
+                            {{ $creditNote->creditor_country }}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        @else
+            <table class="brand-right">
+                <tr>
+                    <td class="right">
+                        <div class="brand-name">{{ $creditNote->creditor_name }}</div>
+                        <div class="brand-meta">
+                            {{ $creditNote->creditor_address }}<br>
+                            {{ $creditNote->creditor_postal_code }} {{ $creditNote->creditor_city }}<br>
+                            {{ $creditNote->creditor_country }}
+                        </div>
+                    </td>
+                    <td class="brand-logo">@inlinedImage(public_path('images/icon-512x512.png'))</td>
+                </tr>
+            </table>
+        @endif
 
-        <div class="address-window">
+        <div class="address-window window-{{ $envelopeWindow }}">
             <div class="party">
                 <strong>{{ $creditNote->recipient_name }}</strong><br>
                 {{ $creditNote->recipient_address }}<br>
