@@ -2,6 +2,7 @@
 
 namespace App\Domains\Invoicing\Services;
 
+use App\Domains\Invoicing\Enums\EnvelopeWindow;
 use App\Domains\Invoicing\Exceptions\InvoicingSettingsMissing;
 use App\Domains\Invoicing\Models\InvoicingSettings;
 use Sprain\SwissQrBill\DataGroup\Element\CreditorInformation;
@@ -105,6 +106,13 @@ class InvoicingSettingsService
             'creditor_country' => strtoupper($settings->creditor_country),
             'creditor_iban' => $this->normalizeIban($settings->creditor_iban),
         ];
+    }
+
+    public function envelopeWindow(): EnvelopeWindow
+    {
+        $settings = $this->current();
+
+        return $settings === null ? EnvelopeWindow::Left : $settings->envelope_window;
     }
 
     public function normalizeIban(string $iban): string

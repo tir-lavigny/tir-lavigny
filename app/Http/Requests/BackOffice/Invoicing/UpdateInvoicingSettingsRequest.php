@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\BackOffice\Invoicing;
 
+use App\Domains\Invoicing\Enums\EnvelopeWindow;
 use App\Domains\Invoicing\Services\InvoicingSettingsService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -26,6 +27,7 @@ class UpdateInvoicingSettingsRequest extends FormRequest
             'creditor_city' => ['required', 'string', 'max:35'],
             'creditor_country' => ['required', 'string', 'size:2', Rule::in(['CH', 'LI'])],
             'creditor_iban' => ['required', 'string', 'max:34'],
+            'envelope_window' => ['required', Rule::enum(EnvelopeWindow::class)],
         ];
     }
 
@@ -70,6 +72,8 @@ class UpdateInvoicingSettingsRequest extends FormRequest
             'creditor_country.required' => 'Le pays du créancier est obligatoire.',
             'creditor_country.in' => 'Le pays du créancier doit être la Suisse ou le Liechtenstein.',
             'creditor_iban.required' => 'L’IBAN du créancier est obligatoire.',
+            'envelope_window.required' => 'Le type d’enveloppe est obligatoire.',
+            'envelope_window.enum' => 'Le type d’enveloppe est invalide.',
         ];
     }
 }

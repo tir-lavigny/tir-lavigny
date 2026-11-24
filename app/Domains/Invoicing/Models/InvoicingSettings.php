@@ -2,12 +2,16 @@
 
 namespace App\Domains\Invoicing\Models;
 
+use App\Domains\Invoicing\Enums\EnvelopeWindow;
 use App\Models\User;
 use Database\Factories\Domains\Invoicing\Models\InvoicingSettingsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property EnvelopeWindow $envelope_window
+ */
 class InvoicingSettings extends Model
 {
     /** @use HasFactory<InvoicingSettingsFactory> */
@@ -20,8 +24,16 @@ class InvoicingSettings extends Model
         'creditor_city',
         'creditor_country',
         'creditor_iban',
+        'envelope_window',
         'updated_by',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'envelope_window' => EnvelopeWindow::class,
+        ];
+    }
 
     /**
      * @return BelongsTo<User, $this>
