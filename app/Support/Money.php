@@ -70,6 +70,57 @@ final class Money
     }
 
     /**
+     * Convert a decimal quantity to thousandths ("1.250" => 1250).
+     */
+    public static function toThousandths(int|float|string|null $quantity): ?int
+    {
+        if ($quantity === null) {
+            return null;
+        }
+
+        if (is_int($quantity)) {
+            return $quantity * 1000;
+        }
+
+        $normalized = self::normalize($quantity);
+
+        if ($normalized === '' || $normalized === '-' || $normalized === '+') {
+            return null;
+        }
+
+        if (! preg_match('/^([+-]?)(\d*)(?:\.(\d+))?$/', $normalized, $matches) || ($matches[2] === '' && ! isset($matches[3]))) {
+            return is_numeric($normalized) ? (int) round(((float) $normalized) * 1000) : null;
+        }
+
+        $decimals = $matches[3] ?? '';
+        $thousandths = (int) ($matches[2] === '' ? '0' : $matches[2]) * 1000
+            + (int) substr(str_pad($decimals, 3, '0'), 0, 3);
+
+        if (strlen($decimals) > 3 && (int) $decimals[3] >= 5) {
+            $thousandths++;
+        }
+
+        return $matches[1] === '-' && $thousandths !== 0 ? -$thousandths : $thousandths;
+    }
+
+    /**
+     * Multiply cents by a decimal quantity, rounded half away from zero.
+     */
+    public static function multiplyByQuantity(int $cents, int|float|string|null $quantity): int
+    {
+        $thousandths = self::toThousandths($quantity) ?? 0;
+
+        if ($cents === 0 || $thousandths === 0) {
+            return 0;
+        }
+
+        $product = $cents * $thousandths;
+        $rounded = intdiv(abs($product) + 500, 1000);
+
+        return $product < 0 ? -$rounded : $rounded;
+    }
+
+    /**
      * Format cents as a two-decimal string ("12550" => "125.50").
      */
     public static function fromCents(?int $cents): ?string

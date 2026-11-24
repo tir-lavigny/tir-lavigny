@@ -3,6 +3,7 @@
 namespace Tests\Feature\BackOffice\Invoicing;
 
 use App\Domains\Invoicing\Models\BillingCustomer;
+use App\Domains\Invoicing\Models\Invoice;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -101,5 +102,38 @@ class InvoicingRbacTest extends TestCase
         $this->actingAs($user)
             ->get(route('bo.invoicing.billing-customers.index'))
             ->assertForbidden();
+    }
+
+    public function test_invoice_policy_matches_permissions_and_status(): void
+    {
+        $viewer = User::factory()->create();
+        $viewer->givePermissionTo('view invoices');
+
+        $manager = User::factory()->create();
+        $manager->givePermissionTo([
+            'create invoices',
+            'issue invoices',
+            'cancel invoices',
+            'manage invoicing',
+        ]);
+
+        $draft = Invoice::factory()->create();
+        $issued = Invoice::factory()->create(['status' => 'issued']);
+
+        $this->assertTrue($viewer->can('view', $draft));
+        $this->assertFalse($viewer->can('create', Invoice::class));
+        $this->assertFalse($viewer->can('update', $draft));
+
+        $this->assertTrue($manager->can('view', $draft));
+        $this->assertTrue($manager->can('create', Invoice::class));
+        $this->assertTrue($manager->can('update', $draft));
+        $this->assertTrue($manager->can('delete', $draft));
+        $this->assertTrue($manager->can('issue', $draft));
+        $this->assertFalse($manager->can('cancel', $draft));
+
+        $this->assertFalse($manager->can('update', $issued));
+        $this->assertFalse($manager->can('delete', $issued));
+        $this->assertFalse($manager->can('issue', $issued));
+        $this->assertTrue($manager->can('cancel', $issued));
     }
 }
