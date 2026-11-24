@@ -56,22 +56,40 @@
     .accent { color: #2563eb; }
     .right { text-align: right; }
 
-    .brand {
-        width: 100%;
-        border-collapse: collapse;
+    .page-top {
+        position: relative;
+        height: 70mm;
     }
-    .brand td { vertical-align: middle; }
-    .brand-logo { width: 17mm; }
-    .brand-logo img { width: 15mm; height: 15mm; }
-    .brand-name { font-size: 12pt; font-weight: 600; color: #020817; }
-    .brand-meta { color: #64748b; font-size: 8pt; line-height: 1.35; }
 
-    .doc-meta {
-        width: 100%;
+    .brand-right {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100mm;
         border-collapse: collapse;
-        margin-top: 8mm;
     }
-    .doc-meta td { vertical-align: top; }
+    .brand-right td { vertical-align: middle; }
+    .brand-logo { width: 17mm; text-align: right; }
+    .brand-logo img { width: 15mm; height: 15mm; }
+    .brand-name { font-size: 11pt; font-weight: 600; color: #020817; }
+    .brand-meta { color: #64748b; font-size: 7.5pt; line-height: 1.35; }
+
+    .address-window {
+        position: absolute;
+        top: 29mm;
+        left: 2mm;
+        width: 85mm;
+        min-height: 40mm;
+        font-size: 10pt;
+        line-height: 1.5;
+    }
+
+    .doc-title {
+        position: absolute;
+        top: 29mm;
+        right: 0;
+        width: 75mm;
+    }
 
     .eyebrow {
         color: #64748b;
@@ -103,6 +121,10 @@
         border-bottom: 0.2mm solid #e2e8f0;
         padding: 2.2mm 1.2mm;
         vertical-align: top;
+    }
+    .lines th.right,
+    .lines td.right {
+        text-align: right;
     }
 
     .totals {
