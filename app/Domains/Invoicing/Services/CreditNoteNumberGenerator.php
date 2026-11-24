@@ -39,6 +39,6 @@ class CreditNoteNumberGenerator
             $sequence->update(['last_number' => $nextNumber]);
 
             return sprintf('CN-%d-%04d', $year, $nextNumber);
-        });
+        }, 5);
     }
 }
