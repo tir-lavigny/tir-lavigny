@@ -17,14 +17,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use LogicException;
 
 /**
  * @property InvoiceStatus $status
  * @property InvoiceType $type
  * @property InvoiceDeliveryMethod $delivery_method
- * @property \Illuminate\Support\Carbon|null $issue_date
- * @property \Illuminate\Support\Carbon|null $due_date
+ * @property Carbon|null $issue_date
+ * @property Carbon|null $due_date
  * @property string $subtotal
  * @property string $total
  * @property int $subtotal_cents
@@ -182,6 +183,22 @@ class Invoice extends Model
     public function paymentAllocations(): HasMany
     {
         return $this->hasMany(InvoicePayment::class);
+    }
+
+    /**
+     * @return HasMany<CreditNote, $this>
+     */
+    public function creditNotes(): HasMany
+    {
+        return $this->hasMany(CreditNote::class);
+    }
+
+    /**
+     * @return HasMany<CreditNoteApplication, $this>
+     */
+    public function creditNoteApplications(): HasMany
+    {
+        return $this->hasMany(CreditNoteApplication::class);
     }
 
     /**

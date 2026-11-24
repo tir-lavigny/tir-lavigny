@@ -215,6 +215,11 @@ const invoicingNavItems: NavItem[] = [
                   href: route('bo.invoicing.invoices.index'),
                   icon: Receipt,
               },
+              {
+                  title: 'Avoirs',
+                  href: route('bo.invoicing.credit-notes.index'),
+                  icon: Receipt,
+              },
           ]
         : []),
 ];

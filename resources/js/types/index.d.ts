@@ -171,6 +171,56 @@ export interface PaginatedInvoices extends PaginatedData<Invoice> {
     data?: Invoice[];
 }
 
+export interface CreditNoteItem {
+    id: number;
+    credit_note_id: number;
+    invoice_item_id: number | null;
+    description: string;
+    quantity: string;
+    unit_price: string;
+    total: string;
+    position: number;
+}
+
+export interface CreditNoteApplication {
+    id: number;
+    credit_note_id: number;
+    invoice_id: number;
+    amount: string;
+    applied_at: string;
+    invoice?: Invoice;
+}
+
+export interface CreditNote {
+    id: number;
+    invoice_id: number;
+    billing_customer_id: number;
+    credit_note_number: string | null;
+    status: 'draft' | 'issued' | 'partially_used' | 'fully_used' | 'partially_reversed' | 'reversed';
+    reason: string;
+    issue_date: string | null;
+    currency: string;
+    subtotal: string;
+    total: string;
+    recipient_name: string;
+    recipient_address: string;
+    recipient_postal_code: string;
+    recipient_city: string;
+    recipient_country: string;
+    recipient_email: string | null;
+    created_by: number | null;
+    issued_at: string | null;
+    invoice?: Invoice;
+    items?: CreditNoteItem[];
+    applications?: CreditNoteApplication[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedCreditNotes extends PaginatedData<CreditNote> {
+    data?: CreditNote[];
+}
+
 export abstract class PaginatedData<T> {
     abstract current_page: number;
     abstract data?: T[];

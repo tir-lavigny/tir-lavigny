@@ -88,6 +88,9 @@ const statusLabel = computed(() => {
                 <Button v-if="invoice.status === 'draft' && canCreate" as-child variant="outline">
                     <Link :href="route('bo.invoicing.invoices.edit', invoice.id)"> <Pencil class="mr-2 h-4 w-4" /> Modifier </Link>
                 </Button>
+                <Button v-if="['issued', 'partially_paid', 'paid'].includes(invoice.status) && canCreate" as-child variant="outline">
+                    <Link :href="route('bo.invoicing.credit-notes.create', { invoice_id: invoice.id })">Créer un avoir</Link>
+                </Button>
                 <AppAlertDialog
                     v-if="invoice.status === 'draft' && canIssue"
                     title="Émettre cette facture ?"

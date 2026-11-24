@@ -5,6 +5,7 @@ use App\Http\Controllers\BackOffice\DavController;
 use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
 use App\Http\Controllers\BackOffice\Invoicing\BillingCustomerController as BackOfficeBillingCustomerController;
+use App\Http\Controllers\BackOffice\Invoicing\CreditNoteController as BackOfficeCreditNoteController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoiceController as BackOfficeInvoiceController;
 use App\Http\Controllers\BackOffice\MemberController;
 use App\Http\Controllers\BackOffice\MemberExportController;
@@ -350,6 +351,27 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
         Route::post('invoices/{invoice}/cancel', [BackOfficeInvoiceController::class, 'cancel'])
             ->middleware('permission:cancel invoices|manage invoicing')
             ->name('invoices.cancel');
+
+        Route::middleware('permission:view invoices|manage invoicing')->group(function () {
+            Route::get('credit-notes', [BackOfficeCreditNoteController::class, 'index'])->name('credit-notes.index');
+        });
+
+        Route::middleware('permission:create invoices|manage invoicing')->group(function () {
+            Route::get('credit-notes/create', [BackOfficeCreditNoteController::class, 'create'])->name('credit-notes.create');
+            Route::post('credit-notes/preview', [BackOfficeCreditNoteController::class, 'preview'])->name('credit-notes.preview');
+            Route::post('credit-notes', [BackOfficeCreditNoteController::class, 'store'])->name('credit-notes.store');
+            Route::get('credit-notes/{creditNote}/edit', [BackOfficeCreditNoteController::class, 'edit'])->name('credit-notes.edit');
+            Route::put('credit-notes/{creditNote}', [BackOfficeCreditNoteController::class, 'update'])->name('credit-notes.update');
+            Route::delete('credit-notes/{creditNote}', [BackOfficeCreditNoteController::class, 'destroy'])->name('credit-notes.destroy');
+        });
+
+        Route::middleware('permission:view invoices|manage invoicing')->group(function () {
+            Route::get('credit-notes/{creditNote}', [BackOfficeCreditNoteController::class, 'show'])->name('credit-notes.show');
+        });
+
+        Route::post('credit-notes/{creditNote}/issue', [BackOfficeCreditNoteController::class, 'issue'])
+            ->middleware('permission:issue invoices|manage invoicing')
+            ->name('credit-notes.issue');
     });
 
     // ── Stock Management ──
