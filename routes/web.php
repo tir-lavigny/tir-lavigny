@@ -5,6 +5,7 @@ use App\Http\Controllers\BackOffice\DavController;
 use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChainController;
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
 use App\Http\Controllers\BackOffice\Invoicing\BillingCustomerController as BackOfficeBillingCustomerController;
+use App\Http\Controllers\BackOffice\Invoicing\InvoiceController as BackOfficeInvoiceController;
 use App\Http\Controllers\BackOffice\MemberController;
 use App\Http\Controllers\BackOffice\MemberExportController;
 use App\Http\Controllers\BackOffice\MemberRegistrationController as BackOfficeMemberRegistrationController;
@@ -324,6 +325,31 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
             Route::post('billing-customers/{billingCustomer}/sync-member', [BackOfficeBillingCustomerController::class, 'syncExisting'])
                 ->name('billing-customers.sync');
         });
+
+        Route::middleware('permission:view invoices|manage invoicing')->group(function () {
+            Route::get('invoices', [BackOfficeInvoiceController::class, 'index'])->name('invoices.index');
+        });
+
+        Route::middleware('permission:create invoices|manage invoicing')->group(function () {
+            Route::get('invoices/create', [BackOfficeInvoiceController::class, 'create'])->name('invoices.create');
+            Route::post('invoices', [BackOfficeInvoiceController::class, 'store'])->name('invoices.store');
+            Route::post('invoices/preview', [BackOfficeInvoiceController::class, 'preview'])->name('invoices.preview');
+            Route::get('invoices/{invoice}/edit', [BackOfficeInvoiceController::class, 'edit'])->name('invoices.edit');
+            Route::put('invoices/{invoice}', [BackOfficeInvoiceController::class, 'update'])->name('invoices.update');
+            Route::delete('invoices/{invoice}', [BackOfficeInvoiceController::class, 'destroy'])->name('invoices.destroy');
+        });
+
+        Route::middleware('permission:view invoices|manage invoicing')->group(function () {
+            Route::get('invoices/{invoice}', [BackOfficeInvoiceController::class, 'show'])->name('invoices.show');
+        });
+
+        Route::post('invoices/{invoice}/issue', [BackOfficeInvoiceController::class, 'issue'])
+            ->middleware('permission:issue invoices|manage invoicing')
+            ->name('invoices.issue');
+
+        Route::post('invoices/{invoice}/cancel', [BackOfficeInvoiceController::class, 'cancel'])
+            ->middleware('permission:cancel invoices|manage invoicing')
+            ->name('invoices.cancel');
     });
 
     // ── Stock Management ──

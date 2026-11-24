@@ -63,6 +63,24 @@ class MoneyTest extends TestCase
         $this->assertSame(8, Money::percentOf(1000, 0.75)); // 7.5 cents rounds half up
     }
 
+    public function test_to_thousandths_converts_decimal_quantities(): void
+    {
+        $this->assertSame(1000, Money::toThousandths(1));
+        $this->assertSame(1250, Money::toThousandths('1.25'));
+        $this->assertSame(1250, Money::toThousandths('1,25'));
+        $this->assertSame(1235, Money::toThousandths('1.2345'));
+        $this->assertSame(0, Money::toThousandths('0'));
+        $this->assertNull(Money::toThousandths(null));
+    }
+
+    public function test_multiply_by_quantity_rounds_to_nearest_cent(): void
+    {
+        $this->assertSame(250, Money::multiplyByQuantity(100, '2.5'));
+        $this->assertSame(333, Money::multiplyByQuantity(1000, '0.333'));
+        $this->assertSame(-1250, Money::multiplyByQuantity(-1000, '1.25'));
+        $this->assertSame(2, Money::multiplyByQuantity(3, '0.5'));
+    }
+
     public function test_round_trip_is_lossless(): void
     {
         foreach ([0, 1, 7, 99, 100, 12550, -2550, 9999999999] as $cents) {

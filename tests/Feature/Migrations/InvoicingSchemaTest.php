@@ -29,6 +29,7 @@ class InvoicingSchemaTest extends TestCase
             'invoice_deliveries',
             'invoice_reminders',
             'invoice_activity_logs',
+            'customer_account_entries',
         ];
     }
 
