@@ -85,6 +85,27 @@ class PdfDocumentsTest extends TestCase
         $this->assertSame("Facture {$invoice->invoice_number}", $qrBill->getAdditionalInformation()?->getFormattedString());
     }
 
+    public function test_pdf_view_omits_swiss_country_from_recipient_address(): void
+    {
+        $invoice = $this->issuedInvoice();
+        $html = view('pdfs.invoice', [
+            'invoice' => $invoice,
+            'envelopeWindow' => 'left',
+        ])->render();
+
+        preg_match('/<div class="address-window.*?<\/div>/s', $html, $swissAddress);
+        $this->assertStringNotContainsString('CH', strip_tags($swissAddress[0]));
+
+        $invoice->recipient_country = 'FR';
+        $html = view('pdfs.invoice', [
+            'invoice' => $invoice,
+            'envelopeWindow' => 'left',
+        ])->render();
+
+        preg_match('/<div class="address-window.*?<\/div>/s', $html, $foreignAddress);
+        $this->assertStringContainsString('FR', strip_tags($foreignAddress[0]));
+    }
+
     public function test_right_window_mirrors_recipient_and_creditor_blocks(): void
     {
         $invoice = $this->issuedInvoice();

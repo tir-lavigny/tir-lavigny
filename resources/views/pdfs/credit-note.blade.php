@@ -40,8 +40,10 @@
             <div class="party">
                 <strong>{{ $creditNote->recipient_name }}</strong><br>
                 {{ $creditNote->recipient_address }}<br>
-                {{ $creditNote->recipient_postal_code }} {{ $creditNote->recipient_city }}<br>
-                {{ $creditNote->recipient_country }}
+                {{ $creditNote->recipient_postal_code }} {{ $creditNote->recipient_city }}
+                @if (strtoupper($creditNote->recipient_country) !== 'CH')
+                    <br>{{ $creditNote->recipient_country }}
+                @endif
             </div>
         </div>
 

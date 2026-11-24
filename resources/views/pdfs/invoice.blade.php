@@ -40,8 +40,10 @@
             <div class="party">
                 <strong>{{ $invoice->recipient_name }}</strong><br>
                 {{ $invoice->recipient_address }}<br>
-                {{ $invoice->recipient_postal_code }} {{ $invoice->recipient_city }}<br>
-                {{ $invoice->recipient_country }}
+                {{ $invoice->recipient_postal_code }} {{ $invoice->recipient_city }}
+                @if (strtoupper($invoice->recipient_country) !== 'CH')
+                    <br>{{ $invoice->recipient_country }}
+                @endif
             </div>
         </div>
 

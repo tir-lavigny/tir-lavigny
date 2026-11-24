@@ -40,8 +40,10 @@
             <div class="party">
                 <strong>{{ $reversal->recipient_name }}</strong><br>
                 {{ $reversal->recipient_address }}<br>
-                {{ $reversal->recipient_postal_code }} {{ $reversal->recipient_city }}<br>
-                {{ $reversal->recipient_country }}
+                {{ $reversal->recipient_postal_code }} {{ $reversal->recipient_city }}
+                @if (strtoupper($reversal->recipient_country) !== 'CH')
+                    <br>{{ $reversal->recipient_country }}
+                @endif
             </div>
         </div>
 
