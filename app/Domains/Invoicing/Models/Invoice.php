@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -25,6 +26,7 @@ use LogicException;
  * @property InvoiceStatus $status
  * @property InvoiceType $type
  * @property InvoiceDeliveryMethod $delivery_method
+ * @property Currency $currency
  * @property Carbon|null $issue_date
  * @property Carbon|null $due_date
  * @property string $subtotal
@@ -147,11 +149,11 @@ class Invoice extends Model
     }
 
     /**
-     * @return HasMany<InvoiceDocument, $this>
+     * @return MorphOne<FinancialDocument, $this>
      */
-    public function documents(): HasMany
+    public function document(): MorphOne
     {
-        return $this->hasMany(InvoiceDocument::class);
+        return $this->morphOne(FinancialDocument::class, 'documentable');
     }
 
     /**

@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.4.1",
         "dedoc/scramble": "^0.13.47",
+        "dompdf/dompdf": "^3.1",
         "inertiajs/inertia-laravel": "^3.5.1",
         "laravel/framework": "^13.34.0",
         "laravel/nightwatch": "^1.30.2",
@@ -18,9 +19,13 @@
         "laravel/telescope": "^5.25.0",
         "laravel/tinker": "^3.0.2",
         "sabre/dav": "^4.7.1",
+        "setasign/fpdf": "^1.9",
+        "setasign/fpdi": "^2.6",
         "spatie/icalendar-generator": "^3.3.0",
+        "spatie/laravel-pdf": "^2.14",
         "spatie/laravel-permission": "^8.3.0",
         "spatie/simple-excel": "^3.10.0",
+        "sprain/swiss-qr-bill": "^5.5",
         "tightenco/ziggy": "^2.6.4"
     },
     "require-dev": {

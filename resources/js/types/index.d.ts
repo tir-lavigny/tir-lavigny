@@ -111,6 +111,14 @@ export interface PaginatedBillingCustomers extends PaginatedData<BillingCustomer
     data?: BillingCustomer[];
 }
 
+export interface FinancialDocument {
+    id: number;
+    status: 'pending' | 'stored' | 'failed';
+    error: string | null;
+    generated_at: string;
+    archived_at: string | null;
+}
+
 export interface InvoiceItem {
     id: number;
     invoice_id: number;
@@ -169,6 +177,7 @@ export interface Invoice {
     activity_logs?: InvoiceActivityLog[];
     billing_customer?: BillingCustomer | null;
     credit_note_applications?: CreditNoteApplication[];
+    document?: FinancialDocument | null;
     created_at: string;
     updated_at: string;
 }
@@ -231,6 +240,7 @@ export interface CreditNoteReversal {
         description: string;
         amount: string;
     }>;
+    document?: FinancialDocument | null;
 }
 
 export interface CreditNote {
@@ -257,6 +267,7 @@ export interface CreditNote {
     applications?: CreditNoteApplication[];
     refunds?: CreditNoteRefund[];
     reversals?: CreditNoteReversal[];
+    document?: FinancialDocument | null;
     created_at: string;
     updated_at: string;
 }

@@ -7,16 +7,19 @@ use App\Domains\Invoicing\Actions\Invoices\CreateInvoice;
 use App\Domains\Invoicing\Actions\Invoices\DeleteDraftInvoice;
 use App\Domains\Invoicing\Actions\Invoices\IssueInvoice;
 use App\Domains\Invoicing\Actions\Invoices\UpdateDraftInvoice;
+use App\Domains\Invoicing\Enums\FinancialDocumentStatus;
 use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
 use App\Domains\Invoicing\Enums\InvoiceItemType;
 use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Domains\Invoicing\Enums\InvoiceType;
 use App\Domains\Invoicing\Exceptions\InvoiceNotCancellable;
 use App\Domains\Invoicing\Exceptions\InvoiceNotIssuable;
+use App\Domains\Invoicing\Exceptions\InvoicingSettingsMissing;
 use App\Domains\Invoicing\Models\BillingCustomer;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Services\InvoiceBalanceCalculator;
 use App\Domains\Invoicing\Services\InvoiceDraftService;
+use App\Domains\Invoicing\Services\InvoicingSettingsService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Invoicing\CancelInvoiceRequest;
 use App\Http\Requests\BackOffice\Invoicing\PreviewInvoiceRequest;
@@ -29,14 +32,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InvoiceController extends Controller
 {
     use SearchesAccentInsensitively;
 
-    public function index(Request $request): Response
+    public function index(Request $request, InvoicingSettingsService $settings): Response
     {
         Gate::authorize('viewAny', Invoice::class);
 
@@ -102,12 +107,18 @@ class InvoiceController extends Controller
             'statuses' => $this->statusOptions(),
             'types' => $this->typeOptions(),
             'years' => $this->yearOptions(),
+            'invoicingConfigured' => $settings->isConfigured(),
         ]);
     }
 
-    public function create(): Response
+    public function create(InvoicingSettingsService $settings): Response|RedirectResponse
     {
         Gate::authorize('create', Invoice::class);
+
+        if (! $settings->isConfigured()) {
+            return to_route('bo.invoicing.settings.edit')
+                ->withErrors(['settings' => 'Configurez les paramètres de facturation avant de créer une facture.']);
+        }
 
         return Inertia::render('backOffice/Invoicing/Invoices/Create', [
             'billingCustomers' => $this->billingCustomerOptions(),
@@ -118,7 +129,12 @@ class InvoiceController extends Controller
 
     public function store(StoreInvoiceRequest $request, CreateInvoice $create): RedirectResponse
     {
-        $invoice = $create->execute($request->validated(), $request->user());
+        try {
+            $invoice = $create->execute($request->validated(), $request->user());
+        } catch (InvoicingSettingsMissing $exception) {
+            return to_route('bo.invoicing.settings.edit')
+                ->withErrors(['settings' => $exception->getMessage()]);
+        }
 
         return redirect()
             ->route('bo.invoicing.invoices.show', $invoice)
@@ -136,6 +152,7 @@ class InvoiceController extends Controller
             'creditNoteApplications.creditNote',
             'creditNoteApplications.reversals',
             'paymentAllocations.payment',
+            'document',
         ]);
 
         return Inertia::render('backOffice/Invoicing/Invoices/Show', [
@@ -146,6 +163,26 @@ class InvoiceController extends Controller
                 'outstanding_cents' => $balances->outstandingCents($invoice),
             ],
         ]);
+    }
+
+    public function downloadPdf(Invoice $invoice): StreamedResponse
+    {
+        Gate::authorize('view', $invoice);
+
+        $document = $invoice->document()->first();
+
+        abort_unless(
+            $document !== null
+                && $document->isStored()
+                && Storage::disk($document->disk)->exists($document->path),
+            404,
+        );
+
+        return Storage::disk($document->disk)->download(
+            $document->path,
+            "facture-{$invoice->invoice_number}.pdf",
+            ['Content-Type' => 'application/pdf'],
+        );
     }
 
     public function edit(Invoice $invoice): Response
@@ -191,8 +228,14 @@ class InvoiceController extends Controller
 
         try {
             $issued = $issue->execute($invoice, request()->user());
-        } catch (InvoiceNotIssuable $exception) {
+        } catch (InvoiceNotIssuable|InvoicingSettingsMissing $exception) {
             return back()->withErrors(['action' => $exception->getMessage()]);
+        }
+
+        if ($issued->document?->status === FinancialDocumentStatus::Failed) {
+            return redirect()
+                ->route('bo.invoicing.invoices.show', $issued)
+                ->with('warning', 'Facture émise, mais le PDF n’a pas pu être archivé. Réessayez l’archivage depuis la fiche.');
         }
 
         return redirect()

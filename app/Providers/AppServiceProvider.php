@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domains\Invoicing\Services\FinancialDocumentGenerator;
+use App\Domains\Invoicing\Services\PdfFinancialDocumentGenerator;
 use App\Services\DavServiceInterface;
 use App\Services\InfomaniakDavService;
 use App\Services\StubDavService;
@@ -22,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(FinancialDocumentGenerator::class, PdfFinancialDocumentGenerator::class);
+
         $this->app->singleton(DavServiceInterface::class, function () {
             if (config('dav.username') && config('dav.password')) {
                 return new InfomaniakDavService;
