@@ -66,6 +66,19 @@ class BillingCustomerControllerTest extends TestCase
         );
     }
 
+    public function test_edit_page_is_rendered(): void
+    {
+        $this->actingAsAdmin();
+        $billingCustomer = BillingCustomer::factory()->create();
+
+        $response = $this->get(route('bo.invoicing.billing-customers.edit', $billingCustomer));
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('backOffice/Invoicing/BillingCustomers/Edit')
+            ->where('billingCustomer.id', $billingCustomer->id)
+        );
+    }
+
     public function test_creates_an_individual_billing_customer(): void
     {
         $this->actingAsAdmin();

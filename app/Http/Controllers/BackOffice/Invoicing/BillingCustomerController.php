@@ -87,6 +87,8 @@ class BillingCustomerController extends Controller
 
     public function edit(BillingCustomer $billingCustomer): Response
     {
+        Gate::authorize('view', $billingCustomer);
+
         $billingCustomer->load('member');
 
         return Inertia::render('backOffice/Invoicing/BillingCustomers/Edit', [
