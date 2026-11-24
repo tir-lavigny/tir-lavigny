@@ -156,7 +156,9 @@ class BillingCustomerController extends Controller
             return back()->with('error', 'Ce membre est anonymisé et ne peut pas être facturé.');
         }
 
-        return back()->with('success', 'Client de facturation synchronisé avec le membre.');
+        return redirect()
+            ->route('bo.invoicing.billing-customers.edit', $billingCustomer)
+            ->with('success', 'Client de facturation synchronisé avec le membre.');
     }
 
     /**
