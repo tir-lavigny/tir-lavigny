@@ -8,10 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDate, formatMoney, hasAnyPermission } from '@/lib/utils';
+import { formatDate, formatMoney, hasAnyPermission, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Invoice, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { CheckCircle2, Pencil, Trash2, XCircle } from '@lucide/vue';
+import { CheckCircle2, Download, Pencil, RefreshCw, Trash2, XCircle } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -26,6 +26,9 @@ const user = page.props.auth.user;
 const canCreate = computed(() => hasAnyPermission(user, ['create invoices', 'manage invoicing']));
 const canIssue = computed(() => hasAnyPermission(user, ['issue invoices', 'manage invoicing']));
 const canCancel = computed(() => hasAnyPermission(user, ['cancel invoices', 'manage invoicing']));
+const canManageInvoicing = computed(() => hasPermissionTo(user, 'manage invoicing'));
+const hasStoredDocument = computed(() => props.invoice.document?.status === 'stored');
+const documentFailed = computed(() => props.invoice.document?.status === 'failed');
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Factures', href: route('bo.invoicing.invoices.index') },
@@ -41,7 +44,14 @@ const issueInvoice = () => {
         {},
         {
             preserveScroll: true,
-            onSuccess: () => toast.success('Facture émise.'),
+            onSuccess: (page) => {
+                const issued = page.props.invoice as Invoice | undefined;
+                if (issued?.document?.status === 'failed') {
+                    toast.warning('Facture émise, mais le PDF n’a pas pu être archivé.');
+                } else {
+                    toast.success('Facture émise.');
+                }
+            },
             onError: (errors) => toast.error(errors.action ?? "Erreur lors de l'émission."),
         },
     );
@@ -63,6 +73,22 @@ const deleteInvoice = () => {
         onSuccess: () => toast.success('Facture brouillon supprimée.'),
         onError: (errors) => toast.error(errors.action ?? 'Erreur lors de la suppression.'),
     });
+};
+
+const retryDocument = () => {
+    if (!props.invoice.document) {
+        return;
+    }
+
+    router.post(
+        route('bo.invoicing.financial-documents.retry', props.invoice.document.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => toast.success('PDF archivé.'),
+            onError: (errors) => toast.error(errors.document ?? "Erreur lors de l'archivage du PDF."),
+        },
+    );
 };
 
 const statusLabel = computed(() => {
@@ -94,6 +120,12 @@ const statusLabel = computed(() => {
                 <Button v-if="['issued', 'partially_paid', 'paid'].includes(invoice.status) && canCreate" as-child variant="outline">
                     <Link :href="route('bo.invoicing.credit-notes.create', { invoice_id: invoice.id })">Créer un avoir</Link>
                 </Button>
+                <Button v-if="hasStoredDocument" as-child variant="outline">
+                    <a :href="route('bo.invoicing.invoices.pdf', invoice.id)"> <Download class="mr-2 h-4 w-4" /> Télécharger le PDF </a>
+                </Button>
+                <Button v-if="documentFailed && canManageInvoicing" variant="outline" @click="retryDocument">
+                    <RefreshCw class="mr-2 h-4 w-4" /> Réessayer l’archivage
+                </Button>
                 <AppAlertDialog
                     v-if="invoice.status === 'draft' && canIssue"
                     title="Émettre cette facture ?"
@@ -124,6 +156,16 @@ const statusLabel = computed(() => {
                     </template>
                 </AppAlertDialog>
             </div>
+        </div>
+
+        <div
+            v-if="invoice.document && invoice.document.status !== 'stored'"
+            class="border-destructive/40 bg-destructive/5 mx-4 rounded-xl border p-4 text-sm"
+        >
+            <p class="font-medium">
+                {{ invoice.document.status === 'pending' ? 'Le PDF est en cours d’archivage.' : 'Le PDF n’a pas pu être archivé.' }}
+            </p>
+            <p v-if="invoice.document.error" class="text-muted-foreground mt-1">{{ invoice.document.error }}</p>
         </div>
 
         <div class="mx-4 grid grid-cols-1 gap-4 lg:grid-cols-3">

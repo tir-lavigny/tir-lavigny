@@ -6,7 +6,9 @@ use App\Http\Controllers\BackOffice\EventChainController as BackOfficeEventChain
 use App\Http\Controllers\BackOffice\EventController as BackOfficeEventController;
 use App\Http\Controllers\BackOffice\Invoicing\BillingCustomerController as BackOfficeBillingCustomerController;
 use App\Http\Controllers\BackOffice\Invoicing\CreditNoteController as BackOfficeCreditNoteController;
+use App\Http\Controllers\BackOffice\Invoicing\FinancialDocumentController as BackOfficeFinancialDocumentController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoiceController as BackOfficeInvoiceController;
+use App\Http\Controllers\BackOffice\Invoicing\InvoicingSettingsController as BackOfficeInvoicingSettingsController;
 use App\Http\Controllers\BackOffice\MemberController;
 use App\Http\Controllers\BackOffice\MemberExportController;
 use App\Http\Controllers\BackOffice\MemberRegistrationController as BackOfficeMemberRegistrationController;
@@ -305,6 +307,13 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
     });
 
     Route::prefix('invoicing')->name('bo.invoicing.')->group(function () {
+        Route::middleware('permission:manage invoicing')->group(function () {
+            Route::get('settings', [BackOfficeInvoicingSettingsController::class, 'edit'])
+                ->name('settings.edit');
+            Route::put('settings', [BackOfficeInvoicingSettingsController::class, 'update'])
+                ->name('settings.update');
+        });
+
         Route::middleware('permission:view invoices|manage invoicing')->group(function () {
             Route::get('billing-customers', [BackOfficeBillingCustomerController::class, 'index'])
                 ->name('billing-customers.index');
@@ -342,6 +351,7 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
 
         Route::middleware('permission:view invoices|manage invoicing')->group(function () {
             Route::get('invoices/{invoice}', [BackOfficeInvoiceController::class, 'show'])->name('invoices.show');
+            Route::get('invoices/{invoice}/pdf', [BackOfficeInvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
         });
 
         Route::post('invoices/{invoice}/issue', [BackOfficeInvoiceController::class, 'issue'])
@@ -367,6 +377,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
 
         Route::middleware('permission:view invoices|manage invoicing')->group(function () {
             Route::get('credit-notes/{creditNote}', [BackOfficeCreditNoteController::class, 'show'])->name('credit-notes.show');
+            Route::get('credit-notes/{creditNote}/pdf', [BackOfficeCreditNoteController::class, 'downloadPdf'])->name('credit-notes.pdf');
+            Route::get('credit-note-reversals/{creditNoteReversal}/pdf', [BackOfficeCreditNoteController::class, 'downloadReversalPdf'])->name('credit-note-reversals.pdf');
         });
 
         Route::post('credit-notes/{creditNote}/issue', [BackOfficeCreditNoteController::class, 'issue'])
@@ -386,6 +398,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
                 ->name('credit-notes.reversals.store');
             Route::post('credit-note-reversals/{creditNoteReversal}/issue', [BackOfficeCreditNoteController::class, 'issueReversal'])
                 ->name('credit-note-reversals.issue');
+            Route::post('financial-documents/{financialDocument}/retry', [BackOfficeFinancialDocumentController::class, 'retry'])
+                ->name('financial-documents.retry');
         });
     });
 

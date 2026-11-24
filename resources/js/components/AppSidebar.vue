@@ -20,6 +20,7 @@ import {
     PanelTop,
     Receipt,
     Repeat,
+    Settings,
     ShoppingCart,
     Tag,
     Tags,
@@ -220,6 +221,15 @@ const invoicingNavItems: NavItem[] = [
                   href: route('bo.invoicing.credit-notes.index'),
                   icon: Receipt,
               },
+              ...(hasPermissionTo(user, 'manage invoicing')
+                  ? [
+                        {
+                            title: 'Paramètres',
+                            href: route('bo.invoicing.settings.edit'),
+                            icon: Settings,
+                        },
+                    ]
+                  : []),
           ]
         : []),
 ];

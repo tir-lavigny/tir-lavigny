@@ -14,9 +14,12 @@ use App\Domains\Invoicing\Services\CreditNoteDraftService;
 use App\Domains\Invoicing\Services\CreditNoteNumberGenerator;
 use App\Domains\Invoicing\Services\CreditNoteStatusCalculator;
 use App\Domains\Invoicing\Services\CustomerAccountLedger;
+use App\Domains\Invoicing\Services\FinancialDocumentArchiver;
+use App\Domains\Invoicing\Services\FinancialDocumentGenerator;
 use App\Domains\Invoicing\Services\InvoiceActivityLogger;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class IssueCreditNote
 {
@@ -29,6 +32,8 @@ class IssueCreditNote
         private readonly CreditNoteApplicationService $applications,
         private readonly CustomerAccountLedger $ledger,
         private readonly InvoiceActivityLogger $activityLogger,
+        private readonly FinancialDocumentGenerator $documents,
+        private readonly FinancialDocumentArchiver $archiver,
     ) {}
 
     public function execute(CreditNote $creditNote, User $actor): CreditNote
@@ -66,6 +71,16 @@ class IssueCreditNote
                 ...$this->draftService->snapshot($invoice),
             ]);
 
+            $locked->load('items', 'invoice');
+
+            try {
+                $pdf = $this->documents->creditNote($locked);
+            } catch (Throwable $exception) {
+                throw CreditNoteNotIssuable::for($locked, 'the PDF document could not be generated. '.$exception->getMessage());
+            }
+
+            $this->archiver->queue($locked, $pdf, 'credit-notes', "{$number}.pdf");
+
             $this->ledger->recordCreditNoteIssued($locked, $actor);
             $this->applications->applyAvailableToOriginalInvoice($locked, $actor);
             $this->statuses->refresh($locked);
@@ -75,8 +90,10 @@ class IssueCreditNote
                 'available_cents' => $this->balances->availableCents($locked->refresh()),
             ]);
 
-            return $locked->load('items', 'applications');
+            return $locked;
         });
+
+        $issued->load('items', 'applications', 'document');
 
         event(new CreditNoteIssued($issued));
 

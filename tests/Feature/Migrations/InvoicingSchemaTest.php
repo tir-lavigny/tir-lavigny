@@ -25,7 +25,8 @@ class InvoicingSchemaTest extends TestCase
             'membership_fee_types',
             'membership_fee_campaigns',
             'membership_fee_campaign_members',
-            'invoice_documents',
+            'invoicing_settings',
+            'financial_documents',
             'invoice_deliveries',
             'invoice_reminders',
             'invoice_activity_logs',
@@ -80,6 +81,7 @@ class InvoicingSchemaTest extends TestCase
     {
         $this->assertUniqueIndex('membership_fee_campaign_members', ['membership_fee_campaign_id', 'member_id']);
         $this->assertUniqueIndex('invoice_payments', ['invoice_id', 'payment_id']);
+        $this->assertUniqueIndex('financial_documents', ['documentable_type', 'documentable_id']);
     }
 
     /**
