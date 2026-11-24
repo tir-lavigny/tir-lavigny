@@ -267,6 +267,8 @@ const statusLabel = computed(() => {
             </ul>
         </div>
 
+        <div class="h-4" aria-hidden="true"></div>
+
         <Dialog v-model:open="cancelDialogOpen">
             <DialogContent>
                 <DialogHeader>
