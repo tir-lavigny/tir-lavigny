@@ -54,6 +54,12 @@ class InvoicingRbacTest extends TestCase
             ->get(route('bo.invoicing.billing-customers.index'))
             ->assertOk();
 
+        $billingCustomer = BillingCustomer::factory()->create();
+
+        $this->actingAs($viewer)
+            ->get(route('bo.invoicing.billing-customers.edit', $billingCustomer))
+            ->assertForbidden();
+
         $this->actingAs($viewer)
             ->post(route('bo.invoicing.billing-customers.store'), [])
             ->assertForbidden();
@@ -67,15 +73,19 @@ class InvoicingRbacTest extends TestCase
         $manager = User::factory()->create();
         $manager->givePermissionTo('manage invoicing');
 
+        $billingCustomer = BillingCustomer::factory()->create();
+
         $this->assertTrue($viewer->can('viewAny', BillingCustomer::class));
+        $this->assertTrue($viewer->can('view', $billingCustomer));
         $this->assertFalse($viewer->can('create', BillingCustomer::class));
-        $this->assertFalse($viewer->can('update', new BillingCustomer));
-        $this->assertFalse($viewer->can('delete', new BillingCustomer));
+        $this->assertFalse($viewer->can('update', $billingCustomer));
+        $this->assertFalse($viewer->can('delete', $billingCustomer));
 
         $this->assertTrue($manager->can('viewAny', BillingCustomer::class));
+        $this->assertTrue($manager->can('view', $billingCustomer));
         $this->assertTrue($manager->can('create', BillingCustomer::class));
-        $this->assertTrue($manager->can('update', new BillingCustomer));
-        $this->assertTrue($manager->can('delete', new BillingCustomer));
+        $this->assertTrue($manager->can('update', $billingCustomer));
+        $this->assertTrue($manager->can('delete', $billingCustomer));
     }
 
     public function test_user_without_invoicing_permissions_is_forbidden(): void
@@ -83,7 +93,10 @@ class InvoicingRbacTest extends TestCase
         $user = User::factory()->create();
         $user->givePermissionTo('access backoffice');
 
+        $billingCustomer = BillingCustomer::factory()->create();
+
         $this->assertFalse($user->can('viewAny', BillingCustomer::class));
+        $this->assertFalse($user->can('view', $billingCustomer));
 
         $this->actingAs($user)
             ->get(route('bo.invoicing.billing-customers.index'))
