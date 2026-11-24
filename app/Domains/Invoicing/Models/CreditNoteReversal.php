@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -86,6 +87,14 @@ class CreditNoteReversal extends Model
     public function items(): HasMany
     {
         return $this->hasMany(CreditNoteReversalItem::class)->orderBy('position');
+    }
+
+    /**
+     * @return MorphOne<FinancialDocument, $this>
+     */
+    public function document(): MorphOne
+    {
+        return $this->morphOne(FinancialDocument::class, 'documentable');
     }
 
     /**

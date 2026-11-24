@@ -10,9 +10,12 @@ use App\Domains\Invoicing\Services\CreditNoteBalanceCalculator;
 use App\Domains\Invoicing\Services\CreditNoteReversalNumberGenerator;
 use App\Domains\Invoicing\Services\CreditNoteStatusCalculator;
 use App\Domains\Invoicing\Services\CustomerAccountLedger;
+use App\Domains\Invoicing\Services\FinancialDocumentArchiver;
+use App\Domains\Invoicing\Services\FinancialDocumentGenerator;
 use App\Domains\Invoicing\Services\InvoiceActivityLogger;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class IssueCreditNoteReversal
 {
@@ -22,11 +25,13 @@ class IssueCreditNoteReversal
         private readonly CreditNoteStatusCalculator $statuses,
         private readonly CustomerAccountLedger $ledger,
         private readonly InvoiceActivityLogger $activityLogger,
+        private readonly FinancialDocumentGenerator $documents,
+        private readonly FinancialDocumentArchiver $archiver,
     ) {}
 
     public function execute(CreditNoteReversal $reversal, User $actor): CreditNoteReversal
     {
-        return DB::transaction(function () use ($reversal, $actor): CreditNoteReversal {
+        $issued = DB::transaction(function () use ($reversal, $actor): CreditNoteReversal {
             $locked = CreditNoteReversal::query()->lockForUpdate()->findOrFail($reversal->id);
             $creditNote = CreditNote::query()->lockForUpdate()->findOrFail($locked->credit_note_id);
 
@@ -56,6 +61,16 @@ class IssueCreditNoteReversal
                 'issued_at' => now(),
             ]);
 
+            $locked->load('items', 'creditNote');
+
+            try {
+                $pdf = $this->documents->creditNoteReversal($locked);
+            } catch (Throwable $exception) {
+                throw CreditNoteReversalNotIssuable::for($locked, 'the PDF document could not be generated. '.$exception->getMessage());
+            }
+
+            $this->archiver->queue($locked, $pdf, 'credit-note-reversals', "{$number}.pdf");
+
             $this->ledger->recordCreditNoteReversed($locked, $actor);
             $this->statuses->refresh($creditNote);
             $this->activityLogger->record($creditNote->invoice, 'credit_note.reversal_issued', $actor, metadata: [
@@ -64,7 +79,11 @@ class IssueCreditNoteReversal
                 'credit_note_reversal_number' => $number,
             ]);
 
-            return $locked->load('items');
+            return $locked;
         });
+
+        $issued->load('items', 'document');
+
+        return $issued;
     }
 }

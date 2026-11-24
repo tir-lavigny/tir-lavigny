@@ -9,6 +9,7 @@ use App\Domains\Invoicing\Models\BillingCustomer;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Services\InvoiceActivityLogger;
 use App\Domains\Invoicing\Services\InvoiceDraftService;
+use App\Domains\Invoicing\Services\InvoicingSettingsService;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +18,7 @@ class CreateInvoice
     public function __construct(
         private readonly InvoiceDraftService $draftService,
         private readonly InvoiceActivityLogger $activityLogger,
+        private readonly InvoicingSettingsService $settings,
     ) {}
 
     /**
@@ -24,6 +26,8 @@ class CreateInvoice
      */
     public function execute(array $data, User $actor): Invoice
     {
+        $this->settings->assertConfigured();
+
         return DB::transaction(function () use ($data, $actor): Invoice {
             $billingCustomer = BillingCustomer::query()->whereKey((int) $data['billing_customer_id'])->firstOrFail();
             $prepared = $this->draftService->prepareItems($data['items']);

@@ -12,6 +12,7 @@ use App\Domains\Invoicing\Actions\CreditNotes\RecordCreditNoteRefund;
 use App\Domains\Invoicing\Actions\CreditNotes\ReverseCreditNoteApplication;
 use App\Domains\Invoicing\Actions\CreditNotes\UpdateDraftCreditNote;
 use App\Domains\Invoicing\Enums\CreditNoteStatus;
+use App\Domains\Invoicing\Enums\FinancialDocumentStatus;
 use App\Domains\Invoicing\Exceptions\CreditNoteNotApplicable;
 use App\Domains\Invoicing\Exceptions\CreditNoteNotIssuable;
 use App\Domains\Invoicing\Exceptions\CreditNoteReversalNotIssuable;
@@ -39,9 +40,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CreditNoteController extends Controller
 {
@@ -116,6 +119,8 @@ class CreditNoteController extends Controller
             'applications.reversals',
             'refunds',
             'reversals.items',
+            'reversals.document',
+            'document',
         ]);
 
         return Inertia::render('backOffice/Invoicing/CreditNotes/Show', [
@@ -130,6 +135,46 @@ class CreditNoteController extends Controller
                 ->orderByDesc('issued_at')
                 ->get(['id', 'invoice_number', 'recipient_name', 'total_cents', 'status']),
         ]);
+    }
+
+    public function downloadPdf(CreditNote $creditNote): StreamedResponse
+    {
+        Gate::authorize('view', $creditNote);
+
+        $document = $creditNote->document()->first();
+
+        abort_unless(
+            $document !== null
+                && $document->isStored()
+                && Storage::disk($document->disk)->exists($document->path),
+            404,
+        );
+
+        return Storage::disk($document->disk)->download(
+            $document->path,
+            "avoir-{$creditNote->credit_note_number}.pdf",
+            ['Content-Type' => 'application/pdf'],
+        );
+    }
+
+    public function downloadReversalPdf(CreditNoteReversal $creditNoteReversal): StreamedResponse
+    {
+        Gate::authorize('view', $creditNoteReversal->creditNote);
+
+        $document = $creditNoteReversal->document()->first();
+
+        abort_unless(
+            $document !== null
+                && $document->isStored()
+                && Storage::disk($document->disk)->exists($document->path),
+            404,
+        );
+
+        return Storage::disk($document->disk)->download(
+            $document->path,
+            "avoir-annulation-{$creditNoteReversal->credit_note_reversal_number}.pdf",
+            ['Content-Type' => 'application/pdf'],
+        );
     }
 
     public function edit(CreditNote $creditNote, CreditNoteCreditLimit $creditLimit): Response
@@ -176,6 +221,12 @@ class CreditNoteController extends Controller
             $issued = $issue->execute($creditNote, $request->user());
         } catch (CreditNoteNotIssuable $exception) {
             return back()->withErrors(['action' => $exception->getMessage()]);
+        }
+
+        if ($issued->document?->status === FinancialDocumentStatus::Failed) {
+            return redirect()
+                ->route('bo.invoicing.credit-notes.show', $issued)
+                ->with('warning', 'Avoir émis, mais le PDF n’a pas pu être archivé. Réessayez l’archivage depuis la fiche.');
         }
 
         return redirect()
@@ -263,10 +314,10 @@ class CreditNoteController extends Controller
 
         $available = $balances->availableCents($creditNote);
 
-        if ($available <= 0 || $balances->appliedCents($creditNote) > 0 || $balances->refundedCents($creditNote) > 0) {
+        if ($available <= 0 || $balances->appliedCents($creditNote) > 0) {
             return redirect()
                 ->route('bo.invoicing.credit-notes.show', $creditNote)
-                ->withErrors(['action' => "Annulez d'abord les imputations et remboursements avant de créer un avoir d'annulation."]);
+                ->withErrors(['action' => "Annulez d'abord les imputations avant de créer un avoir d'annulation."]);
         }
 
         return Inertia::render('backOffice/Invoicing/CreditNotes/CreateReversal', [
@@ -297,9 +348,13 @@ class CreditNoteController extends Controller
         IssueCreditNoteReversal $issue,
     ): RedirectResponse {
         try {
-            $issue->execute($creditNoteReversal, $request->user());
+            $issued = $issue->execute($creditNoteReversal, $request->user());
         } catch (CreditNoteReversalNotIssuable $exception) {
             return back()->withErrors(['action' => $exception->getMessage()]);
+        }
+
+        if ($issued->document?->status === FinancialDocumentStatus::Failed) {
+            return back()->with('warning', 'Avoir d’annulation émis, mais le PDF n’a pas pu être archivé. Réessayez l’archivage depuis la fiche.');
         }
 
         return back()->with('success', "Avoir d'annulation émis.");
