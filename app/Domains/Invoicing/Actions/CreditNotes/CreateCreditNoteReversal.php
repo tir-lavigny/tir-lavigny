@@ -33,6 +33,14 @@ class CreateCreditNoteReversal
                 throw CreditNoteNotApplicable::for($locked, 'the credit note is not issued.');
             }
 
+            if ($this->balances->appliedCents($locked) > 0) {
+                throw CreditNoteNotApplicable::for($locked, 'credit applications must be reversed first.');
+            }
+
+            if ($this->balances->refundedCents($locked) > 0) {
+                throw CreditNoteNotApplicable::for($locked, 'refunds must be reconciled first.');
+            }
+
             $items = array_values($data['items']);
             $totalCents = 0;
 

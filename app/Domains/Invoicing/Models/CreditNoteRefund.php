@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
 /**
+ * @property PaymentMethod $payment_method
  * @property string $amount
  * @property int $amount_cents
  */
@@ -34,7 +35,7 @@ class CreditNoteRefund extends Model
 
     protected $hidden = ['amount_cents'];
 
-    protected $appends = ['amount'];
+    protected $appends = ['amount', 'payment_method_label'];
 
     protected function casts(): array
     {
@@ -65,6 +66,11 @@ class CreditNoteRefund extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function getPaymentMethodLabelAttribute(): string
+    {
+        return $this->payment_method->label();
     }
 
     protected static function booted(): void

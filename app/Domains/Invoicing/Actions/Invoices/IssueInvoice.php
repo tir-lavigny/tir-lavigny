@@ -2,6 +2,7 @@
 
 namespace App\Domains\Invoicing\Actions\Invoices;
 
+use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
 use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Domains\Invoicing\Events\InvoiceIssued;
 use App\Domains\Invoicing\Exceptions\InvoiceNotIssuable;
@@ -54,6 +55,12 @@ class IssueInvoice
             }
 
             $billingCustomer = $locked->billingCustomer()->firstOrFail();
+            $snapshot = $this->draftService->recipientSnapshot($billingCustomer);
+
+            if ($locked->delivery_method === InvoiceDeliveryMethod::Email && blank($snapshot['recipient_email'])) {
+                throw InvoiceNotIssuable::for($locked, 'the customer has no email address for email delivery.');
+            }
+
             $invoiceNumber = $this->numberGenerator->allocate((int) $issueDate->format('Y'));
 
             $locked->update([
@@ -61,7 +68,7 @@ class IssueInvoice
                 'status' => InvoiceStatus::Issued,
                 'issue_date' => $issueDate,
                 'issued_at' => now(),
-                ...$this->draftService->recipientSnapshot($billingCustomer),
+                ...$snapshot,
             ]);
 
             $this->ledger->recordInvoiceIssued($locked, $actor);

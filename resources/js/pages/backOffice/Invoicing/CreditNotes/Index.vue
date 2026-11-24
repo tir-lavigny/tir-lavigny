@@ -44,7 +44,7 @@ const deleteCreditNote = (creditNote: CreditNote) => {
     router.delete(route('bo.invoicing.credit-notes.destroy', creditNote.id), {
         preserveScroll: true,
         onSuccess: () => toast.success('Avoir brouillon supprimé.'),
-        onError: () => toast.error("Erreur lors de la suppression de l'avoir."),
+        onError: (errors) => toast.error(errors.action ?? "Erreur lors de la suppression de l'avoir."),
     });
 };
 

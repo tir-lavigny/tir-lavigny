@@ -8,8 +8,9 @@ import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     invoice: Invoice;
-    billingCustomers: Array<{ id: number; name: string; email: string | null }>;
+    billingCustomers: Array<{ id: number; name: string; email: string | null; preferred_invoice_delivery: string }>;
     deliveryMethods: Array<{ value: string; label: string }>;
+    itemTypes: Array<{ value: string; label: string; description: string }>;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -52,6 +53,7 @@ const submit = (form: any) => {
                 :form-defaults="formDefaults"
                 :billing-customers="billingCustomers"
                 :delivery-methods="deliveryMethods"
+                :item-types="itemTypes"
                 :preview-url="route('bo.invoicing.invoices.preview')"
                 submit-label="Enregistrer"
                 :on-submit="submit"

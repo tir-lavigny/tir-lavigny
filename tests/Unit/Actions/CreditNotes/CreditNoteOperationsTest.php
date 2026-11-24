@@ -13,7 +13,6 @@ use App\Domains\Invoicing\Actions\Invoices\CreateInvoice;
 use App\Domains\Invoicing\Actions\Invoices\IssueInvoice;
 use App\Domains\Invoicing\Enums\CreditNoteStatus;
 use App\Domains\Invoicing\Exceptions\CreditNoteNotApplicable;
-use App\Domains\Invoicing\Exceptions\CreditNoteReversalNotIssuable;
 use App\Domains\Invoicing\Models\BillingCustomer;
 use App\Domains\Invoicing\Models\CreditNote;
 use App\Domains\Invoicing\Models\CreditNoteApplication;
@@ -145,13 +144,11 @@ class CreditNoteOperationsTest extends TestCase
             'created_by' => $actor->id,
         ]);
 
-        $reversal = app(CreateCreditNoteReversal::class)->execute($creditNote->fresh(), [
+        $this->expectException(CreditNoteNotApplicable::class);
+        app(CreateCreditNoteReversal::class)->execute($creditNote->fresh(), [
             'reason' => 'Correction',
             'items' => [['description' => 'Annulation', 'amount' => '10.00']],
         ], $actor);
-
-        $this->expectException(CreditNoteReversalNotIssuable::class);
-        app(IssueCreditNoteReversal::class)->execute($reversal, $actor);
     }
 
     public function test_blocks_reversal_while_refunds_remain(): void
@@ -167,13 +164,11 @@ class CreditNoteOperationsTest extends TestCase
             'payment_method' => 'cash',
         ], $actor);
 
-        $reversal = app(CreateCreditNoteReversal::class)->execute($creditNote->fresh(), [
+        $this->expectException(CreditNoteNotApplicable::class);
+        app(CreateCreditNoteReversal::class)->execute($creditNote->fresh(), [
             'reason' => 'Correction',
             'items' => [['description' => 'Annulation', 'amount' => '10.00']],
         ], $actor);
-
-        $this->expectException(CreditNoteReversalNotIssuable::class);
-        app(IssueCreditNoteReversal::class)->execute($reversal, $actor);
     }
 
     public function test_recalculates_balances_from_records(): void

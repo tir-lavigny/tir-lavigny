@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\BackOffice\Invoicing;
 
+use App\Domains\Invoicing\Actions\Invoices\CreateInvoice;
 use App\Domains\Invoicing\Models\BillingCustomer;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Models\User;
@@ -20,7 +21,7 @@ class InvoiceControllerTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
     }
 
-    public function test_index_lists_invoices(): void
+    public function test_index_lists_invoices_with_remaining_balance(): void
     {
         $this->actingAsAdmin();
         $invoice = Invoice::factory()->create(['recipient_name' => 'Alice Martin']);
@@ -31,6 +32,7 @@ class InvoiceControllerTest extends TestCase
             ->component('backOffice/Invoicing/Invoices/Index')
             ->has('invoices.data', 1)
             ->where('invoices.data.0.id', $invoice->id)
+            ->where('invoices.data.0.remaining_cents', $invoice->total_cents)
         );
     }
 
@@ -60,6 +62,44 @@ class InvoiceControllerTest extends TestCase
         $this->assertNull($invoice->invoice_number);
         $this->assertSame(12000, $invoice->total_cents);
         $this->assertCount(2, $invoice->items);
+    }
+
+    public function test_rejects_email_delivery_when_customer_has_no_email(): void
+    {
+        $this->actingAsAdmin();
+        $customer = BillingCustomer::factory()->create(['email' => null]);
+
+        $response = $this->post(route('bo.invoicing.invoices.store'), $this->invoiceData($customer->id));
+
+        $response->assertSessionHasErrors('delivery_method');
+        $this->assertDatabaseCount('invoices', 0);
+    }
+
+    public function test_rejects_issuing_an_email_invoice_when_customer_lost_their_email(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $customer = BillingCustomer::factory()->create(['email' => 'before@example.test']);
+        $invoice = app(CreateInvoice::class)->execute($this->invoiceData($customer->id), $admin);
+        $customer->update(['email' => null]);
+
+        $response = $this->post(route('bo.invoicing.invoices.issue', $invoice));
+
+        $response->assertSessionHasErrors('action');
+        $this->assertSame('draft', $invoice->fresh()->status->value);
+    }
+
+    public function test_show_includes_financial_balance(): void
+    {
+        $this->actingAsAdmin();
+        $invoice = Invoice::factory()->create(['total_cents' => 12000]);
+
+        $this->get(route('bo.invoicing.invoices.show', $invoice))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('backOffice/Invoicing/Invoices/Show')
+                ->where('balance.paid_cents', 0)
+                ->where('balance.credited_cents', 0)
+                ->where('balance.outstanding_cents', 12000)
+            );
     }
 
     public function test_rejects_an_invoice_without_lines(): void

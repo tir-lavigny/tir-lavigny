@@ -73,7 +73,7 @@ const issueInvoice = (invoice: Invoice) => {
         {
             preserveScroll: true,
             onSuccess: () => toast.success('Facture émise.'),
-            onError: () => toast.error("Erreur lors de l'émission."),
+            onError: (errors) => toast.error(errors.action ?? "Erreur lors de l'émission."),
         },
     );
 };
@@ -95,7 +95,7 @@ const submitCancel = () => {
             cancelDialogOpen.value = false;
             toast.success('Facture annulée.');
         },
-        onError: () => toast.error("Erreur lors de l'annulation."),
+        onError: (errors) => toast.error(errors.action ?? errors.reason ?? "Erreur lors de l'annulation."),
     });
 };
 
@@ -103,7 +103,7 @@ const deleteInvoice = (invoice: Invoice) => {
     router.delete(route('bo.invoicing.invoices.destroy', invoice.id), {
         preserveScroll: true,
         onSuccess: () => toast.success('Facture brouillon supprimée.'),
-        onError: () => toast.error('Erreur lors de la suppression.'),
+        onError: (errors) => toast.error(errors.action ?? 'Erreur lors de la suppression.'),
     });
 };
 
@@ -182,6 +182,7 @@ const goToPage = (pageNumber: number) => {
                             <th class="px-4 py-3 text-left font-medium">Statut</th>
                             <th class="px-4 py-3 text-left font-medium">Échéance</th>
                             <th class="px-4 py-3 text-right font-medium">Total</th>
+                            <th class="px-4 py-3 text-right font-medium">Reste à payer</th>
                             <th class="px-4 py-3 text-right font-medium">Actions</th>
                         </tr>
                     </thead>
@@ -198,6 +199,7 @@ const goToPage = (pageNumber: number) => {
                             </td>
                             <td class="px-4 py-3">{{ invoice.due_date ? formatDate(invoice.due_date, 'DD.MM.YYYY') : '—' }}</td>
                             <td class="px-4 py-3 text-right font-mono">{{ formatMoney(invoice.total) }}</td>
+                            <td class="px-4 py-3 text-right font-mono">{{ formatMoney((invoice.remaining_cents ?? 0) / 100) }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-1">
                                     <Button as-child size="icon" variant="ghost">

@@ -121,6 +121,9 @@ class CreditNoteController extends Controller
         return Inertia::render('backOffice/Invoicing/CreditNotes/Show', [
             'creditNote' => $creditNote,
             'availableCents' => $balances->availableCents($creditNote),
+            'appliedCents' => $balances->appliedCents($creditNote),
+            'refundedCents' => $balances->refundedCents($creditNote),
+            'reversedCents' => $balances->reversedCents($creditNote),
             'targetInvoices' => Invoice::query()
                 ->where('billing_customer_id', $creditNote->billing_customer_id)
                 ->whereIn('status', ['issued', 'partially_paid'])
@@ -172,7 +175,7 @@ class CreditNoteController extends Controller
         try {
             $issued = $issue->execute($creditNote, $request->user());
         } catch (CreditNoteNotIssuable $exception) {
-            return back()->with('error', $exception->getMessage());
+            return back()->withErrors(['action' => $exception->getMessage()]);
         }
 
         return redirect()
@@ -211,7 +214,7 @@ class CreditNoteController extends Controller
                 $request->user(),
             );
         } catch (CreditNoteNotApplicable $exception) {
-            return back()->with('error', $exception->getMessage());
+            return back()->withErrors(['amount' => $exception->getMessage()]);
         }
 
         return back()->with('success', 'Avoir imputé.');
@@ -230,7 +233,7 @@ class CreditNoteController extends Controller
                 $request->user(),
             );
         } catch (CreditNoteNotApplicable $exception) {
-            return back()->with('error', $exception->getMessage());
+            return back()->withErrors(['amount' => $exception->getMessage()]);
         }
 
         return back()->with('success', 'Imputation annulée.');
@@ -247,20 +250,28 @@ class CreditNoteController extends Controller
         try {
             $refund->execute($creditNote, $data, $request->user());
         } catch (CreditNoteNotApplicable $exception) {
-            return back()->with('error', $exception->getMessage());
+            return back()->withErrors(['amount' => $exception->getMessage()]);
         }
 
         return back()->with('success', 'Remboursement enregistré.');
     }
 
-    public function createReversal(CreditNote $creditNote, CreditNoteBalanceCalculator $balances): Response
+    public function createReversal(CreditNote $creditNote, CreditNoteBalanceCalculator $balances): Response|RedirectResponse
     {
         Gate::authorize('reverse', $creditNote);
         $creditNote->load('items');
 
+        $available = $balances->availableCents($creditNote);
+
+        if ($available <= 0 || $balances->appliedCents($creditNote) > 0 || $balances->refundedCents($creditNote) > 0) {
+            return redirect()
+                ->route('bo.invoicing.credit-notes.show', $creditNote)
+                ->withErrors(['action' => "Annulez d'abord les imputations et remboursements avant de créer un avoir d'annulation."]);
+        }
+
         return Inertia::render('backOffice/Invoicing/CreditNotes/CreateReversal', [
             'creditNote' => $creditNote,
-            'availableCents' => $balances->availableCents($creditNote),
+            'availableCents' => $available,
         ]);
     }
 
@@ -272,10 +283,12 @@ class CreditNoteController extends Controller
         try {
             $create->execute($creditNote, $request->validated(), $request->user());
         } catch (CreditNoteNotApplicable $exception) {
-            return back()->with('error', $exception->getMessage());
+            return back()->withErrors(['items' => $exception->getMessage()]);
         }
 
-        return back()->with('success', "Avoir d'annulation brouillon créé.");
+        return redirect()
+            ->route('bo.invoicing.credit-notes.show', $creditNote)
+            ->with('success', "Avoir d'annulation brouillon créé.");
     }
 
     public function issueReversal(
@@ -286,7 +299,7 @@ class CreditNoteController extends Controller
         try {
             $issue->execute($creditNoteReversal, $request->user());
         } catch (CreditNoteReversalNotIssuable $exception) {
-            return back()->with('error', $exception->getMessage());
+            return back()->withErrors(['action' => $exception->getMessage()]);
         }
 
         return back()->with('success', "Avoir d'annulation émis.");

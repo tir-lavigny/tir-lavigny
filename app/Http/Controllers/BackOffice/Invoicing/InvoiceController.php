@@ -8,12 +8,14 @@ use App\Domains\Invoicing\Actions\Invoices\DeleteDraftInvoice;
 use App\Domains\Invoicing\Actions\Invoices\IssueInvoice;
 use App\Domains\Invoicing\Actions\Invoices\UpdateDraftInvoice;
 use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
+use App\Domains\Invoicing\Enums\InvoiceItemType;
 use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Domains\Invoicing\Enums\InvoiceType;
 use App\Domains\Invoicing\Exceptions\InvoiceNotCancellable;
 use App\Domains\Invoicing\Exceptions\InvoiceNotIssuable;
 use App\Domains\Invoicing\Models\BillingCustomer;
 use App\Domains\Invoicing\Models\Invoice;
+use App\Domains\Invoicing\Services\InvoiceBalanceCalculator;
 use App\Domains\Invoicing\Services\InvoiceDraftService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Invoicing\CancelInvoiceRequest;
@@ -43,7 +45,10 @@ class InvoiceController extends Controller
         $type = $request->input('type');
         $year = $request->integer('year') ?: null;
 
-        $query = Invoice::query()->with('billingCustomer');
+        $query = Invoice::query()->with('billingCustomer')
+            ->withSum('paymentAllocations as paid_cents', 'amount_cents')
+            ->withSum('creditNoteApplications as credited_cents', 'amount_cents')
+            ->withSum('creditNoteApplicationReversals as credited_reversed_cents', 'amount_cents');
 
         if (in_array($status, array_column(InvoiceStatus::cases(), 'value'), true)) {
             $query->where('status', $status);
@@ -69,8 +74,25 @@ class InvoiceController extends Controller
             });
         }
 
+        $invoices = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(20)->withQueryString();
+        $invoices->through(function (Invoice $invoice): Invoice {
+            $credited = max(
+                0,
+                (int) ($invoice->getAttribute('credited_cents') ?? 0)
+                    - (int) ($invoice->getAttribute('credited_reversed_cents') ?? 0),
+            );
+
+            $invoice->setAttribute('credited_cents', $credited);
+            $invoice->setAttribute(
+                'remaining_cents',
+                max(0, $invoice->total_cents - (int) ($invoice->getAttribute('paid_cents') ?? 0) - $credited),
+            );
+
+            return $invoice;
+        });
+
         return Inertia::render('backOffice/Invoicing/Invoices/Index', [
-            'invoices' => $query->orderByDesc('created_at')->orderByDesc('id')->paginate(20)->withQueryString(),
+            'invoices' => $invoices,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
@@ -90,6 +112,7 @@ class InvoiceController extends Controller
         return Inertia::render('backOffice/Invoicing/Invoices/Create', [
             'billingCustomers' => $this->billingCustomerOptions(),
             'deliveryMethods' => $this->deliveryOptions(),
+            'itemTypes' => $this->itemTypeOptions(),
         ]);
     }
 
@@ -102,14 +125,26 @@ class InvoiceController extends Controller
             ->with('success', 'Facture brouillon créée.');
     }
 
-    public function show(Invoice $invoice): Response
+    public function show(Invoice $invoice, InvoiceBalanceCalculator $balances): Response
     {
         Gate::authorize('view', $invoice);
 
-        $invoice->load(['items.product', 'billingCustomer', 'activityLogs.user']);
+        $invoice->load([
+            'items.product',
+            'billingCustomer',
+            'activityLogs.user',
+            'creditNoteApplications.creditNote',
+            'creditNoteApplications.reversals',
+            'paymentAllocations.payment',
+        ]);
 
         return Inertia::render('backOffice/Invoicing/Invoices/Show', [
             'invoice' => $invoice,
+            'balance' => [
+                'paid_cents' => $balances->paidCents($invoice),
+                'credited_cents' => $balances->creditedCents($invoice),
+                'outstanding_cents' => $balances->outstandingCents($invoice),
+            ],
         ]);
     }
 
@@ -123,6 +158,7 @@ class InvoiceController extends Controller
             'invoice' => $invoice,
             'billingCustomers' => $this->billingCustomerOptions(),
             'deliveryMethods' => $this->deliveryOptions(),
+            'itemTypes' => $this->itemTypeOptions(),
         ]);
     }
 
@@ -156,7 +192,7 @@ class InvoiceController extends Controller
         try {
             $issued = $issue->execute($invoice, request()->user());
         } catch (InvoiceNotIssuable $exception) {
-            return back()->with('error', $exception->getMessage());
+            return back()->withErrors(['action' => $exception->getMessage()]);
         }
 
         return redirect()
@@ -172,7 +208,7 @@ class InvoiceController extends Controller
         try {
             $cancelled = $cancel->execute($invoice, $request->validated('reason'), $request->user());
         } catch (InvoiceNotCancellable $exception) {
-            return back()->with('error', $exception->getMessage());
+            return back()->withErrors(['action' => $exception->getMessage()]);
         }
 
         return redirect()
@@ -199,7 +235,7 @@ class InvoiceController extends Controller
     }
 
     /**
-     * @return array<int, array{id: int, name: string, email: string|null}>
+     * @return array<int, array{id: int, name: string, email: string|null, preferred_invoice_delivery: string}>
      */
     private function billingCustomerOptions(): array
     {
@@ -211,8 +247,24 @@ class InvoiceController extends Controller
                 'id' => $customer->id,
                 'name' => $customer->displayName(),
                 'email' => $customer->email,
+                'preferred_invoice_delivery' => $customer->preferred_invoice_delivery->value,
             ])
             ->all();
+    }
+
+    /**
+     * @return array<int, array{value: string, label: string, description: string}>
+     */
+    private function itemTypeOptions(): array
+    {
+        return array_map(
+            fn (InvoiceItemType $type): array => [
+                'value' => $type->value,
+                'label' => $type->label(),
+                'description' => $type->description(),
+            ],
+            InvoiceItemType::cases(),
+        );
     }
 
     /**
