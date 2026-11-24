@@ -84,11 +84,28 @@
         line-height: 1.5;
     }
 
-    .doc-title {
-        position: absolute;
-        top: 29mm;
-        right: 0;
-        width: 75mm;
+    .doc-summary {
+        margin: 0 0 1mm;
+        padding-bottom: 2mm;
+        border-bottom: 0.25mm solid #e2e8f0;
+    }
+    .doc-summary .type {
+        color: #64748b;
+        font-size: 8pt;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-right: 1.5mm;
+    }
+    .doc-summary .ref {
+        color: #2563eb;
+        font-size: 10pt;
+        font-weight: 600;
+    }
+    .doc-summary .meta {
+        color: #64748b;
+        font-size: 8pt;
+        margin-top: 0.8mm;
     }
 
     .eyebrow {

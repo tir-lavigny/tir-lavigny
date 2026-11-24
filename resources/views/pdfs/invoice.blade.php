@@ -29,12 +29,12 @@
             </div>
         </div>
 
-        <div class="doc-title right">
-            <div class="eyebrow">Facture</div>
-            <h1>{{ $invoice->invoice_number }}</h1>
-            <div class="small muted">Émise le {{ $invoice->issue_date?->format('d.m.Y') }}</div>
-            <div class="small muted" style="margin-top: 3mm;">Échéance le {{ $invoice->due_date?->format('d.m.Y') }}</div>
-            <div class="small muted">Devise {{ $invoice->currency->value }}</div>
+    </div>
+
+    <div class="doc-summary">
+        <div><span class="type">Facture</span><span class="ref">{{ $invoice->invoice_number }}</span></div>
+        <div class="meta">
+            Émise le {{ $invoice->issue_date?->format('d.m.Y') }} · Échéance le {{ $invoice->due_date?->format('d.m.Y') }} · {{ $invoice->currency->value }}
         </div>
     </div>
 
