@@ -23,6 +23,7 @@ class CustomerAccountEntry extends Model
     protected $fillable = [
         'billing_customer_id',
         'invoice_id',
+        'credit_note_id',
         'type',
         'debit_cents',
         'credit_cents',
@@ -57,6 +58,14 @@ class CustomerAccountEntry extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    /**
+     * @return BelongsTo<CreditNote, $this>
+     */
+    public function creditNote(): BelongsTo
+    {
+        return $this->belongsTo(CreditNote::class);
     }
 
     /**

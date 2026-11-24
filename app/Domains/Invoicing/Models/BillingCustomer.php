@@ -70,6 +70,14 @@ class BillingCustomer extends Model
         return $this->hasMany(MembershipFeeCampaignMember::class);
     }
 
+    /**
+     * @return HasMany<CreditNote, $this>
+     */
+    public function creditNotes(): HasMany
+    {
+        return $this->hasMany(CreditNote::class);
+    }
+
     public function displayName(): string
     {
         if ($this->type === BillingCustomerType::Organization) {

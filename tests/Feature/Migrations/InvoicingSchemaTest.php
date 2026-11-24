@@ -30,6 +30,10 @@ class InvoicingSchemaTest extends TestCase
             'invoice_reminders',
             'invoice_activity_logs',
             'customer_account_entries',
+            'credit_note_sequences',
+            'credit_notes',
+            'credit_note_items',
+            'credit_note_applications',
         ];
     }
 

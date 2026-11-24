@@ -3,12 +3,41 @@
 namespace App\Domains\Invoicing\Services;
 
 use App\Domains\Invoicing\Enums\CustomerAccountEntryType;
+use App\Domains\Invoicing\Models\BillingCustomer;
+use App\Domains\Invoicing\Models\CreditNote;
+use App\Domains\Invoicing\Models\CreditNoteApplication;
 use App\Domains\Invoicing\Models\CustomerAccountEntry;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Models\User;
 
 class CustomerAccountLedger
 {
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    public function recordEntry(
+        BillingCustomer $billingCustomer,
+        CustomerAccountEntryType $type,
+        int $debitCents,
+        int $creditCents,
+        User $actor,
+        ?Invoice $invoice = null,
+        ?CreditNote $creditNote = null,
+        array $metadata = [],
+    ): CustomerAccountEntry {
+        return CustomerAccountEntry::create([
+            'billing_customer_id' => $billingCustomer->id,
+            'invoice_id' => $invoice?->id,
+            'credit_note_id' => $creditNote?->id,
+            'type' => $type,
+            'debit_cents' => $debitCents,
+            'credit_cents' => $creditCents,
+            'occurred_at' => now(),
+            'created_by' => $actor->id,
+            'metadata' => $metadata === [] ? null : $metadata,
+        ]);
+    }
+
     /**
      * @param  array<string, mixed>  $metadata
      */
@@ -20,16 +49,15 @@ class CustomerAccountLedger
         User $actor,
         array $metadata = [],
     ): CustomerAccountEntry {
-        return CustomerAccountEntry::create([
-            'billing_customer_id' => $invoice->billing_customer_id,
-            'invoice_id' => $invoice->id,
-            'type' => $type,
-            'debit_cents' => $debitCents,
-            'credit_cents' => $creditCents,
-            'occurred_at' => now(),
-            'created_by' => $actor->id,
-            'metadata' => $metadata === [] ? null : $metadata,
-        ]);
+        return $this->recordEntry(
+            $invoice->billingCustomer,
+            $type,
+            $debitCents,
+            $creditCents,
+            $actor,
+            invoice: $invoice,
+            metadata: $metadata,
+        );
     }
 
     public function recordInvoiceIssued(Invoice $invoice, User $actor): CustomerAccountEntry
@@ -54,6 +82,41 @@ class CustomerAccountLedger
         );
     }
 
+    public function recordCreditNoteIssued(CreditNote $creditNote, User $actor): CustomerAccountEntry
+    {
+        return $this->recordEntry(
+            $creditNote->billingCustomer,
+            CustomerAccountEntryType::CreditNoteIssued,
+            0,
+            $creditNote->total_cents,
+            $actor,
+            creditNote: $creditNote,
+        );
+    }
+
+    public function recordCreditApplied(CreditNoteApplication $application, User $actor): void
+    {
+        $this->recordEntry(
+            $application->creditNote->billingCustomer,
+            CustomerAccountEntryType::CreditApplied,
+            $application->amount_cents,
+            0,
+            $actor,
+            creditNote: $application->creditNote,
+            metadata: ['invoice_id' => $application->invoice_id],
+        );
+
+        $this->recordEntry(
+            $application->invoice->billingCustomer,
+            CustomerAccountEntryType::CreditApplied,
+            0,
+            $application->amount_cents,
+            $actor,
+            invoice: $application->invoice,
+            creditNote: $application->creditNote,
+        );
+    }
+
     public function invoiceOutstandingCents(Invoice $invoice): int
     {
         $debits = (int) CustomerAccountEntry::query()
@@ -68,5 +131,31 @@ class CustomerAccountLedger
         }
 
         return max(0, $debits - $credits);
+    }
+
+    public function availableCreditCents(CreditNote $creditNote): int
+    {
+        $credits = (int) CustomerAccountEntry::query()
+            ->where('credit_note_id', $creditNote->id)
+            ->sum('credit_cents');
+        $debits = (int) CustomerAccountEntry::query()
+            ->where('credit_note_id', $creditNote->id)
+            ->sum('debit_cents');
+
+        return max(0, $credits - $debits);
+    }
+
+    public function customerAvailableCreditCents(BillingCustomer $billingCustomer): int
+    {
+        $credits = (int) CustomerAccountEntry::query()
+            ->where('billing_customer_id', $billingCustomer->id)
+            ->whereNotNull('credit_note_id')
+            ->sum('credit_cents');
+        $debits = (int) CustomerAccountEntry::query()
+            ->where('billing_customer_id', $billingCustomer->id)
+            ->whereNotNull('credit_note_id')
+            ->sum('debit_cents');
+
+        return max(0, $credits - $debits);
     }
 }
