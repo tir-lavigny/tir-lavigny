@@ -212,9 +212,6 @@
                                 {{ $invoice->creditor_address }}<br>
                                 {{ $invoice->creditor_postal_code }} {{ $invoice->creditor_city }} · {{ $invoice->creditor_country }}
                             </div>
-                            <div style="font-size: 11px; line-height: 1.6; color: #94a3b8; margin-top: 14px;">
-                                Cet email a été envoyé automatiquement. Merci de ne pas y répondre directement.
-                            </div>
                         </td>
                     </tr>
                 </table>

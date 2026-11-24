@@ -14,5 +14,3 @@ Cordialement,
 {{ $invoice->creditor_name }}
 {{ $invoice->creditor_address }}
 {{ $invoice->creditor_postal_code }} {{ $invoice->creditor_city }} · {{ $invoice->creditor_country }}
-
-Cet email a été envoyé automatiquement. Merci de ne pas y répondre directement.
