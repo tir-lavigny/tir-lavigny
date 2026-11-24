@@ -8,7 +8,9 @@ use App\Domains\Invoicing\Enums\FinancialDocumentStatus;
 use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
 use App\Domains\Invoicing\Jobs\SendInvoiceEmailJob;
 use App\Domains\Invoicing\Models\InvoiceDelivery;
+use App\Domains\Invoicing\Models\InvoicingSettings;
 use App\Domains\Invoicing\Services\InvoiceActivityLogger;
+use App\Domains\Invoicing\Services\InvoicingSettingsService;
 use App\Mail\InvoiceIssuedMail;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -58,7 +60,7 @@ class InvoiceEmailDeliveryTest extends TestCase
         $delivery = app(SendInvoiceEmail::class)->execute($invoice, User::firstOrFail());
         Storage::disk($invoice->document->disk)->put($invoice->document->path, 'archived-invoice');
 
-        (new SendInvoiceEmailJob($delivery->id))->handle(app(InvoiceActivityLogger::class));
+        $this->handleJob($delivery);
 
         $delivery->refresh();
         $invoice->refresh();
@@ -74,6 +76,22 @@ class InvoiceEmailDeliveryTest extends TestCase
         ]);
     }
 
+    public function test_email_uses_the_configured_reply_to_address(): void
+    {
+        Queue::fake();
+        Mail::fake();
+        InvoicingSettings::query()->update(['reply_to_email' => 'tresorier@example.test']);
+        $invoice = $this->issueInvoice();
+        $delivery = app(SendInvoiceEmail::class)->execute($invoice, User::firstOrFail());
+
+        $this->handleJob($delivery);
+
+        Mail::assertSent(
+            InvoiceIssuedMail::class,
+            fn (InvoiceIssuedMail $mail): bool => $mail->hasReplyTo('tresorier@example.test'),
+        );
+    }
+
     public function test_marks_email_as_failed_when_archived_pdf_is_missing(): void
     {
         Queue::fake();
@@ -82,7 +100,7 @@ class InvoiceEmailDeliveryTest extends TestCase
         $delivery = app(SendInvoiceEmail::class)->execute($invoice, User::firstOrFail());
         Storage::disk($invoice->document->disk)->delete($invoice->document->path);
 
-        (new SendInvoiceEmailJob($delivery->id))->handle(app(InvoiceActivityLogger::class));
+        $this->handleJob($delivery);
 
         $delivery->refresh();
 
@@ -105,7 +123,7 @@ class InvoiceEmailDeliveryTest extends TestCase
         $job = new SendInvoiceEmailJob($delivery->id);
 
         try {
-            $job->handle(app(InvoiceActivityLogger::class));
+            $job->handle(app(InvoiceActivityLogger::class), app(InvoicingSettingsService::class));
             $this->fail('The job should have rethrown the mail exception.');
         } catch (RuntimeException $exception) {
             $this->assertSame('SMTP indisponible', $exception->getMessage());
@@ -132,13 +150,13 @@ class InvoiceEmailDeliveryTest extends TestCase
         $path = $invoice->document->path;
         Storage::disk($invoice->document->disk)->delete($path);
 
-        (new SendInvoiceEmailJob($first->id))->handle(app(InvoiceActivityLogger::class));
+        $this->handleJob($first);
         $this->assertSame(DeliveryStatus::Failed, $first->fresh()->status);
 
         Storage::disk($invoice->document->disk)->put($path, '%PDF-1.4 retried');
 
         $second = app(SendInvoiceEmail::class)->execute($invoice->fresh(), User::firstOrFail());
-        (new SendInvoiceEmailJob($second->id))->handle(app(InvoiceActivityLogger::class));
+        $this->handleJob($second);
 
         $this->assertSame(DeliveryStatus::Failed, $first->fresh()->status);
         $this->assertSame(DeliveryStatus::Sent, $second->fresh()->status);
@@ -153,7 +171,7 @@ class InvoiceEmailDeliveryTest extends TestCase
         $invoice = $this->issueInvoice();
         $first = app(SendInvoiceEmail::class)->execute($invoice, User::firstOrFail());
 
-        (new SendInvoiceEmailJob($first->id))->handle(app(InvoiceActivityLogger::class));
+        $this->handleJob($first);
 
         $second = app(SendInvoiceEmail::class)->execute($invoice->fresh(), User::firstOrFail());
 
@@ -324,5 +342,13 @@ class InvoiceEmailDeliveryTest extends TestCase
         $this->actingAs($viewer)
             ->post(route('bo.invoicing.invoices.email', $invoice))
             ->assertForbidden();
+    }
+
+    private function handleJob(InvoiceDelivery $delivery): void
+    {
+        (new SendInvoiceEmailJob($delivery->id))->handle(
+            app(InvoiceActivityLogger::class),
+            app(InvoicingSettingsService::class),
+        );
     }
 }

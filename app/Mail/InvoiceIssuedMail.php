@@ -18,13 +18,14 @@ class InvoiceIssuedMail extends Mailable
     public function __construct(
         public Invoice $invoice,
         public string $pdfContent,
+        public ?string $replyToEmail = null,
     ) {}
 
     public function envelope(): Envelope
     {
         $senderName = $this->invoice->creditor_name ?: (string) config('mail.from.name');
-        $replyTo = config('app.email')
-            ? [new Address((string) config('app.email'), $senderName)]
+        $replyTo = $this->replyToEmail
+            ? [new Address($this->replyToEmail, $senderName)]
             : [];
 
         return new Envelope(

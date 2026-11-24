@@ -16,6 +16,7 @@ interface InvoicingSettings {
     creditor_city: string;
     creditor_country: string;
     creditor_iban: string;
+    reply_to_email: string | null;
     envelope_window: 'left' | 'right';
 }
 
@@ -36,6 +37,7 @@ const form = useForm({
     creditor_city: props.settings?.creditor_city ?? '',
     creditor_country: props.settings?.creditor_country ?? 'CH',
     creditor_iban: props.settings?.creditor_iban ?? '',
+    reply_to_email: props.settings?.reply_to_email ?? '',
     envelope_window: props.settings?.envelope_window ?? 'left',
 });
 
@@ -105,6 +107,22 @@ const submit = () => {
                         placeholder="CH93 0076 2011 6238 5295 7"
                     />
                     <p v-if="form.errors.creditor_iban" class="text-destructive mt-1 text-sm">{{ form.errors.creditor_iban }}</p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <Label for="reply_to_email">Adresse de réponse (Reply-To)</Label>
+                    <Input
+                        id="reply_to_email"
+                        v-model="form.reply_to_email"
+                        class="mt-1"
+                        type="email"
+                        autocomplete="email"
+                        placeholder="tresorier@tir-lavigny.ch"
+                    />
+                    <p class="text-muted-foreground mt-1 text-sm">
+                        Utilisée comme adresse de réponse dans les emails de facture. Si vide, l’adresse système par défaut est utilisée.
+                    </p>
+                    <p v-if="form.errors.reply_to_email" class="text-destructive mt-1 text-sm">{{ form.errors.reply_to_email }}</p>
                 </div>
 
                 <div class="md:col-span-2">

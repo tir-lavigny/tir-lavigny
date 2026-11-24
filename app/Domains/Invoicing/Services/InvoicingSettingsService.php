@@ -115,6 +115,19 @@ class InvoicingSettingsService
         return $settings === null ? EnvelopeWindow::Left : $settings->envelope_window;
     }
 
+    public function replyToEmail(): ?string
+    {
+        $configured = trim((string) $this->current()?->reply_to_email);
+
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        $fallback = trim((string) config('app.email'));
+
+        return $fallback === '' ? null : $fallback;
+    }
+
     public function normalizeIban(string $iban): string
     {
         return strtoupper(preg_replace('/\s+/', '', $iban) ?? '');

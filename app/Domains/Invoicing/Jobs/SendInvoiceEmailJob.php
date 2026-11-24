@@ -6,6 +6,7 @@ use App\Domains\Invoicing\Enums\DeliveryStatus;
 use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
 use App\Domains\Invoicing\Models\InvoiceDelivery;
 use App\Domains\Invoicing\Services\InvoiceActivityLogger;
+use App\Domains\Invoicing\Services\InvoicingSettingsService;
 use App\Mail\InvoiceIssuedMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -31,7 +32,7 @@ class SendInvoiceEmailJob implements ShouldQueue
         public int $deliveryId,
     ) {}
 
-    public function handle(InvoiceActivityLogger $logger): void
+    public function handle(InvoiceActivityLogger $logger, InvoicingSettingsService $settings): void
     {
         $delivery = InvoiceDelivery::query()
             ->with(['invoice.document', 'processor'])
@@ -84,7 +85,7 @@ class SendInvoiceEmailJob implements ShouldQueue
         }
 
         try {
-            Mail::to($delivery->recipient)->send(new InvoiceIssuedMail($invoice, $pdf));
+            Mail::to($delivery->recipient)->send(new InvoiceIssuedMail($invoice, $pdf, $settings->replyToEmail()));
         } catch (Throwable $exception) {
             $delivery->update([
                 'error' => Str::limit($exception->getMessage(), 1000),

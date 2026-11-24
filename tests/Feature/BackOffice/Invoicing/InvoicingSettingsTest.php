@@ -85,6 +85,28 @@ class InvoicingSettingsTest extends TestCase
             ->assertSessionHasErrors('envelope_window');
     }
 
+    public function test_saves_reply_to_email(): void
+    {
+        $this->actingAs($this->admin())
+            ->put(route('bo.invoicing.settings.update'), $this->settingsData([
+                'reply_to_email' => 'tresorier@example.test',
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('invoicing_settings', [
+            'reply_to_email' => 'tresorier@example.test',
+        ]);
+    }
+
+    public function test_rejects_invalid_reply_to_email(): void
+    {
+        $this->actingAs($this->admin())
+            ->put(route('bo.invoicing.settings.update'), $this->settingsData([
+                'reply_to_email' => 'not-an-email',
+            ]))
+            ->assertSessionHasErrors('reply_to_email');
+    }
+
     public function test_missing_settings_block_invoice_creation(): void
     {
         InvoicingSettings::query()->delete();
@@ -116,6 +138,7 @@ class InvoicingSettingsTest extends TestCase
             'creditor_city' => 'Lavigny',
             'creditor_country' => 'CH',
             'creditor_iban' => 'CH9300762011623852957',
+            'reply_to_email' => null,
             'envelope_window' => 'left',
             ...$overrides,
         ];
