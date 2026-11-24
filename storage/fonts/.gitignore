@@ -1,2 +1,6 @@
 *
 !.gitignore
+!Instrument_Sans/
+!Instrument_Sans/InstrumentSans-VariableFont_wdth,wght.ttf
+!Instrument_Sans/OFL.txt
+!Instrument_Sans/README.txt
