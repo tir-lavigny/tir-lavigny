@@ -111,6 +111,66 @@ export interface PaginatedBillingCustomers extends PaginatedData<BillingCustomer
     data?: BillingCustomer[];
 }
 
+export interface InvoiceItem {
+    id: number;
+    invoice_id: number;
+    product_id: number | null;
+    type: 'product' | 'fee' | 'discount' | 'adjustment';
+    description: string;
+    quantity: string;
+    unit_price: string;
+    total: string;
+    position: number;
+    metadata?: Record<string, unknown> | null;
+}
+
+export interface InvoiceActivityLog {
+    id: number;
+    invoice_id: number | null;
+    user_id: number | null;
+    action: string;
+    description: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+    user?: { id: number; name: string } | null;
+}
+
+export interface Invoice {
+    id: number;
+    billing_customer_id: number;
+    membership_fee_campaign_id: number | null;
+    type: 'membership_fee' | 'one_off';
+    status: 'draft' | 'issued' | 'partially_paid' | 'paid' | 'cancelled';
+    invoice_number: string | null;
+    recipient_name: string;
+    recipient_address: string;
+    recipient_postal_code: string;
+    recipient_city: string;
+    recipient_country: string;
+    recipient_email: string | null;
+    delivery_method: 'email' | 'postal';
+    issue_date: string | null;
+    due_date: string | null;
+    currency: string;
+    subtotal: string;
+    total: string;
+    issued_at: string | null;
+    sent_at: string | null;
+    cancelled_at: string | null;
+    cancelled_by: number | null;
+    cancellation_reason: string | null;
+    created_by: number | null;
+    items?: InvoiceItem[];
+    activity_logs?: InvoiceActivityLog[];
+    billing_customer?: BillingCustomer | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedInvoices extends PaginatedData<Invoice> {
+    data?: Invoice[];
+}
+
 export abstract class PaginatedData<T> {
     abstract current_page: number;
     abstract data?: T[];

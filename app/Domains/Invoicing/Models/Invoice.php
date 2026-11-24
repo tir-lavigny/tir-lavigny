@@ -6,22 +6,31 @@ use App\Domains\Invoicing\Enums\Currency;
 use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
 use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Domains\Invoicing\Enums\InvoiceType;
+use App\Domains\Invoicing\Policies\InvoicePolicy;
 use App\Models\Concerns\HasMoneyColumns;
 use App\Models\User;
 use Database\Factories\Domains\Invoicing\Models\InvoiceFactory;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 /**
+ * @property InvoiceStatus $status
+ * @property InvoiceType $type
+ * @property InvoiceDeliveryMethod $delivery_method
+ * @property \Illuminate\Support\Carbon|null $issue_date
+ * @property \Illuminate\Support\Carbon|null $due_date
  * @property string $subtotal
  * @property string $total
  * @property int $subtotal_cents
  * @property int $total_cents
  */
+#[UsePolicy(InvoicePolicy::class)]
 class Invoice extends Model
 {
     /** @use HasFactory<InvoiceFactory> */
@@ -183,5 +192,59 @@ class Invoice extends Model
         return $this->belongsToMany(Payment::class, 'invoice_payments')
             ->withPivot('amount_cents')
             ->withTimestamps();
+    }
+
+    public function isDraft(): bool
+    {
+        return $this->status === InvoiceStatus::Draft;
+    }
+
+    public function isIssued(): bool
+    {
+        return $this->status === InvoiceStatus::Issued;
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === InvoiceStatus::Cancelled;
+    }
+
+    public function isCancellable(): bool
+    {
+        return $this->status === InvoiceStatus::Issued;
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function (Invoice $invoice): void {
+            $originalStatus = $invoice->getOriginal('status');
+            $originalStatus = $originalStatus instanceof InvoiceStatus
+                ? $originalStatus
+                : InvoiceStatus::from((string) $originalStatus);
+
+            if ($originalStatus === InvoiceStatus::Draft) {
+                return;
+            }
+
+            $allowed = [
+                'status',
+                'issued_at',
+                'sent_at',
+                'cancelled_at',
+                'cancelled_by',
+                'cancellation_reason',
+                'payment_reference',
+            ];
+
+            if (array_diff(array_keys($invoice->getDirty()), $allowed) !== []) {
+                throw new LogicException('Issued invoices cannot be modified.');
+            }
+        });
+
+        static::deleting(function (Invoice $invoice): void {
+            if ($invoice->status !== InvoiceStatus::Draft) {
+                throw new LogicException('Only draft invoices can be deleted.');
+            }
+        });
     }
 }
