@@ -4,6 +4,7 @@ namespace Tests\Feature\BackOffice\Invoicing;
 
 use App\Domains\Invoicing\Actions\Payments\AllocatePayment;
 use App\Domains\Invoicing\Actions\Payments\RegisterPayment;
+use App\Domains\Invoicing\Actions\Payments\ReversePaymentAllocation;
 use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Domains\Invoicing\Enums\PaymentMethod;
 use App\Domains\Invoicing\Models\Invoice;
@@ -55,6 +56,41 @@ class PaymentControllerTest extends TestCase
                 ->has('payments.data', 1)
                 ->where('payments.data.0.allocated_cents', 4000)
                 ->where('payments.data.0.unallocated_cents', 6000)
+            );
+    }
+
+    public function test_payment_index_filters_by_allocation_status(): void
+    {
+        $invoice = Invoice::factory()->create(['status' => 'issued', 'total_cents' => 10000]);
+        $unallocated = Payment::factory()->create(['amount_cents' => 10000, 'payment_date' => '2027-02-20']);
+        $partial = Payment::factory()->create(['amount_cents' => 10000, 'payment_date' => '2027-02-21']);
+        $full = Payment::factory()->create(['amount_cents' => 10000, 'payment_date' => '2027-02-22']);
+        Payment::factory()->create([
+            'amount_cents' => 10000,
+            'payment_date' => '2027-02-23',
+            'voided_at' => now(),
+            'void_reason' => 'Erreur',
+        ]);
+
+        InvoicePayment::factory()->create(['payment_id' => $partial->id, 'invoice_id' => $invoice->id, 'amount_cents' => 4000]);
+        InvoicePayment::factory()->create(['payment_id' => $full->id, 'invoice_id' => $invoice->id, 'amount_cents' => 10000]);
+
+        $this->get(route('bo.invoicing.payments.index', ['allocation_status' => 'unallocated']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('payments.data', 1)
+                ->where('payments.data.0.id', $unallocated->id)
+            );
+
+        $this->get(route('bo.invoicing.payments.index', ['allocation_status' => 'partially_allocated']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('payments.data', 1)
+                ->where('payments.data.0.id', $partial->id)
+            );
+
+        $this->get(route('bo.invoicing.payments.index', ['allocation_status' => 'fully_allocated']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('payments.data', 1)
+                ->where('payments.data.0.id', $full->id)
             );
     }
 
@@ -193,6 +229,25 @@ class PaymentControllerTest extends TestCase
                 ->component('backOffice/Invoicing/Invoices/Show')
                 ->has('invoice.payment_allocations', 1)
                 ->where('balance.days_overdue', 15)
+            );
+    }
+
+    public function test_invoice_index_ignores_reversed_allocations(): void
+    {
+        Carbon::setTestNow('2027-03-01 12:00:00');
+        $invoice = $this->issueInvoice(actor: $this->actor);
+        $payment = app(RegisterPayment::class)->execute($this->actionPaymentData(15000, 'PAY-REVERSED'), $this->actor);
+        $allocation = app(AllocatePayment::class)->execute($payment, $invoice, 15000, $this->actor);
+        app(ReversePaymentAllocation::class)->execute($allocation, 'Mauvais montant', $this->actor);
+
+        $this->get(route('bo.invoicing.invoices.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('backOffice/Invoicing/Invoices/Index')
+                ->where('invoices.data.0.id', $invoice->id)
+                ->where('invoices.data.0.status', InvoiceStatus::Issued->value)
+                ->where('invoices.data.0.paid_cents', 0)
+                ->where('invoices.data.0.remaining_cents', 15000)
+                ->where('invoices.data.0.days_overdue', 15)
             );
     }
 

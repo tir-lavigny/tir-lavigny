@@ -16,9 +16,16 @@ import { computed } from 'vue';
 
 const props = defineProps<{
     payments: PaginatedPayments;
-    filters: { search?: string | null; method?: string | null; status?: string | null; year?: number | null };
+    filters: {
+        search?: string | null;
+        method?: string | null;
+        status?: string | null;
+        allocation_status?: string | null;
+        year?: number | null;
+    };
     methods: Array<{ value: string; label: string }>;
     statuses: Array<{ value: string; label: string }>;
+    allocationStatuses: Array<{ value: string; label: string }>;
     years: number[];
 }>();
 
@@ -31,6 +38,7 @@ const { filters } = useListFilters('bo.invoicing.payments.index', {
     search: props.filters.search || '',
     method: props.filters.method || '',
     status: props.filters.status || '',
+    allocation_status: props.filters.allocation_status || '',
     year: props.filters.year ? String(props.filters.year) : '',
 });
 
@@ -45,6 +53,13 @@ const statusFilter = computed({
     get: () => filters.value.status || 'all',
     set: (value: string) => {
         filters.value.status = value === 'all' ? '' : value;
+    },
+});
+
+const allocationFilter = computed({
+    get: () => filters.value.allocation_status || 'all',
+    set: (value: string) => {
+        filters.value.allocation_status = value === 'all' ? '' : value;
     },
 });
 
@@ -74,7 +89,9 @@ const goToPage = (pageNumber: number): void => {
         </div>
 
         <div class="mx-4 flex flex-col gap-4">
-            <div class="border-sidebar-border/70 dark:border-sidebar-border flex flex-col gap-3 rounded-xl border p-4 md:flex-row md:items-end">
+            <div
+                class="border-sidebar-border/70 dark:border-sidebar-border flex flex-col gap-3 rounded-xl border p-4 md:flex-row md:flex-wrap md:items-end"
+            >
                 <div class="grid flex-1 gap-2">
                     <Label for="search">Rechercher</Label>
                     <div class="relative">
@@ -99,6 +116,16 @@ const goToPage = (pageNumber: number): void => {
                         <SelectContent>
                             <SelectItem value="all">Tous</SelectItem>
                             <SelectItem v-for="status in statuses" :key="status.value" :value="status.value">{{ status.label }}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div class="grid gap-2 md:w-52">
+                    <Label for="allocation_status">Imputation</Label>
+                    <Select v-model="allocationFilter">
+                        <SelectTrigger id="allocation_status" class="w-full"><SelectValue placeholder="Toutes" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Toutes</SelectItem>
+                            <SelectItem v-for="status in allocationStatuses" :key="status.value" :value="status.value">{{ status.label }}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

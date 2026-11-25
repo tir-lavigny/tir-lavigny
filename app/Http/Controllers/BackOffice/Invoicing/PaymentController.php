@@ -13,7 +13,6 @@ use App\Domains\Invoicing\Exceptions\PaymentException;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Models\InvoicePayment;
 use App\Domains\Invoicing\Models\Payment;
-use App\Domains\Invoicing\Services\InvoiceBalanceCalculator;
 use App\Domains\Invoicing\Services\PaymentBalanceCalculator;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Invoicing\AllocatePaymentRequest;
@@ -38,6 +37,7 @@ class PaymentController extends Controller
         $search = $request->input('search');
         $method = $request->input('method');
         $status = $request->input('status');
+        $allocationStatus = $request->input('allocation_status');
         $year = $request->integer('year') ?: null;
 
         $query = Payment::query()
@@ -52,6 +52,16 @@ class PaymentController extends Controller
             $query->whereNotNull('voided_at');
         } elseif ($status === 'active') {
             $query->whereNull('voided_at');
+        }
+
+        $allocated = '(SELECT COALESCE(SUM(invoice_payments.amount_cents), 0) FROM invoice_payments WHERE invoice_payments.payment_id = payments.id AND invoice_payments.reversed_at IS NULL)';
+
+        if ($allocationStatus === 'unallocated') {
+            $query->whereNull('voided_at')->whereRaw("{$allocated} = 0");
+        } elseif ($allocationStatus === 'partially_allocated') {
+            $query->whereNull('voided_at')->whereRaw("{$allocated} > 0 AND {$allocated} < payments.amount_cents");
+        } elseif ($allocationStatus === 'fully_allocated') {
+            $query->whereNull('voided_at')->whereRaw("{$allocated} >= payments.amount_cents");
         }
 
         if ($year !== null) {
@@ -85,10 +95,12 @@ class PaymentController extends Controller
                 'search' => $search,
                 'method' => $method,
                 'status' => $status,
+                'allocation_status' => $allocationStatus,
                 'year' => $year,
             ],
             'methods' => $this->methodOptions(),
             'statuses' => $this->statusOptions(),
+            'allocationStatuses' => $this->allocationStatusOptions(),
             'years' => $this->yearOptions(),
         ]);
     }
@@ -148,11 +160,8 @@ class PaymentController extends Controller
             ->with('success', 'Paiement enregistré et imputé à la facture.');
     }
 
-    public function show(
-        Payment $payment,
-        PaymentBalanceCalculator $balances,
-        InvoiceBalanceCalculator $invoiceBalances,
-    ): Response {
+    public function show(Payment $payment, PaymentBalanceCalculator $balances): Response
+    {
         $payment->load([
             'creator',
             'voider',
@@ -167,16 +176,29 @@ class PaymentController extends Controller
         $allocatableInvoices = $canAllocate
             ? Invoice::query()
                 ->whereIn('status', [InvoiceStatus::Issued, InvoiceStatus::PartiallyPaid])
+                ->withSum(['paymentAllocations as paid_cents' => fn (Builder $query) => $query->whereNull('reversed_at')], 'amount_cents')
+                ->withSum('creditNoteApplications as credited_cents', 'amount_cents')
+                ->withSum('creditNoteApplicationReversals as credited_reversed_cents', 'amount_cents')
                 ->orderBy('due_date')
                 ->orderBy('invoice_number')
                 ->get()
-                ->map(function (Invoice $invoice) use ($invoiceBalances): array {
+                ->map(function (Invoice $invoice): array {
+                    $credited = max(
+                        0,
+                        (int) ($invoice->getAttribute('credited_cents') ?? 0)
+                            - (int) ($invoice->getAttribute('credited_reversed_cents') ?? 0),
+                    );
+                    $outstanding = max(
+                        0,
+                        $invoice->total_cents - (int) ($invoice->getAttribute('paid_cents') ?? 0) - $credited,
+                    );
+
                     return [
                         'id' => $invoice->id,
                         'invoice_number' => $invoice->invoice_number,
                         'recipient_name' => $invoice->recipient_name,
                         'due_date' => $invoice->due_date?->toDateString(),
-                        'outstanding_cents' => $invoiceBalances->outstandingCents($invoice),
+                        'outstanding_cents' => $outstanding,
                     ];
                 })
                 ->filter(fn (array $invoice): bool => $invoice['outstanding_cents'] > 0)
@@ -305,6 +327,18 @@ class PaymentController extends Controller
         return [
             ['value' => 'active', 'label' => 'Actifs'],
             ['value' => 'voided', 'label' => 'Annulés'],
+        ];
+    }
+
+    /**
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function allocationStatusOptions(): array
+    {
+        return [
+            ['value' => 'unallocated', 'label' => 'Non alloués'],
+            ['value' => 'partially_allocated', 'label' => 'Partiellement alloués'],
+            ['value' => 'fully_allocated', 'label' => 'Entièrement alloués'],
         ];
     }
 

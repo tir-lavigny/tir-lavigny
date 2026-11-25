@@ -92,7 +92,9 @@ class InvoiceController extends Controller
                     - (int) ($invoice->getAttribute('credited_reversed_cents') ?? 0),
             );
 
-            $remaining = max(0, $invoice->total_cents - (int) ($invoice->getAttribute('paid_cents') ?? 0) - $credited);
+            $paid = (int) ($invoice->getAttribute('paid_cents') ?? 0);
+            $remaining = max(0, $invoice->total_cents - $paid - $credited);
+            $invoice->setAttribute('paid_cents', $paid);
             $invoice->setAttribute('credited_cents', $credited);
             $invoice->setAttribute('remaining_cents', $remaining);
             $invoice->setAttribute('days_overdue', $balances->daysOverdue($invoice, outstandingCents: $remaining));
