@@ -178,7 +178,15 @@ class Invoice extends Model
      */
     public function reminders(): HasMany
     {
-        return $this->hasMany(InvoiceReminder::class);
+        return $this->hasMany(InvoiceReminder::class)->latest('created_at')->latest('id');
+    }
+
+    /**
+     * @return HasOne<InvoiceReminder, $this>
+     */
+    public function latestReminder(): HasOne
+    {
+        return $this->hasOne(InvoiceReminder::class)->latestOfMany();
     }
 
     /**

@@ -62,8 +62,27 @@ class InvoicePolicy
         return $invoice->isDistributable() && $user->canAny(['send invoices', 'manage invoicing']);
     }
 
+    public function sendReminder(User $user, Invoice $invoice): bool
+    {
+        return $this->canRemind($invoice)
+            && $user->canAny(['manage invoice reminders', 'manage invoicing']);
+    }
+
+    public function printReminder(User $user, Invoice $invoice): bool
+    {
+        return $this->canRemind($invoice)
+            && $user->canAny(['manage invoice reminders', 'manage invoicing']);
+    }
+
     private function canView(User $user): bool
     {
         return $user->canAny(['view invoices', 'manage invoicing']);
+    }
+
+    private function canRemind(Invoice $invoice): bool
+    {
+        return $invoice->isDistributable()
+            && $invoice->due_date !== null
+            && $invoice->due_date->lt(today());
     }
 }

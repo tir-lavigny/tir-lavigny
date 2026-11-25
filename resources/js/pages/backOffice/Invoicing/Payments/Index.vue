@@ -2,6 +2,7 @@
 import AppPagination from '@/components/AppPagination.vue';
 import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
 import AppTooltipLabel from '@/components/AppTooltipLabel.vue';
+import AppExportMenu from '@/components/back-office/Invoicing/AppExportMenu.vue';
 import { H1 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,9 +86,12 @@ const goToPage = (pageNumber: number): void => {
                 <H1>Paiements</H1>
                 <p class="text-muted-foreground mt-2 text-sm">Paiements reçus et imputations aux factures.</p>
             </div>
-            <Button v-if="canCreate" as-child>
-                <Link :href="route('bo.invoicing.payments.create')"><Plus class="mr-2 h-4 w-4" /> Nouveau paiement</Link>
-            </Button>
+            <div class="flex flex-wrap gap-2">
+                <AppExportMenu route-name="bo.invoicing.payments.export" :filters="filters" />
+                <Button v-if="canCreate" as-child>
+                    <Link :href="route('bo.invoicing.payments.create')"><Plus class="mr-2 h-4 w-4" /> Nouveau paiement</Link>
+                </Button>
+            </div>
         </div>
 
         <div class="mx-4 flex flex-col gap-4">

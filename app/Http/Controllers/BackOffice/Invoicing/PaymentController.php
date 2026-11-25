@@ -14,6 +14,7 @@ use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Models\InvoicePayment;
 use App\Domains\Invoicing\Models\Payment;
 use App\Domains\Invoicing\Services\PaymentBalanceCalculator;
+use App\Domains\Invoicing\Services\PaymentListQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Invoicing\AllocatePaymentRequest;
 use App\Http\Requests\BackOffice\Invoicing\ReversePaymentAllocationRequest;
@@ -30,7 +31,7 @@ use Inertia\Response;
 
 class PaymentController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, PaymentListQuery $payments): Response
     {
         abort_unless($request->user()?->canAny(['view payments', 'manage invoicing']), 403);
 
@@ -40,51 +41,23 @@ class PaymentController extends Controller
         $allocationStatus = $request->input('allocation_status');
         $year = $request->integer('year') ?: null;
 
-        $query = Payment::query()
-            ->with('creator')
-            ->withSum(['allocations as allocated_cents' => fn (Builder $query) => $query->whereNull('reversed_at')], 'amount_cents');
+        $paginated = $payments
+            ->filtered([
+                'search' => is_string($search) ? $search : null,
+                'method' => is_string($method) ? $method : null,
+                'status' => is_string($status) ? $status : null,
+                'allocation_status' => is_string($allocationStatus) ? $allocationStatus : null,
+                'year' => $year,
+            ])
+            ->orderByDesc('payment_date')
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->withQueryString();
 
-        if (in_array($method, array_column(PaymentMethod::cases(), 'value'), true)) {
-            $query->where('method', $method);
-        }
-
-        if ($status === 'voided') {
-            $query->whereNotNull('voided_at');
-        } elseif ($status === 'active') {
-            $query->whereNull('voided_at');
-        }
-
-        if (in_array($allocationStatus, ['unallocated', 'partially_allocated', 'fully_allocated'], true)) {
-            $query->whereNull('voided_at')->allocationStatus($allocationStatus);
-        }
-
-        if ($year !== null) {
-            $query->whereYear('payment_date', $year);
-        }
-
-        if (filled($search)) {
-            $query->where(function (Builder $query) use ($search): void {
-                $query->where('reference', 'like', "%{$search}%")
-                    ->orWhere('notes', 'like', "%{$search}%");
-            });
-        }
-
-        $payments = $query->orderByDesc('payment_date')->orderByDesc('id')->paginate(20)->withQueryString();
-        $payments->through(function (Payment $payment): Payment {
-            $allocated = (int) ($payment->getAttribute('allocated_cents') ?? 0);
-
-            $payment->setAttribute('allocated_cents', $allocated);
-            $payment->setAttribute(
-                'unallocated_cents',
-                $payment->isVoided() ? 0 : max(0, $payment->amount_cents - $allocated),
-            );
-            $payment->setAttribute('is_voided', $payment->isVoided());
-
-            return $payment;
-        });
+        $paginated->through(fn (Payment $payment): Payment => $payments->applyAmounts($payment));
 
         return Inertia::render('backOffice/Invoicing/Payments/Index', [
-            'payments' => $payments,
+            'payments' => $paginated,
             'filters' => [
                 'search' => $search,
                 'method' => $method,

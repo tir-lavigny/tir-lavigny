@@ -11,10 +11,16 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property string $outstanding_amount
  * @property int $outstanding_amount_cents
+ * @property DeliveryStatus $status
+ * @property InvoiceDeliveryMethod $channel
+ * @property Carbon|null $processed_at
+ * @property Invoice $invoice
+ * @property User|null $processor
  */
 class InvoiceReminder extends Model
 {
@@ -30,6 +36,7 @@ class InvoiceReminder extends Model
         'status',
         'processed_at',
         'processed_by',
+        'error',
     ];
 
     protected $hidden = ['outstanding_amount_cents'];

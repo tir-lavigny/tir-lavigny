@@ -25,6 +25,7 @@ class InvoiceReminderFactory extends Factory
             'status' => DeliveryStatus::Pending,
             'processed_at' => null,
             'processed_by' => null,
+            'error' => null,
         ];
     }
 }
