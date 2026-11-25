@@ -34,6 +34,7 @@ class CreateInvoice
 
             $invoice = Invoice::create([
                 'billing_customer_id' => $billingCustomer->id,
+                'membership_fee_campaign_id' => $data['membership_fee_campaign_id'] ?? null,
                 'type' => $data['type'] ?? InvoiceType::OneOff,
                 'status' => InvoiceStatus::Draft,
                 'delivery_method' => $data['delivery_method'],

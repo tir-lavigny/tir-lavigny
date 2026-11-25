@@ -224,6 +224,20 @@ const invoicingNavItems: NavItem[] = [
                   href: route('bo.invoicing.credit-notes.index'),
                   icon: Receipt,
               },
+              ...(hasAnyPermission(user, ['view invoices', 'manage membership fees', 'manage invoicing'])
+                  ? [
+                        {
+                            title: 'Types de cotisation',
+                            href: route('bo.invoicing.membership-fee-types.index'),
+                            icon: Receipt,
+                        },
+                        {
+                            title: 'Campagnes de cotisation',
+                            href: route('bo.invoicing.membership-fee-campaigns.index'),
+                            icon: Calendar,
+                        },
+                    ]
+                  : []),
               ...(hasAnyPermission(user, ['send invoices', 'manage invoicing'])
                   ? [
                         {
