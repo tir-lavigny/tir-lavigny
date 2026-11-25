@@ -25,18 +25,11 @@ class MembershipFeeTypeController extends Controller
 
         $search = $request->input('search');
         $memberStatus = $request->input('member_status');
-        $active = $request->input('active');
 
         $query = MembershipFeeType::query();
 
         if (in_array($memberStatus, MemberStatus::values(), true)) {
             $query->where('member_status', $memberStatus);
-        }
-
-        if ($active === 'active') {
-            $query->where('is_active', true);
-        } elseif ($active === 'inactive') {
-            $query->where('is_active', false);
         }
 
         $this->whereAccentInsensitiveLike($query, ['name'], $search);
@@ -46,7 +39,6 @@ class MembershipFeeTypeController extends Controller
             'filters' => [
                 'search' => $search,
                 'member_status' => $memberStatus,
-                'active' => $active,
             ],
             'memberStatuses' => $this->memberStatusOptions(),
         ]);
@@ -70,7 +62,6 @@ class MembershipFeeTypeController extends Controller
             'member_status' => (string) $validated['member_status'],
             'description' => $validated['description'] ?? null,
             'amount_cents' => Money::toCents((string) $validated['amount']) ?? 0,
-            'is_active' => (bool) ($validated['is_active'] ?? true),
         ]);
 
         return to_route('bo.invoicing.membership-fee-types.index')
@@ -96,7 +87,6 @@ class MembershipFeeTypeController extends Controller
             'member_status' => (string) $validated['member_status'],
             'description' => $validated['description'] ?? null,
             'amount_cents' => Money::toCents((string) $validated['amount']) ?? 0,
-            'is_active' => (bool) ($validated['is_active'] ?? $membershipFeeType->is_active),
         ]);
 
         return to_route('bo.invoicing.membership-fee-types.index')

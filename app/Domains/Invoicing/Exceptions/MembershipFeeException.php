@@ -9,7 +9,7 @@ final class MembershipFeeException extends RuntimeException
 {
     public static function feeTypeNotConfigured(MemberStatus $status): self
     {
-        return new self("Aucun type de cotisation actif n’est configuré pour le statut « {$status->label()} ».");
+        return new self("Aucun type de cotisation n’est configuré pour le statut « {$status->label()} ».");
     }
 
     public static function campaignNotEditable(): self

@@ -12,7 +12,6 @@ class MembershipFeeResolver
     public function resolve(Member $member): MembershipFeeType
     {
         $feeType = MembershipFeeType::query()
-            ->where('is_active', true)
             ->where('member_status', $member->status)
             ->first();
 
@@ -32,7 +31,6 @@ class MembershipFeeResolver
             $memberStatus = MemberStatus::from($status);
 
             $exists = MembershipFeeType::query()
-                ->where('is_active', true)
                 ->where('member_status', $memberStatus)
                 ->exists();
 

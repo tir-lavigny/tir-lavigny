@@ -56,7 +56,6 @@ class MembershipFeeCampaignControllerTest extends TestCase
             'member_status' => MemberStatus::ACTIVE->value,
             'description' => 'Cotisation annuelle',
             'amount' => '150.00',
-            'is_active' => true,
         ]);
 
         $feeType = MembershipFeeTypeModel::sole();
@@ -75,7 +74,6 @@ class MembershipFeeCampaignControllerTest extends TestCase
             'name' => 'Autre cotisation active',
             'member_status' => MemberStatus::ACTIVE->value,
             'amount' => '120.00',
-            'is_active' => true,
         ]);
 
         $response->assertSessionHasErrors('member_status');
@@ -129,7 +127,7 @@ class MembershipFeeCampaignControllerTest extends TestCase
         $this->assertSame(CampaignMemberStatus::Excluded, $campaignMember->fresh()->status);
     }
 
-    public function test_preview_fails_when_a_member_status_has_no_active_fee_type(): void
+    public function test_preview_fails_when_a_member_status_has_no_fee_type(): void
     {
         $this->actingAsAdmin();
         MembershipFeeTypeModel::factory()->create(['member_status' => MemberStatus::ACTIVE]);

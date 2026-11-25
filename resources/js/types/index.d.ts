@@ -167,7 +167,6 @@ export interface MembershipFeeType {
     member_status: 'active' | 'passive' | null;
     description: string | null;
     amount: string;
-    is_active: boolean;
     created_at: string;
     updated_at: string;
 }

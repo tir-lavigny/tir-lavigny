@@ -20,7 +20,6 @@ class MembershipFeeTypeFactory extends Factory
             'member_status' => MemberStatus::ACTIVE,
             'description' => null,
             'amount_cents' => fake()->numberBetween(1000, 30000),
-            'is_active' => true,
         ];
     }
 
