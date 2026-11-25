@@ -67,6 +67,27 @@ final class MembershipFeeException extends RuntimeException
         return new self('Aucune facture brouillon n’est en attente d’émission.');
     }
 
+    public static function campaignHasInvoices(): self
+    {
+        return new self('Cette campagne contient des factures. Supprimez d’abord les factures brouillon.');
+    }
+
+    public static function campaignHasNonDraftInvoices(): self
+    {
+        return new self('Impossible de supprimer la campagne : elle contient au moins une facture émise.');
+    }
+
+    /**
+     * @param  array<int, string>  $members
+     */
+    public static function baseAmountRefreshConflicts(array $members): self
+    {
+        return new self(
+            'Impossible de recalculer les montants : la remise dépasse le nouveau montant de base pour '
+            .implode(', ', $members).'.',
+        );
+    }
+
     public static function deliveryRequiresEmail(): self
     {
         return new self('Ce membre n’a pas d’adresse email. Choisissez l’envoi postal.');

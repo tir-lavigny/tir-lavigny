@@ -185,6 +185,8 @@ export interface MembershipFeeCampaign {
     created_by: number | null;
     creator?: { id: number; name: string } | null;
     members_count?: number;
+    draft_invoices_count?: number;
+    non_draft_invoices_count?: number;
     created_at: string;
     updated_at: string;
 }

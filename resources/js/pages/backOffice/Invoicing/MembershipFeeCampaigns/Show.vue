@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppPagination from '@/components/AppPagination.vue';
+import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
 import AppTooltipLabel from '@/components/AppTooltipLabel.vue';
 import { H1, H3 } from '@/components/typography/headings';
@@ -23,7 +24,7 @@ import type {
     SharedData,
 } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { CheckCircle2, FileText, Pencil, RefreshCw, Search, Send, UserMinus, UserPlus } from '@lucide/vue';
+import { CheckCircle2, FileText, Pencil, RefreshCw, Search, Send, Trash2, UserMinus, UserPlus } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -49,6 +50,8 @@ const props = defineProps<{
     deliveryMethods: Array<{ value: string; label: string }>;
     invoicingConfigured: boolean;
     canIssueInvoices: boolean;
+    canRefreshBaseAmounts: boolean;
+    canDeleteCampaign: boolean;
 }>();
 
 const page = usePage<SharedData>();
@@ -130,6 +133,34 @@ const preview = () => runAction('bo.invoicing.membership-fee-campaigns.preview',
 const validateCampaign = () => runAction('bo.invoicing.membership-fee-campaigns.validate', 'Erreur lors de la validation.');
 const generateInvoices = () => runAction('bo.invoicing.membership-fee-campaigns.invoices.generate', 'Erreur lors de la génération des factures.');
 const issueInvoices = () => runAction('bo.invoicing.membership-fee-campaigns.invoices.issue', 'Erreur lors de l’émission des factures.');
+
+const refreshBaseAmounts = (): void => {
+    router.post(
+        route('bo.invoicing.membership-fee-campaigns.refresh-base-amounts', props.campaign.id),
+        {},
+        {
+            preserveScroll: true,
+            onError: (errors) => toast.error((errors as Record<string, string>).action ?? 'Erreur lors du recalcul.'),
+        },
+    );
+};
+
+const deleteCampaign = (): void => {
+    router.delete(route('bo.invoicing.membership-fee-campaigns.destroy', props.campaign.id), {
+        preserveScroll: true,
+        onError: (errors) => toast.error((errors as Record<string, string>).action ?? 'Erreur lors de la suppression.'),
+    });
+};
+
+const deleteDescription = computed(() => {
+    const draftCount = props.summary.draft_invoices;
+
+    if (draftCount > 0) {
+        return `La campagne et ses ${draftCount} facture(s) brouillon seront supprimées. Les clients de facturation seront conservés.`;
+    }
+
+    return 'La campagne et ses lignes seront supprimées. Les clients de facturation seront conservés.';
+});
 
 const validateMember = (member: MembershipFeeCampaignMember): void => {
     router.post(
@@ -285,6 +316,35 @@ const submitDelivery = (): void => {
                 <Button v-if="canManage && editable" variant="outline" as-child>
                     <Link :href="route('bo.invoicing.membership-fee-campaigns.edit', campaign.id)"> <Pencil class="mr-2 h-4 w-4" /> Modifier </Link>
                 </Button>
+                <AppAlertDialog
+                    v-if="canRefreshBaseAmounts"
+                    title="Recalculer les montants de base ?"
+                    description="Les montants seront relus depuis les types de cotisation actuels. Les remises ordinaires sont conservées, les exonérations totales restent totales et les validations seront réinitialisées."
+                    cancel-text="Annuler"
+                >
+                    <template #trigger>
+                        <Button variant="outline"> <RefreshCw class="mr-2 h-4 w-4" /> Recalculer les montants de base </Button>
+                    </template>
+                    <template #action>
+                        <Button @click="refreshBaseAmounts">Recalculer</Button>
+                    </template>
+                </AppAlertDialog>
+                <AppAlertDialog v-if="canDeleteCampaign" title="Supprimer la campagne ?" :description="deleteDescription" cancel-text="Annuler">
+                    <template #trigger>
+                        <Button variant="destructive"> <Trash2 class="mr-2 h-4 w-4" /> Supprimer la campagne </Button>
+                    </template>
+                    <template #action>
+                        <Button variant="destructive" @click="deleteCampaign">Supprimer définitivement</Button>
+                    </template>
+                </AppAlertDialog>
+                <Tooltip v-else-if="canManage">
+                    <TooltipTrigger as-child>
+                        <span>
+                            <Button variant="destructive" disabled> <Trash2 class="mr-2 h-4 w-4" /> Supprimer la campagne </Button>
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Suppression impossible : la campagne contient une facture émise.</TooltipContent>
+                </Tooltip>
             </div>
         </div>
 

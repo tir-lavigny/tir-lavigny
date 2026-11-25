@@ -2,6 +2,7 @@
 
 namespace App\Domains\Invoicing\Policies;
 
+use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Domains\Invoicing\Enums\MembershipFeeCampaignStatus;
 use App\Domains\Invoicing\Models\MembershipFeeCampaign;
 use App\Models\User;
@@ -55,6 +56,21 @@ class MembershipFeeCampaignPolicy
     public function manageMembers(User $user, MembershipFeeCampaign $campaign): bool
     {
         return $campaign->isEditable() && $this->canManage($user);
+    }
+
+    public function refreshBaseAmounts(User $user, MembershipFeeCampaign $campaign): bool
+    {
+        return $campaign->isEditable()
+            && ! $campaign->invoices()->exists()
+            && $this->canManage($user);
+    }
+
+    public function delete(User $user, MembershipFeeCampaign $campaign): bool
+    {
+        return ! $campaign->invoices()
+            ->where('status', '!=', InvoiceStatus::Draft->value)
+            ->exists()
+            && $this->canManage($user);
     }
 
     private function canView(User $user): bool
