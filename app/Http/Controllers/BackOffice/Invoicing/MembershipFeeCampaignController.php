@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\BackOffice\Invoicing;
 
 use App\Domains\Invoicing\Actions\MembershipFees\CreateFeeCampaign;
+use App\Domains\Invoicing\Actions\MembershipFees\DeleteFeeCampaign;
 use App\Domains\Invoicing\Actions\MembershipFees\ExcludeCampaignMember;
 use App\Domains\Invoicing\Actions\MembershipFees\GenerateFeeInvoices;
 use App\Domains\Invoicing\Actions\MembershipFees\IncludeCampaignMember;
 use App\Domains\Invoicing\Actions\MembershipFees\IssueCampaignInvoices;
 use App\Domains\Invoicing\Actions\MembershipFees\PreviewFeeCampaign;
+use App\Domains\Invoicing\Actions\MembershipFees\RefreshFeeCampaignBaseAmounts;
 use App\Domains\Invoicing\Actions\MembershipFees\UpdateCampaignMemberDelivery;
 use App\Domains\Invoicing\Actions\MembershipFees\UpdateCampaignMemberDiscount;
 use App\Domains\Invoicing\Actions\MembershipFees\UpdateFeeCampaign;
@@ -51,7 +53,11 @@ class MembershipFeeCampaignController extends Controller
 
         $query = MembershipFeeCampaign::query()
             ->with('creator')
-            ->withCount('members');
+            ->withCount('members')
+            ->withCount([
+                'invoices as draft_invoices_count' => fn (Builder $query) => $query->where('status', InvoiceStatus::Draft->value),
+                'invoices as non_draft_invoices_count' => fn (Builder $query) => $query->where('status', '!=', InvoiceStatus::Draft->value),
+            ]);
 
         if (in_array($status, array_column(MembershipFeeCampaignStatus::cases(), 'value'), true)) {
             $query->where('status', $status);
@@ -129,6 +135,8 @@ class MembershipFeeCampaignController extends Controller
             'deliveryMethods' => $this->deliveryOptions(),
             'invoicingConfigured' => $settings->isConfigured(),
             'canIssueInvoices' => $request->user()?->can('issueInvoices', $membershipFeeCampaign) ?? false,
+            'canRefreshBaseAmounts' => $request->user()?->can('refreshBaseAmounts', $membershipFeeCampaign) ?? false,
+            'canDeleteCampaign' => $request->user()?->can('delete', $membershipFeeCampaign) ?? false,
         ]);
     }
 
@@ -170,6 +178,37 @@ class MembershipFeeCampaignController extends Controller
         }
 
         return back()->with('success', 'Aperçu de la campagne généré.');
+    }
+
+    public function refreshBaseAmounts(
+        MembershipFeeCampaign $membershipFeeCampaign,
+        RefreshFeeCampaignBaseAmounts $refresh,
+    ): RedirectResponse {
+        Gate::authorize('refreshBaseAmounts', $membershipFeeCampaign);
+
+        try {
+            $result = $refresh->execute($membershipFeeCampaign, request()->user());
+        } catch (MembershipFeeException $exception) {
+            return back()->withErrors(['action' => $exception->getMessage()]);
+        }
+
+        return back()->with('success', "{$result['updated']} montant(s) de base recalculé(s).");
+    }
+
+    public function destroy(
+        MembershipFeeCampaign $membershipFeeCampaign,
+        DeleteFeeCampaign $delete,
+    ): RedirectResponse {
+        Gate::authorize('delete', $membershipFeeCampaign);
+
+        try {
+            $delete->execute($membershipFeeCampaign, request()->user());
+        } catch (MembershipFeeException $exception) {
+            return back()->withErrors(['action' => $exception->getMessage()]);
+        }
+
+        return to_route('bo.invoicing.membership-fee-campaigns.index')
+            ->with('success', 'Campagne supprimée.');
     }
 
     public function validateCampaign(

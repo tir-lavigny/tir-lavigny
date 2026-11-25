@@ -193,6 +193,103 @@ class MembershipFeeCampaignControllerTest extends TestCase
         $this->assertSame(CampaignMemberStatus::Pending, $campaignMember->status);
     }
 
+    public function test_recalculates_base_amounts_from_current_fee_types_and_resets_validation(): void
+    {
+        $this->actingAsAdmin();
+        $this->configureFeeTypes();
+        $campaign = $this->campaign();
+        $this->member('Alice', 'Martin');
+        $this->post(route('bo.invoicing.membership-fee-campaigns.preview', $campaign));
+        $campaignMember = MembershipFeeCampaignMember::sole();
+        $this->post(route('bo.invoicing.membership-fee-campaigns.validate', $campaign));
+
+        $feeType = MembershipFeeTypeModel::query()
+            ->where('member_status', MemberStatus::ACTIVE)
+            ->firstOrFail();
+        $feeType->update([
+            'name' => 'Cotisation active révisée',
+            'amount_cents' => 20000,
+        ]);
+
+        $this->post(route('bo.invoicing.membership-fee-campaigns.refresh-base-amounts', $campaign))
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $campaignMember->refresh();
+        $campaign->refresh();
+
+        $this->assertSame(20000, $campaignMember->base_amount_cents);
+        $this->assertSame(20000, $campaignMember->final_amount_cents);
+        $this->assertSame('Cotisation active révisée', $campaignMember->fee_type_name);
+        $this->assertSame(CampaignMemberStatus::Pending, $campaignMember->status);
+        $this->assertNull($campaignMember->validated_at);
+        $this->assertSame(MembershipFeeCampaignStatus::Preview, $campaign->status);
+        $this->assertDatabaseHas('membership_fee_campaign_activity_logs', [
+            'membership_fee_campaign_id' => $campaign->id,
+            'action' => 'campaign.base_amounts_refreshed',
+        ]);
+    }
+
+    public function test_recalculation_preserves_full_exemption_semantics(): void
+    {
+        $this->actingAsAdmin();
+        $this->configureFeeTypes();
+        $campaign = $this->campaign();
+        $this->member('Alice', 'Martin');
+        $this->post(route('bo.invoicing.membership-fee-campaigns.preview', $campaign));
+        $campaignMember = MembershipFeeCampaignMember::sole();
+
+        $this->put(route('bo.invoicing.membership-fee-campaigns.members.discount', [$campaign, $campaignMember]), [
+            'discount' => '150.00',
+            'reason' => 'Décision du comité',
+        ]);
+
+        $feeType = MembershipFeeTypeModel::query()
+            ->where('member_status', MemberStatus::ACTIVE)
+            ->firstOrFail();
+        $feeType->update(['amount_cents' => 20000]);
+
+        $this->post(route('bo.invoicing.membership-fee-campaigns.refresh-base-amounts', $campaign))
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $campaignMember->refresh();
+
+        $this->assertSame(20000, $campaignMember->base_amount_cents);
+        $this->assertSame(20000, $campaignMember->discount_amount_cents);
+        $this->assertSame(0, $campaignMember->final_amount_cents);
+        $this->assertSame('Décision du comité', $campaignMember->discount_reason);
+        $this->assertTrue($campaignMember->is_full_exemption);
+    }
+
+    public function test_recalculation_is_blocked_when_a_discount_exceeds_the_new_base(): void
+    {
+        $this->actingAsAdmin();
+        $this->configureFeeTypes();
+        $campaign = $this->campaign();
+        $this->member('Alice', 'Martin');
+        $this->post(route('bo.invoicing.membership-fee-campaigns.preview', $campaign));
+        $campaignMember = MembershipFeeCampaignMember::sole();
+
+        $this->put(route('bo.invoicing.membership-fee-campaigns.members.discount', [$campaign, $campaignMember]), [
+            'discount' => '100.00',
+            'reason' => 'Remise importante',
+        ]);
+
+        $feeType = MembershipFeeTypeModel::query()
+            ->where('member_status', MemberStatus::ACTIVE)
+            ->firstOrFail();
+        $feeType->update(['amount_cents' => 5000]);
+
+        $this->post(route('bo.invoicing.membership-fee-campaigns.refresh-base-amounts', $campaign))
+            ->assertRedirect()
+            ->assertSessionHasErrors('action');
+
+        $campaignMember->refresh();
+        $this->assertSame(15000, $campaignMember->base_amount_cents);
+        $this->assertSame(10000, $campaignMember->discount_amount_cents);
+    }
+
     public function test_excludes_and_reintegrates_a_member(): void
     {
         $this->actingAsAdmin();
@@ -327,6 +424,65 @@ class MembershipFeeCampaignControllerTest extends TestCase
         ]);
     }
 
+    public function test_deletes_a_campaign_and_its_draft_invoices(): void
+    {
+        $this->actingAsAdmin();
+        $this->configureFeeTypes();
+        $campaign = $this->campaign();
+        $this->member('Alice', 'Martin');
+        $this->post(route('bo.invoicing.membership-fee-campaigns.preview', $campaign));
+        $this->post(route('bo.invoicing.membership-fee-campaigns.validate', $campaign));
+        $this->post(route('bo.invoicing.membership-fee-campaigns.invoices.generate', $campaign));
+
+        $this->assertSame(1, Invoice::where('status', InvoiceStatus::Draft)->count());
+        $this->assertSame(1, BillingCustomer::count());
+
+        $this->delete(route('bo.invoicing.membership-fee-campaigns.destroy', $campaign))
+            ->assertRedirect(route('bo.invoicing.membership-fee-campaigns.index'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertModelMissing($campaign);
+        $this->assertDatabaseCount('membership_fee_campaigns', 0);
+        $this->assertDatabaseCount('membership_fee_campaign_members', 0);
+        $this->assertDatabaseCount('invoices', 0);
+        $this->assertDatabaseCount('invoice_items', 0);
+        $this->assertDatabaseCount('billing_customers', 1);
+    }
+
+    public function test_rejects_deleting_a_campaign_with_an_issued_invoice(): void
+    {
+        $this->actingAsAdmin();
+        $this->configureFeeTypes();
+        $campaign = $this->campaign();
+        $this->member('Alice', 'Martin');
+        $this->post(route('bo.invoicing.membership-fee-campaigns.preview', $campaign));
+        $this->post(route('bo.invoicing.membership-fee-campaigns.validate', $campaign));
+        $this->post(route('bo.invoicing.membership-fee-campaigns.invoices.generate', $campaign));
+        $this->post(route('bo.invoicing.membership-fee-campaigns.invoices.issue', $campaign));
+
+        $this->delete(route('bo.invoicing.membership-fee-campaigns.destroy', $campaign))
+            ->assertForbidden();
+
+        $this->assertModelExists($campaign);
+        $this->assertSame(1, Invoice::where('status', InvoiceStatus::Issued)->count());
+    }
+
+    public function test_rejects_base_recalculation_when_a_draft_invoice_exists(): void
+    {
+        $this->actingAsAdmin();
+        $this->configureFeeTypes();
+        $campaign = $this->campaign();
+        $this->member('Alice', 'Martin');
+        $this->post(route('bo.invoicing.membership-fee-campaigns.preview', $campaign));
+        $this->post(route('bo.invoicing.membership-fee-campaigns.validate', $campaign));
+        $this->post(route('bo.invoicing.membership-fee-campaigns.invoices.generate', $campaign));
+
+        $this->post(route('bo.invoicing.membership-fee-campaigns.refresh-base-amounts', $campaign))
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('invoices', 1);
+    }
+
     public function test_viewer_can_read_but_cannot_manage_campaigns(): void
     {
         $viewer = User::factory()->create();
@@ -336,6 +492,8 @@ class MembershipFeeCampaignControllerTest extends TestCase
         $this->actingAs($viewer)->get(route('bo.invoicing.membership-fee-campaigns.show', $campaign))->assertOk();
         $this->actingAs($viewer)->get(route('bo.invoicing.membership-fee-campaigns.create'))->assertForbidden();
         $this->actingAs($viewer)->post(route('bo.invoicing.membership-fee-campaigns.preview', $campaign))->assertForbidden();
+        $this->actingAs($viewer)->post(route('bo.invoicing.membership-fee-campaigns.refresh-base-amounts', $campaign))->assertForbidden();
+        $this->actingAs($viewer)->delete(route('bo.invoicing.membership-fee-campaigns.destroy', $campaign))->assertForbidden();
     }
 
     private function actingAsAdmin(): User

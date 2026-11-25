@@ -353,6 +353,12 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
             Route::post('membership-fee-campaigns/{membershipFeeCampaign}/preview', [BackOfficeMembershipFeeCampaignController::class, 'preview'])
                 ->whereNumber('membershipFeeCampaign')
                 ->name('membership-fee-campaigns.preview');
+            Route::post('membership-fee-campaigns/{membershipFeeCampaign}/refresh-base-amounts', [BackOfficeMembershipFeeCampaignController::class, 'refreshBaseAmounts'])
+                ->whereNumber('membershipFeeCampaign')
+                ->name('membership-fee-campaigns.refresh-base-amounts');
+            Route::delete('membership-fee-campaigns/{membershipFeeCampaign}', [BackOfficeMembershipFeeCampaignController::class, 'destroy'])
+                ->whereNumber('membershipFeeCampaign')
+                ->name('membership-fee-campaigns.destroy');
             Route::post('membership-fee-campaigns/{membershipFeeCampaign}/validate', [BackOfficeMembershipFeeCampaignController::class, 'validateCampaign'])
                 ->whereNumber('membershipFeeCampaign')
                 ->name('membership-fee-campaigns.validate');

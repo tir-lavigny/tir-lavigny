@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppPagination from '@/components/AppPagination.vue';
+import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
 import AppTooltipLabel from '@/components/AppTooltipLabel.vue';
 import { H1 } from '@/components/typography/headings';
@@ -14,8 +15,9 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, hasAnyPermission } from '@/lib/utils';
 import type { BreadcrumbItem, PaginatedMembershipFeeCampaigns, SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Eye, Pencil, Plus, Search } from '@lucide/vue';
+import { Eye, Pencil, Plus, Search, Trash2 } from '@lucide/vue';
 import { computed } from 'vue';
+import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     campaigns: PaginatedMembershipFeeCampaigns;
@@ -62,6 +64,23 @@ const statusDescription = (value: string): string => {
     };
 
     return descriptions[value] ?? value;
+};
+
+const deleteCampaign = (campaign: { id: number }): void => {
+    router.delete(route('bo.invoicing.membership-fee-campaigns.destroy', campaign.id), {
+        preserveScroll: true,
+        onError: (errors) => toast.error((errors as Record<string, string>).action ?? 'Erreur lors de la suppression.'),
+    });
+};
+
+const deleteDescription = (campaign: { draft_invoices_count?: number }): string => {
+    const draftCount = campaign.draft_invoices_count ?? 0;
+
+    if (draftCount > 0) {
+        return `La campagne et ses ${draftCount} facture(s) brouillon seront supprimées. Les clients de facturation seront conservés.`;
+    }
+
+    return 'La campagne et ses lignes seront supprimées. Les clients de facturation seront conservés.';
 };
 
 const goToPage = (pageNumber: number) => {
@@ -171,6 +190,29 @@ const goToPage = (pageNumber: number) => {
                                         :href="route('bo.invoicing.membership-fee-campaigns.edit', campaign.id)"
                                     >
                                         <Pencil class="h-4 w-4" />
+                                    </AppTooltipIconButton>
+                                    <AppAlertDialog
+                                        v-if="canManage && (campaign.non_draft_invoices_count ?? 0) === 0"
+                                        title="Supprimer la campagne ?"
+                                        :description="deleteDescription(campaign)"
+                                        cancel-text="Annuler"
+                                    >
+                                        <template #trigger>
+                                            <AppTooltipIconButton label="Supprimer la campagne" variant="destructive">
+                                                <Trash2 class="h-4 w-4" />
+                                            </AppTooltipIconButton>
+                                        </template>
+                                        <template #action>
+                                            <Button variant="destructive" @click="deleteCampaign(campaign)">Supprimer définitivement</Button>
+                                        </template>
+                                    </AppAlertDialog>
+                                    <AppTooltipIconButton
+                                        v-else-if="canManage"
+                                        label="Suppression impossible : la campagne contient une facture émise."
+                                        variant="destructive"
+                                        disabled
+                                    >
+                                        <Trash2 class="h-4 w-4" />
                                     </AppTooltipIconButton>
                                 </div>
                             </td>
