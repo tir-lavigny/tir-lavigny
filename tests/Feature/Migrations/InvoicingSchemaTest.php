@@ -62,6 +62,13 @@ class InvoicingSchemaTest extends TestCase
         ]));
         $this->assertTrue(Schema::hasColumns('invoicing_settings', ['reply_to_email', 'envelope_window']));
         $this->assertTrue(Schema::hasColumns('invoice_deliveries', ['batch_id', 'error']));
+        $this->assertTrue(Schema::hasColumns('payments', ['idempotency_key', 'voided_at', 'voided_by', 'void_reason']));
+        $this->assertTrue(Schema::hasColumns('invoice_payments', [
+            'idempotency_key',
+            'reversed_at',
+            'reversed_by',
+            'reversal_reason',
+        ]));
     }
 
     public function test_invoice_number_and_sequence_year_are_unique(): void
@@ -79,11 +86,13 @@ class InvoicingSchemaTest extends TestCase
         $this->assertUniqueIndex('billing_customers', ['member_id']);
     }
 
-    public function test_campaign_member_and_payment_allocation_are_unique(): void
+    public function test_campaign_member_document_and_idempotency_keys_are_unique(): void
     {
         $this->assertUniqueIndex('membership_fee_campaign_members', ['membership_fee_campaign_id', 'member_id']);
-        $this->assertUniqueIndex('invoice_payments', ['invoice_id', 'payment_id']);
         $this->assertUniqueIndex('financial_documents', ['documentable_type', 'documentable_id']);
+        $this->assertUniqueIndex('payments', ['idempotency_key']);
+        $this->assertUniqueIndex('invoice_payments', ['idempotency_key']);
+        $this->assertIndex('invoice_payments', ['invoice_id', 'payment_id']);
     }
 
     /**
@@ -96,6 +105,19 @@ class InvoicingSchemaTest extends TestCase
         $this->assertTrue(
             $indexes->contains(fn (array $index): bool => $index['unique'] && $index['columns'] === $columns),
             "No unique index on [{$table}] for [".implode(', ', $columns).'].',
+        );
+    }
+
+    /**
+     * @param  array<int, string>  $columns
+     */
+    private function assertIndex(string $table, array $columns): void
+    {
+        $indexes = collect(Schema::getIndexes($table));
+
+        $this->assertTrue(
+            $indexes->contains(fn (array $index): bool => $index['columns'] === $columns),
+            "No index on [{$table}] for [".implode(', ', $columns).'].',
         );
     }
 }

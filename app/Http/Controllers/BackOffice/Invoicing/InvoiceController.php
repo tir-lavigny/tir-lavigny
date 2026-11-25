@@ -12,6 +12,7 @@ use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
 use App\Domains\Invoicing\Enums\InvoiceItemType;
 use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Domains\Invoicing\Enums\InvoiceType;
+use App\Domains\Invoicing\Enums\PaymentMethod;
 use App\Domains\Invoicing\Exceptions\InvoiceNotCancellable;
 use App\Domains\Invoicing\Exceptions\InvoiceNotIssuable;
 use App\Domains\Invoicing\Exceptions\InvoicingSettingsMissing;
@@ -33,6 +34,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -41,8 +43,11 @@ class InvoiceController extends Controller
 {
     use SearchesAccentInsensitively;
 
-    public function index(Request $request, InvoicingSettingsService $settings): Response
-    {
+    public function index(
+        Request $request,
+        InvoicingSettingsService $settings,
+        InvoiceBalanceCalculator $balances,
+    ): Response {
         Gate::authorize('viewAny', Invoice::class);
 
         $search = $request->input('search');
@@ -51,7 +56,7 @@ class InvoiceController extends Controller
         $year = $request->integer('year') ?: null;
 
         $query = Invoice::query()->with('billingCustomer')
-            ->withSum('paymentAllocations as paid_cents', 'amount_cents')
+            ->withSum(['paymentAllocations as paid_cents' => fn (Builder $query) => $query->whereNull('reversed_at')], 'amount_cents')
             ->withSum('creditNoteApplications as credited_cents', 'amount_cents')
             ->withSum('creditNoteApplicationReversals as credited_reversed_cents', 'amount_cents');
 
@@ -80,18 +85,19 @@ class InvoiceController extends Controller
         }
 
         $invoices = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(20)->withQueryString();
-        $invoices->through(function (Invoice $invoice): Invoice {
+        $invoices->through(function (Invoice $invoice) use ($balances): Invoice {
             $credited = max(
                 0,
                 (int) ($invoice->getAttribute('credited_cents') ?? 0)
                     - (int) ($invoice->getAttribute('credited_reversed_cents') ?? 0),
             );
 
+            $paid = (int) ($invoice->getAttribute('paid_cents') ?? 0);
+            $remaining = max(0, $invoice->total_cents - $paid - $credited);
+            $invoice->setAttribute('paid_cents', $paid);
             $invoice->setAttribute('credited_cents', $credited);
-            $invoice->setAttribute(
-                'remaining_cents',
-                max(0, $invoice->total_cents - (int) ($invoice->getAttribute('paid_cents') ?? 0) - $credited),
-            );
+            $invoice->setAttribute('remaining_cents', $remaining);
+            $invoice->setAttribute('days_overdue', $balances->daysOverdue($invoice, outstandingCents: $remaining));
 
             return $invoice;
         });
@@ -151,18 +157,24 @@ class InvoiceController extends Controller
             'activityLogs.user',
             'creditNoteApplications.creditNote',
             'creditNoteApplications.reversals',
-            'paymentAllocations.payment',
+            'paymentAllocations.payment.creator',
+            'paymentAllocations.reverser',
             'document',
             'deliveries.processor',
         ]);
+
+        $outstandingCents = $balances->outstandingCents($invoice);
 
         return Inertia::render('backOffice/Invoicing/Invoices/Show', [
             'invoice' => $invoice,
             'balance' => [
                 'paid_cents' => $balances->paidCents($invoice),
                 'credited_cents' => $balances->creditedCents($invoice),
-                'outstanding_cents' => $balances->outstandingCents($invoice),
+                'outstanding_cents' => $outstandingCents,
+                'days_overdue' => $balances->daysOverdue($invoice, outstandingCents: $outstandingCents),
             ],
+            'paymentMethods' => $this->paymentMethodOptions(),
+            'paymentIdempotencyKey' => (string) Str::uuid(),
         ]);
     }
 
@@ -330,6 +342,17 @@ class InvoiceController extends Controller
         return array_map(
             fn (InvoiceStatus $status): array => ['value' => $status->value, 'label' => $status->label()],
             InvoiceStatus::cases(),
+        );
+    }
+
+    /**
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function paymentMethodOptions(): array
+    {
+        return array_map(
+            fn (PaymentMethod $method): array => ['value' => $method->value, 'label' => $method->label()],
+            PaymentMethod::cases(),
         );
     }
 

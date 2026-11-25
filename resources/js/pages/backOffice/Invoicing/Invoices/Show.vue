@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
+import PaymentFields from '@/components/back-office/Invoicing/PaymentFields.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,13 +14,15 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasAnyPermission, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Invoice, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { ArrowLeftRight, CheckCircle2, Download, Mail, Pencil, Printer, RefreshCw, Trash2, XCircle } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { ArrowLeftRight, CheckCircle2, Download, Mail, Pencil, Printer, RefreshCw, Trash2, Wallet, XCircle } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     invoice: Invoice;
-    balance: { paid_cents: number; credited_cents: number; outstanding_cents: number };
+    balance: { paid_cents: number; credited_cents: number; outstanding_cents: number; days_overdue: number };
+    paymentMethods: Array<{ value: string; label: string }>;
+    paymentIdempotencyKey: string;
 }>();
 
 const page = usePage<SharedData>();
@@ -30,9 +33,11 @@ const canIssue = computed(() => hasAnyPermission(user, ['issue invoices', 'manag
 const canCancel = computed(() => hasAnyPermission(user, ['cancel invoices', 'manage invoicing']));
 const canManageInvoicing = computed(() => hasPermissionTo(user, 'manage invoicing'));
 const canSend = computed(() => hasAnyPermission(user, ['send invoices', 'manage invoicing']));
+const canCreatePayment = computed(() => hasAnyPermission(user, ['create payments', 'manage invoicing']));
 const hasStoredDocument = computed(() => props.invoice.document?.status === 'stored');
 const documentFailed = computed(() => props.invoice.document?.status === 'failed');
 const isDistributable = computed(() => ['issued', 'partially_paid', 'paid'].includes(props.invoice.status));
+const canRegisterPayment = computed(() => canCreatePayment.value && isDistributable.value && props.balance.outstanding_cents > 0);
 const emailPending = computed(() =>
     (props.invoice.deliveries ?? []).some((delivery) => delivery.channel === 'email' && delivery.status === 'pending'),
 );
@@ -56,6 +61,29 @@ const cancelDialogOpen = ref(false);
 const cancelForm = useForm({ reason: '' });
 const deliveryDialogOpen = ref(false);
 const deliveryMethodForm = useForm({ delivery_method: props.invoice.delivery_method });
+
+const localDate = (date: Date): string => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
+const paymentDialogOpen = ref(false);
+const paymentForm = useForm({
+    amount: '',
+    payment_date: localDate(new Date()),
+    method: 'bank_transfer',
+    reference: '',
+    notes: '',
+    idempotency_key: props.paymentIdempotencyKey,
+});
+
+watch(
+    () => props.paymentIdempotencyKey,
+    (key) => {
+        paymentForm.idempotency_key = key;
+    },
+);
+
+const paymentActionError = computed(() => (paymentForm.errors as Record<string, string>).action);
 
 const issueInvoice = () => {
     router.post(
@@ -166,6 +194,26 @@ const submitDeliveryMethod = (): void => {
         },
     });
 };
+
+const openPaymentDialog = (): void => {
+    paymentForm.clearErrors();
+    paymentForm.amount = (props.balance.outstanding_cents / 100).toFixed(2);
+    paymentForm.payment_date = localDate(new Date());
+    paymentForm.method = 'bank_transfer';
+    paymentForm.reference = '';
+    paymentForm.notes = '';
+    paymentDialogOpen.value = true;
+};
+
+const submitPayment = (): void => {
+    paymentForm.post(route('bo.invoicing.invoices.payments.store', props.invoice.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            paymentDialogOpen.value = false;
+        },
+        onError: (errors) => toast.error(errors.action ?? errors.amount ?? "Le paiement n'a pas pu être enregistré."),
+    });
+};
 </script>
 
 <template>
@@ -199,6 +247,7 @@ const submitDeliveryMethod = (): void => {
                 <Button v-if="canChangeDeliveryMethod" variant="outline" @click="openDeliveryDialog">
                     <ArrowLeftRight class="mr-2 h-4 w-4" /> Mode d’envoi
                 </Button>
+                <Button v-if="canRegisterPayment" @click="openPaymentDialog"> <Wallet class="mr-2 h-4 w-4" /> Enregistrer un paiement </Button>
                 <Button v-if="documentFailed && canManageInvoicing" variant="outline" @click="retryDocument">
                     <RefreshCw class="mr-2 h-4 w-4" /> Réessayer l’archivage
                 </Button>
@@ -295,6 +344,10 @@ const submitDeliveryMethod = (): void => {
                     <div class="font-mono font-semibold">{{ formatMoney(balance.outstanding_cents / 100) }}</div>
                 </div>
             </div>
+
+            <div v-if="balance.days_overdue > 0" class="mt-4">
+                <Badge variant="destructive">En retard de {{ balance.days_overdue }} jour(s)</Badge>
+            </div>
         </div>
 
         <div class="border-sidebar-border/70 dark:border-sidebar-border mx-4 mt-4 rounded-xl border p-4">
@@ -329,6 +382,52 @@ const submitDeliveryMethod = (): void => {
                 <div class="text-base font-semibold">
                     Total: <span class="font-mono">{{ formatMoney(invoice.total) }}</span>
                 </div>
+            </div>
+        </div>
+
+        <div class="border-sidebar-border/70 dark:border-sidebar-border mx-4 mt-4 rounded-xl border p-4">
+            <H3>Paiements</H3>
+            <p v-if="!invoice.payment_allocations?.length" class="text-muted-foreground mt-4 text-sm">Aucun paiement imputé.</p>
+            <div v-else class="mt-4 overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Moyen</TableHead>
+                            <TableHead>Référence</TableHead>
+                            <TableHead class="text-right">Montant</TableHead>
+                            <TableHead>Enregistré par</TableHead>
+                            <TableHead>Statut</TableHead>
+                            <TableHead>Détail</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow v-for="allocation in invoice.payment_allocations" :key="allocation.id">
+                            <TableCell>
+                                {{ allocation.payment?.payment_date ? formatDate(allocation.payment.payment_date, 'DD.MM.YYYY') : '—' }}
+                            </TableCell>
+                            <TableCell>{{ allocation.payment?.method_label ?? '—' }}</TableCell>
+                            <TableCell>{{ allocation.payment?.reference || '—' }}</TableCell>
+                            <TableCell class="text-right font-mono">{{ formatMoney(allocation.amount) }}</TableCell>
+                            <TableCell>{{ allocation.payment?.creator?.name ?? '—' }}</TableCell>
+                            <TableCell>
+                                <Badge :variant="allocation.reversed_at ? 'destructive' : 'secondary'">
+                                    {{ allocation.reversed_at ? 'Annulé' : 'Actif' }}
+                                </Badge>
+                            </TableCell>
+                            <TableCell class="text-muted-foreground max-w-sm whitespace-normal">
+                                <span v-if="allocation.reversed_at"> {{ allocation.reversal_reason }} · {{ allocation.reverser?.name ?? '—' }} </span>
+                                <Link
+                                    v-else-if="allocation.payment"
+                                    :href="route('bo.invoicing.payments.show', allocation.payment.id)"
+                                    class="text-primary hover:underline"
+                                >
+                                    Voir le paiement
+                                </Link>
+                            </TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
             </div>
         </div>
 
@@ -421,6 +520,36 @@ const submitDeliveryMethod = (): void => {
         </div>
 
         <div class="h-4" aria-hidden="true"></div>
+
+        <Dialog v-model:open="paymentDialogOpen">
+            <DialogContent class="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Enregistrer un paiement</DialogTitle>
+                    <DialogDescription>
+                        Le paiement sera imputé à cette facture. Il sera ensuite visible dans l’historique des paiements.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div v-if="paymentActionError" class="border-destructive/40 bg-destructive/5 rounded-lg border p-3 text-sm">
+                    {{ paymentActionError }}
+                </div>
+
+                <PaymentFields
+                    v-model:amount="paymentForm.amount"
+                    v-model:method="paymentForm.method"
+                    v-model:notes="paymentForm.notes"
+                    v-model:payment-date="paymentForm.payment_date"
+                    v-model:reference="paymentForm.reference"
+                    :errors="paymentForm.errors"
+                    :methods="paymentMethods"
+                />
+
+                <DialogFooter>
+                    <Button variant="outline" @click="paymentDialogOpen = false">Annuler</Button>
+                    <Button :disabled="paymentForm.processing" @click="submitPayment">Enregistrer le paiement</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
 
         <Dialog v-model:open="cancelDialogOpen">
             <DialogContent>

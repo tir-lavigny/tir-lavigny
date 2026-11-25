@@ -10,6 +10,7 @@ use App\Http\Controllers\BackOffice\Invoicing\FinancialDocumentController as Bac
 use App\Http\Controllers\BackOffice\Invoicing\InvoiceController as BackOfficeInvoiceController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoiceDeliveryController as BackOfficeInvoiceDeliveryController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoicingSettingsController as BackOfficeInvoicingSettingsController;
+use App\Http\Controllers\BackOffice\Invoicing\PaymentController as BackOfficePaymentController;
 use App\Http\Controllers\BackOffice\MemberController;
 use App\Http\Controllers\BackOffice\MemberExportController;
 use App\Http\Controllers\BackOffice\MemberRegistrationController as BackOfficeMemberRegistrationController;
@@ -368,6 +369,35 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
                 ->name('deliveries.email.index');
             Route::get('deliveries/postal', [BackOfficeInvoiceDeliveryController::class, 'postalQueue'])
                 ->name('deliveries.postal.index');
+        });
+
+        Route::middleware('permission:view payments|manage invoicing')->group(function () {
+            Route::get('payments', [BackOfficePaymentController::class, 'index'])->name('payments.index');
+            Route::get('payments/{payment}', [BackOfficePaymentController::class, 'show'])
+                ->whereNumber('payment')
+                ->name('payments.show');
+        });
+
+        Route::middleware('permission:create payments|manage invoicing')->group(function () {
+            Route::get('payments/create', [BackOfficePaymentController::class, 'create'])->name('payments.create');
+            Route::post('payments', [BackOfficePaymentController::class, 'store'])->name('payments.store');
+            Route::get('payments/{payment}/edit', [BackOfficePaymentController::class, 'edit'])
+                ->whereNumber('payment')
+                ->name('payments.edit');
+            Route::put('payments/{payment}', [BackOfficePaymentController::class, 'update'])
+                ->whereNumber('payment')
+                ->name('payments.update');
+            Route::post('payments/{payment}/void', [BackOfficePaymentController::class, 'void'])
+                ->whereNumber('payment')
+                ->name('payments.void');
+            Route::post('payments/{payment}/allocations', [BackOfficePaymentController::class, 'allocate'])
+                ->whereNumber('payment')
+                ->name('payments.allocations.store');
+            Route::post('invoice-payments/{invoicePayment}/reverse', [BackOfficePaymentController::class, 'reverseAllocation'])
+                ->whereNumber('invoicePayment')
+                ->name('payments.allocations.reverse');
+            Route::post('invoices/{invoice}/payments', [BackOfficePaymentController::class, 'storeForInvoice'])
+                ->name('invoices.payments.store');
         });
 
         Route::middleware('permission:send invoices|manage invoicing')->group(function () {
