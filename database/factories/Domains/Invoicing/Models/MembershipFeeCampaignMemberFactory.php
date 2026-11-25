@@ -27,6 +27,8 @@ class MembershipFeeCampaignMemberFactory extends Factory
             'membership_fee_campaign_id' => MembershipFeeCampaign::factory(),
             'member_id' => $member->id,
             'billing_customer_id' => $billingCustomer->id,
+            'membership_fee_type_id' => null,
+            'fee_type_name' => null,
             'base_amount_cents' => $baseAmount,
             'discount_amount_cents' => 0,
             'discount_reason' => null,

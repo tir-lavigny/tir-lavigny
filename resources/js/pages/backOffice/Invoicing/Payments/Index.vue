@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import AppPagination from '@/components/AppPagination.vue';
+import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
+import AppTooltipLabel from '@/components/AppTooltipLabel.vue';
 import { H1 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -149,8 +151,16 @@ const goToPage = (pageNumber: number): void => {
                             <th class="px-4 py-3 text-left font-medium">Moyen</th>
                             <th class="px-4 py-3 text-left font-medium">Référence</th>
                             <th class="px-4 py-3 text-right font-medium">Montant</th>
-                            <th class="px-4 py-3 text-right font-medium">Alloué</th>
-                            <th class="px-4 py-3 text-right font-medium">Non alloué</th>
+                            <th class="px-4 py-3 text-right font-medium">
+                                <div class="flex justify-end">
+                                    <AppTooltipLabel label="Alloué" description="Montant déjà imputé à des factures." />
+                                </div>
+                            </th>
+                            <th class="px-4 py-3 text-right font-medium">
+                                <div class="flex justify-end">
+                                    <AppTooltipLabel label="Non alloué" description="Montant encore disponible pour être imputé." />
+                                </div>
+                            </th>
                             <th class="px-4 py-3 text-left font-medium">Statut</th>
                             <th class="px-4 py-3 text-left font-medium">Enregistré par</th>
                             <th class="px-4 py-3 text-right font-medium">Actions</th>
@@ -170,12 +180,9 @@ const goToPage = (pageNumber: number): void => {
                             <td class="px-4 py-3">{{ payment.creator?.name ?? '—' }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end">
-                                    <Button as-child size="icon" variant="ghost">
-                                        <Link :href="route('bo.invoicing.payments.show', payment.id)">
-                                            <Eye class="h-4 w-4" />
-                                            <span class="sr-only">Voir</span>
-                                        </Link>
-                                    </Button>
+                                    <AppTooltipIconButton label="Voir le paiement" :href="route('bo.invoicing.payments.show', payment.id)">
+                                        <Eye class="h-4 w-4" />
+                                    </AppTooltipIconButton>
                                 </div>
                             </td>
                         </tr>

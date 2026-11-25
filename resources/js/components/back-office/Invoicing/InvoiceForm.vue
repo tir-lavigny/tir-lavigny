@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import InputError from '@/components/InputError.vue';
+import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -274,9 +275,9 @@ const lineTotal = (index: number | string): string => totals.value?.lines[Number
                             </td>
                             <td class="px-3 py-2 text-right font-mono">{{ lineTotal(index) }}</td>
                             <td class="px-3 py-2">
-                                <Button type="button" size="icon" variant="ghost" @click="removeLine(index)">
+                                <AppTooltipIconButton label="Supprimer cette ligne" @click="removeLine(index)">
                                     <Trash2 class="h-4 w-4" />
-                                </Button>
+                                </AppTooltipIconButton>
                             </td>
                         </tr>
                     </tbody>
