@@ -61,92 +61,94 @@ const selectedYear = computed({
             </div>
         </div>
 
-        <div class="mx-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <Link class="block h-full" :href="route('bo.invoicing.invoices.index', { year: summary.year })">
-                <Card class="h-full transition hover:border-blue-400">
-                    <CardHeader>
-                        <CardDescription class="flex items-center gap-2"><FileText class="h-4 w-4" /> Factures émises</CardDescription>
-                        <CardTitle class="text-2xl">{{ summary.issued_count }}</CardTitle>
-                    </CardHeader>
-                    <CardContent class="text-muted-foreground text-sm">
-                        {{ formatMoney(summary.issued_total_cents / 100) }} CHF facturés
-                    </CardContent>
-                </Card>
-            </Link>
+        <div class="mx-4 flex flex-col gap-4">
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <Link class="block h-full" :href="route('bo.invoicing.invoices.index', { year: summary.year })">
+                    <Card class="h-full transition hover:border-blue-400">
+                        <CardHeader>
+                            <CardDescription class="flex items-center gap-2"><FileText class="h-4 w-4" /> Factures émises</CardDescription>
+                            <CardTitle class="text-2xl">{{ summary.issued_count }}</CardTitle>
+                        </CardHeader>
+                        <CardContent class="text-muted-foreground text-sm">
+                            {{ formatMoney(summary.issued_total_cents / 100) }} CHF facturés
+                        </CardContent>
+                    </Card>
+                </Link>
 
-            <Link class="block h-full" :href="route('bo.invoicing.payments.index', { year: summary.year })">
-                <Card class="h-full transition hover:border-blue-400">
-                    <CardHeader>
-                        <CardDescription class="flex items-center gap-2"><Wallet class="h-4 w-4" /> Encaissé</CardDescription>
-                        <CardTitle class="text-2xl">{{ formatMoney(summary.paid_cents / 100) }} CHF</CardTitle>
-                    </CardHeader>
-                    <CardContent class="text-muted-foreground text-sm"
-                        >Crédits appliqués : {{ formatMoney(summary.credited_cents / 100) }} CHF</CardContent
-                    >
-                </Card>
-            </Link>
+                <Link class="block h-full" :href="route('bo.invoicing.payments.index', { year: summary.year })">
+                    <Card class="h-full transition hover:border-blue-400">
+                        <CardHeader>
+                            <CardDescription class="flex items-center gap-2"><Wallet class="h-4 w-4" /> Encaissé</CardDescription>
+                            <CardTitle class="text-2xl">{{ formatMoney(summary.paid_cents / 100) }} CHF</CardTitle>
+                        </CardHeader>
+                        <CardContent class="text-muted-foreground text-sm"
+                            >Crédits appliqués : {{ formatMoney(summary.credited_cents / 100) }} CHF</CardContent
+                        >
+                    </Card>
+                </Link>
 
-            <Link class="block h-full" :href="route('bo.invoicing.invoices.index', { year: summary.year })">
-                <Card class="h-full transition hover:border-blue-400">
-                    <CardHeader>
-                        <CardDescription class="flex items-center gap-2"><Clock class="h-4 w-4" /> Solde ouvert</CardDescription>
-                        <CardTitle class="text-2xl">{{ formatMoney(summary.outstanding_cents / 100) }} CHF</CardTitle>
-                    </CardHeader>
-                    <CardContent class="text-muted-foreground text-sm"
-                        >{{ summary.awaiting_payment_count }} facture(s) en attente de paiement</CardContent
-                    >
-                </Card>
-            </Link>
+                <Link class="block h-full" :href="route('bo.invoicing.invoices.index', { year: summary.year })">
+                    <Card class="h-full transition hover:border-blue-400">
+                        <CardHeader>
+                            <CardDescription class="flex items-center gap-2"><Clock class="h-4 w-4" /> Solde ouvert</CardDescription>
+                            <CardTitle class="text-2xl">{{ formatMoney(summary.outstanding_cents / 100) }} CHF</CardTitle>
+                        </CardHeader>
+                        <CardContent class="text-muted-foreground text-sm"
+                            >{{ summary.awaiting_payment_count }} facture(s) en attente de paiement</CardContent
+                        >
+                    </Card>
+                </Link>
 
-            <Link class="block h-full" :href="route('bo.invoicing.reminders.overdue.index', { year: summary.year })">
-                <Card class="h-full transition hover:border-red-400">
-                    <CardHeader>
-                        <CardDescription class="flex items-center gap-2"><AlertTriangle class="h-4 w-4" /> En retard</CardDescription>
-                        <CardTitle class="text-2xl text-red-600">{{ formatMoney(summary.overdue_cents / 100) }} CHF</CardTitle>
-                    </CardHeader>
-                    <CardContent class="text-muted-foreground text-sm">{{ summary.overdue_count }} facture(s) en retard</CardContent>
-                </Card>
-            </Link>
-        </div>
+                <Link class="block h-full" :href="route('bo.invoicing.reminders.overdue.index', { year: summary.year })">
+                    <Card class="h-full transition hover:border-red-400">
+                        <CardHeader>
+                            <CardDescription class="flex items-center gap-2"><AlertTriangle class="h-4 w-4" /> En retard</CardDescription>
+                            <CardTitle class="text-2xl text-red-600">{{ formatMoney(summary.overdue_cents / 100) }} CHF</CardTitle>
+                        </CardHeader>
+                        <CardContent class="text-muted-foreground text-sm">{{ summary.overdue_count }} facture(s) en retard</CardContent>
+                    </Card>
+                </Link>
+            </div>
 
-        <div class="mx-4 grid gap-4 md:grid-cols-3">
-            <Link class="block h-full" :href="route('bo.invoicing.deliveries.email.index', { year: summary.year })">
-                <Card class="h-full transition hover:border-blue-400">
-                    <CardHeader>
-                        <CardDescription class="flex items-center gap-2"><Mail class="h-4 w-4" /> Emails à envoyer</CardDescription>
-                        <CardTitle class="text-2xl">{{ summary.awaiting_email_count }}</CardTitle>
-                    </CardHeader>
-                    <CardContent class="text-muted-foreground text-sm">Factures en attente de distribution email.</CardContent>
-                </Card>
-            </Link>
+            <div class="grid gap-4 md:grid-cols-3">
+                <Link class="block h-full" :href="route('bo.invoicing.deliveries.email.index', { year: summary.year })">
+                    <Card class="h-full transition hover:border-blue-400">
+                        <CardHeader>
+                            <CardDescription class="flex items-center gap-2"><Mail class="h-4 w-4" /> Emails à envoyer</CardDescription>
+                            <CardTitle class="text-2xl">{{ summary.awaiting_email_count }}</CardTitle>
+                        </CardHeader>
+                        <CardContent class="text-muted-foreground text-sm">Factures en attente de distribution email.</CardContent>
+                    </Card>
+                </Link>
 
-            <Link class="block h-full" :href="route('bo.invoicing.deliveries.postal.index', { year: summary.year })">
-                <Card class="h-full transition hover:border-blue-400">
-                    <CardHeader>
-                        <CardDescription class="flex items-center gap-2"><Printer class="h-4 w-4" /> Impressions à faire</CardDescription>
-                        <CardTitle class="text-2xl">{{ summary.awaiting_postal_count }}</CardTitle>
-                    </CardHeader>
-                    <CardContent class="text-muted-foreground text-sm">Factures en attente d’impression postale.</CardContent>
-                </Card>
-            </Link>
+                <Link class="block h-full" :href="route('bo.invoicing.deliveries.postal.index', { year: summary.year })">
+                    <Card class="h-full transition hover:border-blue-400">
+                        <CardHeader>
+                            <CardDescription class="flex items-center gap-2"><Printer class="h-4 w-4" /> Impressions à faire</CardDescription>
+                            <CardTitle class="text-2xl">{{ summary.awaiting_postal_count }}</CardTitle>
+                        </CardHeader>
+                        <CardContent class="text-muted-foreground text-sm">Factures en attente d’impression postale.</CardContent>
+                    </Card>
+                </Link>
 
-            <Link class="block h-full" :href="route('bo.invoicing.reminders.overdue.index', { year: summary.year })">
-                <Card class="h-full transition hover:border-blue-400">
-                    <CardHeader>
-                        <CardDescription class="flex items-center gap-2"><BellRing class="h-4 w-4" /> Rappels traités</CardDescription>
-                        <CardTitle class="text-2xl">{{ summary.reminders_count }}</CardTitle>
-                    </CardHeader>
-                    <CardContent class="text-muted-foreground text-sm">Rappels envoyés ou imprimés pendant l’année.</CardContent>
-                </Card>
-            </Link>
-        </div>
+                <Link class="block h-full" :href="route('bo.invoicing.reminders.overdue.index', { year: summary.year })">
+                    <Card class="h-full transition hover:border-blue-400">
+                        <CardHeader>
+                            <CardDescription class="flex items-center gap-2"><BellRing class="h-4 w-4" /> Rappels traités</CardDescription>
+                            <CardTitle class="text-2xl">{{ summary.reminders_count }}</CardTitle>
+                        </CardHeader>
+                        <CardContent class="text-muted-foreground text-sm">Rappels envoyés ou imprimés pendant l’année.</CardContent>
+                    </Card>
+                </Link>
+            </div>
 
-        <div class="border-sidebar-border/70 dark:border-sidebar-border mx-4 rounded-xl border p-4">
-            <H3>Factures par statut</H3>
-            <div class="mt-4 flex flex-wrap gap-2">
-                <Badge v-for="status in summary.status_counts" :key="status.value" variant="secondary">
-                    <Receipt class="mr-1 h-3 w-3" /> {{ status.label }} : {{ status.count }}
-                </Badge>
+            <div class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
+                <H3>Factures par statut</H3>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <Badge v-for="status in summary.status_counts" :key="status.value" variant="secondary">
+                        <Receipt class="mr-1 h-3 w-3" /> {{ status.label }} : {{ status.count }}
+                    </Badge>
+                </div>
             </div>
         </div>
     </AppLayout>
