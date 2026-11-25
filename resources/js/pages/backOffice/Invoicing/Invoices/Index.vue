@@ -215,7 +215,12 @@ const goToPage = (pageNumber: number) => {
                             <td class="px-4 py-3">
                                 <Badge variant="secondary">{{ statusLabel(invoice.status) }}</Badge>
                             </td>
-                            <td class="px-4 py-3">{{ invoice.due_date ? formatDate(invoice.due_date, 'DD.MM.YYYY') : '—' }}</td>
+                            <td class="px-4 py-3">
+                                <div>{{ invoice.due_date ? formatDate(invoice.due_date, 'DD.MM.YYYY') : '—' }}</div>
+                                <div v-if="(invoice.days_overdue ?? 0) > 0" class="text-destructive text-xs">
+                                    En retard de {{ invoice.days_overdue }} j
+                                </div>
+                            </td>
                             <td class="px-4 py-3 text-right font-mono">{{ formatMoney(invoice.total) }}</td>
                             <td class="px-4 py-3 text-right font-mono">{{ formatMoney((invoice.remaining_cents ?? 0) / 100) }}</td>
                             <td class="px-4 py-3">

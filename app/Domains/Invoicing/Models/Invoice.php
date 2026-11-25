@@ -194,7 +194,15 @@ class Invoice extends Model
      */
     public function paymentAllocations(): HasMany
     {
-        return $this->hasMany(InvoicePayment::class);
+        return $this->hasMany(InvoicePayment::class)->latest('created_at')->latest('id');
+    }
+
+    /**
+     * @return HasMany<InvoicePayment, $this>
+     */
+    public function activePaymentAllocations(): HasMany
+    {
+        return $this->paymentAllocations()->whereNull('reversed_at');
     }
 
     /**
@@ -232,7 +240,8 @@ class Invoice extends Model
     public function payments(): BelongsToMany
     {
         return $this->belongsToMany(Payment::class, 'invoice_payments')
-            ->withPivot('amount_cents')
+            ->wherePivotNull('reversed_at')
+            ->withPivot(['amount_cents', 'reversed_at'])
             ->withTimestamps();
     }
 

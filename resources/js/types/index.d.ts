@@ -161,6 +161,43 @@ export interface InvoiceActivityLog {
     user?: { id: number; name: string } | null;
 }
 
+export interface Payment {
+    id: number;
+    amount: string;
+    method: 'bank_transfer' | 'cash' | 'card' | 'other';
+    method_label: string;
+    payment_date: string;
+    reference: string | null;
+    notes: string | null;
+    created_by: number | null;
+    creator?: { id: number; name: string } | null;
+    voided_at: string | null;
+    voided_by: number | null;
+    void_reason: string | null;
+    voider?: { id: number; name: string } | null;
+    is_voided?: boolean;
+    allocated_cents?: number;
+    unallocated_cents?: number;
+    allocations?: InvoicePaymentAllocation[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface InvoicePaymentAllocation {
+    id: number;
+    invoice_id: number;
+    payment_id: number;
+    amount: string;
+    reversed_at: string | null;
+    reversed_by: number | null;
+    reversal_reason: string | null;
+    invoice?: Invoice;
+    payment?: Payment;
+    reverser?: { id: number; name: string } | null;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface Invoice {
     id: number;
     billing_customer_id: number;
@@ -183,6 +220,7 @@ export interface Invoice {
     remaining_cents?: number;
     credited_cents?: number;
     paid_cents?: number;
+    days_overdue?: number;
     issued_at: string | null;
     sent_at: string | null;
     cancelled_at: string | null;
@@ -193,6 +231,7 @@ export interface Invoice {
     activity_logs?: InvoiceActivityLog[];
     billing_customer?: BillingCustomer | null;
     credit_note_applications?: CreditNoteApplication[];
+    payment_allocations?: InvoicePaymentAllocation[];
     document?: FinancialDocument | null;
     deliveries?: InvoiceDelivery[];
     latest_delivery?: InvoiceDelivery | null;
@@ -202,6 +241,10 @@ export interface Invoice {
 
 export interface PaginatedInvoices extends PaginatedData<Invoice> {
     data?: Invoice[];
+}
+
+export interface PaginatedPayments extends PaginatedData<Payment> {
+    data?: Payment[];
 }
 
 export interface CreditNoteItem {

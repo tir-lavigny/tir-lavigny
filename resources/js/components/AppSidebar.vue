@@ -30,6 +30,7 @@ import {
     Ticket,
     Trash2,
     Users,
+    Wallet,
     BookUser,
     WineOff,
     Forklift,
@@ -246,6 +247,15 @@ const invoicingNavItems: NavItem[] = [
                         },
                     ]
                   : []),
+          ]
+        : []),
+    ...(hasAnyPermission(user, ['view payments', 'manage invoicing'])
+        ? [
+              {
+                  title: 'Paiements',
+                  href: route('bo.invoicing.payments.index'),
+                  icon: Wallet,
+              },
           ]
         : []),
 ];
