@@ -161,6 +161,89 @@ export interface InvoiceActivityLog {
     user?: { id: number; name: string } | null;
 }
 
+export interface MembershipFeeType {
+    id: number;
+    name: string;
+    member_status: 'active' | 'passive' | null;
+    description: string | null;
+    amount: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedMembershipFeeTypes extends PaginatedData<MembershipFeeType> {
+    data?: MembershipFeeType[];
+}
+
+export interface MembershipFeeCampaign {
+    id: number;
+    year: number;
+    name: string;
+    issue_date: string;
+    due_date: string;
+    status: 'draft' | 'preview' | 'validated' | 'invoiced' | 'issued' | 'cancelled';
+    created_by: number | null;
+    creator?: { id: number; name: string } | null;
+    members_count?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedMembershipFeeCampaigns extends PaginatedData<MembershipFeeCampaign> {
+    data?: MembershipFeeCampaign[];
+}
+
+export interface MembershipFeeCampaignMember {
+    id: number;
+    membership_fee_campaign_id: number;
+    member_id: number;
+    billing_customer_id: number;
+    membership_fee_type_id: number | null;
+    fee_type_name: string | null;
+    base_amount: string;
+    discount_amount: string;
+    discount_reason: string | null;
+    final_amount: string;
+    is_full_exemption: boolean;
+    status: 'pending' | 'validated' | 'excluded';
+    delivery_method: 'email' | 'postal';
+    validated_by: number | null;
+    validated_at: string | null;
+    invoice_id: number | null;
+    member?: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string | null;
+        status: 'active' | 'passive';
+    } | null;
+    billing_customer?: BillingCustomer | null;
+    fee_type?: MembershipFeeType | null;
+    invoice?: Invoice | null;
+    validator?: { id: number; name: string } | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaginatedMembershipFeeCampaignMembers extends PaginatedData<MembershipFeeCampaignMember> {
+    data?: MembershipFeeCampaignMember[];
+}
+
+export interface MembershipFeeCampaignActivityLog {
+    id: number;
+    membership_fee_campaign_id: number;
+    membership_fee_campaign_member_id: number | null;
+    user_id: number | null;
+    action: string;
+    description: string | null;
+    metadata: Record<string, unknown> | null;
+    created_at: string;
+    action_label?: string;
+    user?: { id: number; name: string } | null;
+    campaign_member?: (MembershipFeeCampaignMember & { member?: { id: number; first_name: string; last_name: string } | null }) | null;
+}
+
 export interface Payment {
     id: number;
     amount: string;

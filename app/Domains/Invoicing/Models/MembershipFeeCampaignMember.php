@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property string $base_amount
@@ -20,6 +21,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $base_amount_cents
  * @property int $discount_amount_cents
  * @property int $final_amount_cents
+ * @property CampaignMemberStatus $status
+ * @property InvoiceDeliveryMethod $delivery_method
+ * @property-read bool $is_full_exemption
  */
 class MembershipFeeCampaignMember extends Model
 {
@@ -30,6 +34,8 @@ class MembershipFeeCampaignMember extends Model
         'membership_fee_campaign_id',
         'member_id',
         'billing_customer_id',
+        'membership_fee_type_id',
+        'fee_type_name',
         'base_amount',
         'base_amount_cents',
         'discount_amount',
@@ -46,7 +52,7 @@ class MembershipFeeCampaignMember extends Model
 
     protected $hidden = ['base_amount_cents', 'discount_amount_cents', 'final_amount_cents'];
 
-    protected $appends = ['base_amount', 'discount_amount', 'final_amount'];
+    protected $appends = ['base_amount', 'discount_amount', 'final_amount', 'is_full_exemption'];
 
     protected function casts(): array
     {
@@ -100,6 +106,35 @@ class MembershipFeeCampaignMember extends Model
     public function billingCustomer(): BelongsTo
     {
         return $this->belongsTo(BillingCustomer::class);
+    }
+
+    /**
+     * @return BelongsTo<MembershipFeeType, $this>
+     */
+    public function feeType(): BelongsTo
+    {
+        return $this->belongsTo(MembershipFeeType::class, 'membership_fee_type_id');
+    }
+
+    /**
+     * @return HasMany<MembershipFeeCampaignActivityLog, $this>
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(MembershipFeeCampaignActivityLog::class)->latest('created_at')->latest('id');
+    }
+
+    public function hasFullExemption(): bool
+    {
+        return $this->base_amount_cents > 0 && $this->discount_amount_cents === $this->base_amount_cents;
+    }
+
+    /** @return Attribute<bool, never> */
+    protected function isFullExemption(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): bool => $this->hasFullExemption(),
+        );
     }
 
     /**

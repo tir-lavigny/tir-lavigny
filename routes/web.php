@@ -10,6 +10,8 @@ use App\Http\Controllers\BackOffice\Invoicing\FinancialDocumentController as Bac
 use App\Http\Controllers\BackOffice\Invoicing\InvoiceController as BackOfficeInvoiceController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoiceDeliveryController as BackOfficeInvoiceDeliveryController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoicingSettingsController as BackOfficeInvoicingSettingsController;
+use App\Http\Controllers\BackOffice\Invoicing\MembershipFeeCampaignController as BackOfficeMembershipFeeCampaignController;
+use App\Http\Controllers\BackOffice\Invoicing\MembershipFeeTypeController as BackOfficeMembershipFeeTypeController;
 use App\Http\Controllers\BackOffice\Invoicing\PaymentController as BackOfficePaymentController;
 use App\Http\Controllers\BackOffice\MemberController;
 use App\Http\Controllers\BackOffice\MemberExportController;
@@ -315,6 +317,74 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
             Route::put('settings', [BackOfficeInvoicingSettingsController::class, 'update'])
                 ->name('settings.update');
         });
+
+        Route::middleware('permission:view invoices|manage invoicing|manage membership fees')->group(function () {
+            Route::get('membership-fee-types', [BackOfficeMembershipFeeTypeController::class, 'index'])
+                ->name('membership-fee-types.index');
+            Route::get('membership-fee-campaigns', [BackOfficeMembershipFeeCampaignController::class, 'index'])
+                ->name('membership-fee-campaigns.index');
+            Route::get('membership-fee-campaigns/{membershipFeeCampaign}', [BackOfficeMembershipFeeCampaignController::class, 'show'])
+                ->whereNumber('membershipFeeCampaign')
+                ->name('membership-fee-campaigns.show');
+        });
+
+        Route::middleware('permission:manage membership fees|manage invoicing')->group(function () {
+            Route::get('membership-fee-types/create', [BackOfficeMembershipFeeTypeController::class, 'create'])
+                ->name('membership-fee-types.create');
+            Route::post('membership-fee-types', [BackOfficeMembershipFeeTypeController::class, 'store'])
+                ->name('membership-fee-types.store');
+            Route::get('membership-fee-types/{membershipFeeType}/edit', [BackOfficeMembershipFeeTypeController::class, 'edit'])
+                ->whereNumber('membershipFeeType')
+                ->name('membership-fee-types.edit');
+            Route::put('membership-fee-types/{membershipFeeType}', [BackOfficeMembershipFeeTypeController::class, 'update'])
+                ->whereNumber('membershipFeeType')
+                ->name('membership-fee-types.update');
+
+            Route::get('membership-fee-campaigns/create', [BackOfficeMembershipFeeCampaignController::class, 'create'])
+                ->name('membership-fee-campaigns.create');
+            Route::post('membership-fee-campaigns', [BackOfficeMembershipFeeCampaignController::class, 'store'])
+                ->name('membership-fee-campaigns.store');
+            Route::get('membership-fee-campaigns/{membershipFeeCampaign}/edit', [BackOfficeMembershipFeeCampaignController::class, 'edit'])
+                ->whereNumber('membershipFeeCampaign')
+                ->name('membership-fee-campaigns.edit');
+            Route::put('membership-fee-campaigns/{membershipFeeCampaign}', [BackOfficeMembershipFeeCampaignController::class, 'update'])
+                ->whereNumber('membershipFeeCampaign')
+                ->name('membership-fee-campaigns.update');
+            Route::post('membership-fee-campaigns/{membershipFeeCampaign}/preview', [BackOfficeMembershipFeeCampaignController::class, 'preview'])
+                ->whereNumber('membershipFeeCampaign')
+                ->name('membership-fee-campaigns.preview');
+            Route::post('membership-fee-campaigns/{membershipFeeCampaign}/validate', [BackOfficeMembershipFeeCampaignController::class, 'validateCampaign'])
+                ->whereNumber('membershipFeeCampaign')
+                ->name('membership-fee-campaigns.validate');
+            Route::post('membership-fee-campaigns/{membershipFeeCampaign}/invoices/generate', [BackOfficeMembershipFeeCampaignController::class, 'generateInvoices'])
+                ->whereNumber('membershipFeeCampaign')
+                ->name('membership-fee-campaigns.invoices.generate');
+            Route::put('membership-fee-campaigns/{membershipFeeCampaign}/members/{campaignMember}/discount', [BackOfficeMembershipFeeCampaignController::class, 'updateDiscount'])
+                ->whereNumber('membershipFeeCampaign')
+                ->whereNumber('campaignMember')
+                ->name('membership-fee-campaigns.members.discount');
+            Route::put('membership-fee-campaigns/{membershipFeeCampaign}/members/{campaignMember}/delivery', [BackOfficeMembershipFeeCampaignController::class, 'updateDelivery'])
+                ->whereNumber('membershipFeeCampaign')
+                ->whereNumber('campaignMember')
+                ->name('membership-fee-campaigns.members.delivery');
+            Route::post('membership-fee-campaigns/{membershipFeeCampaign}/members/{campaignMember}/validate', [BackOfficeMembershipFeeCampaignController::class, 'validateMember'])
+                ->whereNumber('membershipFeeCampaign')
+                ->whereNumber('campaignMember')
+                ->name('membership-fee-campaigns.members.validate');
+            Route::post('membership-fee-campaigns/{membershipFeeCampaign}/members/{campaignMember}/exclude', [BackOfficeMembershipFeeCampaignController::class, 'excludeMember'])
+                ->whereNumber('membershipFeeCampaign')
+                ->whereNumber('campaignMember')
+                ->name('membership-fee-campaigns.members.exclude');
+            Route::post('membership-fee-campaigns/{membershipFeeCampaign}/members/{campaignMember}/include', [BackOfficeMembershipFeeCampaignController::class, 'includeMember'])
+                ->whereNumber('membershipFeeCampaign')
+                ->whereNumber('campaignMember')
+                ->name('membership-fee-campaigns.members.include');
+        });
+
+        Route::post('membership-fee-campaigns/{membershipFeeCampaign}/invoices/issue', [BackOfficeMembershipFeeCampaignController::class, 'issueInvoices'])
+            ->whereNumber('membershipFeeCampaign')
+            ->middleware('permission:issue invoices|manage invoicing')
+            ->name('membership-fee-campaigns.invoices.issue');
 
         Route::middleware('permission:view invoices|manage invoicing')->group(function () {
             Route::get('billing-customers', [BackOfficeBillingCustomerController::class, 'index'])
