@@ -60,7 +60,8 @@ class InvoicingSchemaTest extends TestCase
             'discount_amount_cents',
             'final_amount_cents',
         ]));
-        $this->assertTrue(Schema::hasColumn('invoicing_settings', 'envelope_window'));
+        $this->assertTrue(Schema::hasColumns('invoicing_settings', ['reply_to_email', 'envelope_window']));
+        $this->assertTrue(Schema::hasColumns('invoice_deliveries', ['batch_id', 'error']));
     }
 
     public function test_invoice_number_and_sequence_year_are_unique(): void

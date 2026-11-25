@@ -2,6 +2,7 @@
 
 namespace App\Domains\Invoicing\Policies;
 
+use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Models\User;
 
@@ -40,6 +41,25 @@ class InvoicePolicy
     public function cancel(User $user, Invoice $invoice): bool
     {
         return $invoice->isCancellable() && $user->canAny(['cancel invoices', 'manage invoicing']);
+    }
+
+    public function send(User $user, Invoice $invoice): bool
+    {
+        return $invoice->isDistributable()
+            && $invoice->delivery_method === InvoiceDeliveryMethod::Email
+            && $user->canAny(['send invoices', 'manage invoicing']);
+    }
+
+    public function print(User $user, Invoice $invoice): bool
+    {
+        return $invoice->isDistributable()
+            && $invoice->delivery_method === InvoiceDeliveryMethod::Postal
+            && $user->canAny(['send invoices', 'manage invoicing']);
+    }
+
+    public function changeDeliveryMethod(User $user, Invoice $invoice): bool
+    {
+        return $invoice->isDistributable() && $user->canAny(['send invoices', 'manage invoicing']);
     }
 
     private function canView(User $user): bool

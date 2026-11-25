@@ -27,6 +27,7 @@ class UpdateInvoicingSettingsRequest extends FormRequest
             'creditor_city' => ['required', 'string', 'max:35'],
             'creditor_country' => ['required', 'string', 'size:2', Rule::in(['CH', 'LI'])],
             'creditor_iban' => ['required', 'string', 'max:34'],
+            'reply_to_email' => ['nullable', 'email', 'max:254'],
             'envelope_window' => ['required', Rule::enum(EnvelopeWindow::class)],
         ];
     }
@@ -56,6 +57,7 @@ class UpdateInvoicingSettingsRequest extends FormRequest
         $this->merge([
             'creditor_iban' => app(InvoicingSettingsService::class)->normalizeIban((string) $this->input('creditor_iban')),
             'creditor_country' => strtoupper((string) $this->input('creditor_country')),
+            'reply_to_email' => filled($this->input('reply_to_email')) ? trim((string) $this->input('reply_to_email')) : null,
         ]);
     }
 
@@ -72,6 +74,7 @@ class UpdateInvoicingSettingsRequest extends FormRequest
             'creditor_country.required' => 'Le pays du créancier est obligatoire.',
             'creditor_country.in' => 'Le pays du créancier doit être la Suisse ou le Liechtenstein.',
             'creditor_iban.required' => 'L’IBAN du créancier est obligatoire.',
+            'reply_to_email.email' => 'L’adresse de réponse doit être une adresse email valide.',
             'envelope_window.required' => 'Le type d’enveloppe est obligatoire.',
             'envelope_window.enum' => 'Le type d’enveloppe est invalide.',
         ];

@@ -119,6 +119,11 @@ class InvoicingRbacTest extends TestCase
 
         $draft = Invoice::factory()->create();
         $issued = Invoice::factory()->create(['status' => 'issued']);
+        $postal = Invoice::factory()->create(['status' => 'issued', 'delivery_method' => 'postal']);
+
+        $this->assertFalse($viewer->can('send', $issued));
+        $this->assertFalse($viewer->can('print', $postal));
+        $this->assertFalse($viewer->can('changeDeliveryMethod', $issued));
 
         $this->assertTrue($viewer->can('view', $draft));
         $this->assertFalse($viewer->can('create', Invoice::class));
@@ -135,5 +140,8 @@ class InvoicingRbacTest extends TestCase
         $this->assertFalse($manager->can('delete', $issued));
         $this->assertFalse($manager->can('issue', $issued));
         $this->assertTrue($manager->can('cancel', $issued));
+        $this->assertTrue($manager->can('send', $issued));
+        $this->assertTrue($manager->can('print', $postal));
+        $this->assertTrue($manager->can('changeDeliveryMethod', $issued));
     }
 }

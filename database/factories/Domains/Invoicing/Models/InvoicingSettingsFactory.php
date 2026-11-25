@@ -21,6 +21,7 @@ class InvoicingSettingsFactory extends Factory
             'creditor_city' => 'Lavigny',
             'creditor_country' => 'CH',
             'creditor_iban' => 'CH9300762011623852957',
+            'reply_to_email' => null,
             'envelope_window' => 'left',
             'updated_by' => null,
         ];

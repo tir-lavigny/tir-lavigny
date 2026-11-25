@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property EnvelopeWindow $envelope_window
+ * @property string|null $reply_to_email
  */
 class InvoicingSettings extends Model
 {
@@ -24,6 +25,7 @@ class InvoicingSettings extends Model
         'creditor_city',
         'creditor_country',
         'creditor_iban',
+        'reply_to_email',
         'envelope_window',
         'updated_by',
     ];
