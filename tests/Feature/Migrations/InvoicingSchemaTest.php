@@ -66,6 +66,7 @@ class InvoicingSchemaTest extends TestCase
         $this->assertTrue(Schema::hasColumns('membership_fee_types', ['member_status']));
         $this->assertTrue(Schema::hasColumns('invoicing_settings', ['reply_to_email', 'envelope_window']));
         $this->assertTrue(Schema::hasColumns('invoice_deliveries', ['batch_id', 'error']));
+        $this->assertTrue(Schema::hasColumns('invoice_reminders', ['error']));
         $this->assertTrue(Schema::hasColumns('payments', ['idempotency_key', 'voided_at', 'voided_by', 'void_reason']));
         $this->assertTrue(Schema::hasColumns('invoice_payments', [
             'idempotency_key',

@@ -24,6 +24,8 @@ use Illuminate\Support\Carbon;
  * @property PaymentMethod $method
  * @property Carbon|null $payment_date
  * @property Carbon|null $voided_at
+ * @property User|null $creator
+ * @property User|null $voider
  */
 class Payment extends Model
 {

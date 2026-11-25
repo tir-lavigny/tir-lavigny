@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppPagination from '@/components/AppPagination.vue';
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
+import AppExportMenu from '@/components/back-office/Invoicing/AppExportMenu.vue';
 import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
 import AppTooltipLabel from '@/components/AppTooltipLabel.vue';
 import { H1, H3 } from '@/components/typography/headings';
@@ -316,6 +317,12 @@ const submitDelivery = (): void => {
                 <Button v-if="canManage && editable" variant="outline" as-child>
                     <Link :href="route('bo.invoicing.membership-fee-campaigns.edit', campaign.id)"> <Pencil class="mr-2 h-4 w-4" /> Modifier </Link>
                 </Button>
+                <AppExportMenu
+                    v-if="canManage"
+                    route-name="bo.invoicing.membership-fee-campaigns.export"
+                    :route-params="{ membershipFeeCampaign: campaign.id }"
+                    :filters="filters"
+                />
                 <AppAlertDialog
                     v-if="canRefreshBaseAmounts"
                     title="Recalculer les montants de base ?"

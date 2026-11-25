@@ -2,6 +2,7 @@
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import AppPagination from '@/components/AppPagination.vue';
 import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
+import AppExportMenu from '@/components/back-office/Invoicing/AppExportMenu.vue';
 import { H1 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ import { toast } from 'vue-sonner';
 
 const props = defineProps<{
     invoices: PaginatedInvoices;
-    filters: { search?: string | null; status?: string | null; type?: string | null; year?: number | null };
+    filters: { search?: string | null; status?: string | null; type?: string | null; year?: number | null; overdue?: boolean | null };
     statuses: Array<{ value: string; label: string }>;
     types: Array<{ value: string; label: string }>;
     years: number[];
@@ -43,6 +44,7 @@ const { filters } = useListFilters('bo.invoicing.invoices.index', {
     status: props.filters.status || '',
     type: props.filters.type || '',
     year: props.filters.year ? String(props.filters.year) : '',
+    overdue: props.filters.overdue ? '1' : '',
 });
 
 const statusFilter = computed({
@@ -63,6 +65,13 @@ const yearFilter = computed({
     get: () => filters.value.year || 'all',
     set: (value: string) => {
         filters.value.year = value === 'all' ? '' : value;
+    },
+});
+
+const overdueFilter = computed({
+    get: () => filters.value.overdue || 'all',
+    set: (value: string) => {
+        filters.value.overdue = value === 'overdue' ? '1' : '';
     },
 });
 
@@ -131,9 +140,12 @@ const goToPage = (pageNumber: number) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="m-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <H1>Factures</H1>
-            <Button v-if="canCreateInvoice" as-child>
-                <Link :href="route('bo.invoicing.invoices.create')"> <Plus class="mr-2 h-4 w-4" /> Nouvelle facture </Link>
-            </Button>
+            <div class="flex flex-wrap gap-2">
+                <AppExportMenu route-name="bo.invoicing.invoices.export" :filters="filters" />
+                <Button v-if="canCreateInvoice" as-child>
+                    <Link :href="route('bo.invoicing.invoices.create')"> <Plus class="mr-2 h-4 w-4" /> Nouvelle facture </Link>
+                </Button>
+            </div>
         </div>
 
         <div v-if="!invoicingConfigured" class="border-destructive/40 bg-destructive/5 mx-4 rounded-xl border p-4 text-sm">
@@ -186,6 +198,18 @@ const goToPage = (pageNumber: number) => {
                         <SelectContent>
                             <SelectItem value="all">Toutes</SelectItem>
                             <SelectItem v-for="year in years" :key="year" :value="String(year)">{{ year }}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div class="grid gap-2 md:w-44">
+                    <Label for="overdue">Échéance</Label>
+                    <Select v-model="overdueFilter">
+                        <SelectTrigger id="overdue" class="w-full">
+                            <SelectValue placeholder="Toutes" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Toutes</SelectItem>
+                            <SelectItem value="overdue">En retard uniquement</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

@@ -5,11 +5,10 @@ namespace App\Http\Controllers\BackOffice\Invoicing;
 use App\Domains\Invoicing\Actions\Deliveries\ChangeInvoiceDeliveryMethod;
 use App\Domains\Invoicing\Actions\Deliveries\PrintInvoiceDocuments;
 use App\Domains\Invoicing\Actions\Deliveries\SendInvoiceEmail;
-use App\Domains\Invoicing\Enums\DeliveryStatus;
 use App\Domains\Invoicing\Enums\InvoiceDeliveryMethod;
-use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Domains\Invoicing\Exceptions\InvoiceDeliveryException;
 use App\Domains\Invoicing\Models\Invoice;
+use App\Domains\Invoicing\Services\InvoiceDeliveryQueue;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Invoicing\PrintInvoiceDocumentsRequest;
 use App\Http\Requests\BackOffice\Invoicing\SendInvoiceEmailsRequest;
@@ -29,23 +28,23 @@ class InvoiceDeliveryController extends Controller
 {
     use SearchesAccentInsensitively;
 
-    public function emailQueue(Request $request): Response
+    public function emailQueue(Request $request, InvoiceDeliveryQueue $queue): Response
     {
         Gate::authorize('viewAny', Invoice::class);
 
         return Inertia::render('backOffice/Invoicing/Deliveries/Email', [
-            'invoices' => $this->queueQuery($request, InvoiceDeliveryMethod::Email)->paginate(20)->withQueryString(),
+            'invoices' => $this->queueQuery($request, InvoiceDeliveryMethod::Email, $queue)->paginate(20)->withQueryString(),
             'filters' => $this->filters($request),
             'years' => $this->yearOptions(),
         ]);
     }
 
-    public function postalQueue(Request $request): Response
+    public function postalQueue(Request $request, InvoiceDeliveryQueue $queue): Response
     {
         Gate::authorize('viewAny', Invoice::class);
 
         return Inertia::render('backOffice/Invoicing/Deliveries/Postal', [
-            'invoices' => $this->queueQuery($request, InvoiceDeliveryMethod::Postal)->paginate(20)->withQueryString(),
+            'invoices' => $this->queueQuery($request, InvoiceDeliveryMethod::Postal, $queue)->paginate(20)->withQueryString(),
             'filters' => $this->filters($request),
             'years' => $this->yearOptions(),
         ]);
@@ -154,24 +153,9 @@ class InvoiceDeliveryController extends Controller
     /**
      * @return Builder<Invoice>
      */
-    private function queueQuery(Request $request, InvoiceDeliveryMethod $channel): Builder
+    private function queueQuery(Request $request, InvoiceDeliveryMethod $channel, InvoiceDeliveryQueue $queue): Builder
     {
-        $query = Invoice::query()
-            ->with(['document', 'latestDelivery.processor'])
-            ->whereIn('status', [
-                InvoiceStatus::Issued,
-                InvoiceStatus::PartiallyPaid,
-                InvoiceStatus::Paid,
-            ])
-            ->where('delivery_method', $channel);
-
-        $terminalStatus = $channel === InvoiceDeliveryMethod::Email
-            ? DeliveryStatus::Sent
-            : DeliveryStatus::Printed;
-
-        $query->whereDoesntHave('deliveries', function (Builder $query) use ($channel, $terminalStatus): void {
-            $query->where('channel', $channel)->where('status', $terminalStatus);
-        });
+        $query = $queue->pending($channel)->with(['document', 'latestDelivery.processor']);
 
         $search = $request->input('search');
 

@@ -13,7 +13,7 @@ use Sprain\SwissQrBill\QrBill;
 
 class SwissQrBillFactory
 {
-    public function forInvoice(Invoice $invoice): QrBill
+    public function forInvoice(Invoice $invoice, ?int $amountCents = null, ?string $additionalInformation = null): QrBill
     {
         $qrBill = QrBill::create();
 
@@ -39,7 +39,7 @@ class SwissQrBillFactory
 
         $qrBill->setPaymentAmountInformation(PaymentAmountInformation::create(
             $invoice->currency->value,
-            $invoice->total_cents / 100,
+            ($amountCents ?? $invoice->total_cents) / 100,
         ));
 
         $qrBill->setPaymentReference(PaymentReference::create(
@@ -48,7 +48,7 @@ class SwissQrBillFactory
         ));
 
         $qrBill->setAdditionalInformation(AdditionalInformation::create(
-            "Facture {$invoice->invoice_number}",
+            $additionalInformation ?? "Facture {$invoice->invoice_number}",
         ));
 
         $violations = $qrBill->getViolations();

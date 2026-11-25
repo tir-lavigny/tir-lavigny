@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property string $base_amount
@@ -23,6 +24,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $final_amount_cents
  * @property CampaignMemberStatus $status
  * @property InvoiceDeliveryMethod $delivery_method
+ * @property Carbon|null $validated_at
+ * @property Member|null $member
+ * @property Invoice|null $invoice
  * @property-read bool $is_full_exemption
  */
 class MembershipFeeCampaignMember extends Model

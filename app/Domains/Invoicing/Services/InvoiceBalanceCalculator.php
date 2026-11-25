@@ -8,9 +8,40 @@ use App\Domains\Invoicing\Models\CreditNoteApplicationReversal;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Models\InvoicePayment;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 
 class InvoiceBalanceCalculator
 {
+    /**
+     * @param  Builder<Invoice>  $query
+     * @return Builder<Invoice>
+     */
+    public function withBalanceSums(Builder $query): Builder
+    {
+        return $query
+            ->withSum(['paymentAllocations as paid_cents' => fn (Builder $query) => $query->whereNull('reversed_at')], 'amount_cents')
+            ->withSum('creditNoteApplications as credited_cents', 'amount_cents')
+            ->withSum('creditNoteApplicationReversals as credited_reversed_cents', 'amount_cents');
+    }
+
+    public function applyBalanceAttributes(Invoice $invoice): Invoice
+    {
+        $credited = max(
+            0,
+            (int) ($invoice->getAttribute('credited_cents') ?? 0)
+                - (int) ($invoice->getAttribute('credited_reversed_cents') ?? 0),
+        );
+        $paid = (int) ($invoice->getAttribute('paid_cents') ?? 0);
+        $remaining = max(0, $invoice->total_cents - $paid - $credited);
+
+        $invoice->setAttribute('paid_cents', $paid);
+        $invoice->setAttribute('credited_cents', $credited);
+        $invoice->setAttribute('remaining_cents', $remaining);
+        $invoice->setAttribute('days_overdue', $this->daysOverdue($invoice, outstandingCents: $remaining));
+
+        return $invoice;
+    }
+
     public function creditedCents(Invoice $invoice): int
     {
         $applied = (int) CreditNoteApplication::query()

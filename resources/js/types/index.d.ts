@@ -161,6 +161,22 @@ export interface InvoiceActivityLog {
     user?: { id: number; name: string } | null;
 }
 
+export interface InvoiceReminder {
+    id: number;
+    invoice_id: number;
+    channel: 'email' | 'postal';
+    recipient: string;
+    outstanding_amount: string;
+    outstanding_amount_cents: number;
+    status: 'pending' | 'sent' | 'failed' | 'printed';
+    processed_at: string | null;
+    processed_by: number | null;
+    error: string | null;
+    created_at: string;
+    updated_at: string;
+    processor?: { id: number; name: string } | null;
+}
+
 export interface MembershipFeeType {
     id: number;
     name: string;
@@ -319,6 +335,9 @@ export interface Invoice {
     document?: FinancialDocument | null;
     deliveries?: InvoiceDelivery[];
     latest_delivery?: InvoiceDelivery | null;
+    reminders?: InvoiceReminder[];
+    latest_reminder?: InvoiceReminder | null;
+    reminders_count?: number;
     created_at: string;
     updated_at: string;
 }
