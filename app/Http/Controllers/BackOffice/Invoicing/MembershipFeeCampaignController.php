@@ -27,6 +27,7 @@ use App\Http\Requests\BackOffice\Invoicing\StoreMembershipFeeCampaignRequest;
 use App\Http\Requests\BackOffice\Invoicing\UpdateCampaignMemberDeliveryRequest;
 use App\Http\Requests\BackOffice\Invoicing\UpdateCampaignMemberDiscountRequest;
 use App\Http\Requests\BackOffice\Invoicing\UpdateMembershipFeeCampaignRequest;
+use App\Models\Member;
 use App\Support\Money;
 use App\Traits\SearchesAccentInsensitively;
 use Illuminate\Database\Eloquent\Builder;
@@ -104,11 +105,9 @@ class MembershipFeeCampaignController extends Controller
             ->with(['member', 'billingCustomer', 'feeType', 'invoice', 'validator'])
             ->when(in_array($memberStatus, array_column(CampaignMemberStatus::cases(), 'value'), true), fn (Builder $query) => $query->where('status', $memberStatus))
             ->when(filled($search), function (Builder $query) use ($search): void {
-                $query->whereHas('member', function (Builder $query) use ($search): void {
-                    $query->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                });
+                $memberQuery = Member::query();
+                $this->whereAccentInsensitiveLike($memberQuery, ['first_name', 'last_name', 'email'], $search);
+                $query->whereIn('member_id', $memberQuery->select('id'));
             })
             ->orderBy('member_id')
             ->paginate(50)

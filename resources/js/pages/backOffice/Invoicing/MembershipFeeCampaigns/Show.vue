@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import AppPagination from '@/components/AppPagination.vue';
+import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
+import AppTooltipLabel from '@/components/AppTooltipLabel.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useListFilters } from '@/composables/useListFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasAnyPermission } from '@/lib/utils';
 import type {
@@ -19,7 +23,7 @@ import type {
     SharedData,
 } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { CheckCircle2, FileText, Pencil, RefreshCw, Send, Users, XCircle } from '@lucide/vue';
+import { CheckCircle2, FileText, Pencil, RefreshCw, Search, Send, UserMinus, UserPlus } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -56,28 +60,26 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: props.campaign.name, href: route('bo.invoicing.membership-fee-campaigns.show', props.campaign.id) },
 ];
 
-const filters = ref({
-    search: props.filters.search || '',
-    member_status: props.filters.member_status || '',
-});
+const { filters: listFilters, visit } = useListFilters(
+    'bo.invoicing.membership-fee-campaigns.show',
+    {
+        search: props.filters.search || '',
+        member_status: props.filters.member_status || '',
+    },
+    300,
+    { membershipFeeCampaign: props.campaign.id },
+);
 
 const memberStatusFilter = computed({
-    get: () => filters.value.member_status || 'all',
+    get: () => listFilters.value.member_status || 'all',
     set: (value: string) => {
-        filters.value.member_status = value === 'all' ? '' : value;
-        applyFilters(1);
+        listFilters.value.member_status = value === 'all' ? '' : value;
     },
 });
 
-const applyFilters = (pageNumber = 1): void => {
-    router.get(
-        route('bo.invoicing.membership-fee-campaigns.show', props.campaign.id),
-        { page: pageNumber, ...filters.value },
-        { preserveState: true, preserveScroll: true },
-    );
-};
+const hasActiveFilters = computed(() => Boolean(listFilters.value.search || listFilters.value.member_status));
 
-const goToPage = (pageNumber: number): void => applyFilters(pageNumber);
+const goToPage = (pageNumber: number): void => visit(pageNumber);
 
 const statusLabel = (value: string): string => {
     const labels: Record<string, string> = {
@@ -90,6 +92,19 @@ const statusLabel = (value: string): string => {
     };
 
     return labels[value] ?? value;
+};
+
+const statusDescription = (value: string): string => {
+    const descriptions: Record<string, string> = {
+        draft: 'La campagne est créée mais aucun aperçu n’a encore été généré.',
+        preview: 'Des membres sont en attente de validation ou de correction.',
+        validated: 'Les membres sont validés. Les factures brouillon peuvent être générées.',
+        invoiced: 'Les factures brouillon existent mais ne sont pas encore émises.',
+        issued: 'Toutes les factures de la campagne ont été émises.',
+        cancelled: 'Cette campagne est annulée.',
+    };
+
+    return descriptions[value] ?? value;
 };
 
 const memberStatusLabel = (value: string): string => props.memberStatuses.find((status) => status.value === value)?.label ?? value;
@@ -212,7 +227,12 @@ const submitDelivery = (): void => {
             <div>
                 <div class="flex flex-wrap items-center gap-3">
                     <H1>{{ campaign.name }}</H1>
-                    <Badge variant="secondary">{{ statusLabel(campaign.status) }}</Badge>
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Badge variant="secondary" class="cursor-help">{{ statusLabel(campaign.status) }}</Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>{{ statusDescription(campaign.status) }}</TooltipContent>
+                    </Tooltip>
                 </div>
                 <p class="text-muted-foreground mt-2 text-sm">
                     Année {{ campaign.year }} · Émission {{ formatDate(campaign.issue_date, 'DD.MM.YYYY') }} · Échéance
@@ -221,19 +241,47 @@ const submitDelivery = (): void => {
             </div>
 
             <div class="flex flex-wrap gap-2">
-                <Button v-if="canManage && editable" variant="outline" @click="preview">
-                    <RefreshCw class="mr-2 h-4 w-4" />
-                    {{ campaign.status === 'draft' ? 'Générer l’aperçu' : 'Actualiser l’aperçu' }}
-                </Button>
-                <Button v-if="canManage && campaign.status === 'preview'" variant="outline" @click="validateCampaign">
-                    <CheckCircle2 class="mr-2 h-4 w-4" /> Tout valider
-                </Button>
-                <Button v-if="canManage && campaign.status === 'validated'" :disabled="!invoicingConfigured" @click="generateInvoices">
-                    <FileText class="mr-2 h-4 w-4" /> Générer les brouillons
-                </Button>
-                <Button v-if="canIssueInvoices && campaign.status === 'invoiced'" :disabled="!invoicingConfigured" @click="issueInvoices">
-                    <Send class="mr-2 h-4 w-4" /> Émettre les factures
-                </Button>
+                <Tooltip v-if="canManage && editable">
+                    <TooltipTrigger as-child>
+                        <Button variant="outline" @click="preview">
+                            <RefreshCw class="mr-2 h-4 w-4" />
+                            {{ campaign.status === 'draft' ? 'Générer l’aperçu' : 'Ajouter les membres manquants' }}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        {{
+                            campaign.status === 'draft'
+                                ? 'Calcule la cotisation de chaque membre et crée l’aperçu.'
+                                : 'Ajoute les nouveaux membres sans modifier les remises, exclusions et validations existantes.'
+                        }}
+                    </TooltipContent>
+                </Tooltip>
+                <Tooltip v-if="canManage && campaign.status === 'preview'">
+                    <TooltipTrigger as-child>
+                        <Button variant="outline" @click="validateCampaign"> <CheckCircle2 class="mr-2 h-4 w-4" /> Valider tous les membres </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Valide les membres inclus. Les erreurs laissent la campagne en aperçu.</TooltipContent>
+                </Tooltip>
+                <Tooltip v-if="canManage && campaign.status === 'validated'">
+                    <TooltipTrigger as-child>
+                        <span>
+                            <Button :disabled="!invoicingConfigured" @click="generateInvoices">
+                                <FileText class="mr-2 h-4 w-4" /> Générer les factures brouillon
+                            </Button>
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Crée une facture brouillon par membre validé. Aucun numéro n’est attribué et rien n’est envoyé.</TooltipContent>
+                </Tooltip>
+                <Tooltip v-if="canIssueInvoices && campaign.status === 'invoiced'">
+                    <TooltipTrigger as-child>
+                        <span>
+                            <Button :disabled="!invoicingConfigured" @click="issueInvoices">
+                                <Send class="mr-2 h-4 w-4" /> Émettre les factures
+                            </Button>
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Attribue un numéro, archive le PDF et rend la facture non modifiable. Aucun email n’est envoyé.</TooltipContent>
+                </Tooltip>
                 <Button v-if="canManage && editable" variant="outline" as-child>
                     <Link :href="route('bo.invoicing.membership-fee-campaigns.edit', campaign.id)"> <Pencil class="mr-2 h-4 w-4" /> Modifier </Link>
                 </Button>
@@ -249,22 +297,34 @@ const submitDelivery = (): void => {
 
         <div class="mx-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
-                <p class="text-muted-foreground text-sm">Membres inclus</p>
+                <AppTooltipLabel label="Membres inclus" description="Membres non exclus de la campagne." class="text-muted-foreground text-sm" />
                 <p class="mt-1 text-2xl font-semibold">{{ summary.included }}</p>
                 <p class="text-muted-foreground mt-1 text-xs">{{ summary.excluded }} exclu(s) sur {{ summary.total }}</p>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
-                <p class="text-muted-foreground text-sm">Validation</p>
+                <AppTooltipLabel
+                    label="Membres validés"
+                    description="Membres prêts pour la génération des factures brouillon."
+                    class="text-muted-foreground text-sm"
+                />
                 <p class="mt-1 text-2xl font-semibold">{{ summary.validated }} / {{ summary.included }}</p>
                 <p class="text-muted-foreground mt-1 text-xs">{{ summary.pending }} en attente</p>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
-                <p class="text-muted-foreground text-sm">Factures</p>
+                <AppTooltipLabel
+                    label="Factures générées"
+                    description="Factures brouillon ou émises liées à cette campagne."
+                    class="text-muted-foreground text-sm"
+                />
                 <p class="mt-1 text-2xl font-semibold">{{ summary.invoiced }} / {{ summary.included }}</p>
                 <p class="text-muted-foreground mt-1 text-xs">{{ summary.issued_invoices }} émise(s) · {{ summary.draft_invoices }} brouillon(s)</p>
             </div>
             <div class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
-                <p class="text-muted-foreground text-sm">Total à facturer</p>
+                <AppTooltipLabel
+                    label="Total des cotisations"
+                    description="Somme des montants finaux des membres inclus, remises déduites."
+                    class="text-muted-foreground text-sm"
+                />
                 <p class="mt-1 font-mono text-2xl font-semibold">CHF {{ formatMoney(summary.final_cents / 100) }}</p>
                 <p class="text-muted-foreground mt-1 text-xs">
                     Base {{ formatMoney(summary.base_cents / 100) }} · Remises {{ formatMoney(summary.discount_cents / 100) }}
@@ -276,7 +336,10 @@ const submitDelivery = (): void => {
             <div class="border-sidebar-border/70 dark:border-sidebar-border flex flex-col gap-3 rounded-xl border p-4 md:flex-row md:items-end">
                 <div class="grid flex-1 gap-2">
                     <Label for="search">Rechercher un membre</Label>
-                    <Input id="search" v-model="filters.search" placeholder="Nom ou email" @keyup.enter="applyFilters(1)" />
+                    <div class="relative">
+                        <Search class="text-muted-foreground absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2" />
+                        <Input id="search" v-model="listFilters.search" class="pl-8" placeholder="Nom ou email" />
+                    </div>
                 </div>
                 <div class="grid gap-2 md:w-56">
                     <Label for="member_status">Validation</Label>
@@ -297,12 +360,39 @@ const submitDelivery = (): void => {
                     <thead class="bg-muted/50">
                         <tr>
                             <th class="px-4 py-3 text-left font-medium">Membre</th>
-                            <th class="px-4 py-3 text-left font-medium">Type</th>
-                            <th class="px-4 py-3 text-right font-medium">Base</th>
-                            <th class="px-4 py-3 text-right font-medium">Remise</th>
-                            <th class="px-4 py-3 text-right font-medium">Final</th>
-                            <th class="px-4 py-3 text-left font-medium">Envoi</th>
-                            <th class="px-4 py-3 text-left font-medium">Statut</th>
+                            <th class="px-4 py-3 text-left font-medium">
+                                <AppTooltipLabel
+                                    label="Type de cotisation"
+                                    description="Type appliqué lors de l’aperçu. Le montant est figé pour cette campagne."
+                                />
+                            </th>
+                            <th class="px-4 py-3 text-right font-medium">
+                                <div class="flex justify-end">
+                                    <AppTooltipLabel label="Cotisation de base" description="Montant standard du type de cotisation." />
+                                </div>
+                            </th>
+                            <th class="px-4 py-3 text-right font-medium">
+                                <div class="flex justify-end">
+                                    <AppTooltipLabel
+                                        label="Remise individuelle"
+                                        description="Remise accordée à ce membre, déduite du montant de base."
+                                    />
+                                </div>
+                            </th>
+                            <th class="px-4 py-3 text-right font-medium">
+                                <div class="flex justify-end">
+                                    <AppTooltipLabel label="Montant final" description="Cotisation de base moins la remise individuelle." />
+                                </div>
+                            </th>
+                            <th class="px-4 py-3 text-left font-medium">
+                                <AppTooltipLabel
+                                    label="Mode d’envoi"
+                                    description="Distribution prévue pour la future facture. Aucun envoi immédiat."
+                                />
+                            </th>
+                            <th class="px-4 py-3 text-left font-medium">
+                                <AppTooltipLabel label="Validation" description="État de validation de ce membre dans la campagne." />
+                            </th>
                             <th class="px-4 py-3 text-right font-medium">Actions</th>
                         </tr>
                     </thead>
@@ -328,7 +418,12 @@ const submitDelivery = (): void => {
                             <td class="px-4 py-3 text-right font-mono">{{ formatMoney(member.base_amount) }}</td>
                             <td class="px-4 py-3 text-right">
                                 <div class="font-mono">{{ formatMoney(member.discount_amount) }}</div>
-                                <Badge v-if="member.is_full_exemption" variant="destructive" class="mt-1">Exonération totale</Badge>
+                                <Tooltip v-if="member.is_full_exemption">
+                                    <TooltipTrigger as-child>
+                                        <Badge variant="destructive" class="mt-1 cursor-help">Exonération totale</Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>La remise couvre la totalité de la cotisation.</TooltipContent>
+                                </Tooltip>
                                 <div v-if="member.discount_reason" class="text-muted-foreground mt-1 max-w-48 text-xs">
                                     {{ member.discount_reason }}
                                 </div>
@@ -346,28 +441,51 @@ const submitDelivery = (): void => {
                             <td class="px-4 py-3 text-right">
                                 <div class="flex flex-wrap justify-end gap-1">
                                     <template v-if="canManage && editable && member.invoice_id === null">
-                                        <Button v-if="member.status !== 'excluded'" size="sm" variant="outline" @click="openDiscount(member)"
-                                            >Remise</Button
+                                        <Tooltip v-if="member.status !== 'excluded'">
+                                            <TooltipTrigger as-child>
+                                                <Button size="sm" variant="outline" @click="openDiscount(member)">Modifier la remise</Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Saisir une remise. Une exonération totale exige un motif.</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip v-if="member.status !== 'excluded'">
+                                            <TooltipTrigger as-child>
+                                                <Button size="sm" variant="outline" @click="openDelivery(member)">Mode d’envoi</Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Choisit email ou postal pour la future facture. Aucun envoi immédiat.</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip v-if="member.status === 'pending'">
+                                            <TooltipTrigger as-child>
+                                                <Button size="sm" variant="outline" @click="validateMember(member)">Valider le membre</Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Rend ce membre éligible à la génération des factures.</TooltipContent>
+                                        </Tooltip>
+                                        <AppTooltipIconButton
+                                            v-if="member.status !== 'excluded'"
+                                            label="Exclure ce membre de la campagne"
+                                            variant="outline"
+                                            @click="excludeMember(member)"
                                         >
-                                        <Button v-if="member.status !== 'excluded'" size="sm" variant="outline" @click="openDelivery(member)"
-                                            >Envoi</Button
+                                            <UserMinus class="h-4 w-4" />
+                                        </AppTooltipIconButton>
+                                        <AppTooltipIconButton
+                                            v-if="member.status === 'excluded'"
+                                            label="Réintégrer ce membre dans la campagne"
+                                            variant="outline"
+                                            @click="includeMember(member)"
                                         >
-                                        <Button v-if="member.status === 'pending'" size="sm" variant="outline" @click="validateMember(member)">
-                                            Valider
-                                        </Button>
-                                        <Button v-if="member.status !== 'excluded'" size="sm" variant="outline" @click="excludeMember(member)">
-                                            <XCircle class="h-4 w-4" />
-                                        </Button>
-                                        <Button v-if="member.status === 'excluded'" size="sm" variant="outline" @click="includeMember(member)">
-                                            <Users class="h-4 w-4" />
-                                        </Button>
+                                            <UserPlus class="h-4 w-4" />
+                                        </AppTooltipIconButton>
                                     </template>
                                 </div>
                             </td>
                         </tr>
                         <tr v-if="!members.data?.length">
                             <td colspan="8" class="text-muted-foreground px-4 py-8 text-center">
-                                Aucun membre. Générez l’aperçu pour calculer les cotisations.
+                                {{
+                                    hasActiveFilters
+                                        ? 'Aucun membre ne correspond aux filtres.'
+                                        : 'Aucun membre. Générez l’aperçu pour calculer les cotisations.'
+                                }}
                             </td>
                         </tr>
                     </tbody>
@@ -404,7 +522,8 @@ const submitDelivery = (): void => {
                     <DialogTitle>Remise individuelle</DialogTitle>
                     <DialogDescription>
                         {{ discountTarget ? memberName(discountTarget) : '' }} · cotisation de
-                        {{ discountTarget ? formatMoney(discountTarget.base_amount) : '0.00' }} CHF
+                        {{ discountTarget ? formatMoney(discountTarget.base_amount) : '0.00' }} CHF. Une exonération totale couvre toute la
+                        cotisation.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -423,7 +542,7 @@ const submitDelivery = (): void => {
                     <p v-if="discountActionError" class="text-destructive text-sm">{{ discountActionError }}</p>
                     <DialogFooter>
                         <Button type="button" variant="outline" @click="discountOpen = false">Annuler</Button>
-                        <Button type="submit" :disabled="discountForm.processing">Enregistrer</Button>
+                        <Button type="submit" :disabled="discountForm.processing">Enregistrer la remise</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -433,7 +552,10 @@ const submitDelivery = (): void => {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Mode d’envoi</DialogTitle>
-                    <DialogDescription>{{ deliveryTarget ? memberName(deliveryTarget) : '' }}</DialogDescription>
+                    <DialogDescription>
+                        {{ deliveryTarget ? memberName(deliveryTarget) : '' }}. Ce choix définit la distribution future. Aucun email ni impression
+                        n’est déclenché ici.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form class="grid gap-4" @submit.prevent="submitDelivery">
@@ -454,7 +576,7 @@ const submitDelivery = (): void => {
                     <p v-if="deliveryActionError" class="text-destructive text-sm">{{ deliveryActionError }}</p>
                     <DialogFooter>
                         <Button type="button" variant="outline" @click="deliveryOpen = false">Annuler</Button>
-                        <Button type="submit" :disabled="deliveryForm.processing">Enregistrer</Button>
+                        <Button type="submit" :disabled="deliveryForm.processing">Enregistrer le mode d’envoi</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

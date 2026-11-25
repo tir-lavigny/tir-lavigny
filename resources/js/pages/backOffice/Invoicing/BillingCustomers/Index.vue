@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import AppPagination from '@/components/AppPagination.vue';
+import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
 import { H1 } from '@/components/typography/headings';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -123,7 +124,7 @@ const goToPage = (pageNumber: number) => {
                     </Select>
                 </div>
                 <div class="grid gap-2 md:w-56">
-                    <Label for="delivery">Envoi</Label>
+                    <Label for="delivery">Mode d’envoi</Label>
                     <Select v-model="deliveryFilter">
                         <SelectTrigger id="delivery" class="w-full">
                             <SelectValue placeholder="Tous" />
@@ -143,7 +144,7 @@ const goToPage = (pageNumber: number) => {
                             <th class="px-4 py-3 text-left font-medium">Nom</th>
                             <th class="px-4 py-3 text-left font-medium">Type</th>
                             <th class="px-4 py-3 text-left font-medium">Email</th>
-                            <th class="px-4 py-3 text-left font-medium">Envoi</th>
+                            <th class="px-4 py-3 text-left font-medium">Mode d’envoi</th>
                             <th class="px-4 py-3 text-left font-medium">Membre</th>
                             <th class="px-4 py-3 text-right font-medium">Actions</th>
                         </tr>
@@ -167,22 +168,22 @@ const goToPage = (pageNumber: number) => {
                             </td>
                             <td class="px-4 py-3">
                                 <div v-if="canManage" class="flex justify-end gap-2">
-                                    <Button as-child size="icon" variant="outline">
-                                        <Link :href="route('bo.invoicing.billing-customers.edit', customer.id)">
-                                            <Pencil class="h-4 w-4" />
-                                            <span class="sr-only">Modifier</span>
-                                        </Link>
-                                    </Button>
+                                    <AppTooltipIconButton
+                                        label="Modifier ce client de facturation"
+                                        variant="outline"
+                                        :href="route('bo.invoicing.billing-customers.edit', customer.id)"
+                                    >
+                                        <Pencil class="h-4 w-4" />
+                                    </AppTooltipIconButton>
                                     <AppAlertDialog
                                         title="Supprimer ce client ?"
                                         description="Le client sera supprimé définitivement. Les clients liés à des factures ne peuvent pas être supprimés."
                                         cancel-text="Annuler"
                                     >
                                         <template #trigger>
-                                            <Button size="icon" variant="destructive">
+                                            <AppTooltipIconButton label="Supprimer ce client de facturation" variant="destructive">
                                                 <Trash2 class="h-4 w-4" />
-                                                <span class="sr-only">Supprimer</span>
-                                            </Button>
+                                            </AppTooltipIconButton>
                                         </template>
                                         <template #action>
                                             <Button variant="destructive" @click="deleteCustomer(customer)">Supprimer</Button>

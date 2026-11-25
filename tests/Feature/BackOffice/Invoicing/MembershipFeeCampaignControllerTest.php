@@ -140,6 +140,30 @@ class MembershipFeeCampaignControllerTest extends TestCase
         $this->assertDatabaseCount('membership_fee_campaign_members', 0);
     }
 
+    public function test_campaign_member_search_is_live_compatible_and_accent_insensitive(): void
+    {
+        $this->actingAsAdmin();
+        $this->configureFeeTypes();
+        $campaign = $this->campaign();
+        $elodie = Member::factory()->create([
+            'first_name' => 'Élodie',
+            'last_name' => 'Rochat',
+            'email' => 'elodie@example.test',
+        ]);
+        $this->member('Bob', 'Durand');
+        $this->post(route('bo.invoicing.membership-fee-campaigns.preview', $campaign));
+
+        $this->get(route('bo.invoicing.membership-fee-campaigns.show', [
+            'membershipFeeCampaign' => $campaign,
+            'search' => 'elodie',
+        ]))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('members.data.0.member_id', $elodie->id)
+                ->where('members.data.0.member.first_name', 'Élodie')
+                ->has('members.data', 1)
+            );
+    }
+
     public function test_requires_a_reason_for_full_exemption_and_updates_discount(): void
     {
         $this->actingAsAdmin();

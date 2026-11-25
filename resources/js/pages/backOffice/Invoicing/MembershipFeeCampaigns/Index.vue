@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import AppPagination from '@/components/AppPagination.vue';
+import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
+import AppTooltipLabel from '@/components/AppTooltipLabel.vue';
 import { H1 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useListFilters } from '@/composables/useListFilters';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, hasAnyPermission } from '@/lib/utils';
@@ -48,6 +51,19 @@ const yearFilter = computed({
 
 const statusLabel = (value: string): string => props.statuses.find((status) => status.value === value)?.label ?? value;
 
+const statusDescription = (value: string): string => {
+    const descriptions: Record<string, string> = {
+        draft: 'La campagne est créée mais aucun aperçu n’a encore été généré.',
+        preview: 'Des membres sont en attente de validation ou de correction.',
+        validated: 'Les membres sont validés. Les factures brouillon peuvent être générées.',
+        invoiced: 'Les factures brouillon existent mais ne sont pas encore émises.',
+        issued: 'Toutes les factures de la campagne ont été émises.',
+        cancelled: 'Cette campagne est annulée.',
+    };
+
+    return descriptions[value] ?? value;
+};
+
 const goToPage = (pageNumber: number) => {
     router.get(
         route('bo.invoicing.membership-fee-campaigns.index'),
@@ -80,7 +96,7 @@ const goToPage = (pageNumber: number) => {
                     </div>
                 </div>
                 <div class="grid gap-2 md:w-48">
-                    <Label for="status">Statut</Label>
+                    <Label for="status">Statut campagne</Label>
                     <Select v-model="statusFilter">
                         <SelectTrigger id="status" class="w-full">
                             <SelectValue placeholder="Tous" />
@@ -111,10 +127,14 @@ const goToPage = (pageNumber: number) => {
                         <tr>
                             <th class="px-4 py-3 text-left font-medium">Année</th>
                             <th class="px-4 py-3 text-left font-medium">Campagne</th>
-                            <th class="px-4 py-3 text-left font-medium">Statut</th>
-                            <th class="px-4 py-3 text-left font-medium">Émission</th>
-                            <th class="px-4 py-3 text-left font-medium">Échéance</th>
-                            <th class="px-4 py-3 text-right font-medium">Membres</th>
+                            <th class="px-4 py-3 text-left font-medium">Statut campagne</th>
+                            <th class="px-4 py-3 text-left font-medium">Date d’émission</th>
+                            <th class="px-4 py-3 text-left font-medium">Date d’échéance</th>
+                            <th class="px-4 py-3 text-right font-medium">
+                                <div class="flex justify-end">
+                                    <AppTooltipLabel label="Membres" description="Nombre total de membres dans la campagne, exclusions comprises." />
+                                </div>
+                            </th>
                             <th class="px-4 py-3 text-right font-medium">Actions</th>
                         </tr>
                     </thead>
@@ -127,7 +147,12 @@ const goToPage = (pageNumber: number) => {
                             <td class="px-4 py-3 font-mono font-medium">{{ campaign.year }}</td>
                             <td class="px-4 py-3">{{ campaign.name }}</td>
                             <td class="px-4 py-3">
-                                <Badge variant="secondary">{{ statusLabel(campaign.status) }}</Badge>
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <Badge variant="secondary" class="cursor-help">{{ statusLabel(campaign.status) }}</Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{{ statusDescription(campaign.status) }}</TooltipContent>
+                                </Tooltip>
                             </td>
                             <td class="px-4 py-3">{{ formatDate(campaign.issue_date, 'DD.MM.YYYY') }}</td>
                             <td class="px-4 py-3">{{ formatDate(campaign.due_date, 'DD.MM.YYYY') }}</td>
@@ -139,16 +164,14 @@ const goToPage = (pageNumber: number) => {
                                             <Eye class="mr-2 h-4 w-4" /> Ouvrir
                                         </Link>
                                     </Button>
-                                    <Button
+                                    <AppTooltipIconButton
                                         v-if="canManage && ['draft', 'preview', 'validated'].includes(campaign.status)"
-                                        size="sm"
+                                        label="Modifier la campagne"
                                         variant="outline"
-                                        as-child
+                                        :href="route('bo.invoicing.membership-fee-campaigns.edit', campaign.id)"
                                     >
-                                        <Link :href="route('bo.invoicing.membership-fee-campaigns.edit', campaign.id)">
-                                            <Pencil class="h-4 w-4" />
-                                        </Link>
-                                    </Button>
+                                        <Pencil class="h-4 w-4" />
+                                    </AppTooltipIconButton>
                                 </div>
                             </td>
                         </tr>
