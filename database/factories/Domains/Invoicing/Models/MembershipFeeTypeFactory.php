@@ -3,6 +3,7 @@
 namespace Database\Factories\Domains\Invoicing\Models;
 
 use App\Domains\Invoicing\Models\MembershipFeeType;
+use App\MemberStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,9 +17,17 @@ class MembershipFeeTypeFactory extends Factory
     {
         return [
             'name' => fake()->unique()->words(2, true),
+            'member_status' => MemberStatus::ACTIVE,
             'description' => null,
             'amount_cents' => fake()->numberBetween(1000, 30000),
-            'is_active' => true,
         ];
+    }
+
+    public function passive(): static
+    {
+        return $this->state(fn () => [
+            'name' => 'Cotisation membre passif',
+            'member_status' => MemberStatus::PASSIVE,
+        ]);
     }
 }

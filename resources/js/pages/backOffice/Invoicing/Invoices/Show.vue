@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
+import AppTooltipLabel from '@/components/AppTooltipLabel.vue';
 import PaymentFields from '@/components/back-office/Invoicing/PaymentFields.vue';
 import { H1, H3 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useInvoicePrinting } from '@/composables/useInvoicePrinting';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasAnyPermission, hasPermissionTo } from '@/lib/utils';
@@ -244,9 +246,12 @@ const submitPayment = (): void => {
                 <Button v-if="canPrintInvoice" variant="outline" :disabled="printing" @click="printCurrentInvoice">
                     <Printer class="mr-2 h-4 w-4" /> Imprimer
                 </Button>
-                <Button v-if="canChangeDeliveryMethod" variant="outline" @click="openDeliveryDialog">
-                    <ArrowLeftRight class="mr-2 h-4 w-4" /> Mode d’envoi
-                </Button>
+                <Tooltip v-if="canChangeDeliveryMethod">
+                    <TooltipTrigger as-child>
+                        <Button variant="outline" @click="openDeliveryDialog"> <ArrowLeftRight class="mr-2 h-4 w-4" /> Mode d’envoi </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Changer email/postal. Aucun envoi immédiat.</TooltipContent>
+                </Tooltip>
                 <Button v-if="canRegisterPayment" @click="openPaymentDialog"> <Wallet class="mr-2 h-4 w-4" /> Enregistrer un paiement </Button>
                 <Button v-if="documentFailed && canManageInvoicing" variant="outline" @click="retryDocument">
                     <RefreshCw class="mr-2 h-4 w-4" /> Réessayer l’archivage
@@ -317,7 +322,11 @@ const submitPayment = (): void => {
                         <span>{{ invoice.due_date ? formatDate(invoice.due_date, 'DD.MM.YYYY') : '—' }}</span>
                     </div>
                     <div class="flex justify-between gap-4">
-                        <span class="text-muted-foreground">Envoi</span>
+                        <AppTooltipLabel
+                            label="Mode d’envoi"
+                            description="Canal prévu pour la distribution de la facture."
+                            class="text-muted-foreground"
+                        />
                         <span>{{ invoice.delivery_method === 'email' ? 'Email' : 'Postal' }}</span>
                     </div>
                 </div>
@@ -572,9 +581,10 @@ const submitPayment = (): void => {
         <Dialog v-model:open="deliveryDialogOpen">
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Mode de distribution</DialogTitle>
+                    <DialogTitle>Mode d’envoi</DialogTitle>
                     <DialogDescription>
-                        Le mode peut être modifié tant qu’aucun envoi n’a commencé. Les coordonnées historiques de la facture sont conservées.
+                        Le mode peut être modifié tant qu’aucun envoi n’a commencé. Les coordonnées historiques de la facture sont conservées. Aucun
+                        envoi n’est déclenché par ce changement.
                     </DialogDescription>
                 </DialogHeader>
                 <div class="grid gap-2">
@@ -594,7 +604,7 @@ const submitPayment = (): void => {
                 </div>
                 <DialogFooter>
                     <Button variant="outline" @click="deliveryDialogOpen = false">Annuler</Button>
-                    <Button :disabled="deliveryMethodForm.processing" @click="submitDeliveryMethod">Enregistrer</Button>
+                    <Button :disabled="deliveryMethodForm.processing" @click="submitDeliveryMethod">Enregistrer le mode d’envoi</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

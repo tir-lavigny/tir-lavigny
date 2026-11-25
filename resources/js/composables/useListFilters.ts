@@ -3,7 +3,12 @@ import { onScopeDispose, ref, watch, type Ref } from 'vue';
 
 type FilterValue = string | number | boolean | null | undefined;
 
-export function useListFilters<T extends Record<string, FilterValue>>(routeName: string, initialFilters: T, debounceMs = 300) {
+export function useListFilters<T extends Record<string, FilterValue>>(
+    routeName: string,
+    initialFilters: T,
+    debounceMs = 300,
+    routeParams: Record<string, string | number> = {},
+) {
     const filters = ref({ ...initialFilters }) as Ref<T>;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -19,7 +24,9 @@ export function useListFilters<T extends Record<string, FilterValue>>(routeName:
     const visit = (page = 1): void => {
         clearPendingVisit();
 
-        router.get(route(routeName), { page, ...filters.value }, { preserveState: true, preserveScroll: true });
+        const url = Object.keys(routeParams).length > 0 ? route(routeName, routeParams) : route(routeName);
+
+        router.get(url, { page, ...filters.value }, { preserveState: true, preserveScroll: true });
     };
 
     watch(

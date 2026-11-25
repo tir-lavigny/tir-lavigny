@@ -25,6 +25,7 @@ class InvoicingSchemaTest extends TestCase
             'membership_fee_types',
             'membership_fee_campaigns',
             'membership_fee_campaign_members',
+            'membership_fee_campaign_activity_logs',
             'invoicing_settings',
             'financial_documents',
             'invoice_deliveries',
@@ -59,7 +60,10 @@ class InvoicingSchemaTest extends TestCase
             'base_amount_cents',
             'discount_amount_cents',
             'final_amount_cents',
+            'membership_fee_type_id',
+            'fee_type_name',
         ]));
+        $this->assertTrue(Schema::hasColumns('membership_fee_types', ['member_status']));
         $this->assertTrue(Schema::hasColumns('invoicing_settings', ['reply_to_email', 'envelope_window']));
         $this->assertTrue(Schema::hasColumns('invoice_deliveries', ['batch_id', 'error']));
         $this->assertTrue(Schema::hasColumns('payments', ['idempotency_key', 'voided_at', 'voided_by', 'void_reason']));
@@ -89,6 +93,7 @@ class InvoicingSchemaTest extends TestCase
     public function test_campaign_member_document_and_idempotency_keys_are_unique(): void
     {
         $this->assertUniqueIndex('membership_fee_campaign_members', ['membership_fee_campaign_id', 'member_id']);
+        $this->assertUniqueIndex('membership_fee_types', ['member_status']);
         $this->assertUniqueIndex('financial_documents', ['documentable_type', 'documentable_id']);
         $this->assertUniqueIndex('payments', ['idempotency_key']);
         $this->assertUniqueIndex('invoice_payments', ['idempotency_key']);
