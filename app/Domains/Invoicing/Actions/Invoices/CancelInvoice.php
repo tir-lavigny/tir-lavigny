@@ -33,7 +33,7 @@ class CancelInvoice
                 throw InvoiceNotCancellable::for($locked, 'a cancellation reason is required.');
             }
 
-            if ($locked->paymentAllocations()->exists()) {
+            if ($locked->activePaymentAllocations()->exists()) {
                 throw InvoiceNotCancellable::for($locked, 'payments have been allocated.');
             }
 

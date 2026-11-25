@@ -11,6 +11,7 @@ use App\Domains\Invoicing\Models\CreditNoteRefund;
 use App\Domains\Invoicing\Models\CreditNoteReversal;
 use App\Domains\Invoicing\Models\CustomerAccountEntry;
 use App\Domains\Invoicing\Models\Invoice;
+use App\Domains\Invoicing\Models\InvoicePayment;
 use App\Models\User;
 
 class CustomerAccountLedger
@@ -82,6 +83,37 @@ class CustomerAccountLedger
             0,
             $this->invoiceOutstandingCents($invoice),
             $actor,
+        );
+    }
+
+    public function recordPaymentAllocated(InvoicePayment $allocation, User $actor): CustomerAccountEntry
+    {
+        return $this->record(
+            $allocation->invoice,
+            CustomerAccountEntryType::PaymentAllocated,
+            0,
+            $allocation->amount_cents,
+            $actor,
+            metadata: [
+                'payment_id' => $allocation->payment_id,
+                'invoice_payment_id' => $allocation->id,
+            ],
+        );
+    }
+
+    public function recordPaymentAllocationReversed(InvoicePayment $allocation, User $actor): CustomerAccountEntry
+    {
+        return $this->record(
+            $allocation->invoice,
+            CustomerAccountEntryType::PaymentAllocationReversed,
+            $allocation->amount_cents,
+            0,
+            $actor,
+            metadata: [
+                'payment_id' => $allocation->payment_id,
+                'invoice_payment_id' => $allocation->id,
+                'reason' => $allocation->reversal_reason,
+            ],
         );
     }
 
