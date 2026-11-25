@@ -8,6 +8,7 @@ use App\LogsActivity;
 use App\Models\Concerns\HasMoneyColumns;
 use App\Models\User;
 use Database\Factories\Domains\Invoicing\Models\PaymentFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -73,6 +74,41 @@ class Payment extends Model
     public function isVoided(): bool
     {
         return $this->voided_at !== null;
+    }
+
+    /**
+     * @param  Builder<Payment>  $query
+     */
+    public function scopeAllocationStatus(Builder $query, string $status): void
+    {
+        if ($status === 'unallocated') {
+            $query->whereDoesntHave(
+                'allocations',
+                fn (Builder $query) => $query->whereNull('reversed_at'),
+            );
+
+            return;
+        }
+
+        if (! in_array($status, ['partially_allocated', 'fully_allocated'], true)) {
+            return;
+        }
+
+        $subquery = InvoicePayment::query()
+            ->select('invoice_payments.payment_id')
+            ->join('payments', 'payments.id', '=', 'invoice_payments.payment_id')
+            ->whereNull('invoice_payments.reversed_at')
+            ->groupBy('invoice_payments.payment_id', 'payments.amount_cents');
+
+        if ($status === 'partially_allocated') {
+            $subquery
+                ->havingRaw('SUM(invoice_payments.amount_cents) > 0')
+                ->havingRaw('SUM(invoice_payments.amount_cents) < payments.amount_cents');
+        } else {
+            $subquery->havingRaw('SUM(invoice_payments.amount_cents) >= payments.amount_cents');
+        }
+
+        $query->whereIn('payments.id', $subquery);
     }
 
     /**

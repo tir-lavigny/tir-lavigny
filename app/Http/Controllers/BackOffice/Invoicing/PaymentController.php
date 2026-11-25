@@ -54,14 +54,8 @@ class PaymentController extends Controller
             $query->whereNull('voided_at');
         }
 
-        $allocated = '(SELECT COALESCE(SUM(invoice_payments.amount_cents), 0) FROM invoice_payments WHERE invoice_payments.payment_id = payments.id AND invoice_payments.reversed_at IS NULL)';
-
-        if ($allocationStatus === 'unallocated') {
-            $query->whereNull('voided_at')->whereRaw("{$allocated} = 0");
-        } elseif ($allocationStatus === 'partially_allocated') {
-            $query->whereNull('voided_at')->whereRaw("{$allocated} > 0 AND {$allocated} < payments.amount_cents");
-        } elseif ($allocationStatus === 'fully_allocated') {
-            $query->whereNull('voided_at')->whereRaw("{$allocated} >= payments.amount_cents");
+        if (in_array($allocationStatus, ['unallocated', 'partially_allocated', 'fully_allocated'], true)) {
+            $query->whereNull('voided_at')->allocationStatus($allocationStatus);
         }
 
         if ($year !== null) {
