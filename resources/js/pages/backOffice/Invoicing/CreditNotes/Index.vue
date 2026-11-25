@@ -61,6 +61,11 @@ const goToPage = (pageNumber: number) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="m-4">
             <H1>Avoirs</H1>
+            <p class="text-muted-foreground mt-2 text-sm">
+                Un avoir crédite tout ou partie d’une facture émise. Le plafond correspond au montant encore créditable de la facture, pas à son solde
+                impayé ; l’excédent éventuel reste disponible comme crédit client. Un avoir ne remplace pas un paiement : pour enregistrer de l’argent
+                reçu, utilisez un paiement.
+            </p>
         </div>
 
         <div class="mx-4 flex flex-col gap-4">

@@ -255,9 +255,19 @@ const submitPayment = (): void => {
                 <Button v-if="invoice.status === 'draft' && canCreate" as-child variant="outline">
                     <Link :href="route('bo.invoicing.invoices.edit', invoice.id)"> <Pencil class="mr-2 h-4 w-4" /> Modifier </Link>
                 </Button>
-                <Button v-if="['issued', 'partially_paid', 'paid'].includes(invoice.status) && canCreate" as-child variant="outline">
-                    <Link :href="route('bo.invoicing.credit-notes.create', { invoice_id: invoice.id })">Créer un avoir</Link>
-                </Button>
+                <Tooltip v-if="['issued', 'partially_paid', 'paid'].includes(invoice.status) && canCreate">
+                    <TooltipTrigger as-child>
+                        <span class="inline-flex">
+                            <Button as-child variant="outline">
+                                <Link :href="route('bo.invoicing.credit-notes.create', { invoice_id: invoice.id })">Créer un avoir</Link>
+                            </Button>
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Crée un avoir sur tout ou partie de la facture. Un avoir ne remplace pas un paiement : utilisez Paiements pour enregistrer de
+                        l’argent reçu. Un avoir total sur une facture partiellement payée peut laisser un crédit client.
+                    </TooltipContent>
+                </Tooltip>
                 <Button v-if="hasStoredDocument" as-child variant="outline">
                     <a :href="route('bo.invoicing.invoices.pdf', invoice.id)"> <Download class="mr-2 h-4 w-4" /> Télécharger le PDF </a>
                 </Button>
