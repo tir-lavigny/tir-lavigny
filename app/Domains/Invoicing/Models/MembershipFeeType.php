@@ -28,7 +28,6 @@ class MembershipFeeType extends Model
         'description',
         'amount',
         'amount_cents',
-        'is_active',
     ];
 
     protected $hidden = ['amount_cents'];
@@ -40,7 +39,6 @@ class MembershipFeeType extends Model
         return [
             'member_status' => MemberStatus::class,
             'amount_cents' => 'integer',
-            'is_active' => 'boolean',
         ];
     }
 

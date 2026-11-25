@@ -19,7 +19,6 @@ const formDefaults = {
     member_status: 'active',
     description: '',
     amount: '',
-    is_active: true,
 };
 
 const submit = (form: any) => {

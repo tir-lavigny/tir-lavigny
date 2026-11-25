@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import AppPagination from '@/components/AppPagination.vue';
 import { H1 } from '@/components/typography/headings';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +15,7 @@ import { computed } from 'vue';
 
 const props = defineProps<{
     feeTypes: PaginatedMembershipFeeTypes;
-    filters: { search?: string | null; member_status?: string | null; active?: string | null };
+    filters: { search?: string | null; member_status?: string | null };
     memberStatuses: Array<{ value: string; label: string }>;
 }>();
 
@@ -28,20 +27,12 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Types de cotisation', href: rou
 const { filters } = useListFilters('bo.invoicing.membership-fee-types.index', {
     search: props.filters.search || '',
     member_status: props.filters.member_status || '',
-    active: props.filters.active || '',
 });
 
 const memberStatusFilter = computed({
     get: () => filters.value.member_status || 'all',
     set: (value: string) => {
         filters.value.member_status = value === 'all' ? '' : value;
-    },
-});
-
-const activeFilter = computed({
-    get: () => filters.value.active || 'all',
-    set: (value: string) => {
-        filters.value.active = value === 'all' ? '' : value;
     },
 });
 
@@ -62,7 +53,7 @@ const goToPage = (pageNumber: number) => {
         <div class="m-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
                 <H1>Types de cotisation</H1>
-                <p class="text-muted-foreground mt-2 text-sm">Un type actif est requis pour chaque statut de membre lors de l’aperçu annuel.</p>
+                <p class="text-muted-foreground mt-2 text-sm">Un type de cotisation est requis pour chaque statut de membre lors de l’aperçu annuel.</p>
             </div>
             <Button v-if="canManage" as-child>
                 <Link :href="route('bo.invoicing.membership-fee-types.create')"> <Plus class="mr-2 h-4 w-4" /> Nouveau type </Link>
@@ -90,19 +81,6 @@ const goToPage = (pageNumber: number) => {
                         </SelectContent>
                     </Select>
                 </div>
-                <div class="grid gap-2 md:w-44">
-                    <Label for="active">État</Label>
-                    <Select v-model="activeFilter">
-                        <SelectTrigger id="active" class="w-full">
-                            <SelectValue placeholder="Tous" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Tous</SelectItem>
-                            <SelectItem value="active">Actifs</SelectItem>
-                            <SelectItem value="inactive">Inactifs</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
             </div>
 
             <div class="border-sidebar-border/70 dark:border-sidebar-border overflow-x-auto rounded-xl border">
@@ -112,7 +90,6 @@ const goToPage = (pageNumber: number) => {
                             <th class="px-4 py-3 text-left font-medium">Nom</th>
                             <th class="px-4 py-3 text-left font-medium">Statut</th>
                             <th class="px-4 py-3 text-right font-medium">Montant</th>
-                            <th class="px-4 py-3 text-left font-medium">État</th>
                             <th class="px-4 py-3 text-right font-medium">Actions</th>
                         </tr>
                     </thead>
@@ -124,9 +101,6 @@ const goToPage = (pageNumber: number) => {
                             </td>
                             <td class="px-4 py-3">{{ memberStatusLabel(feeType.member_status) }}</td>
                             <td class="px-4 py-3 text-right font-mono">{{ formatMoney(feeType.amount) }}</td>
-                            <td class="px-4 py-3">
-                                <Badge :variant="feeType.is_active ? 'secondary' : 'outline'">{{ feeType.is_active ? 'Actif' : 'Inactif' }}</Badge>
-                            </td>
                             <td class="px-4 py-3 text-right">
                                 <Button v-if="canManage" size="sm" variant="outline" as-child>
                                     <Link :href="route('bo.invoicing.membership-fee-types.edit', feeType.id)">
@@ -136,7 +110,7 @@ const goToPage = (pageNumber: number) => {
                             </td>
                         </tr>
                         <tr v-if="!feeTypes.data?.length">
-                            <td colspan="5" class="text-muted-foreground px-4 py-8 text-center">Aucun type de cotisation configuré.</td>
+                            <td colspan="4" class="text-muted-foreground px-4 py-8 text-center">Aucun type de cotisation configuré.</td>
                         </tr>
                     </tbody>
                 </table>

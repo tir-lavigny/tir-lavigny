@@ -24,7 +24,6 @@ class StoreMembershipFeeTypeRequest extends FormRequest
             'member_status' => ['required', Rule::enum(MemberStatus::class), Rule::unique('membership_fee_types', 'member_status')],
             'description' => ['nullable', 'string', 'max:2000'],
             'amount' => ['required', 'numeric', 'gt:0'],
-            'is_active' => ['sometimes', 'boolean'],
         ];
     }
 

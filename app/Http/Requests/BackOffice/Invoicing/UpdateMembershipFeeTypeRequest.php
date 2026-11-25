@@ -38,7 +38,6 @@ class UpdateMembershipFeeTypeRequest extends FormRequest
             ],
             'description' => ['nullable', 'string', 'max:2000'],
             'amount' => ['required', 'numeric', 'gt:0'],
-            'is_active' => ['sometimes', 'boolean'],
         ];
     }
 

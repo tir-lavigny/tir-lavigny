@@ -20,7 +20,6 @@ const formDefaults = {
     member_status: props.feeType.member_status ?? 'active',
     description: props.feeType.description ?? '',
     amount: props.feeType.amount,
-    is_active: props.feeType.is_active,
 };
 
 const submit = (form: any) => {

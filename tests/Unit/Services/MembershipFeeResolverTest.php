@@ -14,7 +14,7 @@ class MembershipFeeResolverTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_resolves_the_active_fee_type_for_the_member_status(): void
+    public function test_resolves_the_fee_type_for_the_member_status(): void
     {
         $active = MembershipFeeType::factory()->create([
             'member_status' => MemberStatus::ACTIVE,
@@ -29,15 +29,10 @@ class MembershipFeeResolverTest extends TestCase
         $this->assertSame($passive->id, $resolver->resolve(Member::factory()->passive()->create())->id);
     }
 
-    public function test_rejects_a_member_status_without_an_active_fee_type(): void
+    public function test_rejects_a_member_status_without_a_fee_type(): void
     {
-        MembershipFeeType::factory()->create([
-            'member_status' => MemberStatus::ACTIVE,
-            'is_active' => false,
-        ]);
-
         $this->expectException(MembershipFeeException::class);
-        $this->expectExceptionMessage('Aucun type de cotisation actif');
+        $this->expectExceptionMessage('Aucun type de cotisation n’est configuré');
 
         app(MembershipFeeResolver::class)->resolve(Member::factory()->create());
     }

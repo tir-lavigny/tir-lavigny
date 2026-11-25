@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from '@inertiajs/vue3';
 
@@ -12,7 +11,6 @@ interface MembershipFeeTypeFormDefaults {
     member_status: string;
     description: string;
     amount: string;
-    is_active: boolean;
 }
 
 const props = defineProps<{
@@ -56,14 +54,6 @@ const handleSubmit = () => {
             <Label for="amount">Montant (CHF)</Label>
             <Input id="amount" v-model="form.amount" inputmode="decimal" placeholder="150.00" />
             <p v-if="form.errors.amount" class="text-destructive text-sm">{{ form.errors.amount }}</p>
-        </div>
-
-        <div class="flex items-center justify-between gap-4 rounded-lg border p-3">
-            <div>
-                <Label for="is_active">Type actif</Label>
-                <p class="text-muted-foreground text-sm">Un type inactif n’est pas utilisé pour les nouveaux aperçus.</p>
-            </div>
-            <Switch id="is_active" v-model="form.is_active" />
         </div>
 
         <div class="grid gap-2 md:col-span-2">
