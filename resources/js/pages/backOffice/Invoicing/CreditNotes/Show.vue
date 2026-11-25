@@ -243,10 +243,10 @@ const statusLabel = computed(() => {
                     </template>
                 </AppAlertDialog>
                 <Button v-if="creditNote.status !== 'draft' && availableCents > 0 && canManage" variant="outline" @click="applyDialogOpen = true">
-                    Imputer à une facture
+                    Appliquer l’avoir à une facture
                 </Button>
                 <Button v-if="creditNote.status !== 'draft' && availableCents > 0 && canManage" variant="outline" @click="refundDialogOpen = true">
-                    Remboursement
+                    Enregistrer un remboursement
                 </Button>
                 <Button v-if="creditNote.status !== 'draft' && canManage && reversible" as-child variant="outline">
                     <Link :href="route('bo.invoicing.credit-notes.reversals.create', creditNote.id)">Créer un avoir d'annulation</Link>

@@ -159,7 +159,7 @@ const goToPage = (pageNumber: number): void => {
                             <th class="px-4 py-3 text-left font-medium">Client</th>
                             <th class="px-4 py-3 text-left font-medium">Échéance</th>
                             <th class="px-4 py-3 text-right font-medium">Total</th>
-                            <th class="px-4 py-3 text-left font-medium">Dernier envoi</th>
+                            <th class="px-4 py-3 text-left font-medium">Dernière tentative</th>
                             <th class="px-4 py-3 text-right font-medium">Actions</th>
                         </tr>
                     </thead>

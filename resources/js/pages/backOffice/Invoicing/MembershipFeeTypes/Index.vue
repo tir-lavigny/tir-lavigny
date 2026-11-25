@@ -53,7 +53,9 @@ const goToPage = (pageNumber: number) => {
         <div class="m-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
                 <H1>Types de cotisation</H1>
-                <p class="text-muted-foreground mt-2 text-sm">Un type de cotisation est requis pour chaque statut de membre lors de l’aperçu annuel.</p>
+                <p class="text-muted-foreground mt-2 text-sm">
+                    Un type de cotisation est requis pour chaque statut de membre lors de l’aperçu annuel.
+                </p>
             </div>
             <Button v-if="canManage" as-child>
                 <Link :href="route('bo.invoicing.membership-fee-types.create')"> <Plus class="mr-2 h-4 w-4" /> Nouveau type </Link>
@@ -70,7 +72,7 @@ const goToPage = (pageNumber: number) => {
                     </div>
                 </div>
                 <div class="grid gap-2 md:w-56">
-                    <Label for="member_status">Statut</Label>
+                    <Label for="member_status">Statut de membre</Label>
                     <Select v-model="memberStatusFilter">
                         <SelectTrigger id="member_status" class="w-full">
                             <SelectValue placeholder="Tous" />
@@ -88,8 +90,8 @@ const goToPage = (pageNumber: number) => {
                     <thead class="bg-muted/50">
                         <tr>
                             <th class="px-4 py-3 text-left font-medium">Nom</th>
-                            <th class="px-4 py-3 text-left font-medium">Statut</th>
-                            <th class="px-4 py-3 text-right font-medium">Montant</th>
+                            <th class="px-4 py-3 text-left font-medium">Statut de membre</th>
+                            <th class="px-4 py-3 text-right font-medium">Cotisation annuelle</th>
                             <th class="px-4 py-3 text-right font-medium">Actions</th>
                         </tr>
                     </thead>

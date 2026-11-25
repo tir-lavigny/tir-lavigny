@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppAlertDialog from '@/components/AppAlertDialog.vue';
 import AppPagination from '@/components/AppPagination.vue';
+import AppTooltipIconButton from '@/components/AppTooltipIconButton.vue';
 import { H1 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -225,18 +226,16 @@ const goToPage = (pageNumber: number) => {
                             <td class="px-4 py-3 text-right font-mono">{{ formatMoney((invoice.remaining_cents ?? 0) / 100) }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-1">
-                                    <Button as-child size="icon" variant="ghost">
-                                        <Link :href="route('bo.invoicing.invoices.show', invoice.id)">
-                                            <Eye class="h-4 w-4" />
-                                            <span class="sr-only">Voir</span>
-                                        </Link>
-                                    </Button>
-                                    <Button v-if="invoice.status === 'draft' && canCreate" as-child size="icon" variant="ghost">
-                                        <Link :href="route('bo.invoicing.invoices.edit', invoice.id)">
-                                            <Pencil class="h-4 w-4" />
-                                            <span class="sr-only">Modifier</span>
-                                        </Link>
-                                    </Button>
+                                    <AppTooltipIconButton label="Voir la facture" :href="route('bo.invoicing.invoices.show', invoice.id)">
+                                        <Eye class="h-4 w-4" />
+                                    </AppTooltipIconButton>
+                                    <AppTooltipIconButton
+                                        v-if="invoice.status === 'draft' && canCreate"
+                                        label="Modifier le brouillon"
+                                        :href="route('bo.invoicing.invoices.edit', invoice.id)"
+                                    >
+                                        <Pencil class="h-4 w-4" />
+                                    </AppTooltipIconButton>
                                     <AppAlertDialog
                                         v-if="invoice.status === 'draft' && canIssue"
                                         title="Émettre cette facture ?"
@@ -244,24 +243,21 @@ const goToPage = (pageNumber: number) => {
                                         cancel-text="Annuler"
                                     >
                                         <template #trigger>
-                                            <Button size="icon" variant="ghost">
+                                            <AppTooltipIconButton label="Émettre la facture">
                                                 <CheckCircle2 class="h-4 w-4" />
-                                                <span class="sr-only">Émettre</span>
-                                            </Button>
+                                            </AppTooltipIconButton>
                                         </template>
                                         <template #action>
                                             <Button @click="issueInvoice(invoice)">Émettre</Button>
                                         </template>
                                     </AppAlertDialog>
-                                    <Button
+                                    <AppTooltipIconButton
                                         v-if="invoice.status === 'issued' && canCancel"
-                                        size="icon"
-                                        variant="ghost"
+                                        label="Annuler la facture"
                                         @click="openCancelDialog(invoice)"
                                     >
                                         <XCircle class="h-4 w-4" />
-                                        <span class="sr-only">Annuler</span>
-                                    </Button>
+                                    </AppTooltipIconButton>
                                     <AppAlertDialog
                                         v-if="invoice.status === 'draft' && canCreate"
                                         title="Supprimer ce brouillon ?"
@@ -269,10 +265,9 @@ const goToPage = (pageNumber: number) => {
                                         cancel-text="Annuler"
                                     >
                                         <template #trigger>
-                                            <Button size="icon" variant="ghost">
+                                            <AppTooltipIconButton label="Supprimer le brouillon" variant="destructive">
                                                 <Trash2 class="h-4 w-4" />
-                                                <span class="sr-only">Supprimer</span>
-                                            </Button>
+                                            </AppTooltipIconButton>
                                         </template>
                                         <template #action>
                                             <Button variant="destructive" @click="deleteInvoice(invoice)">Supprimer</Button>
