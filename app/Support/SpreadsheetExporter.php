@@ -9,6 +9,10 @@ use Throwable;
 
 class SpreadsheetExporter
 {
+    public function __construct(
+        private readonly ?string $temporaryDirectory = null,
+    ) {}
+
     /**
      * @param  array<int, string>  $headers
      * @param  iterable<int, array<int, int|string>>  $rows
@@ -21,7 +25,7 @@ class SpreadsheetExporter
         iterable $rows,
         array $widths = [],
     ): StreamedResponse {
-        $path = tempnam(sys_get_temp_dir(), 'invoicing-export-');
+        $path = tempnam($this->temporaryDirectory ?? sys_get_temp_dir(), 'invoicing-export-');
 
         if ($path === false) {
             abort(500, 'Le fichier d’export n’a pas pu être créé.');
