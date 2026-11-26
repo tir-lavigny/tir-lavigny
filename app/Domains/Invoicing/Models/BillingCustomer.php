@@ -12,10 +12,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property BillingCustomerType $type
  * @property InvoiceDeliveryMethod $preferred_invoice_delivery
+ * @property bool $sync_with_member
+ * @property Carbon|null $last_synced_at
  */
 #[UsePolicy(BillingCustomerPolicy::class)]
 class BillingCustomer extends Model
@@ -36,6 +39,8 @@ class BillingCustomer extends Model
         'email',
         'phone',
         'preferred_invoice_delivery',
+        'sync_with_member',
+        'last_synced_at',
     ];
 
     protected function casts(): array
@@ -43,6 +48,8 @@ class BillingCustomer extends Model
         return [
             'type' => BillingCustomerType::class,
             'preferred_invoice_delivery' => InvoiceDeliveryMethod::class,
+            'sync_with_member' => 'boolean',
+            'last_synced_at' => 'datetime',
         ];
     }
 

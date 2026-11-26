@@ -28,6 +28,7 @@ const formDefaults = {
     email: '',
     phone: '',
     preferred_invoice_delivery: 'email',
+    sync_with_member: true,
 };
 
 const submit = (form: any) => {

@@ -24,9 +24,12 @@ class SyncMemberBillingCustomer
 
         if ($billingCustomer->exists) {
             unset($attributes['preferred_invoice_delivery']);
+        } else {
+            $billingCustomer->sync_with_member = true;
         }
 
         $billingCustomer->fill($attributes);
+        $billingCustomer->last_synced_at = now();
         $billingCustomer->save();
 
         return $billingCustomer;

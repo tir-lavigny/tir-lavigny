@@ -97,6 +97,8 @@ export interface BillingCustomer {
     email: string | null;
     phone: string | null;
     preferred_invoice_delivery: 'email' | 'postal';
+    sync_with_member: boolean;
+    last_synced_at: string | null;
     member?: {
         id: number;
         first_name: string;

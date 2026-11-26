@@ -2,14 +2,17 @@
 
 namespace App\Providers;
 
+use App\Domains\Invoicing\Listeners\SyncBillingCustomerFromMember;
 use App\Domains\Invoicing\Services\FinancialDocumentGenerator;
 use App\Domains\Invoicing\Services\PdfFinancialDocumentGenerator;
+use App\Events\MemberProfileUpdated;
 use App\Services\DavServiceInterface;
 use App\Services\InfomaniakDavService;
 use App\Services\StubDavService;
 use App\TokenAbility;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -43,6 +46,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(MemberProfileUpdated::class, SyncBillingCustomerFromMember::class);
+
         $this->overrideSanctumConfigurationToSupportRefreshToken();
         $this->defineRateLimiters();
     }
