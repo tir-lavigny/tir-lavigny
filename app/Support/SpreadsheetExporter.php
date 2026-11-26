@@ -5,6 +5,7 @@ namespace App\Support;
 use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class SpreadsheetExporter
 {
@@ -26,33 +27,61 @@ class SpreadsheetExporter
             abort(500, 'Le fichier d’export n’a pas pu être créé.');
         }
 
-        $writer = SimpleExcelWriter::create(
-            file: $path,
-            type: $format,
-            configureWriter: function (object $writer) use ($widths): void {
-                if ($writer instanceof XlsxWriter) {
-                    foreach ($widths as $columnIndex => $width) {
-                        $writer->getOptions()->setColumnWidth($width, max(1, $columnIndex));
+        try {
+            $writer = SimpleExcelWriter::create(
+                file: $path,
+                type: $format,
+                configureWriter: function (object $writer) use ($widths): void {
+                    if ($writer instanceof XlsxWriter) {
+                        foreach ($widths as $columnIndex => $width) {
+                            $writer->getOptions()->setColumnWidth($width, max(1, $columnIndex));
+                        }
                     }
-                }
-            },
-            delimiter: $format === 'csv' ? ',' : null,
-            shouldAddBom: $format === 'csv',
-        );
+                },
+                delimiter: $format === 'csv' ? ',' : null,
+                shouldAddBom: $format === 'csv',
+            );
 
-        $writer->noHeaderRow();
-        $writer->addHeader($headers);
+            $writer->noHeaderRow();
+            $writer->addHeader($headers);
 
-        foreach ($rows as $row) {
-            $writer->addRow($row);
+            foreach ($rows as $row) {
+                $writer->addRow(array_map($this->sanitizeCell(...), $row));
+            }
+
+            $writer->close();
+        } catch (Throwable $exception) {
+            @unlink($path);
+
+            throw $exception;
         }
 
-        $writer->close();
-
         return response()->streamDownload(function () use ($path): void {
-            readfile($path);
-            @unlink($path);
+            try {
+                readfile($path);
+            } finally {
+                @unlink($path);
+            }
         }, $fileName, ['Content-Type' => $this->contentType($format)]);
+    }
+
+    private function sanitizeCell(int|string $value): int|string
+    {
+        if (! is_string($value) || $value === '') {
+            return $value;
+        }
+
+        $firstCharacter = $value[0];
+
+        if (! in_array($firstCharacter, ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return $value;
+        }
+
+        if (in_array($firstCharacter, ['+', '-'], true) && is_numeric($value)) {
+            return $value;
+        }
+
+        return "'".$value;
     }
 
     private function contentType(string $format): string

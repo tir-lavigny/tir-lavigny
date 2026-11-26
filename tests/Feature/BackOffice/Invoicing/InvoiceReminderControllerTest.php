@@ -21,6 +21,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia as Assert;
+use RuntimeException;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
 use Tests\Support\IssuesInvoices;
@@ -175,6 +176,44 @@ class InvoiceReminderControllerTest extends TestCase
         ]);
     }
 
+    public function test_reminder_email_job_marks_failed_after_smtp_retries_are_exhausted(): void
+    {
+        Queue::fake();
+        Carbon::setTestNow('2027-03-01 12:00:00');
+        $invoice = $this->issueInvoice();
+        $reminder = app(SendInvoiceReminderEmail::class)->execute($invoice, User::firstOrFail());
+        Mail::shouldReceive('to')->once()->andThrow(new RuntimeException('SMTP indisponible'));
+        $job = new SendInvoiceReminderEmailJob($reminder->id);
+
+        try {
+            $job->handle(
+                app(InvoiceReminderPdfGenerator::class),
+                app(InvoiceActivityLogger::class),
+                app(InvoiceBalanceCalculator::class),
+                app(InvoicingSettingsService::class),
+            );
+            $this->fail('The reminder job should have rethrown the mail exception.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('SMTP indisponible', $exception->getMessage());
+        }
+
+        $reminder->refresh();
+        $this->assertSame(DeliveryStatus::Pending, $reminder->status);
+        $this->assertNull($reminder->processed_at);
+        $this->assertSame('SMTP indisponible', $reminder->error);
+
+        $job->failed(new RuntimeException('SMTP indisponible'));
+
+        $reminder->refresh();
+        $this->assertSame(DeliveryStatus::Failed, $reminder->status);
+        $this->assertNotNull($reminder->processed_at);
+        $this->assertSame('SMTP indisponible', $reminder->error);
+        $this->assertDatabaseHas('invoice_activity_logs', [
+            'invoice_id' => $invoice->id,
+            'action' => 'invoice.reminder_failed',
+        ]);
+    }
+
     public function test_postal_reminder_generates_a_printable_pdf_and_tracks_history(): void
     {
         Carbon::setTestNow('2027-03-01 12:00:00');
@@ -198,6 +237,30 @@ class InvoiceReminderControllerTest extends TestCase
         $this->assertDatabaseHas('invoice_activity_logs', [
             'invoice_id' => $invoice->id,
             'action' => 'invoice.reminder_printed',
+        ]);
+    }
+
+    public function test_postal_reminder_marks_failed_when_pdf_generation_fails(): void
+    {
+        Carbon::setTestNow('2027-03-01 12:00:00');
+        $invoice = $this->issueInvoice(InvoiceDeliveryMethod::Postal);
+        $this->mock(InvoiceReminderPdfGenerator::class, function ($mock): void {
+            $mock->shouldReceive('generate')->once()->andThrow(new RuntimeException('PDF indisponible'));
+        });
+
+        $response = $this->post(route('bo.invoicing.invoices.reminders.print', $invoice), [], ['Accept' => 'application/json']);
+
+        $response->assertStatus(422)->assertJson([
+            'message' => 'Le rappel postal n’a pas pu être généré : PDF indisponible',
+        ]);
+
+        $reminder = InvoiceReminder::sole();
+        $this->assertSame(DeliveryStatus::Failed, $reminder->status);
+        $this->assertNotNull($reminder->processed_at);
+        $this->assertSame('PDF indisponible', $reminder->error);
+        $this->assertDatabaseHas('invoice_activity_logs', [
+            'invoice_id' => $invoice->id,
+            'action' => 'invoice.reminder_failed',
         ]);
     }
 
