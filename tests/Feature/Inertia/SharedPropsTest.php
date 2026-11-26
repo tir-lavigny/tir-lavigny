@@ -180,6 +180,14 @@ class SharedPropsTest extends TestCase
             );
     }
 
+    public function test_guests_do_not_receive_unfiltered_ziggy_in_html(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertDontSee('Ziggy=', false)
+            ->assertDontSee('bo.users.index', false);
+    }
+
     public function test_ziggy_keeps_public_routes_for_guests(): void
     {
         $this->get('/')
