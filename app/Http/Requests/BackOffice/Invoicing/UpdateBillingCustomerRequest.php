@@ -51,6 +51,7 @@ class UpdateBillingCustomerRequest extends FormRequest
             ],
             'phone' => ['nullable', 'string', 'max:50'],
             'preferred_invoice_delivery' => ['required', Rule::enum(InvoiceDeliveryMethod::class)],
+            'sync_with_member' => ['nullable', 'boolean'],
         ];
     }
 

@@ -68,6 +68,7 @@ class InvoicingSchemaTest extends TestCase
         $this->assertTrue(Schema::hasColumns('invoice_deliveries', ['batch_id', 'error']));
         $this->assertTrue(Schema::hasColumns('invoice_reminders', ['error']));
         $this->assertTrue(Schema::hasColumns('payments', ['idempotency_key', 'voided_at', 'voided_by', 'void_reason']));
+        $this->assertTrue(Schema::hasColumns('billing_customers', ['sync_with_member', 'last_synced_at']));
         $this->assertTrue(Schema::hasColumns('invoice_payments', [
             'idempotency_key',
             'reversed_at',

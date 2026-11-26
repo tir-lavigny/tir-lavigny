@@ -3,6 +3,7 @@ import BillingCustomerForm from '@/components/back-office/Invoicing/BillingCusto
 import { H1, H3 } from '@/components/typography/headings';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDate } from '@/lib/utils';
 import type { BillingCustomer, BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { RefreshCw } from '@lucide/vue';
@@ -32,6 +33,7 @@ const formDefaults = computed(() => ({
     email: props.billingCustomer.email ?? '',
     phone: props.billingCustomer.phone ?? '',
     preferred_invoice_delivery: props.billingCustomer.preferred_invoice_delivery,
+    sync_with_member: props.billingCustomer.sync_with_member,
 }));
 
 const submit = (form: any) => {
@@ -70,6 +72,9 @@ const syncMember = () => {
                 {{ billingCustomer.member.first_name }} {{ billingCustomer.member.last_name }}
                 <span v-if="billingCustomer.member.email">· {{ billingCustomer.member.email }}</span>
             </p>
+            <p v-if="billingCustomer.last_synced_at" class="text-muted-foreground mt-1 text-xs">
+                Dernière synchronisation : {{ formatDate(billingCustomer.last_synced_at, 'DD.MM.YYYY HH:mm') }}
+            </p>
         </div>
 
         <div class="border-sidebar-border/70 dark:border-sidebar-border mx-4 rounded-xl border p-4">
@@ -77,6 +82,7 @@ const syncMember = () => {
                 :form-defaults="formDefaults"
                 :types="types"
                 :delivery-methods="deliveryMethods"
+                :member-linked="billingCustomer.member_id !== null"
                 submit-label="Enregistrer"
                 :on-submit="submit"
             />

@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useForm } from '@inertiajs/vue3';
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
 
 const props = defineProps<{
     formDefaults: {
@@ -20,14 +21,17 @@ const props = defineProps<{
         email: string;
         phone: string;
         preferred_invoice_delivery: string;
+        sync_with_member: boolean;
     };
     types: Array<{ value: string; label: string }>;
     deliveryMethods: Array<{ value: string; label: string }>;
     submitLabel: string;
+    memberLinked?: boolean;
     onSubmit: (form: any) => void;
 }>();
 
 const form = useForm({ ...props.formDefaults });
+const identityLocked = computed(() => props.memberLinked === true && form.sync_with_member === true);
 
 watch(
     () => props.formDefaults,
@@ -47,10 +51,26 @@ defineExpose({ form });
 
 <template>
     <form class="flex flex-col gap-6" @submit.prevent="handleSubmit">
+        <div v-if="memberLinked" class="border-sidebar-border/70 dark:border-sidebar-border flex flex-col gap-3 rounded-xl border p-4">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <Label for="sync_with_member">Synchroniser avec le membre</Label>
+                    <p class="text-muted-foreground mt-1 text-sm">
+                        Les coordonnées sont reprises du membre. Désactivez la synchronisation pour utiliser une adresse de facturation différente.
+                    </p>
+                </div>
+                <Switch id="sync_with_member" v-model="form.sync_with_member" />
+            </div>
+            <p v-if="identityLocked" class="text-muted-foreground text-xs">
+                Les champs d’identité et d’adresse sont gérés depuis la fiche du membre.
+            </p>
+            <InputError :message="form.errors.sync_with_member" />
+        </div>
+
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div class="grid gap-2">
                 <Label for="type">Type de client</Label>
-                <Select v-model="form.type">
+                <Select v-model="form.type" :disabled="identityLocked">
                     <SelectTrigger id="type" class="w-full">
                         <SelectValue placeholder="Sélectionner un type" />
                     </SelectTrigger>
@@ -80,6 +100,7 @@ defineExpose({ form });
                         id="organization_name"
                         v-model="form.organization_name"
                         type="text"
+                        :disabled="identityLocked"
                         placeholder="Nom de l'organisation"
                         maxlength="255"
                         required
@@ -90,34 +111,34 @@ defineExpose({ form });
             <template v-else>
                 <div class="grid gap-2">
                     <Label for="first_name">Prénom</Label>
-                    <Input id="first_name" v-model="form.first_name" type="text" placeholder="Prénom" maxlength="255" required />
+                    <Input id="first_name" v-model="form.first_name" type="text" placeholder="Prénom" maxlength="255" required :disabled="identityLocked" />
                     <InputError :message="form.errors.first_name" />
                 </div>
                 <div class="grid gap-2">
                     <Label for="last_name">Nom</Label>
-                    <Input id="last_name" v-model="form.last_name" type="text" placeholder="Nom" maxlength="255" required />
+                    <Input id="last_name" v-model="form.last_name" type="text" placeholder="Nom" maxlength="255" required :disabled="identityLocked" />
                     <InputError :message="form.errors.last_name" />
                 </div>
             </template>
 
             <div class="grid gap-2 md:col-span-2">
                 <Label for="address">Adresse</Label>
-                <Input id="address" v-model="form.address" type="text" placeholder="Rue et numéro" maxlength="255" required />
+                <Input id="address" v-model="form.address" type="text" placeholder="Rue et numéro" maxlength="255" required :disabled="identityLocked" />
                 <InputError :message="form.errors.address" />
             </div>
             <div class="grid gap-2">
                 <Label for="postal_code">Code postal</Label>
-                <Input id="postal_code" v-model="form.postal_code" type="text" placeholder="1000" maxlength="20" required />
+                <Input id="postal_code" v-model="form.postal_code" type="text" placeholder="1000" maxlength="20" required :disabled="identityLocked" />
                 <InputError :message="form.errors.postal_code" />
             </div>
             <div class="grid gap-2">
                 <Label for="city">Ville</Label>
-                <Input id="city" v-model="form.city" type="text" placeholder="Ville" maxlength="255" required />
+                <Input id="city" v-model="form.city" type="text" placeholder="Ville" maxlength="255" required :disabled="identityLocked" />
                 <InputError :message="form.errors.city" />
             </div>
             <div class="grid gap-2">
                 <Label for="country">Pays</Label>
-                <Input id="country" v-model="form.country" type="text" placeholder="CH" maxlength="2" required />
+                <Input id="country" v-model="form.country" type="text" placeholder="CH" maxlength="2" required :disabled="identityLocked" />
                 <InputError :message="form.errors.country" />
             </div>
             <div class="grid gap-2">
@@ -129,12 +150,13 @@ defineExpose({ form });
                     placeholder="Email"
                     maxlength="255"
                     :required="form.preferred_invoice_delivery === 'email'"
+                    :disabled="identityLocked"
                 />
                 <InputError :message="form.errors.email" />
             </div>
             <div class="grid gap-2">
                 <Label for="phone">Téléphone</Label>
-                <Input id="phone" v-model="form.phone" type="tel" placeholder="Téléphone" maxlength="50" />
+                <Input id="phone" v-model="form.phone" type="tel" placeholder="Téléphone" maxlength="50" :disabled="identityLocked" />
                 <InputError :message="form.errors.phone" />
             </div>
         </div>
