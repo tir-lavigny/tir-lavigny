@@ -17,6 +17,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Throwable;
@@ -76,6 +77,12 @@ class SendInvoiceReminderEmailJob implements ShouldQueue
                 $settings->replyToEmail(),
             ));
         } catch (Throwable $exception) {
+            Log::warning('Invoice reminder email failed', [
+                'invoice_reminder_id' => $reminder->id,
+                'invoice_id' => $invoice->id,
+                'exception' => $exception,
+            ]);
+
             $reminder->update([
                 'error' => Str::limit($exception->getMessage(), 1000),
                 'processed_at' => null,
@@ -113,6 +120,13 @@ class SendInvoiceReminderEmailJob implements ShouldQueue
             $this->markFailed($reminder, $exception);
         }
 
+        Log::error('Invoice reminder email permanently failed', [
+            'invoice_reminder_id' => $reminder->id,
+            'invoice_id' => $reminder->invoice_id,
+            'error' => $reminder->error,
+            'exception' => $exception,
+        ]);
+
         app(InvoiceActivityLogger::class)->record($reminder->invoice, 'invoice.reminder_failed', $reminder->processor, metadata: [
             'invoice_reminder_id' => $reminder->id,
             'channel' => InvoiceDeliveryMethod::Email->value,
@@ -126,6 +140,12 @@ class SendInvoiceReminderEmailJob implements ShouldQueue
         string $message,
     ): void {
         $this->markFailed($reminder, $message);
+
+        Log::warning('Invoice reminder email rejected', [
+            'invoice_reminder_id' => $reminder->id,
+            'invoice_id' => $reminder->invoice_id,
+            'error' => $reminder->error,
+        ]);
 
         $logger->record($reminder->invoice, 'invoice.reminder_failed', $reminder->processor, metadata: [
             'invoice_reminder_id' => $reminder->id,

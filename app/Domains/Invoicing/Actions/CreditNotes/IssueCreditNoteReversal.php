@@ -15,6 +15,7 @@ use App\Domains\Invoicing\Services\FinancialDocumentGenerator;
 use App\Domains\Invoicing\Services\InvoiceActivityLogger;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class IssueCreditNoteReversal
@@ -66,6 +67,16 @@ class IssueCreditNoteReversal
             try {
                 $pdf = $this->documents->creditNoteReversal($locked);
             } catch (Throwable $exception) {
+                report($exception);
+
+                Log::error('Credit note reversal PDF generation failed', [
+                    'credit_note_reversal_id' => $locked->id,
+                    'credit_note_reversal_number' => $number,
+                    'credit_note_id' => $creditNote->id,
+                    'user_id' => $actor->id,
+                    'exception' => $exception,
+                ]);
+
                 throw CreditNoteReversalNotIssuable::for($locked, 'the PDF document could not be generated. '.$exception->getMessage());
             }
 

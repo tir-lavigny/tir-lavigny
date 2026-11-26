@@ -14,6 +14,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -87,6 +88,13 @@ class SendInvoiceEmailJob implements ShouldQueue
         try {
             Mail::to($delivery->recipient)->send(new InvoiceIssuedMail($invoice, $pdf, $settings->replyToEmail()));
         } catch (Throwable $exception) {
+            Log::warning('Invoice email delivery failed', [
+                'invoice_delivery_id' => $delivery->id,
+                'invoice_id' => $invoice->id,
+                'batch_id' => $delivery->batch_id,
+                'exception' => $exception,
+            ]);
+
             $delivery->update([
                 'error' => Str::limit($exception->getMessage(), 1000),
                 'processed_at' => null,
@@ -127,6 +135,14 @@ class SendInvoiceEmailJob implements ShouldQueue
             $this->markFailed($delivery, $exception);
         }
 
+        Log::error('Invoice email delivery permanently failed', [
+            'invoice_delivery_id' => $delivery->id,
+            'invoice_id' => $delivery->invoice_id,
+            'batch_id' => $delivery->batch_id,
+            'error' => $delivery->error,
+            'exception' => $exception,
+        ]);
+
         app(InvoiceActivityLogger::class)->record(
             $delivery->invoice,
             'invoice.email_failed',
@@ -145,6 +161,13 @@ class SendInvoiceEmailJob implements ShouldQueue
         string $message,
     ): void {
         $this->markFailed($delivery, $message);
+
+        Log::warning('Invoice email delivery rejected', [
+            'invoice_delivery_id' => $delivery->id,
+            'invoice_id' => $delivery->invoice_id,
+            'batch_id' => $delivery->batch_id,
+            'error' => $delivery->error,
+        ]);
 
         $logger->record($delivery->invoice, 'invoice.email_failed', $delivery->processor, metadata: [
             'invoice_delivery_id' => $delivery->id,

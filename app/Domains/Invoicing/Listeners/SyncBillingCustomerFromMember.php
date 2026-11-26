@@ -6,6 +6,7 @@ use App\Domains\Invoicing\Actions\Customers\SyncMemberBillingCustomer;
 use App\Domains\Invoicing\Exceptions\CannotInvoiceAnonymizedMember;
 use App\Domains\Invoicing\Models\BillingCustomer;
 use App\Events\MemberProfileUpdated;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class SyncBillingCustomerFromMember
@@ -36,6 +37,12 @@ class SyncBillingCustomerFromMember
             return;
         } catch (Throwable $exception) {
             report($exception);
+
+            Log::error('Billing customer auto-sync failed', [
+                'member_id' => $member->id,
+                'billing_customer_id' => $billingCustomer->id,
+                'exception' => $exception,
+            ]);
         }
     }
 }

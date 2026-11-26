@@ -18,6 +18,8 @@ use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Exceptions;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -182,6 +184,7 @@ class InvoiceReminderControllerTest extends TestCase
         Carbon::setTestNow('2027-03-01 12:00:00');
         $invoice = $this->issueInvoice();
         $reminder = app(SendInvoiceReminderEmail::class)->execute($invoice, User::firstOrFail());
+        Log::spy();
         Mail::shouldReceive('to')->once()->andThrow(new RuntimeException('SMTP indisponible'));
         $job = new SendInvoiceReminderEmailJob($reminder->id);
 
@@ -197,12 +200,24 @@ class InvoiceReminderControllerTest extends TestCase
             $this->assertSame('SMTP indisponible', $exception->getMessage());
         }
 
+        Log::shouldHaveReceived('warning')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Invoice reminder email failed'
+                && $context['invoice_reminder_id'] === $reminder->id
+                && $context['invoice_id'] === $invoice->id,
+        );
+
         $reminder->refresh();
         $this->assertSame(DeliveryStatus::Pending, $reminder->status);
         $this->assertNull($reminder->processed_at);
         $this->assertSame('SMTP indisponible', $reminder->error);
 
         $job->failed(new RuntimeException('SMTP indisponible'));
+
+        Log::shouldHaveReceived('error')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Invoice reminder email permanently failed'
+                && $context['invoice_reminder_id'] === $reminder->id
+                && $context['error'] === 'SMTP indisponible',
+        );
 
         $reminder->refresh();
         $this->assertSame(DeliveryStatus::Failed, $reminder->status);
@@ -244,6 +259,8 @@ class InvoiceReminderControllerTest extends TestCase
     {
         Carbon::setTestNow('2027-03-01 12:00:00');
         $invoice = $this->issueInvoice(InvoiceDeliveryMethod::Postal);
+        Exceptions::fake();
+        Log::spy();
         $this->mock(InvoiceReminderPdfGenerator::class, function ($mock): void {
             $mock->shouldReceive('generate')->once()->andThrow(new RuntimeException('PDF indisponible'));
         });
@@ -255,6 +272,12 @@ class InvoiceReminderControllerTest extends TestCase
         ]);
 
         $reminder = InvoiceReminder::sole();
+        Exceptions::assertReported(fn (RuntimeException $exception): bool => $exception->getMessage() === 'PDF indisponible');
+        Log::shouldHaveReceived('error')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Postal reminder PDF generation failed'
+                && $context['invoice_id'] === $invoice->id
+                && $context['invoice_reminder_id'] === $reminder->id,
+        );
         $this->assertSame(DeliveryStatus::Failed, $reminder->status);
         $this->assertNotNull($reminder->processed_at);
         $this->assertSame('PDF indisponible', $reminder->error);

@@ -63,13 +63,18 @@ class FinancialDocumentArchiver
                 'archived_at' => now(),
             ]);
         } catch (Throwable $exception) {
+            report($exception);
+
             $document->update([
                 'status' => FinancialDocumentStatus::Failed,
                 'error' => Str::limit($exception->getMessage(), 1000),
             ]);
 
-            Log::error('Impossible d’archiver un document de facturation.', [
+            Log::error('Financial document archiving failed', [
                 'financial_document_id' => $document->id,
+                'documentable_type' => $document->documentable_type,
+                'documentable_id' => $document->documentable_id,
+                'disk' => $document->disk,
                 'path' => $document->path,
                 'exception' => $exception,
             ]);

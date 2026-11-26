@@ -19,6 +19,7 @@ use App\Domains\Invoicing\Services\FinancialDocumentGenerator;
 use App\Domains\Invoicing\Services\InvoiceActivityLogger;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class IssueCreditNote
@@ -76,6 +77,16 @@ class IssueCreditNote
             try {
                 $pdf = $this->documents->creditNote($locked);
             } catch (Throwable $exception) {
+                report($exception);
+
+                Log::error('Credit note PDF generation failed', [
+                    'credit_note_id' => $locked->id,
+                    'credit_note_number' => $number,
+                    'invoice_id' => $invoice->id,
+                    'user_id' => $actor->id,
+                    'exception' => $exception,
+                ]);
+
                 throw CreditNoteNotIssuable::for($locked, 'the PDF document could not be generated. '.$exception->getMessage());
             }
 

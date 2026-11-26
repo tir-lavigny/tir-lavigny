@@ -10,6 +10,7 @@ use App\Domains\Invoicing\Models\InvoiceReminder;
 use App\Domains\Invoicing\Services\InvoiceActivityLogger;
 use App\Domains\Invoicing\Services\InvoiceReminderPdfGenerator;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -31,6 +32,15 @@ class PrintInvoiceReminder
         try {
             $pdf = $this->pdfGenerator->generate($reminder);
         } catch (Throwable $exception) {
+            report($exception);
+
+            Log::error('Postal reminder PDF generation failed', [
+                'invoice_id' => $invoice->id,
+                'invoice_reminder_id' => $reminder->id,
+                'user_id' => $actor->id,
+                'exception' => $exception,
+            ]);
+
             $error = Str::limit($exception->getMessage(), 1000);
 
             $reminder->update([

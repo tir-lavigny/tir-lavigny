@@ -15,6 +15,7 @@ use App\Mail\InvoiceIssuedMail;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -119,6 +120,7 @@ class InvoiceEmailDeliveryTest extends TestCase
         Queue::fake();
         $invoice = $this->issueInvoice();
         $delivery = app(SendInvoiceEmail::class)->execute($invoice, User::firstOrFail());
+        Log::spy();
         Mail::shouldReceive('to')->once()->andThrow(new RuntimeException('SMTP indisponible'));
         $job = new SendInvoiceEmailJob($delivery->id);
 
@@ -129,11 +131,23 @@ class InvoiceEmailDeliveryTest extends TestCase
             $this->assertSame('SMTP indisponible', $exception->getMessage());
         }
 
+        Log::shouldHaveReceived('warning')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Invoice email delivery failed'
+                && $context['invoice_delivery_id'] === $delivery->id
+                && $context['invoice_id'] === $invoice->id,
+        );
+
         $delivery->refresh();
         $this->assertSame(DeliveryStatus::Pending, $delivery->status);
         $this->assertSame('SMTP indisponible', $delivery->error);
 
         $job->failed(new RuntimeException('SMTP indisponible'));
+
+        Log::shouldHaveReceived('error')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Invoice email delivery permanently failed'
+                && $context['invoice_delivery_id'] === $delivery->id
+                && $context['error'] === 'SMTP indisponible',
+        );
 
         $delivery->refresh();
         $this->assertSame(DeliveryStatus::Failed, $delivery->status);

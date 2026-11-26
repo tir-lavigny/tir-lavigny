@@ -17,6 +17,7 @@ use App\Domains\Invoicing\Services\InvoicingSettingsService;
 use App\Domains\Invoicing\Services\PaymentReferenceGenerator;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class IssueInvoice
@@ -90,6 +91,15 @@ class IssueInvoice
             try {
                 $pdf = $this->documents->invoice($locked);
             } catch (Throwable $exception) {
+                report($exception);
+
+                Log::error('Invoice PDF generation failed', [
+                    'invoice_id' => $locked->id,
+                    'invoice_number' => $invoiceNumber,
+                    'user_id' => $actor->id,
+                    'exception' => $exception,
+                ]);
+
                 throw InvoiceNotIssuable::for($locked, 'the PDF document could not be generated. '.$exception->getMessage());
             }
 

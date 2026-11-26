@@ -5,11 +5,14 @@ namespace App\Domains\Invoicing\Actions\MembershipFees;
 use App\Domains\Invoicing\Actions\Invoices\IssueInvoice;
 use App\Domains\Invoicing\Enums\InvoiceStatus;
 use App\Domains\Invoicing\Enums\MembershipFeeCampaignStatus;
+use App\Domains\Invoicing\Exceptions\InvoiceNotIssuable;
+use App\Domains\Invoicing\Exceptions\InvoicingSettingsMissing;
 use App\Domains\Invoicing\Exceptions\MembershipFeeException;
 use App\Domains\Invoicing\Models\MembershipFeeCampaign;
 use App\Domains\Invoicing\Services\InvoiceBalanceCalculator;
 use App\Domains\Invoicing\Services\MembershipFeeCampaignActivityLogger;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class IssueCampaignInvoices
@@ -47,6 +50,21 @@ class IssueCampaignInvoices
 
                 $issued++;
             } catch (Throwable $exception) {
+                $context = [
+                    'campaign_id' => $campaign->id,
+                    'invoice_id' => $invoice->id,
+                    'invoice_number' => $invoice->invoice_number,
+                    'user_id' => $actor->id,
+                    'exception' => $exception,
+                ];
+
+                if ($exception instanceof InvoiceNotIssuable || $exception instanceof InvoicingSettingsMissing) {
+                    Log::warning('Campaign invoice issuance skipped', $context);
+                } else {
+                    report($exception);
+                    Log::error('Campaign invoice issuance failed', $context);
+                }
+
                 $errors[] = "Facture #{$invoice->id} ({$invoice->recipient_name}) : {$exception->getMessage()}";
             }
         }

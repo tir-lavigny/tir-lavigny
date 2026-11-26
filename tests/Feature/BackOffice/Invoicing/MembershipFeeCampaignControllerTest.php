@@ -15,6 +15,7 @@ use App\Models\Member;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -394,10 +395,17 @@ class MembershipFeeCampaignControllerTest extends TestCase
         $this->post(route('bo.invoicing.membership-fee-campaigns.invoices.generate', $campaign));
 
         BillingCustomer::query()->where('member_id', $alice->id)->update(['email' => null]);
+        Log::spy();
 
         $response = $this->post(route('bo.invoicing.membership-fee-campaigns.invoices.issue', $campaign));
 
         $response->assertRedirect()->assertSessionHas('warning');
+        $failed = Invoice::where('status', InvoiceStatus::Draft)->firstOrFail();
+        Log::shouldHaveReceived('warning')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Campaign invoice issuance skipped'
+                && $context['campaign_id'] === $campaign->id
+                && $context['invoice_id'] === $failed->id,
+        );
         $this->assertSame(1, Invoice::where('status', InvoiceStatus::Issued)->count());
         $this->assertSame(1, Invoice::where('status', InvoiceStatus::Draft)->count());
         $this->assertSame(MembershipFeeCampaignStatus::Invoiced, $campaign->fresh()->status);

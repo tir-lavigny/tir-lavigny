@@ -26,6 +26,8 @@ use App\Domains\Invoicing\Services\FinancialDocumentGenerator;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Exceptions;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -35,6 +37,8 @@ class FinancialDocumentTest extends TestCase
 
     public function test_marks_document_failed_when_storage_write_fails(): void
     {
+        Exceptions::fake();
+        Log::spy();
         $invoice = Invoice::factory()->create();
         $document = FinancialDocument::create([
             'documentable_type' => $invoice->getMorphClass(),
@@ -47,6 +51,13 @@ class FinancialDocumentTest extends TestCase
         ]);
 
         app(FinancialDocumentArchiver::class)->store($document->id, '%PDF-1.4 fake');
+
+        Exceptions::assertReportedCount(1);
+        Log::shouldHaveReceived('error')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Financial document archiving failed'
+                && $context['financial_document_id'] === $document->id
+                && $context['documentable_id'] === $invoice->id,
+        );
 
         $document->refresh();
 
@@ -129,23 +140,9 @@ class FinancialDocumentTest extends TestCase
         $customer = BillingCustomer::factory()->create();
         $invoice = app(CreateInvoice::class)->execute($this->invoiceData($customer->id), $actor);
 
-        $this->app->instance(FinancialDocumentGenerator::class, new class implements FinancialDocumentGenerator
-        {
-            public function invoice(Invoice $invoice): string
-            {
-                throw new RuntimeException('Generator failed');
-            }
-
-            public function creditNote(CreditNote $creditNote): string
-            {
-                throw new RuntimeException('Generator failed');
-            }
-
-            public function creditNoteReversal(CreditNoteReversal $reversal): string
-            {
-                throw new RuntimeException('Generator failed');
-            }
-        });
+        Exceptions::fake();
+        Log::spy();
+        $this->app->instance(FinancialDocumentGenerator::class, $this->failingGenerator());
 
         try {
             app(IssueInvoice::class)->execute($invoice, $actor);
@@ -153,6 +150,12 @@ class FinancialDocumentTest extends TestCase
         } catch (InvoiceNotIssuable $exception) {
             $this->assertStringContainsString('PDF', $exception->getMessage());
         }
+
+        Exceptions::assertReported(fn (RuntimeException $exception): bool => $exception->getMessage() === 'Generator failed');
+        Log::shouldHaveReceived('error')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Invoice PDF generation failed'
+                && $context['invoice_id'] === $invoice->id,
+        );
 
         $this->assertSame('draft', $invoice->fresh()->status->value);
         $this->assertDatabaseCount('financial_documents', 0);
@@ -215,6 +218,8 @@ class FinancialDocumentTest extends TestCase
             ],
         ], $actor);
 
+        Exceptions::fake();
+        Log::spy();
         $this->app->instance(FinancialDocumentGenerator::class, $this->failingGenerator());
 
         try {
@@ -223,6 +228,13 @@ class FinancialDocumentTest extends TestCase
         } catch (CreditNoteNotIssuable $exception) {
             $this->assertStringContainsString('PDF', $exception->getMessage());
         }
+
+        Exceptions::assertReported(fn (RuntimeException $exception): bool => $exception->getMessage() === 'Generator failed');
+        Log::shouldHaveReceived('error')->withArgs(
+            fn (string $message, array $context): bool => $message === 'Credit note PDF generation failed'
+                && $context['credit_note_id'] === $creditNote->id
+                && $context['invoice_id'] === $invoice->id,
+        );
 
         $creditNote->refresh();
         $this->assertSame(CreditNoteStatus::Draft, $creditNote->status);

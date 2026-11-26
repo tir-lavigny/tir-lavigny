@@ -8,6 +8,7 @@ use App\Domains\Invoicing\Services\FinancialDocumentArchiver;
 use App\Domains\Invoicing\Services\FinancialDocumentGenerator;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class FinancialDocumentController extends Controller
@@ -23,6 +24,13 @@ class FinancialDocumentController extends Controller
             $financialDocument = $archiver->retry($financialDocument, $generator);
         } catch (Throwable $exception) {
             report($exception);
+
+            Log::error('Financial document retry failed', [
+                'financial_document_id' => $financialDocument->id,
+                'documentable_type' => $financialDocument->documentable_type,
+                'documentable_id' => $financialDocument->documentable_id,
+                'exception' => $exception,
+            ]);
 
             return back()->withErrors(['document' => 'Le PDF n’a pas pu être régénéré.']);
         }
