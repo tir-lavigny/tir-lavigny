@@ -160,6 +160,70 @@ class SharedPropsTest extends TestCase
             );
     }
 
+    public function test_ziggy_does_not_expose_privileged_routes_to_guests(): void
+    {
+        $this->get('/')
+            ->assertInertia(fn ($page) => $page
+                ->has('ziggy.routes')
+                ->where('ziggy.routes', fn ($routes) => ! isset(
+                    $routes['bo.users.index'],
+                    $routes['locations.index'],
+                    $routes['contents.index'],
+                    $routes['profile.edit'],
+                    $routes['api.register.tickets.store'],
+                    $routes['api.stock.locations.index'],
+                    $routes['test'],
+                    $routes['telescope'],
+                    $routes['scramble.docs.ui'],
+                    $routes['boost.browser-logs'],
+                ))
+            );
+    }
+
+    public function test_guests_do_not_receive_unfiltered_ziggy_in_html(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertDontSee('Ziggy=', false)
+            ->assertDontSee('bo.users.index', false);
+    }
+
+    public function test_ziggy_keeps_public_routes_for_guests(): void
+    {
+        $this->get('/')
+            ->assertInertia(fn ($page) => $page
+                ->where('ziggy.routes', fn ($routes) => isset(
+                    $routes['home'],
+                    $routes['events'],
+                    $routes['events.show'],
+                    $routes['shootings'],
+                    $routes['member-registration.store'],
+                    $routes['dashboard'],
+                ))
+            );
+    }
+
+    public function test_ziggy_exposes_back_office_routes_to_authenticated_users(): void
+    {
+        $user = $this->backOfficeUser();
+
+        $this->actingAs($user)
+            ->get('/back-office/dashboard')
+            ->assertInertia(fn ($page) => $page
+                ->where('ziggy.routes', fn ($routes) => isset(
+                    $routes['bo.users.index'],
+                    $routes['bo.register.products.index'],
+                    $routes['bo.members.index'],
+                    $routes['dashboard'],
+                ))
+                ->where('ziggy.routes', fn ($routes) => ! isset(
+                    $routes['telescope'],
+                    $routes['scramble.docs.ui'],
+                    $routes['boost.browser-logs'],
+                ))
+            );
+    }
+
     // ─── sidebarOpen ─────────────────────────────────────────────────────────
 
     public function test_sidebar_is_open_by_default_when_no_cookie(): void

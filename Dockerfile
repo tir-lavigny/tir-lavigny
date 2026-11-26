@@ -70,7 +70,8 @@ COPY . .
 
 COPY --from=composer-deps /var/www/vendor ./vendor
 
-RUN pnpm run build
+RUN pnpm run build \
+    && test -z "$(find public/build -name '*.map' -print -quit)"
 
 
 FROM php-base AS production

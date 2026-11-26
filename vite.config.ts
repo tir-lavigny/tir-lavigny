@@ -19,7 +19,7 @@ process.env.VITE_BUILD_TAG ??= (() => {
 
 export default defineConfig({
     build: {
-        sourcemap: (process.env.APP_ENV || 'local') === 'local',
+        sourcemap: process.env.APP_ENV === 'local',
     },
     server: {
         // Requis pour le HMR depuis un navigateur hôte quand Vite tourne dans Docker

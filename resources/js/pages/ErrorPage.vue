@@ -43,7 +43,7 @@ const description = computed(() => {
             <H1>{{ title }}</H1>
             <P>{{ description }}</P>
             <div class="mt-6">
-                <Link :href="route('home')"> <Button class="w-full"> Retour à l'accueil </Button> </Link>
+                <Link href="/"> <Button class="w-full"> Retour à l'accueil </Button> </Link>
             </div>
         </div>
     </div>
