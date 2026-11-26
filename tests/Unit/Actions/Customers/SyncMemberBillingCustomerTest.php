@@ -150,6 +150,23 @@ class SyncMemberBillingCustomerTest extends TestCase
         $this->assertSame(InvoiceDeliveryMethod::Postal, $updated->preferred_invoice_delivery);
     }
 
+    public function test_updating_billing_customer_does_not_change_member(): void
+    {
+        $member = Member::factory()->create(['first_name' => 'Alice', 'city' => 'Lausanne']);
+        $billingCustomer = app(SyncMemberBillingCustomer::class)->execute($member);
+        $billingCustomer->update(['sync_with_member' => false]);
+
+        $updated = app(UpdateBillingCustomer::class)->execute($billingCustomer, [
+            'first_name' => 'Bob',
+            'city' => 'Morges',
+        ]);
+
+        $this->assertSame('Bob', $updated->first_name);
+        $this->assertSame('Morges', $updated->city);
+        $this->assertSame('Alice', $member->fresh()->first_name);
+        $this->assertSame('Lausanne', $member->fresh()->city);
+    }
+
     public function test_keeps_preferred_delivery_method_on_resync(): void
     {
         $member = Member::factory()->create(['email' => 'member@example.test']);

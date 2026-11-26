@@ -253,6 +253,36 @@ class BillingCustomerControllerTest extends TestCase
         $this->assertSame(InvoiceDeliveryMethod::Postal, $billingCustomer->preferred_invoice_delivery);
     }
 
+    public function test_persists_automatic_sync_toggle_and_stops_member_sync(): void
+    {
+        $this->actingAsAdmin();
+        $member = Member::factory()->create(['city' => 'Lausanne']);
+        $billingCustomer = BillingCustomer::factory()->forMember($member)->create(['city' => 'Lausanne']);
+
+        $this->put(route('bo.invoicing.billing-customers.update', $billingCustomer), [
+            'type' => 'individual',
+            'first_name' => 'Alice',
+            'last_name' => 'Martin',
+            'organization_name' => '',
+            'address' => 'Rue du Lac 4',
+            'postal_code' => '1003',
+            'city' => 'Morges',
+            'country' => 'CH',
+            'email' => 'alice@example.test',
+            'phone' => '',
+            'preferred_invoice_delivery' => 'email',
+            'sync_with_member' => false,
+        ])->assertSessionHasNoErrors();
+
+        $billingCustomer->refresh();
+        $this->assertFalse($billingCustomer->sync_with_member);
+        $this->assertSame('Morges', $billingCustomer->city);
+
+        $member->update(['city' => 'Neuchâtel']);
+
+        $this->assertSame('Morges', $billingCustomer->fresh()->city);
+    }
+
     public function test_creates_billing_customer_from_member(): void
     {
         $this->actingAsAdmin();

@@ -68,7 +68,7 @@ class InvoiceReminderController extends Controller
     public function print(
         Invoice $invoice,
         PrintInvoiceReminder $printReminder,
-    ): StreamedResponse|JsonResponse|RedirectResponse {
+    ): StreamedResponse|JsonResponse {
         Gate::authorize('printReminder', $invoice);
 
         try {

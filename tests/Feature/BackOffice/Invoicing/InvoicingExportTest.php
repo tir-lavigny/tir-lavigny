@@ -70,6 +70,25 @@ class InvoicingExportTest extends TestCase
         $this->assertStringContainsString('100.00', $content);
     }
 
+    public function test_csv_export_neutralizes_formula_cells(): void
+    {
+        $this->invoicingAdmin();
+
+        Payment::factory()->create([
+            'amount_cents' => 10000,
+            'payment_date' => '2027-02-20',
+            'reference' => '=HYPERLINK("https://example.test")',
+        ]);
+
+        $response = $this->get(route('bo.invoicing.payments.export', ['format' => 'csv']));
+
+        $response->assertOk();
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString("'=HYPERLINK", $content);
+        $this->assertStringNotContainsString("\n=HYPERLINK", $content);
+    }
+
     public function test_campaign_csv_export_contains_member_rows(): void
     {
         $this->invoicingAdmin();
