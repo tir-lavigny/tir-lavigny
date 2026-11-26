@@ -49,6 +49,9 @@ jobs:
         env:
           APP_ENV: testing
 
+      - name: Verify no source maps in build
+        run: test -z "$(find public/build -name '*.map' -print -quit)"
+
       - name: Type Check
         run: pnpm run tsc
 
