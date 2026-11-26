@@ -73,6 +73,7 @@ class InvoicingReportingTest extends TestCase
                 ->where('summary.reminders_count', 1)
                 ->where('summary.status_counts.2.value', 'partially_paid')
                 ->where('summary.status_counts.2.count', 1)
+                ->where('invoicingConfigured', true)
             );
     }
 

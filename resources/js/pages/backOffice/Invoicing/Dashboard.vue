@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { H1, H3 } from '@/components/typography/headings';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatMoney } from '@/lib/utils';
-import type { BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { AlertTriangle, BellRing, Clock, FileText, Mail, Printer, Receipt, Wallet } from '@lucide/vue';
+import { formatMoney, hasAnyPermission, hasPermissionTo } from '@/lib/utils';
+import type { BreadcrumbItem, SharedData } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { AlertTriangle, BellRing, CalendarPlus, Clock, FileText, Mail, Printer, Receipt, Settings, UserPlus, Wallet } from '@lucide/vue';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -28,7 +29,18 @@ const props = defineProps<{
         status_counts: Array<{ value: string; label: string; count: number }>;
     };
     years: number[];
+    invoicingConfigured: boolean;
 }>();
+
+const page = usePage<SharedData>();
+const user = page.props.auth.user;
+
+const canCreatePayment = computed(() => hasAnyPermission(user, ['create payments', 'manage invoicing']));
+const canCreateInvoice = computed(() => props.invoicingConfigured && hasAnyPermission(user, ['create invoices', 'manage invoicing']));
+const canCreateCustomer = computed(() => hasPermissionTo(user, 'manage invoicing'));
+const canCreateCampaign = computed(() => hasAnyPermission(user, ['manage membership fees', 'manage invoicing']));
+const canViewReminders = computed(() => hasAnyPermission(user, ['view invoices', 'manage invoicing']));
+const canConfigureInvoicing = computed(() => hasPermissionTo(user, 'manage invoicing'));
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Tableau de bord facturation', href: route('bo.invoicing.dashboard') }];
 
@@ -62,6 +74,35 @@ const selectedYear = computed({
         </div>
 
         <div class="mx-4 flex flex-col gap-4">
+            <div class="border-sidebar-border/70 dark:border-sidebar-border rounded-xl border p-4">
+                <H3>Actions rapides</H3>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <Button v-if="canCreatePayment" as-child>
+                        <Link :href="route('bo.invoicing.payments.create')"><Wallet class="mr-2 h-4 w-4" /> Nouveau paiement</Link>
+                    </Button>
+                    <Button v-if="canCreateInvoice" variant="outline" as-child>
+                        <Link :href="route('bo.invoicing.invoices.create')"><FileText class="mr-2 h-4 w-4" /> Nouvelle facture</Link>
+                    </Button>
+                    <Button v-if="canCreateCustomer" variant="outline" as-child>
+                        <Link :href="route('bo.invoicing.billing-customers.create')"><UserPlus class="mr-2 h-4 w-4" /> Nouveau client</Link>
+                    </Button>
+                    <Button v-if="canCreateCampaign" variant="outline" as-child>
+                        <Link :href="route('bo.invoicing.membership-fee-campaigns.create')">
+                            <CalendarPlus class="mr-2 h-4 w-4" /> Nouvelle campagne
+                        </Link>
+                    </Button>
+                    <Button v-if="canViewReminders" variant="outline" as-child>
+                        <Link :href="route('bo.invoicing.reminders.overdue.index')"><BellRing class="mr-2 h-4 w-4" /> Rappels</Link>
+                    </Button>
+                    <Button v-if="!invoicingConfigured && canConfigureInvoicing" variant="outline" as-child>
+                        <Link :href="route('bo.invoicing.settings.edit')"><Settings class="mr-2 h-4 w-4" /> Configurer la facturation</Link>
+                    </Button>
+                </div>
+                <p v-if="!invoicingConfigured" class="text-muted-foreground mt-3 text-sm">
+                    La création et l’émission de factures sont bloquées tant que les paramètres de facturation sont incomplets.
+                </p>
+            </div>
+
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <Link class="block h-full" :href="route('bo.invoicing.invoices.index', { year: summary.year })">
                     <Card class="h-full transition hover:border-blue-400">
