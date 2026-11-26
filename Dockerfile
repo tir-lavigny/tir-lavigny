@@ -1,6 +1,6 @@
 ARG VCS_URL=https://github.com/tir-lavigny/tir-lavigny-laravel
 
-FROM php:8.4.28-fpm-alpine AS php-base
+FROM php:8.5.12-fpm-alpine AS php-base
 
 RUN apk upgrade --no-cache
 
