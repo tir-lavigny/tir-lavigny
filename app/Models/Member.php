@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\EncryptedMemberData;
 use App\Domains\Invoicing\Models\BillingCustomer;
+use App\Events\MemberProfileUpdated;
 use App\LogsActivity;
 use App\MemberStatus;
 use App\Support\MemberDataCipher;
@@ -151,6 +152,27 @@ class Member extends Model
                     ? null
                     : app(MemberDataCipher::class)->hash(preg_replace('/\D/', '', $avs) ?? '');
             }
+        });
+
+        static::created(function (Member $member): void {
+            MemberProfileUpdated::dispatch($member);
+        });
+
+        static::updated(function (Member $member): void {
+            if (! $member->wasChanged([
+                'first_name',
+                'last_name',
+                'email',
+                'tel',
+                'street',
+                'npa',
+                'city',
+                'country',
+            ])) {
+                return;
+            }
+
+            MemberProfileUpdated::dispatch($member);
         });
     }
 

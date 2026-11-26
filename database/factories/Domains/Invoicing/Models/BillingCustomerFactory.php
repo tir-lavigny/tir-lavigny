@@ -30,6 +30,8 @@ class BillingCustomerFactory extends Factory
             'email' => fake()->safeEmail(),
             'phone' => fake()->phoneNumber(),
             'preferred_invoice_delivery' => InvoiceDeliveryMethod::Email,
+            'sync_with_member' => true,
+            'last_synced_at' => null,
         ];
     }
 

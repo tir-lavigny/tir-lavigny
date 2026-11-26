@@ -10,10 +10,12 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import {
     BarChart3,
+    BellRing,
     Calendar,
     CalendarDays,
     ClipboardList,
     FileText,
+    LayoutDashboard,
     LayoutGrid,
     Mail,
     MapPin,
@@ -210,6 +212,11 @@ const invoicingNavItems: NavItem[] = [
     ...(hasAnyPermission(user, ['view invoices', 'manage invoicing'])
         ? [
               {
+                  title: 'Tableau de bord facturation',
+                  href: route('bo.invoicing.dashboard'),
+                  icon: LayoutDashboard,
+              },
+              {
                   title: 'Clients de facturation',
                   href: route('bo.invoicing.billing-customers.index'),
                   icon: Receipt,
@@ -218,6 +225,11 @@ const invoicingNavItems: NavItem[] = [
                   title: 'Factures',
                   href: route('bo.invoicing.invoices.index'),
                   icon: Receipt,
+              },
+              {
+                  title: 'Rappels',
+                  href: route('bo.invoicing.reminders.overdue.index'),
+                  icon: BellRing,
               },
               {
                   title: 'Avoirs',

@@ -12,11 +12,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useInvoicePrinting } from '@/composables/useInvoicePrinting';
+import { useInvoiceReminderPrinting } from '@/composables/useInvoiceReminderPrinting';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatMoney, hasAnyPermission, hasPermissionTo } from '@/lib/utils';
 import type { BreadcrumbItem, Invoice, SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { ArrowLeftRight, CheckCircle2, Download, Mail, Pencil, Printer, RefreshCw, Trash2, Wallet, XCircle } from '@lucide/vue';
+import { ArrowLeftRight, BellRing, CheckCircle2, Download, Mail, Pencil, Printer, RefreshCw, Trash2, Wallet, XCircle } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
@@ -36,6 +37,7 @@ const canCancel = computed(() => hasAnyPermission(user, ['cancel invoices', 'man
 const canManageInvoicing = computed(() => hasPermissionTo(user, 'manage invoicing'));
 const canSend = computed(() => hasAnyPermission(user, ['send invoices', 'manage invoicing']));
 const canCreatePayment = computed(() => hasAnyPermission(user, ['create payments', 'manage invoicing']));
+const canManageReminders = computed(() => hasAnyPermission(user, ['manage invoice reminders', 'manage invoicing']));
 const hasStoredDocument = computed(() => props.invoice.document?.status === 'stored');
 const documentFailed = computed(() => props.invoice.document?.status === 'failed');
 const isDistributable = computed(() => ['issued', 'partially_paid', 'paid'].includes(props.invoice.status));
@@ -52,7 +54,11 @@ const canPrintInvoice = computed(
     () => isDistributable.value && canSend.value && props.invoice.delivery_method === 'postal' && hasStoredDocument.value,
 );
 const canChangeDeliveryMethod = computed(() => isDistributable.value && canSend.value && !deliveryStarted.value);
+const canRemind = computed(
+    () => canManageReminders.value && isDistributable.value && props.balance.outstanding_cents > 0 && props.balance.days_overdue > 0,
+);
 const { printing, printInvoice: printInvoicePdf } = useInvoicePrinting();
+const { printing: reminderPrinting, printReminder: printReminderPdf } = useInvoiceReminderPrinting();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Factures', href: route('bo.invoicing.invoices.index') },
@@ -178,6 +184,22 @@ const printCurrentInvoice = async (): Promise<void> => {
     await printInvoicePdf(props.invoice.id);
 };
 
+const sendReminderEmail = (): void => {
+    router.post(
+        route('bo.invoicing.invoices.reminders.email', props.invoice.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => toast.success('Rappel email mis en file d’attente.'),
+            onError: (errors) => toast.error(errors.action ?? "Le rappel email n'a pas pu être envoyé."),
+        },
+    );
+};
+
+const printReminder = async (): Promise<void> => {
+    await printReminderPdf(props.invoice.id);
+};
+
 const openDeliveryDialog = (): void => {
     deliveryMethodForm.delivery_method = props.invoice.delivery_method;
     deliveryMethodForm.clearErrors();
@@ -233,9 +255,19 @@ const submitPayment = (): void => {
                 <Button v-if="invoice.status === 'draft' && canCreate" as-child variant="outline">
                     <Link :href="route('bo.invoicing.invoices.edit', invoice.id)"> <Pencil class="mr-2 h-4 w-4" /> Modifier </Link>
                 </Button>
-                <Button v-if="['issued', 'partially_paid', 'paid'].includes(invoice.status) && canCreate" as-child variant="outline">
-                    <Link :href="route('bo.invoicing.credit-notes.create', { invoice_id: invoice.id })">Créer un avoir</Link>
-                </Button>
+                <Tooltip v-if="['issued', 'partially_paid', 'paid'].includes(invoice.status) && canCreate">
+                    <TooltipTrigger as-child>
+                        <span class="inline-flex">
+                            <Button as-child variant="outline">
+                                <Link :href="route('bo.invoicing.credit-notes.create', { invoice_id: invoice.id })">Créer un avoir</Link>
+                            </Button>
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Crée un avoir sur tout ou partie de la facture. Un avoir ne remplace pas un paiement : utilisez Paiements pour enregistrer de
+                        l’argent reçu. Un avoir total sur une facture partiellement payée peut laisser un crédit client.
+                    </TooltipContent>
+                </Tooltip>
                 <Button v-if="hasStoredDocument" as-child variant="outline">
                     <a :href="route('bo.invoicing.invoices.pdf', invoice.id)"> <Download class="mr-2 h-4 w-4" /> Télécharger le PDF </a>
                 </Button>
@@ -253,6 +285,22 @@ const submitPayment = (): void => {
                     <TooltipContent>Changer email/postal. Aucun envoi immédiat.</TooltipContent>
                 </Tooltip>
                 <Button v-if="canRegisterPayment" @click="openPaymentDialog"> <Wallet class="mr-2 h-4 w-4" /> Enregistrer un paiement </Button>
+                <AppAlertDialog
+                    v-if="canRemind && invoice.recipient_email"
+                    title="Envoyer un rappel par email ?"
+                    :description="`Un email avec le solde impayé et le PDF de rappel sera envoyé à ${invoice.recipient_email}.`"
+                    cancel-text="Annuler"
+                >
+                    <template #trigger>
+                        <Button variant="outline"> <BellRing class="mr-2 h-4 w-4" /> Rappel email </Button>
+                    </template>
+                    <template #action>
+                        <Button @click="sendReminderEmail">Envoyer</Button>
+                    </template>
+                </AppAlertDialog>
+                <Button v-if="canRemind" variant="outline" :disabled="reminderPrinting" @click="printReminder">
+                    <Printer class="mr-2 h-4 w-4" /> Rappel postal
+                </Button>
                 <Button v-if="documentFailed && canManageInvoicing" variant="outline" @click="retryDocument">
                     <RefreshCw class="mr-2 h-4 w-4" /> Réessayer l’archivage
                 </Button>
@@ -507,6 +555,43 @@ const submitPayment = (): void => {
                             <TableCell class="text-muted-foreground max-w-sm whitespace-normal">
                                 <span v-if="delivery.error" class="text-destructive">{{ delivery.error }}</span>
                                 <span v-else-if="delivery.processed_at">{{ formatDate(delivery.processed_at, 'DD.MM.YYYY HH:mm') }}</span>
+                                <span v-else>—</span>
+                            </TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+
+        <div class="border-sidebar-border/70 dark:border-sidebar-border mx-4 mt-4 rounded-xl border p-4">
+            <H3>Rappels</H3>
+            <p v-if="!invoice.reminders?.length" class="text-muted-foreground mt-4 text-sm">Aucun rappel enregistré.</p>
+            <div v-else class="mt-4 overflow-x-auto">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Canal</TableHead>
+                            <TableHead>Destinataire</TableHead>
+                            <TableHead class="text-right">Solde réclamé</TableHead>
+                            <TableHead>Statut</TableHead>
+                            <TableHead>Traité par</TableHead>
+                            <TableHead>Détail</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow v-for="reminder in invoice.reminders" :key="reminder.id">
+                            <TableCell>{{ formatDate(reminder.created_at, 'DD.MM.YYYY HH:mm') }}</TableCell>
+                            <TableCell>{{ channelLabel(reminder.channel) }}</TableCell>
+                            <TableCell class="max-w-xs whitespace-normal">{{ reminder.recipient }}</TableCell>
+                            <TableCell class="text-right font-mono">{{ formatMoney(reminder.outstanding_amount) }}</TableCell>
+                            <TableCell>
+                                <Badge variant="secondary">{{ deliveryStatusLabel(reminder.status) }}</Badge>
+                            </TableCell>
+                            <TableCell>{{ reminder.processor?.name ?? '—' }}</TableCell>
+                            <TableCell class="text-muted-foreground max-w-sm whitespace-normal">
+                                <span v-if="reminder.error" class="text-destructive">{{ reminder.error }}</span>
+                                <span v-else-if="reminder.processed_at">{{ formatDate(reminder.processed_at, 'DD.MM.YYYY HH:mm') }}</span>
                                 <span v-else>—</span>
                             </TableCell>
                         </TableRow>

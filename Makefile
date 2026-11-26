@@ -1,4 +1,4 @@
-.PHONY: help install \
+.PHONY: help install restore-db \
 	docker-dev-build docker-dev-setup docker-dev-up docker-dev-down docker-dev-logs docker-dev-shell docker-dev-artisan \
 
 
@@ -28,6 +28,39 @@ setup-dev:	install
 	php artisan members:key
 	php artisan migrate
 	@echo "Development environment setup complete"
+
+restore-db: ## Restore local MariaDB from database/backups - usage: make restore-db FILE=db-YYYYMMDD-HHMMSS.sql.gz
+	@test -n "$(FILE)" || { echo "Usage: make restore-db FILE=db-YYYYMMDD-HHMMSS.sql.gz"; exit 1; }
+	@case "$(FILE)" in */*|*..*) echo "Invalid file name: $(FILE)"; exit 1;; esac
+	@test -f "database/backups/$(FILE)" || { echo "File not found: database/backups/$(FILE)"; exit 1; }
+	@case "$(FILE)" in *.sql.gz) ;; *) echo "Expected a .sql.gz dump."; exit 1;; esac
+	@DB_NAME=$$(sed -n 's/^DB_DATABASE=//p' .env 2>/dev/null | tail -n 1); \
+	[ -n "$$DB_NAME" ] || DB_NAME=laravel; \
+	printf 'This will DROP and recreate local database "%s" from %s.\n' "$$DB_NAME" "$(FILE)"; \
+	if [ "$(YES)" != "1" ]; then \
+		printf 'Type "yes" to continue: '; \
+		read -r answer; \
+		[ "$$answer" = "yes" ] || { echo "Aborted."; exit 1; }; \
+	fi; \
+	SOURCE_DB=$$(gzip -cd "database/backups/$(FILE)" | awk '\
+		/^-- Current Database: `/ { db=$$0; sub(/^-- Current Database: `/, "", db); sub(/`$$/, "", db); next } \
+		/^CREATE TABLE `migrations`/ { print db; exit } \
+	'); \
+	[ -n "$$SOURCE_DB" ] || { echo "Could not detect the application database in the dump."; exit 1; }; \
+	echo "Source database: $$SOURCE_DB"; \
+	docker compose up -d --wait db; \
+	docker compose exec -T db sh -c 'mariadb -u root -p"$$MARIADB_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS \`$$MARIADB_DATABASE\`; CREATE DATABASE \`$$MARIADB_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"'; \
+	{ \
+		printf 'SET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS=0;\nSET UNIQUE_CHECKS=0;\n'; \
+		gzip -cd "database/backups/$(FILE)" | awk -v source="$$SOURCE_DB" '\
+			/^-- Current Database: `/ { current=$$0; sub(/^-- Current Database: `/, "", current); sub(/`$$/, "", current); in_section=(current==source); next } \
+			in_section && /^CREATE DATABASE / { next } \
+			in_section && /^USE `/ { next } \
+			in_section { print } \
+		'; \
+		printf 'SET FOREIGN_KEY_CHECKS=1;\nSET UNIQUE_CHECKS=1;\n'; \
+	} | docker compose exec -T db sh -c 'mariadb --default-character-set=utf8mb4 -u root -p"$$MARIADB_ROOT_PASSWORD" "$$MARIADB_DATABASE"'; \
+	echo "Database $$DB_NAME restored from $(FILE)."
 
 delete-dependencies: ## Delete project dependencies
 	@echo "Deleting project dependencies..."

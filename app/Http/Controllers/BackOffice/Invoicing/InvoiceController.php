@@ -20,6 +20,7 @@ use App\Domains\Invoicing\Models\BillingCustomer;
 use App\Domains\Invoicing\Models\Invoice;
 use App\Domains\Invoicing\Services\InvoiceBalanceCalculator;
 use App\Domains\Invoicing\Services\InvoiceDraftService;
+use App\Domains\Invoicing\Services\InvoiceListQuery;
 use App\Domains\Invoicing\Services\InvoicingSettingsService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BackOffice\Invoicing\CancelInvoiceRequest;
@@ -27,8 +28,6 @@ use App\Http\Requests\BackOffice\Invoicing\PreviewInvoiceRequest;
 use App\Http\Requests\BackOffice\Invoicing\StoreInvoiceRequest;
 use App\Http\Requests\BackOffice\Invoicing\UpdateInvoiceRequest;
 use App\Support\Money;
-use App\Traits\SearchesAccentInsensitively;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,12 +40,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InvoiceController extends Controller
 {
-    use SearchesAccentInsensitively;
-
     public function index(
         Request $request,
         InvoicingSettingsService $settings,
-        InvoiceBalanceCalculator $balances,
+        InvoiceListQuery $invoices,
     ): Response {
         Gate::authorize('viewAny', Invoice::class);
 
@@ -54,61 +51,31 @@ class InvoiceController extends Controller
         $status = $request->input('status');
         $type = $request->input('type');
         $year = $request->integer('year') ?: null;
+        $overdue = $request->boolean('overdue');
 
-        $query = Invoice::query()->with('billingCustomer')
-            ->withSum(['paymentAllocations as paid_cents' => fn (Builder $query) => $query->whereNull('reversed_at')], 'amount_cents')
-            ->withSum('creditNoteApplications as credited_cents', 'amount_cents')
-            ->withSum('creditNoteApplicationReversals as credited_reversed_cents', 'amount_cents');
+        $paginated = $invoices
+            ->filtered([
+                'search' => is_string($search) ? $search : null,
+                'status' => is_string($status) ? $status : null,
+                'type' => is_string($type) ? $type : null,
+                'year' => $year,
+                'overdue' => $overdue,
+            ])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->withQueryString();
 
-        if (in_array($status, array_column(InvoiceStatus::cases(), 'value'), true)) {
-            $query->where('status', $status);
-        }
-
-        if (in_array($type, array_column(InvoiceType::cases(), 'value'), true)) {
-            $query->where('type', $type);
-        }
-
-        if ($year !== null) {
-            $query->where(function (Builder $query) use ($year): void {
-                $query->whereYear('issue_date', $year)
-                    ->orWhere(function (Builder $query) use ($year): void {
-                        $query->whereNull('issue_date')->whereYear('created_at', $year);
-                    });
-            });
-        }
-
-        if (filled($search)) {
-            $query->where(function (Builder $query) use ($search): void {
-                $this->whereAccentInsensitiveLike($query, ['recipient_name'], $search);
-                $query->orWhere('invoice_number', 'like', "%{$search}%");
-            });
-        }
-
-        $invoices = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(20)->withQueryString();
-        $invoices->through(function (Invoice $invoice) use ($balances): Invoice {
-            $credited = max(
-                0,
-                (int) ($invoice->getAttribute('credited_cents') ?? 0)
-                    - (int) ($invoice->getAttribute('credited_reversed_cents') ?? 0),
-            );
-
-            $paid = (int) ($invoice->getAttribute('paid_cents') ?? 0);
-            $remaining = max(0, $invoice->total_cents - $paid - $credited);
-            $invoice->setAttribute('paid_cents', $paid);
-            $invoice->setAttribute('credited_cents', $credited);
-            $invoice->setAttribute('remaining_cents', $remaining);
-            $invoice->setAttribute('days_overdue', $balances->daysOverdue($invoice, outstandingCents: $remaining));
-
-            return $invoice;
-        });
+        $paginated->through(fn (Invoice $invoice): Invoice => $invoices->applyBalanceAttributes($invoice));
 
         return Inertia::render('backOffice/Invoicing/Invoices/Index', [
-            'invoices' => $invoices,
+            'invoices' => $paginated,
             'filters' => [
                 'search' => $search,
                 'status' => $status,
                 'type' => $type,
                 'year' => $year,
+                'overdue' => $overdue,
             ],
             'statuses' => $this->statusOptions(),
             'types' => $this->typeOptions(),
@@ -161,6 +128,7 @@ class InvoiceController extends Controller
             'paymentAllocations.reverser',
             'document',
             'deliveries.processor',
+            'reminders.processor',
         ]);
 
         $outstandingCents = $balances->outstandingCents($invoice);

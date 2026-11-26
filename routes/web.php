@@ -9,6 +9,9 @@ use App\Http\Controllers\BackOffice\Invoicing\CreditNoteController as BackOffice
 use App\Http\Controllers\BackOffice\Invoicing\FinancialDocumentController as BackOfficeFinancialDocumentController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoiceController as BackOfficeInvoiceController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoiceDeliveryController as BackOfficeInvoiceDeliveryController;
+use App\Http\Controllers\BackOffice\Invoicing\InvoiceReminderController as BackOfficeInvoiceReminderController;
+use App\Http\Controllers\BackOffice\Invoicing\InvoicingDashboardController as BackOfficeInvoicingDashboardController;
+use App\Http\Controllers\BackOffice\Invoicing\InvoicingExportController as BackOfficeInvoicingExportController;
 use App\Http\Controllers\BackOffice\Invoicing\InvoicingSettingsController as BackOfficeInvoicingSettingsController;
 use App\Http\Controllers\BackOffice\Invoicing\MembershipFeeCampaignController as BackOfficeMembershipFeeCampaignController;
 use App\Http\Controllers\BackOffice\Invoicing\MembershipFeeTypeController as BackOfficeMembershipFeeTypeController;
@@ -318,6 +321,22 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
                 ->name('settings.update');
         });
 
+        Route::middleware('permission:view invoices|manage invoicing')->group(function () {
+            Route::get('dashboard', [BackOfficeInvoicingDashboardController::class, 'index'])
+                ->name('dashboard');
+            Route::get('reminders/overdue', [BackOfficeInvoiceReminderController::class, 'index'])
+                ->name('reminders.overdue.index');
+        });
+
+        Route::middleware('permission:manage invoice reminders|manage invoicing')->group(function () {
+            Route::post('invoices/{invoice}/reminders/email', [BackOfficeInvoiceReminderController::class, 'sendEmail'])
+                ->whereNumber('invoice')
+                ->name('invoices.reminders.email');
+            Route::post('invoices/{invoice}/reminders/print', [BackOfficeInvoiceReminderController::class, 'print'])
+                ->whereNumber('invoice')
+                ->name('invoices.reminders.print');
+        });
+
         Route::middleware('permission:view invoices|manage invoicing|manage membership fees')->group(function () {
             Route::get('membership-fee-types', [BackOfficeMembershipFeeTypeController::class, 'index'])
                 ->name('membership-fee-types.index');
@@ -347,6 +366,9 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
             Route::get('membership-fee-campaigns/{membershipFeeCampaign}/edit', [BackOfficeMembershipFeeCampaignController::class, 'edit'])
                 ->whereNumber('membershipFeeCampaign')
                 ->name('membership-fee-campaigns.edit');
+            Route::get('membership-fee-campaigns/{membershipFeeCampaign}/export', [BackOfficeInvoicingExportController::class, 'membershipFeeCampaign'])
+                ->whereNumber('membershipFeeCampaign')
+                ->name('membership-fee-campaigns.export');
             Route::put('membership-fee-campaigns/{membershipFeeCampaign}', [BackOfficeMembershipFeeCampaignController::class, 'update'])
                 ->whereNumber('membershipFeeCampaign')
                 ->name('membership-fee-campaigns.update');
@@ -416,6 +438,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
 
         Route::middleware('permission:view invoices|manage invoicing')->group(function () {
             Route::get('invoices', [BackOfficeInvoiceController::class, 'index'])->name('invoices.index');
+            Route::get('invoices/export', [BackOfficeInvoicingExportController::class, 'invoices'])
+                ->name('invoices.export');
         });
 
         Route::middleware('permission:create invoices|manage invoicing')->group(function () {
@@ -449,6 +473,8 @@ Route::prefix('back-office')->middleware(['auth', 'verified', 'permission:access
 
         Route::middleware('permission:view payments|manage invoicing')->group(function () {
             Route::get('payments', [BackOfficePaymentController::class, 'index'])->name('payments.index');
+            Route::get('payments/export', [BackOfficeInvoicingExportController::class, 'payments'])
+                ->name('payments.export');
             Route::get('payments/{payment}', [BackOfficePaymentController::class, 'show'])
                 ->whereNumber('payment')
                 ->name('payments.show');
