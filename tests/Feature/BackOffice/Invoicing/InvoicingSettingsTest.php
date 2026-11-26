@@ -49,6 +49,15 @@ class InvoicingSettingsTest extends TestCase
             ->assertSessionHasErrors('creditor_iban');
     }
 
+    public function test_rejects_a_qr_iban_for_scor_references(): void
+    {
+        $this->actingAs($this->admin())
+            ->put(route('bo.invoicing.settings.update'), $this->settingsData([
+                'creditor_iban' => 'CH4431999123000889012',
+            ]))
+            ->assertSessionHasErrors('creditor_iban');
+    }
+
     public function test_normalizes_iban_before_saving(): void
     {
         $this->actingAs($this->admin())

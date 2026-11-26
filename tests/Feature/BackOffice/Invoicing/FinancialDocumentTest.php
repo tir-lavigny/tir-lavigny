@@ -2,9 +2,17 @@
 
 namespace Tests\Feature\BackOffice\Invoicing;
 
+use App\Domains\Invoicing\Actions\CreditNotes\CreateCreditNote;
+use App\Domains\Invoicing\Actions\CreditNotes\CreateCreditNoteReversal;
+use App\Domains\Invoicing\Actions\CreditNotes\IssueCreditNote;
+use App\Domains\Invoicing\Actions\CreditNotes\IssueCreditNoteReversal;
+use App\Domains\Invoicing\Actions\CreditNotes\ReverseCreditNoteApplication;
 use App\Domains\Invoicing\Actions\Invoices\CreateInvoice;
 use App\Domains\Invoicing\Actions\Invoices\IssueInvoice;
+use App\Domains\Invoicing\Enums\CreditNoteStatus;
 use App\Domains\Invoicing\Enums\FinancialDocumentStatus;
+use App\Domains\Invoicing\Exceptions\CreditNoteNotIssuable;
+use App\Domains\Invoicing\Exceptions\CreditNoteReversalNotIssuable;
 use App\Domains\Invoicing\Exceptions\InvoiceNotIssuable;
 use App\Domains\Invoicing\Exceptions\InvoicingSettingsMissing;
 use App\Domains\Invoicing\Models\BillingCustomer;
@@ -190,5 +198,108 @@ class FinancialDocumentTest extends TestCase
                 ['type' => 'fee', 'description' => 'Cotisation', 'quantity' => '1', 'unit_price' => '150.00'],
             ],
         ];
+    }
+
+    public function test_credit_note_pdf_generation_failure_rolls_back_issuance(): void
+    {
+        $actor = User::factory()->create();
+        $customer = BillingCustomer::factory()->create();
+        $invoice = app(CreateInvoice::class)->execute($this->invoiceData($customer->id), $actor);
+        app(IssueInvoice::class)->execute($invoice, $actor);
+        $creditNote = app(CreateCreditNote::class)->execute([
+            'invoice_id' => $invoice->id,
+            'reason' => 'Correction',
+            'issue_date' => '2027-01-20',
+            'items' => [
+                ['description' => 'Correction', 'quantity' => '1', 'unit_price' => '50.00'],
+            ],
+        ], $actor);
+
+        $this->app->instance(FinancialDocumentGenerator::class, $this->failingGenerator());
+
+        try {
+            app(IssueCreditNote::class)->execute($creditNote, $actor);
+            $this->fail('Credit note issuance should have failed.');
+        } catch (CreditNoteNotIssuable $exception) {
+            $this->assertStringContainsString('PDF', $exception->getMessage());
+        }
+
+        $creditNote->refresh();
+        $this->assertSame(CreditNoteStatus::Draft, $creditNote->status);
+        $this->assertNull($creditNote->credit_note_number);
+        $this->assertNull($creditNote->document);
+        $this->assertDatabaseMissing('financial_documents', [
+            'documentable_type' => $creditNote->getMorphClass(),
+            'documentable_id' => $creditNote->id,
+        ]);
+    }
+
+    public function test_credit_note_reversal_pdf_generation_failure_rolls_back_issuance(): void
+    {
+        $actor = User::factory()->create();
+        $customer = BillingCustomer::factory()->create();
+        $invoice = app(CreateInvoice::class)->execute($this->invoiceData($customer->id), $actor);
+        app(IssueInvoice::class)->execute($invoice, $actor);
+        $creditNote = app(CreateCreditNote::class)->execute([
+            'invoice_id' => $invoice->id,
+            'reason' => 'Correction',
+            'issue_date' => '2027-01-20',
+            'items' => [
+                ['description' => 'Correction', 'quantity' => '1', 'unit_price' => '50.00'],
+            ],
+        ], $actor);
+        $creditNote = app(IssueCreditNote::class)->execute($creditNote, $actor);
+        app(ReverseCreditNoteApplication::class)->execute(
+            $creditNote->applications()->firstOrFail(),
+            5000,
+            'Recredit',
+            $actor,
+        );
+        $reversal = app(CreateCreditNoteReversal::class)->execute($creditNote->fresh(), [
+            'reason' => 'Annulation',
+            'issue_date' => '2027-02-01',
+            'items' => [
+                ['description' => 'Annulation', 'amount' => '50.00'],
+            ],
+        ], $actor);
+
+        $this->app->instance(FinancialDocumentGenerator::class, $this->failingGenerator());
+
+        try {
+            app(IssueCreditNoteReversal::class)->execute($reversal, $actor);
+            $this->fail('Credit note reversal issuance should have failed.');
+        } catch (CreditNoteReversalNotIssuable $exception) {
+            $this->assertStringContainsString('PDF', $exception->getMessage());
+        }
+
+        $reversal->refresh();
+        $this->assertSame('draft', $reversal->status->value);
+        $this->assertNull($reversal->credit_note_reversal_number);
+        $this->assertNull($reversal->document);
+        $this->assertDatabaseMissing('financial_documents', [
+            'documentable_type' => $reversal->getMorphClass(),
+            'documentable_id' => $reversal->id,
+        ]);
+    }
+
+    private function failingGenerator(): FinancialDocumentGenerator
+    {
+        return new class implements FinancialDocumentGenerator
+        {
+            public function invoice(Invoice $invoice): string
+            {
+                throw new RuntimeException('Generator failed');
+            }
+
+            public function creditNote(CreditNote $creditNote): string
+            {
+                throw new RuntimeException('Generator failed');
+            }
+
+            public function creditNoteReversal(CreditNoteReversal $reversal): string
+            {
+                throw new RuntimeException('Generator failed');
+            }
+        };
     }
 }

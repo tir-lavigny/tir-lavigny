@@ -141,4 +141,33 @@ class InvoicingExportTest extends TestCase
             ->get(route('bo.invoicing.invoices.export'))
             ->assertForbidden();
     }
+
+    public function test_payment_export_requires_payment_view_permission(): void
+    {
+        $invoiceViewer = User::factory()->create();
+        $invoiceViewer->givePermissionTo(['access backoffice', 'view invoices']);
+
+        $paymentViewer = User::factory()->create();
+        $paymentViewer->givePermissionTo(['access backoffice', 'view payments']);
+
+        $this->actingAs($invoiceViewer)
+            ->get(route('bo.invoicing.payments.export'))
+            ->assertForbidden();
+
+        $this->actingAs($paymentViewer)
+            ->get(route('bo.invoicing.payments.export'))
+            ->assertOk();
+    }
+
+    public function test_campaign_export_requires_membership_fee_management(): void
+    {
+        $this->invoicingAdmin();
+        $campaign = MembershipFeeCampaign::factory()->create(['year' => 2027]);
+        $viewer = User::factory()->create();
+        $viewer->givePermissionTo(['access backoffice', 'view invoices']);
+
+        $this->actingAs($viewer)
+            ->get(route('bo.invoicing.membership-fee-campaigns.export', $campaign))
+            ->assertForbidden();
+    }
 }

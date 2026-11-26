@@ -216,6 +216,20 @@ class InvoiceEmailDeliveryTest extends TestCase
         $this->assertSame('Tentative d’envoi expirée.', $stale->fresh()->error);
     }
 
+    public function test_rejects_an_invalid_recipient_email_before_queueing(): void
+    {
+        Queue::fake();
+        $invoice = $this->issueInvoice(customerOverrides: ['email' => 'not-an-email']);
+
+        $response = $this->post(route('bo.invoicing.invoices.email', $invoice));
+
+        $response->assertSessionHasErrors([
+            'action' => 'Cette facture ne possède pas d’adresse email valide.',
+        ]);
+        $this->assertDatabaseCount('invoice_deliveries', 0);
+        Queue::assertNothingPushed();
+    }
+
     public function test_uses_invoice_email_snapshot_after_customer_email_changes(): void
     {
         Queue::fake();

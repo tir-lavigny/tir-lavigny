@@ -83,6 +83,8 @@ class PdfDocumentsTest extends TestCase
         $this->assertSame('SCOR', $qrBill->getPaymentReference()?->getType());
         $this->assertStringStartsWith('RF', (string) $qrBill->getPaymentReference()?->getReference());
         $this->assertSame("Facture {$invoice->invoice_number}", $qrBill->getAdditionalInformation()?->getFormattedString());
+        $this->assertSame(150.0, $qrBill->getPaymentAmountInformation()->getAmount());
+        $this->assertSame($invoice->recipient_name, $qrBill->getUltimateDebtor()?->getName());
     }
 
     public function test_pdf_view_omits_swiss_country_from_recipient_address(): void
