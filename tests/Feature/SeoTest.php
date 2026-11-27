@@ -92,6 +92,26 @@ class SeoTest extends TestCase
             ->assertDontSee('/member-registration', false);
     }
 
+    public function test_sitemap_uses_configured_app_url_when_host_header_is_spoofed(): void
+    {
+        $this->get('http://evil.example/sitemap.xml')
+            ->assertOk()
+            ->assertSee(config('app.url'), false)
+            ->assertDontSee('evil.example', false);
+    }
+
+    public function test_calendar_feed_uses_configured_app_url_when_forwarded_host_is_spoofed(): void
+    {
+        $event = Event::factory()->create(['start_datetime' => now()->addDay()]);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '172.16.10.10'])
+            ->withHeader('X-Forwarded-Host', 'evil.example')
+            ->get('http://evil.example/events/calendar/feed.ics')
+            ->assertOk()
+            ->assertSee('URL:'.config('app.url').'/events/'.$event->id, false)
+            ->assertDontSee('evil.example', false);
+    }
+
     public function test_robots_references_sitemap_and_blocks_private_paths_in_production(): void
     {
         app()->detectEnvironment(fn () => 'production');

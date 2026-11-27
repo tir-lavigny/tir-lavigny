@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
@@ -45,5 +46,18 @@ class HealthRoutesTest extends TestCase
 
         $response->assertServiceUnavailable()->assertExactJson(['status' => 'degraded']);
         $this->assertStringNotContainsString('nope', $response->getContent());
+    }
+
+    public function test_spoofed_host_is_rejected_in_production(): void
+    {
+        config(['app.url' => 'https://tir-lavigny.ch']);
+        app()->detectEnvironment(fn () => 'production');
+
+        try {
+            $this->get('http://evil.example/up')->assertStatus(400);
+            $this->get('http://tir-lavigny.ch/up')->assertNoContent();
+        } finally {
+            Request::setTrustedHosts([]);
+        }
     }
 }

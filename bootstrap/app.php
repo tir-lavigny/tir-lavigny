@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '172.16.0.0/12');
+        $middleware->trustHosts();
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
         $middleware->preventRequestsDuringMaintenance(except: ['/up', '/health', '/api/health']);
 
