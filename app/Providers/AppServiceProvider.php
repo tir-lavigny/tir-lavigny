@@ -9,6 +9,7 @@ use App\TokenAbility;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
@@ -40,7 +41,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->overrideSanctumConfigurationToSupportRefreshToken();
+        $this->forceCanonicalUrls();
         $this->defineRateLimiters();
+    }
+
+    private function forceCanonicalUrls(): void
+    {
+        $url = (string) config('app.url');
+
+        URL::useOrigin($url);
+        URL::forceScheme(parse_url($url, PHP_URL_SCHEME) ?: 'https');
     }
 
     private function defineRateLimiters(): void
