@@ -61,6 +61,10 @@ router.on('success', (event) => {
     if (flash?.warning) toast.warning(flash.warning);
 });
 
+router.on('beforeUpdate', (event) => {
+    syncZiggyConfig((event.detail.page.props as unknown as SharedData).ziggy);
+});
+
 function syncZiggyConfig(config: SharedData['ziggy'] | undefined): void {
     if (!config) {
         return;
