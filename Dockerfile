@@ -51,7 +51,7 @@ RUN composer dump-autoload \
     --no-scripts
 
 
-FROM node:24.22.1-alpine AS frontend
+FROM node:26.13.1-alpine AS frontend
 
 ARG VITE_APP_NAME="Tir Lavigny"
 ENV VITE_APP_NAME=$VITE_APP_NAME
